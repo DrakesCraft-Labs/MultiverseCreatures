@@ -49,3 +49,4 @@ A Minecraft plugin that adds themed creatures and items, starting with the Scoob
    - Ensure you have Maven installed.
    - Run `mvn clean package`.
    - The generated file will be in the `target` folder.
++
