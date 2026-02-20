@@ -1,10 +1,12 @@
 package com.Chagui68.entities;
 
+import com.Chagui68.items.ItemCombatTrades;
 import com.Chagui68.items.ItemsFoodTrades;
 import com.Chagui68.listener.ItemFoodHandler;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.WanderingTrader;
+import org.bukkit.entity.Wolf;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
@@ -59,8 +61,15 @@ public class MobHandler implements Listener {
         MerchantRecipe precio1 = new MerchantRecipe(resultado1,999);
         precio1.addIngredient(new ItemStack(Material.DIAMOND,20));
         tradeos.add(precio1);
+
+        ItemStack resultado2 = ItemCombatTrades.
+
         trader.setRecipes(tradeos);
 
         trader.addScoreboardTag("MSC_Shaggy");
+    }
+
+    private static void equipSnoopy(Wolf wolf){
+
     }
 }
