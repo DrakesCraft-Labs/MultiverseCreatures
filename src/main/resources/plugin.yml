@@ -5,3 +5,5 @@ api-version: '1.20'
 author: Chagui68
 description: A themed creatures and items plugin 
 website: https://github.com/Chagui68/MultiverseCreatures
+softdepend:
+  - LibsDisguises

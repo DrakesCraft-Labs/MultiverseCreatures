@@ -1,52 +1,43 @@
-# 🐾 MultiverseCreatures - Scooby Update
+# MultiverseCreatures (Fork by JackStar6677-1)
 
-[![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.6-brightgreen.svg)](https://www.spigotmc.org/)
-[![Java Version](https://img.shields.io/badge/Java-21-orange.svg)](https://www.java.com/)
+Plugin for custom themed creatures and items on Spigot/Paper 1.20.6.
 
-A Minecraft plugin that adds themed creatures and items, starting with the Scooby-Doo universe.
+## Current features
+- Shaggy replacement on Wandering Trader spawn (30% chance).
+- Custom trades for Scooby Cookies and Excalibur Sword.
+- Scooby Cookies grant Resistance VI for 10 seconds.
+- Optional player-skin disguise system for themed mobs.
 
----
+## New in this fork: Player skins on entities
+This fork keeps normal mob AI/trades, but can render the entity as a player skin using `LibsDisguises`.
 
-## 🚀 Features
+How it works:
+- Entity is still a real `WanderingTrader` (safe for vanilla behavior).
+- Visual appearance becomes a player model/skin when enabled.
 
-### 👤 Shaggy (Wandering Trader)
-- Randomly spawns instead of a normal Wandering Trader (30% chance).
-- Features a custom name and unique look.
-- **Exclusive Trades**: Exchange Diamonds for the legendary Scooby Cookies.
+Config file: `plugins/MultiverseCreatures/config.yml`
 
-### 🍪 Scooby Cookies
-- Custom items with unique persistent metadata.
-- **Consumption Effect**:
-  - Upon eating, the player receives **Resistance VI** (Invincibility).
-  - The effect lasts for **10 seconds**.
+```yaml
+skins:
+  enabled: false
+  source: fixed                # fixed | nearest-player | random-online-player | entity-name
+  fixed-name: Notch
+  nearest-player-max-distance: 64.0
+```
 
-### 🏠 System
-- Intelligent entity spawn management to prevent interference with vanilla mechanics.
+Notes:
+- Requires `LibsDisguises` in `/plugins` to apply skins.
+- `source: fixed` and other name-based modes depend on resolvable skin names.
+- For offline/non-premium environments, use a skin provider plugin (for example `SkinsRestorer`) and valid skin names from that provider.
 
----
+## Requirements
+- Minecraft server: Paper/Spigot 1.20.6
+- Java: 21+
+- Optional: LibsDisguises (for skin rendering)
 
-## 📋 Requirements
-
-### Server
-- **Minecraft**: 1.20.6
-- **Server Software**: Spigot or Paper 1.20.6
-- **Java**: 21 or higher
-
----
-
-## 📦 Installation
-
-### For Server Administrators
-1. **Download the Plugin**
-   - Download the latest `.jar` from [GitHub Releases](https://github.com/Chagui68/MultiverseCreatures/releases).
-   - Place the file in your server's `/plugins/` folder.
-
-2. **Restart**
-   - Restart the server to apply changes.
-
-### For Developers
-1. **Build from Source**
-   - Ensure you have Maven installed.
-   - Run `mvn clean package`.
-   - The generated file will be in the `target` folder.
-+
+## Build
+```bash
+mvn clean package -DskipTests
+```
+Output jar:
+- `target/MultiverseCreatures-v1.0.jar`
