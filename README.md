@@ -1,43 +1,53 @@
-# MultiverseCreatures (Fork by JackStar6677-1)
+# MultiverseCreatures
+**Developed by: Chagui68**
 
-Plugin for custom themed creatures and items on Spigot/Paper 1.20.6.
+A custom plugin for Spigot/Paper 1.20.6 that adds themed creatures, items with special abilities, and an advanced dynamic skin system.
 
-## Current features
-- Shaggy replacement on Wandering Trader spawn (30% chance).
-- Custom trades for Scooby Cookies and Excalibur Sword.
-- Scooby Cookies grant Resistance VI for 10 seconds.
-- Optional player-skin disguise system for themed mobs.
+## 🚀 Key Features
 
-## New in this fork: Player skins on entities
-This fork keeps normal mob AI/trades, but can render the entity as a player skin using `LibsDisguises`.
+### 1. Unique Items System
+The plugin uses `PersistentDataContainer` to identify its items, ensuring that abilities work even if the item's name is changed.
 
-How it works:
-- Entity is still a real `WanderingTrader` (safe for vanilla behavior).
-- Visual appearance becomes a player model/skin when enabled.
+*   **Excalibur Sword:** 
+    *   **Obtainment:** Rare trade with Shaggy.
+    *   **Ability:** Grants constant **Strength II** while held in the main hand.
+    *   **Logic:** Uses a clock (Scheduler) that checks the held item every second, ensuring the effect is never lost.
+*   **Scooby Cookies:**
+    *   **Effect:** When consumed, they grant **Resistance VI** for 10 seconds.
+    *   **Usage:** Ideal for critical combat situations.
 
-Config file: `plugins/MultiverseCreatures/config.yml`
+### 2. Creatures and Mobs
+*   **Shaggy (Wandering Trader):**
+    *   Has a **30% chance** of replacing a conventional Wandering Trader upon spawning.
+    *   Features custom trades requiring high-value materials (Diamonds, Netherite).
+    *   Internally tagged with the scoreboard tag `MSC_Shaggy` for tracking.
 
-```yaml
-skins:
-  enabled: false
-  source: fixed                # fixed | nearest-player | random-online-player | entity-name
-  fixed-name: Notch
-  nearest-player-max-distance: 64.0
-```
+## 🎭 Skin System (LibsDisguises Integration)
+One of the technical highlights of this plugin is its dynamic skin service (`PlayerSkinDisguiseService`).
 
-Notes:
-- Requires `LibsDisguises` in `/plugins` to apply skins.
-- `source: fixed` and other name-based modes depend on resolvable skin names.
-- For offline/non-premium environments, use a skin provider plugin (for example `SkinsRestorer`) and valid skin names from that provider.
+### Technical Implementation
+The plugin integrates **LibsDisguises** intelligently using **Java Reflection**:
+*   **Optionality:** The plugin DOES NOT require LibsDisguises to start. If the plugin is missing, it simply disables skins and continues to function normally without console errors.
+*   **Independence:** By using Reflection, we don't depend directly on the LibsDisguises JAR in the build environment, making it more flexible.
 
-## Requirements
-- Minecraft server: Paper/Spigot 1.20.6
-- Java: 21+
-- Optional: LibsDisguises (for skin rendering)
+### Viewing Modes (config.yml)
+You can configure where the "Shaggy" mob gets its skin from:
+*   `fixed`: Uses a fixed skin (e.g., Notch).
+*   `nearest-player`: Copies the skin of the nearest player at the moment of spawning.
+*   `random-online-player`: Chooses the skin of a random player currently online.
+*   `entity-name`: Uses the entity's custom name as the skin name.
 
-## Build
+## 🛠 System Requirements
+*   **Minecraft Version:** Paper/Spigot 1.20.6
+*   **Java:** 21 or higher.
+*   **Optional Dependency:** [LibsDisguises](https://www.spigotmc.org/resources/libs-disguises.81/) (Recommended for the full visual experience).
+
+## 🔨 Building
+To build the project manually:
 ```bash
 mvn clean package -DskipTests
 ```
-Output jar:
-- `target/MultiverseCreatures-v1.0.jar`
+The resulting file can be found at `target/MultiverseCreatures-v1.0.jar`.
+
+---
+*This project is owned by Chagui68. All rights reserved.*

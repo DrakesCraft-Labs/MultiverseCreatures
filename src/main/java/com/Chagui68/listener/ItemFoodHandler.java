@@ -14,7 +14,8 @@ import org.bukkit.potion.PotionEffectType;
 public class ItemFoodHandler implements Listener {
 
     @EventHandler
-    public void cuandoCome(PlayerItemConsumeEvent event) {
+    public void cuandoComeCookie(PlayerItemConsumeEvent event) {
+
         ItemStack item = event.getItem();
         Player player = event.getPlayer();
         ItemMeta meta = item.getItemMeta();

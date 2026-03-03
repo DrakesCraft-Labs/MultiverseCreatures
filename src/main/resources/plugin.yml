@@ -7,3 +7,14 @@ description: A themed creatures and items plugin
 website: https://github.com/Chagui68/MultiverseCreatures
 softdepend:
   - LibsDisguises
+
+commands:
+  msc:
+    description: Main command for MultiverseCreatures
+    usage: /msc spawn <type>
+    permission: multiversecreatures.admin
+
+permissions:
+  multiversecreatures.admin:
+    description: Allows users to spawn custom entities
+    default: op

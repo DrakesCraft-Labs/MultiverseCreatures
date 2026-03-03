@@ -32,19 +32,23 @@ public class MobHandler implements Listener {
     @EventHandler
     public void OnSpawn(CreatureSpawnEvent entity) {
         if (entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL
-            && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER_EGG
-            && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.CHUNK_GEN
-            && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.REINFORCEMENTS
-            && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER) {
+                && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER_EGG
+                && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.CHUNK_GEN
+                && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.REINFORCEMENTS
+                && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER) {
             return;
         }
 
         double roll = random.nextDouble();
         if (entity.getEntityType() == EntityType.WANDERING_TRADER && roll < SHAGGY_CHANCE) {
             WanderingTrader wanderingTrader = (WanderingTrader) entity.getEntity();
-            equipWanderingVillager(wanderingTrader);
-            disguiseService.applyPlayerSkin(wanderingTrader);
+            transformIntoShaggy(wanderingTrader);
         }
+    }
+
+    public void transformIntoShaggy(WanderingTrader trader) {
+        equipWanderingVillager(trader);
+        disguiseService.applyPlayerSkin(trader);
     }
 
     private void equipWanderingVillager(WanderingTrader trader) {
