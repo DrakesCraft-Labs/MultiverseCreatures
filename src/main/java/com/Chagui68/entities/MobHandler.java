@@ -18,6 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static com.Chagui68.items.ItemCombatTrades.EXCALIBUR_SWORD;
+import static com.Chagui68.items.ItemsFoodTrades.SCOOBY_COOKIES;
+
 public class MobHandler implements Listener {
 
     private static final double SHAGGY_CHANCE = 0.3;
@@ -32,10 +35,10 @@ public class MobHandler implements Listener {
     @EventHandler
     public void OnSpawn(CreatureSpawnEvent entity) {
         if (entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL
-            && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER_EGG
-            && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.CHUNK_GEN
-            && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.REINFORCEMENTS
-            && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER) {
+                && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER_EGG
+                && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.CHUNK_GEN
+                && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.REINFORCEMENTS
+                && entity.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER) {
             return;
         }
 
@@ -47,18 +50,18 @@ public class MobHandler implements Listener {
         }
     }
 
-    private void equipWanderingVillager(WanderingTrader trader) {
+    public void equipWanderingVillager(WanderingTrader trader) {
         List<MerchantRecipe> trades = new ArrayList<>();
         trader.setCustomName(ChatColor.GREEN + "Shaggy");
         trader.setCustomNameVisible(true);
 
-        ItemStack cookies = ItemsFoodTrades.SCOOBY_COOKIES.clone();
+        ItemStack cookies = SCOOBY_COOKIES.clone();
         cookies.setAmount(5);
         MerchantRecipe cookiesTrade = new MerchantRecipe(cookies, 999);
         cookiesTrade.addIngredient(new ItemStack(Material.DIAMOND, 20));
         trades.add(cookiesTrade);
 
-        ItemStack excalibur = ItemCombatTrades.EXCALIBUR_SWORD.clone();
+        ItemStack excalibur = EXCALIBUR_SWORD.clone();
         MerchantRecipe excaliburTrade = new MerchantRecipe(excalibur, 1);
         excaliburTrade.addIngredient(new ItemStack(Material.NETHERITE_INGOT, 8));
         excaliburTrade.addIngredient(new ItemStack(Material.DIAMOND_BLOCK, 16));
@@ -66,5 +69,12 @@ public class MobHandler implements Listener {
 
         trader.setRecipes(trades);
         trader.addScoreboardTag("MSC_Shaggy");
+    }
+
+    public void spawnShaggy(org.bukkit.Location location) {
+        WanderingTrader shaggy = (WanderingTrader) location.getWorld().spawnEntity(location,
+                EntityType.WANDERING_TRADER);
+        equipWanderingVillager(shaggy);
+        disguiseService.applyPlayerSkin(shaggy);
     }
 }

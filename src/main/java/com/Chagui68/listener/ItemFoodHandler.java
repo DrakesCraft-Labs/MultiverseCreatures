@@ -10,11 +10,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffectType;
+import com.Chagui68.utils.VersionSafe;
+import org.bukkit.Material;
 
 public class ItemFoodHandler implements Listener {
 
     @EventHandler
-    public void cuandoCome(PlayerItemConsumeEvent event) {
+    public void onConsume(PlayerItemConsumeEvent event) {
         ItemStack item = event.getItem();
         Player player = event.getPlayer();
         ItemMeta meta = item.getItemMeta();
@@ -25,7 +27,7 @@ public class ItemFoodHandler implements Listener {
 
         PersistentDataContainer data = meta.getPersistentDataContainer();
         if (data.has(ItemsFoodTrades.COOKIE_KEY, PersistentDataType.INTEGER)) {
-            player.addPotionEffect(PotionEffectType.RESISTANCE.createEffect(200, 5));
+            VersionSafe.applyPotionEffectSafe(player, PotionEffectType.RESISTANCE, 200, 5);
         }
     }
 }

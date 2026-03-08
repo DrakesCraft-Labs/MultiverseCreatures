@@ -40,7 +40,8 @@ public class PlayerSkinDisguiseService {
         if (!isLibsDisguisesAvailable()) {
             if (!warnedMissingDependency) {
                 warnedMissingDependency = true;
-                plugin.getLogger().warning("skins.enabled=true pero falta LibsDisguises. Instala ese plugin para aplicar skins.");
+                plugin.getLogger().warning(
+                        "skins.enabled=true but LibsDisguises is missing. Install this plugin to apply skins.");
             }
             return;
         }
@@ -64,8 +65,8 @@ public class PlayerSkinDisguiseService {
             Method disguiseEntity = disguiseApiClass.getMethod("disguiseEntity", Entity.class, disguiseClass);
             disguiseEntity.invoke(null, entity, disguise);
         } catch (ReflectiveOperationException exception) {
-            plugin.getLogger().warning("No se pudo aplicar skin '" + skinName + "' a entidad " + entity.getType()
-                + ": " + exception.getMessage());
+            plugin.getLogger().warning("Could not apply skin '" + skinName + "' to entity " + entity.getType()
+                    + ": " + exception.getMessage());
         }
     }
 
@@ -88,9 +89,10 @@ public class PlayerSkinDisguiseService {
 
     private Optional<String> resolveNearestOnlinePlayer(LivingEntity entity) {
         return entity.getWorld().getPlayers().stream()
-            .filter(player -> player.getLocation().distanceSquared(entity.getLocation()) <= maxDistance * maxDistance)
-            .min(Comparator.comparingDouble(player -> player.getLocation().distanceSquared(entity.getLocation())))
-            .map(Player::getName);
+                .filter(player -> player.getLocation().distanceSquared(entity.getLocation()) <= maxDistance
+                        * maxDistance)
+                .min(Comparator.comparingDouble(player -> player.getLocation().distanceSquared(entity.getLocation())))
+                .map(Player::getName);
     }
 
     private Optional<String> resolveRandomOnlinePlayer() {

@@ -6,7 +6,7 @@
 
     <groupId>org.example</groupId>
     <artifactId>MultiverseCreatures</artifactId>
-    <version>1.0</version>
+    <version>1.4.DEV</version>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -47,6 +47,14 @@
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
             <version>3.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- JetBrains Annotations -->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>24.0.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
