@@ -1,4 +1,4 @@
-# MultiverseCreatures (Fork by JackStar6677-1)
+# MultiverseCreatures
 
 Plugin for custom themed creatures and items on Spigot/Paper **1.20.1 - 1.20.6**.
 
@@ -46,7 +46,7 @@ skins:
 ## Requirements
 - **Minecraft Server:** Paper/Spigot 1.20.1 - 1.20.6
 - **Java:** 21+
-- **Optional:** `LibsDisguises` (required for player skin rendering)
+- **Optional:** `LibsDisguises` (required for player skin rendering - **Not compatible with 1.20.1**)
 
 ## Build
 ```bash
