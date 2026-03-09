@@ -12,6 +12,11 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.Bukkit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * Utility class to handle version-specific changes between Minecraft versions
@@ -182,6 +187,10 @@ public class VersionSafe {
             return;
 
         try {
+            // First, sanitize the player's effect state if they are already in a corrupted
+            // state
+            sanitizePlayerEffects(player);
+
             // Check if player reportedly has the effect
             if (player.hasPotionEffect(type)) {
                 org.bukkit.potion.PotionEffect active = player.getPotionEffect(type);
@@ -193,26 +202,99 @@ public class VersionSafe {
                         return;
                 } else {
                     // Corrupted state: hasPotionEffect is true but getPotionEffect is null.
-                    // This is likely what leads to the "Ticking player" crash in certain
-                    // environments.
-                    // Clear it manually before re-adding.
+                    // This is likely what leads to the "Ticking player" crash.
                     Bukkit.getLogger().warning("[MSC] Detected corrupted effect state for " + type.getName() + " on "
-                            + player.getName() + "... Clearing.");
-                    player.removePotionEffect(type);
+                            + player.getName() + "... Force clearing.");
+
+                    // Force removal of the corrupted effect
+                    try {
+                        player.removePotionEffect(type);
+                    } catch (Exception ignored) {
+                    }
                 }
             }
 
             // Sanitization: Ensure values are non-negative and valid for modern versions
-            if (duration < 1)
-                duration = 1;
-            if (amplifier < 0)
-                amplifier = 0;
+            int finalDuration = Math.max(1, duration);
+            int finalAmplifier = Math.max(0, amplifier);
 
-            player.addPotionEffect(new org.bukkit.potion.PotionEffect(type, duration, amplifier));
+            player.addPotionEffect(new org.bukkit.potion.PotionEffect(type, finalDuration, finalAmplifier));
         } catch (Exception e) {
             // General safety net to prevent server crash during player ticking
-            Bukkit.getLogger().warning("[MSC] CRITICAL: Failed to apply " + type.getName() + " to " + player.getName());
-            e.printStackTrace();
+            Bukkit.getLogger().log(Level.WARNING,
+                    "[MSC] CRITICAL: Failed to apply " + type.getName() + " to " + player.getName(), e);
+        }
+    }
+
+    /**
+     * Attempts to sanitize a player's potion effects by removing null entries
+     * from the internal Minecraft effect map using reflection.
+     * This is an aggressive fix for the "Ticking player" NullPointerException.
+     */
+    public static void sanitizePlayerEffects(Player player) {
+        if (player == null)
+            return;
+
+        try {
+            // 1. Try to detect null effects via Bukkit first
+            for (org.bukkit.potion.PotionEffect effect : player.getActivePotionEffects()) {
+                if (effect == null || effect.getType() == null) {
+                    Bukkit.getLogger().warning(
+                            "[MSC] Null effect found on " + player.getName() + ". Attempting aggressive cleanup...");
+                    forceCleanupInternalMap(player);
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            // High-level check failed, maybe the map is already so broken it throws on
+            // iteration
+            forceCleanupInternalMap(player);
+        }
+    }
+
+    private static void forceCleanupInternalMap(Player player) {
+        try {
+            // Get the NMS handle (CraftPlayer -> EntityPlayer)
+            Method getHandle = player.getClass().getMethod("getHandle");
+            Object nmsPlayer = getHandle.invoke(player);
+
+            // Search for the activeEffects map in LivingEntity (nmsPlayer's superclass)
+            Class<?> livingEntityClass = nmsPlayer.getClass();
+            while (livingEntityClass != null && !livingEntityClass.getSimpleName().equals("LivingEntity")
+                    && !livingEntityClass.getSimpleName().equals("EntityLiving")) {
+                livingEntityClass = livingEntityClass.getSuperclass();
+            }
+
+            if (livingEntityClass == null)
+                return;
+
+            // In 1.20.1, the map is often called 'activeEffects' or 'f' (obfuscated)
+            // We'll search for any field of type Map
+            for (java.lang.reflect.Field field : livingEntityClass.getDeclaredFields()) {
+                if (java.util.Map.class.isAssignableFrom(field.getType())) {
+                    field.setAccessible(true);
+                    java.util.Map<?, ?> map = (java.util.Map<?, ?>) field.get(nmsPlayer);
+                    if (map != null) {
+                        // Remove any null values from the map
+                        try {
+                            map.values().removeIf(java.util.Objects::isNull);
+                            map.keySet().removeIf(java.util.Objects::isNull);
+                        } catch (Exception e) {
+                            // If removeIf fails (Immutable map or ConcurrentModification),
+                            // we might need to create a new map or use an iterator
+                            java.util.Iterator<? extends java.util.Map.Entry<?, ?>> it = map.entrySet().iterator();
+                            while (it.hasNext()) {
+                                java.util.Map.Entry<?, ?> entry = it.next();
+                                if (entry.getKey() == null || entry.getValue() == null) {
+                                    it.remove();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Bukkit.getLogger().log(Level.FINE, "[MSC] Reflection cleanup failed for " + player.getName(), e);
         }
     }
 }
