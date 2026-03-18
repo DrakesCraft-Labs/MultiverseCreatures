@@ -1,7 +1,7 @@
 name: MultiverseCreatures
 version: '${project.version}'
-main: com.Chagui68.MutlverseCreatures
-api-version: '1.20'
+main: com.Chagui68.MultiverseCreatures
+api-version: '1.21'
 author: Chagui68
 description: A themed creatures and items plugin 
 website: https://github.com/Chagui68/MultiverseCreatures

@@ -27,7 +27,10 @@ public class ItemFoodHandler implements Listener {
 
         PersistentDataContainer data = meta.getPersistentDataContainer();
         if (data.has(ItemsFoodTrades.COOKIE_KEY, PersistentDataType.INTEGER)) {
-            VersionSafe.applyPotionEffectSafe(player, PotionEffectType.RESISTANCE, 200, 5);
+            PotionEffectType resistance = VersionSafe.getPotionEffectSafe("RESISTANCE", "DAMAGE_RESISTANCE");
+            if (resistance != null) {
+                VersionSafe.applyPotionEffectSafe(player, resistance, 200, 5);
+            }
         }
     }
 }

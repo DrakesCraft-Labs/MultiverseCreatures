@@ -47,10 +47,10 @@ import java.util.UUID;
 public class DragonCombatHandler implements Listener {
 
     private final Plugin plugin;
-    private static final double DRAGON_HEALTH = 5000.0;
+    private static final double DRAGON_HEALTH = 2000.0;
     private static final double DRAGON_DAMAGE = 15.0;
-    private static final double DAMAGE_CAP = 200.0;
-    private static final double REGEN_MULTIPLIER = 0.2; // Only 20% of original regen from crystals
+    private static final double DAMAGE_CAP = 50.0;
+    private static final double REGEN_MULTIPLIER = 0.2; // Scaled mathematically from 0.2 to match 2000 HP pool
     private static final double EXECUTION_RADIUS = 300.0; // Configurable radius from center
     private static final double EXECUTION_RADIUS_SQ = EXECUTION_RADIUS * EXECUTION_RADIUS;
     private static final long GLOBAL_COOLDOWN_MS = 60000; // 1 minute
@@ -129,7 +129,7 @@ public class DragonCombatHandler implements Listener {
 
             // Deep Chill: Slowness and Freezing in BLUE phase
             if (currentPhase == BarColor.BLUE) {
-                PotionEffectType slow = VersionSafe.getPotionEffectSafe("SLOW");
+                PotionEffectType slow = VersionSafe.getPotionEffectSafe("SLOWNESS", "SLOW");
                 if (slow != null)
                     VersionSafe.applyPotionEffectSafe(p, slow, 60, 0);
                 p.setFreezeTicks(Math.min(p.getFreezeTicks() + 40, 140)); // Screen frost effect
@@ -385,6 +385,7 @@ public class DragonCombatHandler implements Listener {
                     // Stop if we hit the player (within 5 blocks radius)
                     if (distSq < 25) { // 5 blocks squared
                         slammingDragons.remove(dragon.getUniqueId());
+                        triggerImpactEffect(dragon);
                         task.cancel();
                         return;
                     }
@@ -394,7 +395,14 @@ public class DragonCombatHandler implements Listener {
                             .normalize();
                     dragon.setVelocity(currentDir.multiply(3.0)); // Slightly lower speed for better control
                 } else {
-                    dragon.setVelocity(dragon.getLocation().getDirection().multiply(2.5));
+                    // Fallback to plunging straight down to end the attack if no target
+                    dragon.setVelocity(new Vector(0, -2.5, 0));
+
+                    if (dragon.getLocation().getBlock().getType().isSolid() || dragon.getLocation().getY() < 20) {
+                        slammingDragons.remove(dragon.getUniqueId());
+                        triggerImpactEffect(dragon);
+                        task.cancel();
+                    }
                 }
             }
         }, 0L, 1L);
@@ -530,9 +538,12 @@ public class DragonCombatHandler implements Listener {
             bat.setHealth(SHADOW_BAT_HEALTH);
 
             new BukkitRunnable() {
+                int lifetime = 0;
+
                 @Override
                 public void run() {
-                    if (!bat.isValid() || bat.isDead() || !dragon.isValid()) {
+                    lifetime += 5;
+                    if (lifetime > 200 || !bat.isValid() || bat.isDead() || !dragon.isValid()) { // 10 second timeout
                         if (bat.isValid()) {
                             VersionSafe.spawnBreathParticle(bat.getLocation(), 20, 0.5, 0.5, 0.5,
                                     0.05);
@@ -817,17 +828,41 @@ public class DragonCombatHandler implements Listener {
         if (world == null)
             return;
 
-        int x, z;
+        int x = center.getBlockX();
+        int z = center.getBlockZ();
 
-        // Purely random strikes within an 80-block area around the dragon
-        x = center.getBlockX() + (random.nextInt(81) - 40);
-        z = center.getBlockZ() + (random.nextInt(81) - 40);
+        // 10% chance to target near a random survival/adventure player, 90% chance
+        // completely random
+        boolean targeted = false;
+        if (random.nextDouble() < 0.10) {
+            java.util.List<Player> validTargets = new java.util.ArrayList<>();
+            for (Player p : world.getPlayers()) {
+                if (p.getGameMode() == GameMode.SURVIVAL || p.getGameMode() == GameMode.ADVENTURE) {
+                    if (p.getLocation().distanceSquared(center) < 10000) { // Within 100 blocks
+                        validTargets.add(p);
+                    }
+                }
+            }
+            if (!validTargets.isEmpty()) {
+                Player target = validTargets.get(random.nextInt(validTargets.size()));
+                x = target.getLocation().getBlockX() + (random.nextInt(15) - 7); // Cluster near player
+                z = target.getLocation().getBlockZ() + (random.nextInt(15) - 7);
+                targeted = true;
+            }
+        }
+
+        if (!targeted) {
+            // Purely random strikes within an 80-block area around the dragon
+            x = center.getBlockX() + (random.nextInt(81) - 40);
+            z = center.getBlockZ() + (random.nextInt(81) - 40);
+        }
 
         int highestY = world.getHighestBlockYAt(x, z);
         Location strikeLoc = new Location(world, x, highestY, z);
 
         // Visual lightning (no damage to terrain)
-        world.strikeLightning(strikeLoc);
+        world.strikeLightningEffect(strikeLoc);
+        VersionSafe.playSoundSafe(strikeLoc, 5f, 1f, "ENTITY_LIGHTNING_BOLT_THUNDER", "ENTITY_LIGHTNING_THUNDER");
 
         // Apply custom damage for the lightning bolt to nearby players at or above the
         // strike point
@@ -842,7 +877,7 @@ public class DragonCombatHandler implements Listener {
             double dz = pLoc.getZ() - (z + 0.5);
             double distXZSq = dx * dx + dz * dz;
 
-            if (distXZSq < 9) { // 3 block horizontal radius
+            if (distXZSq < 16) { // 4 block horizontal radius for customized strikes
                 // Player is safe if they are below the highest solid block (under cover)
                 if (pLoc.getY() >= highestY - 1.1) {
                     p.damage(STORM_BOLT_DAMAGE);
@@ -876,15 +911,30 @@ public class DragonCombatHandler implements Listener {
 
         if (dragon.getScoreboardTags().contains("MSC_CustomDragon")) {
             long now = System.currentTimeMillis();
-            if (event.getDamage() > DAMAGE_CAP) {
-                event.setDamage(DAMAGE_CAP);
-            }
+
+            // Leaving health effectively as 2000 HP (no 5k scaling)
+            double damageScale = 1.0;
+            double scaledDamage = event.getDamage() * damageScale;
+            double scaledCap = DAMAGE_CAP * damageScale;
 
             Attribute maxHealthAttr = VersionSafe.getAttributeSafe("MAX_HEALTH", "GENERIC_MAX_HEALTH");
             if (maxHealthAttr == null || dragon.getAttribute(maxHealthAttr) == null)
                 return;
             double maxHealth = dragon.getAttribute(maxHealthAttr).getValue();
             double healthPercent = dragon.getHealth() / maxHealth;
+
+            // Resistance scales from 0% at full health up to 50% max at 0 health
+            double dynamicResistanceMultiplier = (1.0 - healthPercent) * 0.50;
+            scaledDamage = scaledDamage * (1.0 - dynamicResistanceMultiplier);
+
+            // Re-apply damage cap check in case scaled damage somehow bypasses logic before
+            // this
+            if (scaledDamage > scaledCap) {
+                scaledDamage = scaledCap;
+            }
+            event.setDamage(scaledDamage);
+
+            double phaseShiftThreshold = 50.0 * damageScale;
 
             int phaseIndex = (int) (healthPercent * 10);
             if (phaseIndex > 9)
@@ -910,6 +960,8 @@ public class DragonCombatHandler implements Listener {
                 }
             }
 
+            // Sync update phase colors before applying passives so we don't read stale data
+            updateDragonBossBar(dragon);
             BarColor phaseColor = currentPhaseColors.getOrDefault(dragon.getUniqueId(), BarColor.WHITE);
 
             // Shadow Armor: RED phase reduction
@@ -918,7 +970,7 @@ public class DragonCombatHandler implements Listener {
             }
 
             // Phase Shift: WHITE phase teleport on heavy damage
-            if (phaseColor == BarColor.WHITE && event.getDamage() > 50.0 && random.nextDouble() < 0.20) {
+            if (phaseColor == BarColor.WHITE && event.getDamage() > phaseShiftThreshold && random.nextDouble() < 0.20) {
                 Location loc = dragon.getLocation().add(random.nextInt(31) - 15, random.nextInt(11) - 5,
                         random.nextInt(31) - 15);
                 dragon.teleport(loc);
@@ -935,8 +987,8 @@ public class DragonCombatHandler implements Listener {
 
                     // Static Discharge: BLUE phase lightning counter
                     if (phaseColor == BarColor.BLUE) {
-                        attacker.getWorld().strikeLightning(attacker.getLocation());
-                        attacker.damage(STATIC_DISCHARGE_DAMAGE);
+                        attacker.getWorld().strikeLightningEffect(attacker.getLocation()); // VIsual only
+                        attacker.damage(STATIC_DISCHARGE_DAMAGE, dragon); // Directly attribute damage
                         org.bukkit.util.Vector kb = attacker.getLocation().toVector()
                                 .subtract(dragon.getLocation().toVector()).normalize()
                                 .multiply(STATIC_DISCHARGE_KNOCKBACK);
@@ -955,8 +1007,8 @@ public class DragonCombatHandler implements Listener {
                         attacker.sendMessage(ChatColor.YELLOW + "SOLAR FLARE: You are blinded by the flash!");
                     }
 
-                    // Abyssal Thorns: 15% chance to apply Wither II
-                    if (random.nextDouble() < 0.15) {
+                    // Abyssal Thorns: PINK or PURPLE phase 15% chance to apply Wither II
+                    if ((phaseColor == BarColor.PINK || phaseColor == BarColor.PURPLE) && random.nextDouble() < 0.15) {
                         PotionEffectType wither = VersionSafe.getPotionEffectSafe("WITHER");
                         if (wither != null)
                             VersionSafe.applyPotionEffectSafe(attacker, wither, 60, 1);
@@ -1046,6 +1098,82 @@ public class DragonCombatHandler implements Listener {
         }
     }
 
+
+    private void fillChestRandomly(Chest chest, String theme) {
+        chest.getInventory().clear();
+        int slots = chest.getInventory().getSize();
+        
+        switch (theme) {
+            case "COMBAT":
+                addRandomItems(chest, getCombatPool(), 3, 6);
+                break;
+            case "UTILITY":
+                addRandomItems(chest, getUtilityPool(), 3, 6);
+                break;
+            case "MATERIAL":
+                addRandomItems(chest, getMaterialPool(), 2, 5);
+                break;
+        }
+    }
+
+    private void addRandomItems(Chest chest, List<ItemStack> pool, int min, int max) {
+        int count = min + random.nextInt(max - min + 1);
+        for (int i = 0; i < count; i++) {
+            ItemStack item = pool.get(random.nextInt(pool.size())).clone();
+            // Randomize stack size for certain items
+            if (item.getMaxStackSize() > 1 && item.getAmount() == 1) {
+                item.setAmount(1 + random.nextInt(Math.min(item.getMaxStackSize(), 8)));
+            }
+            
+            int slot = random.nextInt(chest.getInventory().getSize());
+            // Try to find an empty slot
+            for (int attempt = 0; attempt < 10 && chest.getInventory().getItem(slot) != null; attempt++) {
+                slot = random.nextInt(chest.getInventory().getSize());
+            }
+            chest.getInventory().setItem(slot, item);
+        }
+    }
+
+    private List<ItemStack> getCombatPool() {
+        return java.util.Arrays.asList(
+            new ItemStack(Material.NETHERITE_SWORD),
+            new ItemStack(Material.NETHERITE_AXE),
+            new ItemStack(Material.ENCHANTED_GOLDEN_APPLE),
+            new ItemStack(Material.GOLDEN_APPLE, 4),
+            new ItemStack(Material.TOTEM_OF_UNDYING),
+            new ItemStack(Material.DIAMOND_CHESTPLATE),
+            new ItemStack(Material.DIAMOND_LEGGINGS),
+            new ItemStack(Material.END_CRYSTAL, 2),
+            new ItemStack(Material.OBSIDIAN, 16)
+        );
+    }
+
+    private List<ItemStack> getUtilityPool() {
+        return java.util.Arrays.asList(
+            new ItemStack(Material.ELYTRA),
+            new ItemStack(Material.FIREWORK_ROCKET, 32),
+            new ItemStack(Material.ENDER_CHEST, 4),
+            new ItemStack(Material.SHULKER_BOX),
+            new ItemStack(Material.EXPERIENCE_BOTTLE, 16),
+            new ItemStack(Material.POTION), // Will be water bottle, but could be improved
+            new ItemStack(Material.GOLDEN_CARROT, 32),
+            new ItemStack(Material.CHORUS_FRUIT, 16)
+        );
+    }
+
+    private List<ItemStack> getMaterialPool() {
+        return java.util.Arrays.asList(
+            new ItemStack(Material.NETHERITE_INGOT),
+            new ItemStack(Material.NETHERITE_SCRAP, 2),
+            new ItemStack(Material.DIAMOND, 8),
+            new ItemStack(Material.EMERALD_BLOCK, 2),
+            new ItemStack(Material.DRAGON_BREATH, 16),
+            new ItemStack(Material.ANCIENT_DEBRIS, 2),
+            new ItemStack(Material.GOLD_BLOCK, 4),
+            new ItemStack(Material.DRAGON_EGG)
+        );
+    }
+
     public void spawnRewardChests(World world) {
         Location base = new Location(world, 0, 62, 7); // Behind the exit portal
         Location[] locs = {
@@ -1055,6 +1183,7 @@ public class DragonCombatHandler implements Listener {
         };
 
         String[] themes = { "§6§lCOMBAT REWARD", "§b§lUTILITY REWARD", "§d§lMATERIAL REWARD" };
+        String[] internalThemes = { "COMBAT", "UTILITY", "MATERIAL" };
 
         for (int i = 0; i < 3; i++) {
             Location l = locs[i];
@@ -1064,19 +1193,11 @@ public class DragonCombatHandler implements Listener {
                 chest.getPersistentDataContainer().set(new NamespacedKey(plugin, "MSC_RewardChest"),
                         PersistentDataType.BYTE, (byte) 1);
                 chest.setCustomName(themes[i]);
+                
+                // Fill with randomized loot
+                fillChestRandomly(chest, internalThemes[i]);
+                
                 chest.update();
-
-                // Fill with basic representative loot for now
-                if (i == 0) { // Combat
-                    chest.getInventory().addItem(new ItemStack(Material.DIAMOND_SWORD));
-                    chest.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 2));
-                } else if (i == 1) { // Utility
-                    chest.getInventory().addItem(new ItemStack(Material.ELYTRA));
-                    chest.getInventory().addItem(new ItemStack(Material.FIREWORK_ROCKET, 64));
-                } else { // Materials
-                    chest.getInventory().addItem(new ItemStack(Material.NETHERITE_INGOT, 2));
-                    chest.getInventory().addItem(new ItemStack(Material.DRAGON_EGG));
-                }
             }
             VersionSafe.spawnPortalParticle(l.clone().add(0.5, 0.5, 0.5), 50, 0.5, 0.5, 0.5, 0.1);
         }

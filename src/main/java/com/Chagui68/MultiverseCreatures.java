@@ -8,11 +8,12 @@ import com.Chagui68.listener.ItemCombatHandler;
 import com.Chagui68.listener.ItemFoodHandler;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class MutlverseCreatures extends JavaPlugin {
+public class MultiverseCreatures extends JavaPlugin {
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        com.Chagui68.utils.DatapackManager.installDatapack(this);
 
         MobHandler mobHandler = new MobHandler(this);
         getServer().getPluginManager().registerEvents(mobHandler, this);
@@ -29,6 +30,7 @@ public class MutlverseCreatures extends JavaPlugin {
         com.Chagui68.commands.MSCCommand mscCommand = new com.Chagui68.commands.MSCCommand(mobHandler,
                 dragonCombatHandler);
         getCommand("msc").setExecutor(mscCommand);
+        getCommand("msc").setTabCompleter(mscCommand);
     }
 
 }

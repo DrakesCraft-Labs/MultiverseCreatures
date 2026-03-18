@@ -96,13 +96,18 @@ public class VersionSafe {
      * Safely gets a PotionEffectType by name to ensure compatibility across
      * versions.
      */
-    public static PotionEffectType getPotionEffectSafe(String name) {
-        try {
-            // First try direct modern access if possible, then fallback to getByName
-            return PotionEffectType.getByName(name);
-        } catch (Exception e) {
-            return null;
+    public static PotionEffectType getPotionEffectSafe(String... names) {
+        for (String name : names) {
+            try {
+                // First try direct modern access if possible, then fallback to getByName
+                PotionEffectType effect = PotionEffectType.getByName(name);
+                if (effect != null) {
+                    return effect;
+                }
+            } catch (Exception ignored) {
+            }
         }
+        return null;
     }
 
     /**
@@ -296,5 +301,70 @@ public class VersionSafe {
         } catch (Exception e) {
             Bukkit.getLogger().log(Level.FINE, "[MSC] Reflection cleanup failed for " + player.getName(), e);
         }
+    }
+
+    /**
+     * Safely attempts to locate a biome by its string key (e.g.,
+     * "msc:abyssal_plains").
+     * Supports 1.20+ via Registry and World's locateNearestBiome methods.
+     *
+     * @param startLoc The starting location to search from.
+     * @param biomeKey The string key of the biome (e.g. "msc:abyssal_plains").
+     * @param radius   The maximum search radius.
+     * @param step     The step size for checking (e.g. 8).
+     * @return The Location of the biome, or null if not found/unsupported.
+     */
+    public static Location locateBiomeSafe(Location startLoc, String biomeKey, int radius, int step) {
+        if (startLoc == null || startLoc.getWorld() == null || biomeKey == null) {
+            return null;
+        }
+
+        World world = startLoc.getWorld();
+
+        try {
+            org.bukkit.NamespacedKey key = org.bukkit.NamespacedKey.fromString(biomeKey);
+            if (key == null)
+                return null;
+
+            // Try explicit enum values if applicable (some plugins map exactly)
+            try {
+                org.bukkit.block.Biome biomeEnum = org.bukkit.block.Biome.valueOf(key.getKey().toUpperCase());
+                // In Spigot API, locateNearestBiome doesn't take 'step'. Just location, radius,
+                // and biome array/varargs.
+                org.bukkit.util.BiomeSearchResult result = world.locateNearestBiome(startLoc, radius, biomeEnum);
+                if (result != null) {
+                    return result.getLocation();
+                }
+            } catch (Exception ignored) {
+                // Not an enum (likely a datapack biome)
+            }
+
+            // Fallback for custom datapack biomes
+            int fallbackMaxRadius = java.lang.Math.min(radius, 2500);
+            int fallbackStep = java.lang.Math.max(step, 64);
+            int startX = startLoc.getBlockX();
+            int startZ = startLoc.getBlockZ();
+
+            for (int r = 0; r <= fallbackMaxRadius; r += fallbackStep) {
+                for (int x = -r; x <= r; x += fallbackStep) {
+                    for (int z = -r; z <= r; z += fallbackStep) {
+                        if (java.lang.Math.abs(x) == r || java.lang.Math.abs(z) == r) {
+                            int checkX = startX + x;
+                            int checkZ = startZ + z;
+                            org.bukkit.block.Block b = world.getBlockAt(checkX, 64, checkZ);
+                            org.bukkit.block.Biome bType = b.getBiome();
+
+                            if (bType.getKey().toString().equalsIgnoreCase(biomeKey)) {
+                                return new Location(world, checkX, 64, checkZ);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (java.lang.Throwable t) {
+            // Ignore failure silently to prevent console spam
+        }
+
+        return null;
     }
 }

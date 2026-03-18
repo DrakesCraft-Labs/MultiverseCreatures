@@ -30,7 +30,10 @@ public class ItemCombatHandler implements Listener {
 
                     if (meta.getPersistentDataContainer().has(ItemCombatTrades.EXCALIBUR_KEY,
                             PersistentDataType.INTEGER)) {
-                        VersionSafe.applyPotionEffectSafe(player, PotionEffectType.STRENGTH, 80, 2);
+                        PotionEffectType strength = VersionSafe.getPotionEffectSafe("STRENGTH", "INCREASE_DAMAGE");
+                        if (strength != null) {
+                            VersionSafe.applyPotionEffectSafe(player, strength, 80, 2);
+                        }
                     }
                 }
             }
