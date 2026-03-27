@@ -1,5 +1,5 @@
 name: MultiverseCreatures
-version: '${project.version}'
+version: '3.0.DEV'
 main: com.Chagui68.MultiverseCreatures
 api-version: '1.21'
 load: STARTUP

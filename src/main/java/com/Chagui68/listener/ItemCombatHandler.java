@@ -8,10 +8,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import com.Chagui68.utils.VersionSafe;
 
 public class ItemCombatHandler implements Listener {
 
@@ -30,10 +29,7 @@ public class ItemCombatHandler implements Listener {
 
                     if (meta.getPersistentDataContainer().has(ItemCombatTrades.EXCALIBUR_KEY,
                             PersistentDataType.INTEGER)) {
-                        PotionEffectType strength = VersionSafe.getPotionEffectSafe("STRENGTH", "INCREASE_DAMAGE");
-                        if (strength != null) {
-                            VersionSafe.applyPotionEffectSafe(player, strength, 80, 2);
-                        }
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 80, 2));
                     }
                 }
             }

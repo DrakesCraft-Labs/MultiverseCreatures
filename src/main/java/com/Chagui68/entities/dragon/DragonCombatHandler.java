@@ -1,20 +1,21 @@
 package com.Chagui68.entities.dragon;
 
-import com.Chagui68.utils.VersionSafe;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
+import org.bukkit.Registry;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.util.Vector;
 import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Bat;
 import org.bukkit.entity.ComplexEntityPart;
 import org.bukkit.entity.EnderDragon;
@@ -22,20 +23,23 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.NamespacedKey;
-import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.block.Chest;
+import org.bukkit.util.Vector;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -77,9 +81,10 @@ public class DragonCombatHandler implements Listener {
     private final Map<UUID, BarColor> currentPhaseColors = new HashMap<>(); // Dragon UUID -> Current color
     private final Map<UUID, Integer> executionTimers = new HashMap<>(); // Player UUID -> Seconds left
     private final Map<UUID, Long> lastGlobalAbilityTimes = new HashMap<>(); // Dragon UUID -> Timestamp
-    private boolean stormActive = false;
-    private boolean breathFloorActive = false;
-    private boolean rouletteActive = false;
+    private final Map<UUID, BossBar> bossBars = new HashMap<>(); // Dragon UUID -> Custom BossBar
+    private final Set<UUID> activeStorms = new HashSet<>();
+    private final Set<UUID> activeBreathFloors = new HashSet<>();
+    private final Set<UUID> activeRoulettes = new HashSet<>();
 
     public DragonCombatHandler(Plugin plugin) {
         this.plugin = plugin;
@@ -121,19 +126,15 @@ public class DragonCombatHandler implements Listener {
             }
 
             // Oppressive Presence: Hunger aura near dragon
-            PotionEffectType hunger = VersionSafe.getPotionEffectSafe("HUNGER");
-            if (hunger != null)
-                VersionSafe.applyPotionEffectSafe(p, hunger, 60, 1);
+            p.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 60, 1));
 
             BarColor currentPhase = currentPhaseColors.getOrDefault(dragon.getUniqueId(), BarColor.WHITE);
 
             // Deep Chill: Slowness and Freezing in BLUE phase
             if (currentPhase == BarColor.BLUE) {
-                PotionEffectType slow = VersionSafe.getPotionEffectSafe("SLOWNESS", "SLOW");
-                if (slow != null)
-                    VersionSafe.applyPotionEffectSafe(p, slow, 60, 0);
+                p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 0));
                 p.setFreezeTicks(Math.min(p.getFreezeTicks() + 40, 140)); // Screen frost effect
-                VersionSafe.sendActionBarSafe(p, ChatColor.AQUA + "DEEP CHILL: You are freezing!");
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.AQUA + "DEEP CHILL: You are freezing!"));
             }
 
             // Soul Link: Weakness if apart in PINK/PURPLE phases
@@ -157,11 +158,9 @@ public class DragonCombatHandler implements Listener {
                     }
 
                     if (aliveAlliesInSurvival > 0 && !nearAlly) {
-                        PotionEffectType weakness = VersionSafe.getPotionEffectSafe("WEAKNESS");
-                        if (weakness != null)
-                            VersionSafe.applyPotionEffectSafe(p, weakness, 60, 0);
-                        VersionSafe.sendActionBarSafe(p,
-                                ChatColor.RED + "SOUL LINK BROKEN: Stay near your teammates!");
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 0));
+                        p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(
+                                ChatColor.RED + "SOUL LINK BROKEN: Stay near your teammates!"));
                     }
                 }
             }
@@ -171,8 +170,8 @@ public class DragonCombatHandler implements Listener {
                 p.setVelocity(p.getVelocity().add(new org.bukkit.util.Vector(0, -GRAVITY_WELL_FORCE, 0)));
             }
 
-            Attribute maxHealthAttr = VersionSafe.getAttributeSafe("MAX_HEALTH", "GENERIC_MAX_HEALTH");
-            if (maxHealthAttr == null || p.getAttribute(maxHealthAttr) == null)
+            Attribute maxHealthAttr = Registry.ATTRIBUTE.get(NamespacedKey.minecraft("generic.max_health"));
+            if (p.getAttribute(maxHealthAttr) == null)
                 continue;
             double maxHealth = p.getAttribute(maxHealthAttr).getValue();
             double healthPercent = p.getHealth() / maxHealth;
@@ -191,9 +190,9 @@ public class DragonCombatHandler implements Listener {
                     p.sendTitle(title, subtitle, 0, 25, 5);
 
                     if (timeLeft == 10) {
-                        VersionSafe.playSoundSafe(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1f, 0.5f);
+                        p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1f, 0.5f);
                     } else {
-                        VersionSafe.playSoundSafe(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1f,
+                        p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1f,
                                 0.5f + (10 - timeLeft) * 0.1f);
                     }
 
@@ -217,10 +216,9 @@ public class DragonCombatHandler implements Listener {
     public void performAbyssalExecution(EnderDragon dragon, Player victim) {
         // Visual effects
         victim.sendTitle(ChatColor.DARK_RED + "EXECUTED", ChatColor.RED + "The void consumes you", 5, 20, 5);
-        VersionSafe.spawnExplosionParticle(victim.getLocation(), 1);
-        VersionSafe.spawnBreathParticle(victim.getLocation(), 100, 1, 1, 1, 0.5);
-        VersionSafe.playSoundSafe(victim.getLocation(), 2f, 0.2f, "ENTITY_GENERIC_EXPLODE",
-                "EXPLODE");
+        victim.getWorld().spawnParticle(Particle.EXPLOSION, victim.getLocation(), 1);
+        victim.getWorld().spawnParticle(Particle.DRAGON_BREATH, victim.getLocation(), 100, 1, 1, 1, 0.5);
+        victim.playSound(victim.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 2f, 0.2f);
 
         // Lethal action
         victim.setHealth(0);
@@ -235,11 +233,15 @@ public class DragonCombatHandler implements Listener {
         dragon.setCustomName(initialName);
         dragon.setCustomNameVisible(true);
 
-        // Initialize attributes safely for different versions
-        VersionSafe.setAttributeBaseSafe(dragon, DRAGON_HEALTH, "MAX_HEALTH", "GENERIC_MAX_HEALTH");
-        dragon.setHealth(DRAGON_HEALTH);
+        // Initialize attributes safely using 1.21.11 native constants
+        if (dragon.getAttribute(Attribute.MAX_HEALTH) != null) {
+            dragon.getAttribute(Attribute.MAX_HEALTH).setBaseValue(DRAGON_HEALTH);
+            dragon.setHealth(DRAGON_HEALTH);
+        }
 
-        VersionSafe.setAttributeBaseSafe(dragon, DRAGON_DAMAGE, "ATTACK_DAMAGE", "GENERIC_ATTACK_DAMAGE");
+        if (dragon.getAttribute(Attribute.ATTACK_DAMAGE) != null) {
+            dragon.getAttribute(Attribute.ATTACK_DAMAGE).setBaseValue(DRAGON_DAMAGE);
+        }
 
         updateDragonBossBar(dragon);
         if (!dragon.getScoreboardTags().contains("MSC_CustomDragon")) {
@@ -249,19 +251,41 @@ public class DragonCombatHandler implements Listener {
 
     public void forcePhaseColor(EnderDragon dragon, BarColor color) {
         currentPhaseColors.put(dragon.getUniqueId(), color);
-        if (dragon.getBossBar() != null) {
-            dragon.getBossBar().setColor(color);
+        BossBar bar = getOrCreateBossBar(dragon);
+        if (bar != null) {
+            bar.setColor(color);
         }
     }
 
+    private BossBar getOrCreateBossBar(EnderDragon dragon) {
+        BossBar bar = bossBars.get(dragon.getUniqueId());
+        if (bar == null && dragon.isValid()) {
+            String initialName = getDynamicName(1.0);
+            bar = Bukkit.createBossBar(initialName, BarColor.WHITE, BarStyle.SEGMENTED_20);
+            bossBars.put(dragon.getUniqueId(), bar);
+        }
+        
+        // Update players for the boss bar
+        if (bar != null) {
+            for (Player p : dragon.getWorld().getPlayers()) {
+                if (p.getLocation().distanceSquared(dragon.getLocation()) < 10000) { // 100 blocks
+                    if (!bar.getPlayers().contains(p)) bar.addPlayer(p);
+                } else {
+                    bar.removePlayer(p);
+                }
+            }
+        }
+        return bar;
+    }
+
     private void updateDragonBossBar(EnderDragon dragon) {
-        if (dragon.getBossBar() == null)
+        BossBar bar = getOrCreateBossBar(dragon);
+        if (bar == null)
             return;
 
-        Attribute maxAttr = VersionSafe.getAttributeSafe("MAX_HEALTH", "GENERIC_MAX_HEALTH");
-        if (maxAttr == null || dragon.getAttribute(maxAttr) == null)
+        if (dragon.getAttribute(Attribute.MAX_HEALTH) == null)
             return;
-        double healthPercent = (dragon.getHealth() / dragon.getAttribute(maxAttr).getValue())
+        double healthPercent = (dragon.getHealth() / dragon.getAttribute(Attribute.MAX_HEALTH).getValue())
                 * 100;
 
         BarColor color;
@@ -290,19 +314,36 @@ public class DragonCombatHandler implements Listener {
         if (oldColor != color) {
             currentPhaseColors.put(dragon.getUniqueId(), color);
             String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
+            
+            ChatColor chatColor;
+            switch (color) {
+                case BLUE: chatColor = ChatColor.BLUE; break;
+                case GREEN: chatColor = ChatColor.GREEN; break;
+                case YELLOW: chatColor = ChatColor.YELLOW; break;
+                case PINK: chatColor = ChatColor.LIGHT_PURPLE; break;
+                case PURPLE: chatColor = ChatColor.DARK_PURPLE; break;
+                case RED: chatColor = ChatColor.RED; break;
+                case WHITE: chatColor = ChatColor.WHITE; break;
+                default: chatColor = ChatColor.GRAY; break;
+            }
+
             String message = PHASE_MESSAGE_PREFIX + ChatColor.GRAY + "The Dragon's scales turn " +
-                    ChatColor.valueOf(color.name()) + colorName + ChatColor.GRAY + "...";
+                    chatColor + colorName + ChatColor.GRAY + "...";
             for (Player p : dragon.getWorld().getPlayers()) {
                 p.sendMessage(message);
             }
         }
 
-        dragon.getBossBar().setColor(color);
-        dragon.getBossBar().setStyle(BarStyle.SEGMENTED_20);
+
+
+
+        bar.setColor(color);
+        bar.setStyle(BarStyle.SEGMENTED_20);
 
         String dynamicName = getDynamicName(healthPercent / 100.0);
         dragon.setCustomName(dynamicName); // Update physical name too
-        dragon.getBossBar().setTitle(dynamicName + ChatColor.GRAY + " [" + (int) healthPercent + "%]");
+        bar.setTitle(dynamicName + ChatColor.GRAY + " [" + (int) healthPercent + "%]");
+        bar.setProgress(Math.min(1.0, Math.max(0.0, dragon.getHealth() / dragon.getAttribute(Attribute.MAX_HEALTH).getValue())));
     }
 
     private String getDynamicName(double healthPercent) {
@@ -323,8 +364,7 @@ public class DragonCombatHandler implements Listener {
 
         slammingDragons.add(dragon.getUniqueId());
         dragon.setPhase(EnderDragon.Phase.FLY_TO_PORTAL); // Force the dragon to head towards the center/lowering
-        VersionSafe.playSoundSafe(dragon.getLocation(), 5f, 0.5f, "ENTITY_ENDER_DRAGON_GROWL",
-                "ENTITY_ENDERDRAGON_GROWL", "ENTITY_ENDER_DRAGON_AMBIENT");
+        dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 5f, 0.5f);
 
         // Notify players
         String title = ChatColor.DARK_RED + "" + ChatColor.BOLD + "ABYSSAL DASH";
@@ -333,35 +373,34 @@ public class DragonCombatHandler implements Listener {
             p.sendTitle(title, subtitle, 10, 40, 10);
         }
 
-        Bukkit.getScheduler().runTaskTimer(plugin, new java.util.function.Consumer<org.bukkit.scheduler.BukkitTask>() {
+        new BukkitRunnable() {
             int ticks = 0;
 
             @Override
-            public void accept(org.bukkit.scheduler.BukkitTask task) {
+            public void run() {
                 ticks++;
                 if (!dragon.isValid() || dragon.isDead() || ticks > 100) { // 5 second maximum timeout
                     slammingDragons.remove(dragon.getUniqueId());
-                    task.cancel();
+                    this.cancel();
                     return;
                 }
 
-                VersionSafe.spawnBreathParticle(dragon.getLocation(), 10, 2, 1, 2, 0.1);
+                dragon.getWorld().spawnParticle(Particle.DRAGON_BREATH, dragon.getLocation(), 10, 2, 1, 2, 0.1);
 
                 // Create a non-destructive explosion every few ticks to damage nearby players
                 if (ticks % 4 == 0) {
                     dragon.getWorld().createExplosion(dragon.getLocation(), 3f, false, false);
-                    VersionSafe.playSoundSafe(dragon.getLocation(), 1f, 0.5f,
-                            "ENTITY_GENERIC_EXPLODE", "EXPLODE");
+                    dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.5f);
 
                     // Restore TNT-like explosion particles safely
-                    VersionSafe.spawnExplosionParticle(dragon.getLocation(), 3);
+                    dragon.getWorld().spawnParticle(Particle.EXPLOSION, dragon.getLocation(), 3);
 
                     // Add a small circular distribution of particles for impact vibe
                     for (int i = 0; i < 8; i++) {
                         double angle = i * Math.PI / 4;
                         double x = Math.cos(angle) * 2;
                         double z = Math.sin(angle) * 2;
-                        VersionSafe.spawnBreathParticle(dragon.getLocation().clone().add(x, 0, z), 5,
+                        dragon.getWorld().spawnParticle(Particle.DRAGON_BREATH, dragon.getLocation().clone().add(x, 0, z), 5,
                                 0.1, 0.1, 0.1, 0.05);
                     }
                 }
@@ -386,7 +425,7 @@ public class DragonCombatHandler implements Listener {
                     if (distSq < 25) { // 5 blocks squared
                         slammingDragons.remove(dragon.getUniqueId());
                         triggerImpactEffect(dragon);
-                        task.cancel();
+                        this.cancel();
                         return;
                     }
 
@@ -401,27 +440,25 @@ public class DragonCombatHandler implements Listener {
                     if (dragon.getLocation().getBlock().getType().isSolid() || dragon.getLocation().getY() < 20) {
                         slammingDragons.remove(dragon.getUniqueId());
                         triggerImpactEffect(dragon);
-                        task.cancel();
+                        this.cancel();
                     }
                 }
             }
-        }, 0L, 1L);
+        }.runTaskTimer(plugin, 0L, 1L);
     }
 
     public void performVoidBreath(EnderDragon dragon) {
-        if (breathFloorActive)
+        if (activeBreathFloors.contains(dragon.getUniqueId()))
             return;
-        breathFloorActive = true;
+        activeBreathFloors.add(dragon.getUniqueId());
 
-        VersionSafe.playSoundSafe(dragon.getLocation(), 5f, 2.0f, "ENTITY_ENDER_DRAGON_GROWL",
-                "ENTITY_ENDERDRAGON_GROWL");
+        dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 5f, 2.0f);
 
         String title = ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "VOID CORRUPTION";
         String subtitle = ChatColor.RED + "THE FLOOR IS PERISHING! BUILD UP!";
         for (Player p : dragon.getWorld().getPlayers()) {
             p.sendTitle(title, subtitle, 10, 60, 10);
-            VersionSafe.playSoundSafe(p.getLocation(), 1f, 0.5f, "ENTITY_WITHER_SPAWN",
-                    "WITHER_SPAWN");
+            p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1f, 0.5f);
         }
 
         new BukkitRunnable() {
@@ -431,7 +468,7 @@ public class DragonCombatHandler implements Listener {
             public void run() {
                 ticks += 10;
                 if (!dragon.isValid() || dragon.isDead() || ticks > 300) { // 15 seconds
-                    breathFloorActive = false;
+                    activeBreathFloors.remove(dragon.getUniqueId());
                     this.cancel();
                     return;
                 }
@@ -444,7 +481,7 @@ public class DragonCombatHandler implements Listener {
                     Block b = p.getLocation().clone().subtract(0, 0.1, 0).getBlock();
                     if (b.getType() == Material.END_STONE) {
                         p.damage(VOID_BREATH_DAMAGE, dragon);
-                        VersionSafe.spawnBreathParticle(p.getLocation(), 40, 1, 0, 1, 0.05);
+                        p.getWorld().spawnParticle(Particle.DRAGON_BREATH, p.getLocation(), 40, 1, 0, 1, 0.05);
                     }
                 }
             }
@@ -452,9 +489,9 @@ public class DragonCombatHandler implements Listener {
     }
 
     public void startAbilityRoulette(EnderDragon dragon) {
-        if (rouletteActive)
+        if (activeRoulettes.contains(dragon.getUniqueId()))
             return;
-        rouletteActive = true;
+        activeRoulettes.add(dragon.getUniqueId());
 
         new BukkitRunnable() {
             int ticks = 0;
@@ -475,13 +512,12 @@ public class DragonCombatHandler implements Listener {
 
                 for (Player p : dragon.getWorld().getPlayers()) {
                     p.sendTitle(titleText, subtitleText, 0, 5, 0);
-                    VersionSafe.playSoundSafe(p.getLocation(), 0.5f, 1.5f, "BLOCK_NOTE_BLOCK_HAT",
-                            "BLOCK_NOTE_HAT");
+                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.5f);
                 }
 
                 if (ticks > 60) { // Roll for 3.0 seconds
                     this.cancel();
-                    rouletteActive = false;
+                    activeRoulettes.remove(dragon.getUniqueId());
 
                     int choice = random.nextInt(8);
                     switch (choice) {
@@ -516,15 +552,13 @@ public class DragonCombatHandler implements Listener {
     }
 
     public void performShadowEnemies(EnderDragon dragon) {
-        VersionSafe.playSoundSafe(dragon.getLocation(), 5f, 0.5f, "ENTITY_ENDER_DRAGON_GROWL",
-                "ENTITY_ENDERDRAGON_GROWL");
+        dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 5f, 0.5f);
 
         String title = ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "SHADOW ENEMIES";
         String subtitle = ChatColor.LIGHT_PURPLE + "THE VOID CHASES YOU!";
         for (Player p : dragon.getWorld().getPlayers()) {
             p.sendTitle(title, subtitle, 10, 40, 10);
-            VersionSafe.playSoundSafe(p.getLocation(), 1f, 1f, "ENTITY_BAT_AMBIENT",
-                    "ENTITY_BAT_AMBIENT");
+            p.playSound(p.getLocation(), Sound.ENTITY_BAT_AMBIENT, 1f, 1f);
         }
 
         for (int i = 0; i < 2; i++) {
@@ -534,7 +568,7 @@ public class DragonCombatHandler implements Listener {
             bat.setCustomName(ChatColor.DARK_PURPLE + "Void Shadow");
             bat.setCustomNameVisible(false);
 
-            VersionSafe.setAttributeBaseSafe(bat, SHADOW_BAT_HEALTH, "MAX_HEALTH", "GENERIC_MAX_HEALTH");
+            bat.getAttribute(Registry.ATTRIBUTE.get(NamespacedKey.minecraft("generic.max_health"))).setBaseValue(SHADOW_BAT_HEALTH);
             bat.setHealth(SHADOW_BAT_HEALTH);
 
             new BukkitRunnable() {
@@ -545,8 +579,7 @@ public class DragonCombatHandler implements Listener {
                     lifetime += 5;
                     if (lifetime > 200 || !bat.isValid() || bat.isDead() || !dragon.isValid()) { // 10 second timeout
                         if (bat.isValid()) {
-                            VersionSafe.spawnBreathParticle(bat.getLocation(), 20, 0.5, 0.5, 0.5,
-                                    0.05);
+                            bat.getWorld().spawnParticle(Particle.DRAGON_BREATH, bat.getLocation(), 20, 0.5, 0.5, 0.5, 0.05);
                             bat.remove();
                         }
                         this.cancel();
@@ -554,7 +587,7 @@ public class DragonCombatHandler implements Listener {
                     }
 
                     // Visual aura
-                    VersionSafe.spawnSmokeParticle(bat.getLocation(), 5, 0.2, 0.2, 0.2, 0.02);
+                    bat.getWorld().spawnParticle(Particle.SMOKE, bat.getLocation(), 5, 0.2, 0.2, 0.2, 0.02);
 
                     // Pursuit logic: Find nearest player
                     Player target = null;
@@ -576,13 +609,8 @@ public class DragonCombatHandler implements Listener {
 
                         // Apply effects if close
                         if (bat.getLocation().distanceSquared(target.getLocation()) < 16) {
-                            PotionEffectType darkness = VersionSafe.getPotionEffectSafe("DARKNESS");
-                            if (darkness != null)
-                                VersionSafe.applyPotionEffectSafe(target, darkness, 60, 0);
-
-                            PotionEffectType blindness = VersionSafe.getPotionEffectSafe("BLINDNESS");
-                            if (blindness != null)
-                                VersionSafe.applyPotionEffectSafe(target, blindness, 60, 0);
+                            target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 60, 0));
+                            target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0));
                         }
                     }
                 }
@@ -591,10 +619,8 @@ public class DragonCombatHandler implements Listener {
     }
 
     public void performAbyssalScream(EnderDragon dragon) {
-        VersionSafe.playSoundSafe(dragon.getLocation(), 10f, 0.1f, "ENTITY_ENDER_DRAGON_GROWL",
-                "ENTITY_ENDERDRAGON_GROWL");
-        VersionSafe.playSoundSafe(dragon.getLocation(), 5f, 0.5f, "ENTITY_DRAGON_FIREBALL_EXPLODE",
-                "ENTITY_ENDERDRAGON_FIREBALL_EXPLODE");
+        dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 10f, 0.1f);
+        dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 5f, 0.5f);
 
         String title = ChatColor.AQUA + "" + ChatColor.BOLD + "ABYSSAL SCREAM";
         String subtitle = ChatColor.GRAY + "NO ESCAPE FROM THE VOID!";
@@ -621,7 +647,7 @@ public class DragonCombatHandler implements Listener {
                     double x = Math.cos(rad) * radius;
                     double z = Math.sin(rad) * radius;
                     Location loc = dragon.getLocation().clone().add(x, 2, z);
-                    VersionSafe.spawnBreathParticle(loc, 5, 0.5, 0.5, 0.5, 0.05);
+                    loc.getWorld().spawnParticle(Particle.DRAGON_BREATH, loc, 5, 0.5, 0.5, 0.5, 0.05);
                 }
 
                 // Apply effect to players in range
@@ -632,11 +658,8 @@ public class DragonCombatHandler implements Listener {
                     if (p.getGameMode() == GameMode.SURVIVAL || p.getGameMode() == GameMode.ADVENTURE) {
                         if (p.getLocation().distanceSquared(dragon.getLocation()) < (radius * radius)) {
                             hitPlayers.add(p.getUniqueId());
-                            PotionEffectType levitation = VersionSafe.getPotionEffectSafe("LEVITATION");
-                            if (levitation != null)
-                                VersionSafe.applyPotionEffectSafe(p, levitation, 200, 1);
-                            VersionSafe.playSoundSafe(p.getLocation(), 0.5f, 0.5f,
-                                    "ENTITY_PHANTOM_SWOOP", "ENTITY_PHANTOM_SWOOP");
+                            p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 200, 1));
+                            p.playSound(p.getLocation(), Sound.ENTITY_PHANTOM_SWOOP, 0.5f, 0.5f);
                         }
                     }
                 }
@@ -645,8 +668,7 @@ public class DragonCombatHandler implements Listener {
     }
 
     public void performMeteorShower(EnderDragon dragon) {
-        VersionSafe.playSoundSafe(dragon.getLocation(), 2f, 0.5f, "ENTITY_WITHER_SHOOT",
-                "WITHER_SHOOT");
+        dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_WITHER_SHOOT, 2f, 0.5f);
 
         String title = ChatColor.RED + "" + ChatColor.BOLD + "METEOR SHOWER";
         String subtitle = ChatColor.GRAY + "DESTRUCTION FROM THE HEAVENS!";
@@ -693,9 +715,8 @@ public class DragonCombatHandler implements Listener {
                 ticks++;
                 if (ticks > 60 || current.getY() < 0 || current.getBlock().getType().isSolid()) {
                     // Impact
-                    VersionSafe.spawnLargeExplosion(current, 1);
-                    VersionSafe.playSoundSafe(current, 0.8f, 0.8f, "ENTITY_GENERIC_EXPLODE",
-                            "EXPLODE");
+                    current.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, current, 1);
+                    current.getWorld().playSound(current, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 0.8f);
 
                     // Small damage radius, low environmental impact
                     for (Entity e : current.getWorld().getNearbyEntities(current, 4, 4, 4)) {
@@ -708,31 +729,24 @@ public class DragonCombatHandler implements Listener {
                 }
 
                 current.add(dir);
-                VersionSafe.spawnFireParticle(current, 10, 0.2, 0.2, 0.2, 0.05);
-                VersionSafe.spawnSmokeParticle(current, 5, 0.1, 0.1, 0.1, 0.02);
+                current.getWorld().spawnParticle(Particle.FLAME, current, 10, 0.2, 0.2, 0.2, 0.05);
+                current.getWorld().spawnParticle(Particle.SMOKE, current, 5, 0.1, 0.1, 0.1, 0.02);
                 if (ticks % 2 == 0) {
-                    VersionSafe.spawnLavaParticle(current, 3, 0.1, 0.1, 0.1, 0.1);
+                    current.getWorld().spawnParticle(Particle.LAVA, current, 3, 0.1, 0.1, 0.1, 0.1);
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L);
     }
 
     public void performAbyssalMist(EnderDragon dragon) {
-        VersionSafe.playSoundSafe(dragon.getLocation(), 2f, 0.5f, "ENTITY_SQUID_SQUISH",
-                "ENTITY_SQUID_SQUIRT", "ENTITY_PLAYER_BREATH");
+        dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_SQUID_SQUIRT, 2f, 0.5f);
 
         String title = ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "ABYSSAL MIST";
         String subtitle = ChatColor.GRAY + "THE VOID CONSUMES YOUR SIGHT!";
         for (Player p : dragon.getWorld().getPlayers()) {
             p.sendTitle(title, subtitle, 10, 40, 10);
-
-            PotionEffectType blindness = VersionSafe.getPotionEffectSafe("BLINDNESS");
-            if (blindness != null)
-                VersionSafe.applyPotionEffectSafe(p, blindness, 300, 0);
-
-            PotionEffectType darkness = VersionSafe.getPotionEffectSafe("DARKNESS");
-            if (darkness != null)
-                VersionSafe.applyPotionEffectSafe(p, darkness, 300, 0);
+            p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 300, 0));
+            p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 300, 0));
         }
 
         new BukkitRunnable() {
@@ -753,7 +767,7 @@ public class DragonCombatHandler implements Listener {
                                 (random.nextDouble() - 0.5) * 10,
                                 random.nextDouble() * 3,
                                 (random.nextDouble() - 0.5) * 10);
-                        VersionSafe.spawnMistParticle(loc, 5, 1, 1, 1, 0.01);
+                        p.getWorld().spawnParticle(Particle.CLOUD, loc, 5, 1, 1, 1, 0.01);
                     }
                 }
             }
@@ -761,9 +775,9 @@ public class DragonCombatHandler implements Listener {
     }
 
     private void triggerImpactEffect(EnderDragon dragon) {
-        VersionSafe.playSoundSafe(dragon.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 5f, 0.8f);
-        VersionSafe.spawnLargeExplosion(dragon.getLocation(), 5);
-        VersionSafe.spawnBreathParticle(dragon.getLocation(), 100, 5, 2, 5, 0.2);
+        dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 5f, 0.8f);
+        dragon.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, dragon.getLocation(), 5);
+        dragon.getWorld().spawnParticle(Particle.DRAGON_BREATH, dragon.getLocation(), 100, 5, 2, 5, 0.2);
 
         for (Entity entity : dragon.getNearbyEntities(20, 5, 20)) {
             if (entity instanceof Player) {
@@ -776,11 +790,11 @@ public class DragonCombatHandler implements Listener {
     }
 
     public void performLightningStorm(EnderDragon dragon) {
-        if (stormActive)
+        if (activeStorms.contains(dragon.getUniqueId()))
             return;
-        stormActive = true;
+        activeStorms.add(dragon.getUniqueId());
 
-        VersionSafe.playSoundSafe(dragon.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 5f, 1.5f);
+        dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 5f, 1.5f);
 
         String title = ChatColor.GOLD + "LIGHTNING STORM!";
         String subtitle = ChatColor.YELLOW + "Take cover under solid blocks!";
@@ -811,7 +825,7 @@ public class DragonCombatHandler implements Listener {
             @Override
             public void run() {
                 if (count >= 50 || !dragon.isValid()) {
-                    stormActive = false;
+                    activeStorms.remove(dragon.getUniqueId());
                     this.cancel();
                     return;
                 }
@@ -862,7 +876,7 @@ public class DragonCombatHandler implements Listener {
 
         // Visual lightning (no damage to terrain)
         world.strikeLightningEffect(strikeLoc);
-        VersionSafe.playSoundSafe(strikeLoc, 5f, 1f, "ENTITY_LIGHTNING_BOLT_THUNDER", "ENTITY_LIGHTNING_THUNDER");
+        world.playSound(strikeLoc, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 5f, 1f);
 
         // Apply custom damage for the lightning bolt to nearby players at or above the
         // strike point
@@ -903,8 +917,8 @@ public class DragonCombatHandler implements Listener {
 
         if (dragon.getScoreboardTags().contains("MSC_ShadowClone")) {
             event.setCancelled(true);
-            VersionSafe.spawnLargeExplosion(dragon.getLocation(), 1);
-            VersionSafe.playSoundSafe(dragon.getLocation(), Sound.BLOCK_GLASS_BREAK, 1f, 0.5f);
+            dragon.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, dragon.getLocation(), 1);
+            dragon.getWorld().playSound(dragon.getLocation(), Sound.BLOCK_GLASS_BREAK, 1f, 0.5f);
             dragon.remove();
             return;
         }
@@ -917,10 +931,9 @@ public class DragonCombatHandler implements Listener {
             double scaledDamage = event.getDamage() * damageScale;
             double scaledCap = DAMAGE_CAP * damageScale;
 
-            Attribute maxHealthAttr = VersionSafe.getAttributeSafe("MAX_HEALTH", "GENERIC_MAX_HEALTH");
-            if (maxHealthAttr == null || dragon.getAttribute(maxHealthAttr) == null)
+            if (dragon.getAttribute(Attribute.MAX_HEALTH) == null)
                 return;
-            double maxHealth = dragon.getAttribute(maxHealthAttr).getValue();
+            double maxHealth = dragon.getAttribute(Attribute.MAX_HEALTH).getValue();
             double healthPercent = dragon.getHealth() / maxHealth;
 
             // Resistance scales from 0% at full health up to 50% max at 0 health
@@ -944,7 +957,8 @@ public class DragonCombatHandler implements Listener {
             boolean globalReady = (now - lastGlobal >= GLOBAL_COOLDOWN_MS);
 
             // The Roulette is now the ONLY trigger for special abilities
-            if (globalReady && !rouletteActive && !stormActive && !breathFloorActive && !isSlamming(dragon)) {
+            UUID id = dragon.getUniqueId();
+            if (globalReady && !activeRoulettes.contains(id) && !activeStorms.contains(id) && !activeBreathFloors.contains(id) && !isSlamming(dragon)) {
                 lastGlobalAbilityTimes.put(dragon.getUniqueId(), now);
                 startAbilityRoulette(dragon);
             }
@@ -955,8 +969,7 @@ public class DragonCombatHandler implements Listener {
                 String enrageSubtitle = ChatColor.RED + "Final Stand - No Escape!";
                 for (Player p : dragon.getWorld().getPlayers()) {
                     p.sendTitle(enrageTitle, enrageSubtitle, 10, 40, 10);
-                    VersionSafe.playSoundSafe(p.getLocation(), 1f, 0.5f, "ENTITY_ENDER_DRAGON_GROWL",
-                            "ENTITY_ENDERDRAGON_GROWL");
+                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1f, 0.5f);
                 }
             }
 
@@ -970,14 +983,11 @@ public class DragonCombatHandler implements Listener {
             }
 
             // Phase Shift: WHITE phase teleport on heavy damage
-            if (phaseColor == BarColor.WHITE && event.getDamage() > phaseShiftThreshold && random.nextDouble() < 0.20) {
-                Location loc = dragon.getLocation().add(random.nextInt(31) - 15, random.nextInt(11) - 5,
+                        Location loc = dragon.getLocation().add(random.nextInt(31) - 15, random.nextInt(11) - 5,
                         random.nextInt(31) - 15);
                 dragon.teleport(loc);
-                VersionSafe.spawnBreathParticle(dragon.getLocation(), 40, 1.5, 1.5, 1.5, 0.1);
-                VersionSafe.playSoundSafe(dragon.getLocation(), 1f, 1f, "ENTITY_ENDERMAN_TELEPORT",
-                        "ENTITY_ENDERMAN_TELEPORT");
-            }
+                dragon.getWorld().spawnParticle(Particle.DRAGON_BREATH, dragon.getLocation(), 40, 1.5, 1.5, 1.5, 0.1);
+                dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
 
             // Abyssal Thorns and other combat triggers
             if (event instanceof EntityDamageByEntityEvent) {
@@ -998,23 +1008,17 @@ public class DragonCombatHandler implements Listener {
 
                     // Solar Flare: YELLOW phase blindness on hit
                     if (phaseColor == BarColor.YELLOW && random.nextDouble() < 0.20) {
-                        PotionEffectType blind = VersionSafe.getPotionEffectSafe("BLINDNESS");
-                        if (blind != null)
-                            VersionSafe.applyPotionEffectSafe(attacker, blind, 40, 0);
-                        VersionSafe.spawnExplosionParticle(attacker.getLocation(), 1);
-                        VersionSafe.playSoundSafe(attacker.getLocation(), 1f, 2f, "BLOCK_BEACON_ACTIVATE",
-                                "BLOCK_BEACON_ACTIVATE");
+                        attacker.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0));
+                        attacker.getWorld().spawnParticle(Particle.EXPLOSION, attacker.getLocation(), 1);
+                        attacker.getWorld().playSound(attacker.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 2f);
                         attacker.sendMessage(ChatColor.YELLOW + "SOLAR FLARE: You are blinded by the flash!");
                     }
 
                     // Abyssal Thorns: PINK or PURPLE phase 15% chance to apply Wither II
                     if ((phaseColor == BarColor.PINK || phaseColor == BarColor.PURPLE) && random.nextDouble() < 0.15) {
-                        PotionEffectType wither = VersionSafe.getPotionEffectSafe("WITHER");
-                        if (wither != null)
-                            VersionSafe.applyPotionEffectSafe(attacker, wither, 60, 1);
-                        VersionSafe.spawnBreathParticle(attacker.getLocation(), 10, 0.3, 0.3, 0.3, 0.05);
-                        VersionSafe.playSoundSafe(attacker.getLocation(), 0.5f, 0.5f, "ENTITY_ELDER_GUARDIAN_CURSE",
-                                "ENTITY_ELDER_GUARDIAN_CURSE");
+                        attacker.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 1));
+                        attacker.getWorld().spawnParticle(Particle.DRAGON_BREATH, attacker.getLocation(), 10, 0.3, 0.3, 0.3, 0.05);
+                        attacker.getWorld().playSound(attacker.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.5f, 0.5f);
                     }
                 }
             }
@@ -1047,14 +1051,12 @@ public class DragonCombatHandler implements Listener {
 
         // Siphon Life: GREEN phase healing on hit
         if (phaseColor == BarColor.GREEN) {
-            Attribute maxHealthAttr = VersionSafe.getAttributeSafe("MAX_HEALTH", "GENERIC_MAX_HEALTH");
-            if (maxHealthAttr != null && dragon.getAttribute(maxHealthAttr) != null) {
-                double maxVal = dragon.getAttribute(maxHealthAttr).getValue();
+            if (dragon.getAttribute(Attribute.MAX_HEALTH) != null) {
+                double maxVal = dragon.getAttribute(Attribute.MAX_HEALTH).getValue();
                 double healAmount = maxVal * SIPHON_LIFE_PERCENT;
                 dragon.setHealth(Math.min(dragon.getHealth() + healAmount, maxVal));
-                VersionSafe.spawnBreathParticle(dragon.getLocation(), 20, 1.0, 1.0, 1.0, 0.05);
-                VersionSafe.playSoundSafe(dragon.getLocation(), 0.8f, 1.2f, "ENTITY_PLAYER_LEVELUP",
-                        "ENTITY_EXPERIENCE_ORB_PICKUP");
+                dragon.getWorld().spawnParticle(Particle.DRAGON_BREATH, dragon.getLocation(), 20, 1.0, 1.0, 1.0, 0.05);
+                dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 1.2f);
             }
         }
     }
@@ -1082,17 +1084,21 @@ public class DragonCombatHandler implements Listener {
             event.getDrops().add(new ItemStack(Material.DRAGON_BREATH, 5));
             event.getDrops().add(new ItemStack(Material.ELYTRA, 1));
 
-            slammingDragons.remove(dragon.getUniqueId());
-            enragedDragons.remove(dragon.getUniqueId());
-            currentPhaseColors.remove(dragon.getUniqueId());
-            stormActive = false;
+            UUID id = dragon.getUniqueId();
+            slammingDragons.remove(id);
+            enragedDragons.remove(id);
+            currentPhaseColors.remove(id);
+            activeRoulettes.remove(id);
+            activeStorms.remove(id);
+            activeBreathFloors.remove(id);
+            BossBar bar = bossBars.remove(id);
+            if (bar != null) bar.removeAll();
 
             String vicTitle = ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "QUEEN DEFEATED";
             String vicSubtitle = ChatColor.WHITE + "The End is safe... for now.";
             for (Player p : event.getEntity().getWorld().getPlayers()) {
                 p.sendTitle(vicTitle, vicSubtitle, 20, 100, 20);
-                VersionSafe.playSoundSafe(p.getLocation(), 1f, 1f, "UI_TOAST_CHALLENGE_COMPLETE",
-                        "UI_BUTTON_CLICK");
+                p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
             }
             spawnRewardChests(dragon.getWorld());
         }
@@ -1182,7 +1188,9 @@ public class DragonCombatHandler implements Listener {
                 base.clone().add(-2, 0, 0)
         };
 
-        String[] themes = { "§6§lCOMBAT REWARD", "§b§lUTILITY REWARD", "§d§lMATERIAL REWARD" };
+        String[] themes = { ChatColor.GOLD + "" + ChatColor.BOLD + "COMBAT REWARD", 
+                          ChatColor.AQUA + "" + ChatColor.BOLD + "UTILITY REWARD", 
+                          ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "MATERIAL REWARD" };
         String[] internalThemes = { "COMBAT", "UTILITY", "MATERIAL" };
 
         for (int i = 0; i < 3; i++) {
@@ -1193,13 +1201,10 @@ public class DragonCombatHandler implements Listener {
                 chest.getPersistentDataContainer().set(new NamespacedKey(plugin, "MSC_RewardChest"),
                         PersistentDataType.BYTE, (byte) 1);
                 chest.setCustomName(themes[i]);
-                
-                // Fill with randomized loot
                 fillChestRandomly(chest, internalThemes[i]);
-                
                 chest.update();
             }
-            VersionSafe.spawnPortalParticle(l.clone().add(0.5, 0.5, 0.5), 50, 0.5, 0.5, 0.5, 0.1);
+            l.getWorld().spawnParticle(Particle.PORTAL, l.clone().add(0.5, 0.5, 0.5), 50, 0.5, 0.5, 0.5, 0.1);
         }
     }
 
@@ -1230,10 +1235,8 @@ public class DragonCombatHandler implements Listener {
 
                     if (l.getBlock().getType() == Material.CHEST) {
                         l.getBlock().setType(Material.AIR);
-                        VersionSafe.spawnLargeSmokeParticle(l.clone().add(0.5, 0.5, 0.5), 30, 0.3,
-                                0.3, 0.3, 0.05);
-                        VersionSafe.playSoundSafe(l, 1f, 0.5f, "ENTITY_ENDERMAN_TELEPORT",
-                                "ENTITY_ENDERMEN_TELEPORT");
+                        l.getWorld().spawnParticle(Particle.LARGE_SMOKE, l.clone().add(0.5, 0.5, 0.5), 30, 0.3, 0.3, 0.3, 0.05);
+                        l.getWorld().playSound(l, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 0.5f);
                     }
                 }
 
@@ -1242,15 +1245,14 @@ public class DragonCombatHandler implements Listener {
                 chest.update();
 
                 event.getPlayer()
-                        .sendMessage("§d§l[MSC] §fYou have chosen your reward! The other options have vanished.");
+                        .sendMessage(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "[MSC] " + ChatColor.WHITE + "You have chosen your reward! The other options have vanished.");
             }
         }
     }
 
     public void performVoidBeam(EnderDragon dragon) {
         dragon.setPhase(EnderDragon.Phase.HOVER);
-        VersionSafe.playSoundSafe(dragon.getLocation(), 5f, 0.5f, "ENTITY_ENDER_DRAGON_GROWL",
-                "ENTITY_ENDERDRAGON_GROWL");
+        dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 5f, 0.5f);
 
         String title = ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "VOID BEAM";
         String subtitle = ChatColor.LIGHT_PURPLE + "THE VOID IS FOCUSING...";
@@ -1293,9 +1295,9 @@ public class DragonCombatHandler implements Listener {
 
                     for (double d = 0; d < Math.min(distance, 60); d += 0.5) {
                         Location particleLoc = start.clone().add(direction.clone().multiply(d));
-                        VersionSafe.spawnBreathParticle(particleLoc, 1, 0.1, 0.1, 0.1, 0.01);
+                        particleLoc.getWorld().spawnParticle(Particle.DRAGON_BREATH, particleLoc, 1, 0.1, 0.1, 0.1, 0.01);
                         if (ticks % 10 == 0) {
-                            VersionSafe.spawnSmokeParticle(particleLoc, 1, 0.05, 0.05, 0.05, 0.01);
+                            particleLoc.getWorld().spawnParticle(Particle.SMOKE, particleLoc, 1, 0.05, 0.05, 0.05, 0.01);
                         }
                     }
 
@@ -1309,8 +1311,7 @@ public class DragonCombatHandler implements Listener {
                                 }
                             }
                         }
-                        VersionSafe.playSoundSafe(end, 1f, 1.5f, "ENTITY_GLOW_SQUID_SQUISH",
-                                "ENTITY_ENDER_DRAGON_FLAP");
+                        end.getWorld().playSound(end, Sound.ENTITY_GLOW_SQUID_SQUIRT, 1f, 1.5f);
                     }
                 }
             }

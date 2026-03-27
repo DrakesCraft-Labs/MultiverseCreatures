@@ -1,15 +1,12 @@
 package com.Chagui68.commands;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import com.Chagui68.entities.MobHandler;
-import com.Chagui68.entities.dragon.DragonCombatHandler;
-import com.Chagui68.utils.VersionSafe;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
+import org.bukkit.World;
+import org.bukkit.block.Biome;
 import org.bukkit.boss.BarColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -18,13 +15,31 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.Chagui68.entities.MobHandler;
+import com.Chagui68.entities.dragon.DragonCombatHandler;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
+import org.bukkit.entity.EnderDragon;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 
 public class MSCCommand implements CommandExecutor, TabCompleter {
 
+    private final com.Chagui68.MultiverseCreatures plugin;
     private final MobHandler mobHandler;
     private final DragonCombatHandler dragonCombatHandler;
 
-    public MSCCommand(MobHandler mobHandler, DragonCombatHandler dragonCombatHandler) {
+    public MSCCommand(com.Chagui68.MultiverseCreatures plugin, MobHandler mobHandler, DragonCombatHandler dragonCombatHandler) {
+        this.plugin = plugin;
         this.mobHandler = mobHandler;
         this.dragonCombatHandler = dragonCombatHandler;
     }
@@ -62,11 +77,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             case "phase":
                 handlePhase(sender, args);
                 break;
-            case "locate":
-                handleLocate(sender, args);
+            case "check":
+                handleCheck(sender);
                 break;
-            case "tp":
-                handleTp(sender, args);
+            case "reload":
+                handleReload(sender);
                 break;
             default:
                 sender.sendMessage(ChatColor.RED + "Unknown command. Use /msc for help.");
@@ -99,9 +114,14 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(ChatColor.RED + "The Sovereign of the End can only be spawned in the End dimension!");
                 return;
             }
-            EnderDragon dragon = (EnderDragon) p.getWorld().spawnEntity(p.getLocation(), EntityType.ENDER_DRAGON);
-            dragonCombatHandler.configureDragon(dragon);
-            sender.sendMessage(ChatColor.GREEN + "Spawned Custom Dragon!");
+            try {
+                EnderDragon dragon = (EnderDragon) p.getWorld().spawnEntity(p.getLocation(), EntityType.ENDER_DRAGON);
+                dragonCombatHandler.configureDragon(dragon);
+                sender.sendMessage(ChatColor.GREEN + "Spawned Custom Dragon! [Sovereign of the End]");
+            } catch (Exception e) {
+                sender.sendMessage(ChatColor.RED + "Failed to configure custom dragon: " + e.getMessage());
+                e.printStackTrace();
+            }
         } else {
             sender.sendMessage(ChatColor.RED + "Unknown entity type.");
         }
@@ -221,9 +241,61 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatColor.YELLOW + "/msc ability <name> " + ChatColor.WHITE + "- Force a dragon ability");
         sender.sendMessage(
                 ChatColor.YELLOW + "/msc phase <color> " + ChatColor.WHITE + "- Force a specific phase color");
-        sender.sendMessage(ChatColor.YELLOW + "/msc locate biome <key> " + ChatColor.WHITE + "- Locate a custom biome");
-        sender.sendMessage(ChatColor.YELLOW + "/msc tp biome <key> " + ChatColor.WHITE + "- Teleport to a custom biome");
         sender.sendMessage(ChatColor.YELLOW + "/msc chests " + ChatColor.WHITE + "- Spawn reward chests");
+        sender.sendMessage(ChatColor.YELLOW + "/msc check " + ChatColor.WHITE + "- Check registry state");
+        sender.sendMessage(ChatColor.YELLOW + "/msc reload " + ChatColor.WHITE + "- Reload biomes.yml and generators");
+    }
+
+    private void handleReload(CommandSender sender) {
+        plugin.reloadGenerators();
+        sender.sendMessage(ChatColor.GREEN + "[MSC] Reloaded biomes.yml and world generators.");
+    }
+
+    private void handleCheck(CommandSender sender) {
+        sender.sendMessage(ChatColor.GOLD + "--- [MSC] System Diagnostic ---");
+        
+        // 1. Registry Audit
+        try {
+            org.bukkit.Registry<org.bukkit.block.Biome> registry = org.bukkit.Bukkit.getRegistry(org.bukkit.block.Biome.class);
+            List<String> mscBiomes = new ArrayList<>();
+            if (registry != null) {
+                sender.sendMessage(ChatColor.YELLOW + "Registry Audit (msc: namespace):");
+                for (org.bukkit.block.Biome b : registry) {
+                    String key = b.getKey().toString();
+                    if (key.startsWith("msc:")) {
+                        mscBiomes.add(key);
+                    }
+                }
+                
+                if (!mscBiomes.isEmpty()) {
+                    sender.sendMessage(ChatColor.GREEN + "[Registry] Found " + mscBiomes.size() + " MSC biomes precisely injected via NMS.");
+                    for (String name : mscBiomes) {
+                        sender.sendMessage(ChatColor.GREEN + "  - " + name);
+                    }
+                } else {
+                    sender.sendMessage(ChatColor.RED + "[Registry] No 'msc:' biomes found in current Bukkit registry view.");
+                    sender.sendMessage(ChatColor.GRAY + "(Note: Custom biomes will still work in world generation even if Bukkit registry takes time to sync.)");
+                }
+            }
+        } catch (Exception e) {
+            sender.sendMessage(ChatColor.RED + "[Error] Registry audit failed: " + e.getMessage());
+        }
+        
+        // 2. World & Position Audit
+        if (sender instanceof Player) {
+            Player p = (Player) sender;
+            org.bukkit.block.Biome current = p.getLocation().getBlock().getBiome();
+            String biomeKey = current.getKey().toString();
+            ChatColor color = biomeKey.startsWith("msc:") ? ChatColor.GREEN : ChatColor.GRAY;
+            
+            sender.sendMessage(ChatColor.GOLD + "--- Current Position ---");
+            sender.sendMessage(ChatColor.YELLOW + "World: " + ChatColor.WHITE + p.getWorld().getName());
+            sender.sendMessage(ChatColor.YELLOW + "Generator: " + ChatColor.WHITE + (p.getWorld().getGenerator() != null ? p.getWorld().getGenerator().getClass().getSimpleName() : "Native"));
+            sender.sendMessage(ChatColor.YELLOW + "Biome: " + color + biomeKey);
+            sender.sendMessage(ChatColor.GRAY + "Pos: " + p.getLocation().getBlockX() + ", " + p.getLocation().getBlockY() + ", " + p.getLocation().getBlockZ());
+        }
+
+        sender.sendMessage(ChatColor.DARK_GRAY + "Note: Biomes are injected via NMS at startup. If they don't show up in registries yet, wait a few minutes or teleport to them directly.");
     }
 
     private void handlePhase(CommandSender sender, String[] args) {
@@ -247,67 +319,6 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void handleLocate(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can locate biomes relative to themselves.");
-            return;
-        }
-
-        if (args.length < 3 || !args[1].equalsIgnoreCase("biome")) {
-            sender.sendMessage(ChatColor.RED + "Usage: /msc locate biome <msc:abyssal_plains>");
-            return;
-        }
-
-        Player p = (Player) sender;
-        String biomeKey = args[2].toLowerCase();
-
-        p.sendMessage(ChatColor.YELLOW + "Searching for biome '" + biomeKey + "'... This may take a moment.");
-        
-        Location loc = VersionSafe.locateBiomeSafe(p.getLocation(), biomeKey, 10000, 32);
-        
-        if (loc != null) {
-            int distance = (int) p.getLocation().distance(loc);
-            p.sendMessage(ChatColor.GREEN + "Biome " + biomeKey + " found " + distance + " blocks away at: " 
-                + ChatColor.WHITE + loc.getBlockX() + ", ~, " + loc.getBlockZ());
-            p.sendMessage(ChatColor.GRAY + "(Use /msc tp biome " + biomeKey + " to go there)");
-        } else {
-            p.sendMessage(ChatColor.RED + "Could not locate biome '" + biomeKey + "' within 10,000 blocks.");
-        }
-    }
-
-    private void handleTp(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can be teleported.");
-            return;
-        }
-
-        if (args.length < 3 || !args[1].equalsIgnoreCase("biome")) {
-            sender.sendMessage(ChatColor.RED + "Usage: /msc tp biome <msc:abyssal_plains>");
-            return;
-        }
-
-        Player p = (Player) sender;
-        String biomeKey = args[2].toLowerCase();
-
-        p.sendMessage(ChatColor.YELLOW + "Finding and teleporting to biome '" + biomeKey + "'...");
-        
-        Location loc = VersionSafe.locateBiomeSafe(p.getLocation(), biomeKey, 10000, 64);
-        
-        if (loc != null) {
-            org.bukkit.World w = loc.getWorld();
-            if (w != null) {
-                int highestY = w.getHighestBlockYAt(loc.getBlockX(), loc.getBlockZ());
-                if (highestY < 0) highestY = 64; // Safety for void worlds
-                loc.setY(highestY + 1.0);
-                p.teleport(loc);
-                p.sendMessage(ChatColor.GREEN + "Teleported to " + biomeKey + "!");
-                VersionSafe.playSoundSafe(p.getLocation(), 1f, 1f, "ENTITY_ENDERMAN_TELEPORT", "ENTITY_ENDERMEN_TELEPORT");
-            }
-        } else {
-            p.sendMessage(ChatColor.RED + "Could not teleport. Biome '" + biomeKey + "' not found nearby.");
-        }
-    }
-
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> completions = new ArrayList<>();
@@ -317,7 +328,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            List<String> subCommands = Arrays.asList("spawn", "damage", "ability", "chests", "phase", "locate", "tp");
+            List<String> subCommands = Arrays.asList("spawn", "damage", "ability", "chests", "phase", "check", "reload");
             completions.addAll(subCommands.stream()
                     .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList()));
@@ -337,19 +348,6 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 List<String> colors = Arrays.asList("white", "green", "blue", "yellow", "pink", "purple", "red");
                 completions.addAll(colors.stream()
                         .filter(c -> c.startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList()));
-            } else if (subCmd.equals("locate") || subCmd.equals("tp")) {
-                List<String> targets = Arrays.asList("biome");
-                completions.addAll(targets.stream()
-                        .filter(t -> t.startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList()));
-            }
-        } else if (args.length == 3) {
-            String subCmd = args[0].toLowerCase();
-            if ((subCmd.equals("locate") || subCmd.equals("tp")) && args[1].equalsIgnoreCase("biome")) {
-                List<String> biomes = Arrays.asList("msc:abyssal_plains");
-                completions.addAll(biomes.stream()
-                        .filter(b -> b.startsWith(args[2].toLowerCase()))
                         .collect(Collectors.toList()));
             }
         }

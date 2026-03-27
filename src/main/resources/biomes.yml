@@ -1,0 +1,125 @@
+# Custom Biome Definitions for MultiverseCreatures (Minecraft 1.21.11)
+# Use hex colors (e.g., #FF0000) or decimal integers.
+
+biomes:
+  abyssal_plains:
+    display_name: "§1Abyssal Plains"
+    base_biome: "minecraft:deep_ocean"
+    fog_color: 1894451
+    water_color: 16711904
+    water_fog_color: 13444319
+    sky_color: 2621487
+    foliage_color: 8604555
+    grass_color: 8604555
+    precipitation: false
+    temperature: 0.1
+    downfall: 0.0
+    resources:
+      ores:
+        - material: DIAMOND_ORE
+          chance: 0.01
+        - material: GOLD_ORE
+          chance: 0.03
+        - material: MAGMA_BLOCK
+          chance: 0.05
+      spawner_chance: 0.002
+    terrain:
+      base_height: 32
+      amplitude: 12
+    flora:
+      - chance: 0.15
+        layers:
+          - material: WARPED_ROOTS
+            count: 1
+      - chance: 0.10
+        layers:
+          - material: NETHER_SPROUTS
+            count: 1
+
+  cliffs:
+    display_name: "§fMajestic Cliffs"
+    base_biome: "minecraft:jagged_peaks"
+    fog_color: 12632256
+    water_color: 4159204
+    water_fog_color: 329011
+    sky_color: 8103167
+    foliage_color: 10387589
+    grass_color: 9470285
+    precipitation: true
+    temperature: 0.2
+    downfall: 0.3
+    resources:
+      ores:
+        - material: COAL_ORE
+          chance: 0.08
+        - material: IRON_ORE
+          chance: 0.04
+      spawner_chance: 0.0005
+    terrain:
+      base_height: 120
+      amplitude: 60
+    flora:
+      - chance: 0.20
+        layers:
+          - material: SHORT_GRASS
+            count: 1
+      - chance: 0.05
+        layers:
+          - material: POPPY
+            count: 1
+    trees:
+      - type: REDWOOD
+        chance: 0.05
+      - type: TALL_REDWOOD
+        chance: 0.02
+
+  valley:
+    display_name: "§aEvergreen Valley"
+    base_biome: "minecraft:meadow"
+    fog_color: 12632256
+    water_color: 4159204
+    water_fog_color: 329011
+    sky_color: 8103167
+    foliage_color: 6927429
+    grass_color: 6927429
+    precipitation: true
+    temperature: 0.5
+    downfall: 0.5
+    resources:
+      ores:
+        - material: EMERALD_ORE
+          chance: 0.02
+        - material: IRON_ORE
+          chance: 0.05
+      spawner_chance: 0.001
+    terrain:
+      base_height: 64
+      amplitude: 28
+    flora:
+      - chance: 0.40
+        layers:
+          - material: SHORT_GRASS
+            count: 1
+      - chance: 0.15
+        layers:
+          - material: TALL_GRASS
+            count: 2
+      - chance: 0.05
+        layers:
+          - material: PEONY
+            count: 2
+      - chance: 0.10
+        layers:
+          - material: OXEYE_DAISY
+            count: 1
+      - chance: 0.10
+        layers:
+          - material: CORNFLOWER
+            count: 1
+    trees:
+      - type: TREE
+        chance: 0.08
+      - type: BIRCH
+        chance: 0.04
+      - type: DARK_OAK
+        chance: 0.02

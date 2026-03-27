@@ -9,8 +9,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import com.Chagui68.utils.VersionSafe;
 import org.bukkit.Material;
 
 public class ItemFoodHandler implements Listener {
@@ -27,10 +27,7 @@ public class ItemFoodHandler implements Listener {
 
         PersistentDataContainer data = meta.getPersistentDataContainer();
         if (data.has(ItemsFoodTrades.COOKIE_KEY, PersistentDataType.INTEGER)) {
-            PotionEffectType resistance = VersionSafe.getPotionEffectSafe("RESISTANCE", "DAMAGE_RESISTANCE");
-            if (resistance != null) {
-                VersionSafe.applyPotionEffectSafe(player, resistance, 200, 5);
-            }
+            player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 200, 5));
         }
     }
 }
