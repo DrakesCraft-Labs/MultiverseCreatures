@@ -228,7 +228,6 @@ public class DragonCombatHandler implements Listener {
      * Configures a dragon instance with custom attributes.
      */
     public void configureDragon(EnderDragon dragon) {
-        double maxHealth = 5000.0; // Assume setup health
         String initialName = getDynamicName(1.0);
         dragon.setCustomName(initialName);
         dragon.setCustomNameVisible(true);
@@ -334,16 +333,15 @@ public class DragonCombatHandler implements Listener {
             }
         }
 
-
-
-
         bar.setColor(color);
         bar.setStyle(BarStyle.SEGMENTED_20);
 
         String dynamicName = getDynamicName(healthPercent / 100.0);
         dragon.setCustomName(dynamicName); // Update physical name too
         bar.setTitle(dynamicName + ChatColor.GRAY + " [" + (int) healthPercent + "%]");
-        bar.setProgress(Math.min(1.0, Math.max(0.0, dragon.getHealth() / dragon.getAttribute(Attribute.MAX_HEALTH).getValue())));
+        double maxHealth = dragon.getAttribute(Attribute.MAX_HEALTH) != null
+                ? dragon.getAttribute(Attribute.MAX_HEALTH).getValue() : DRAGON_HEALTH;
+        bar.setProgress(Math.min(1.0, Math.max(0.0, dragon.getHealth() / maxHealth)));
     }
 
     private String getDynamicName(double healthPercent) {
@@ -983,11 +981,13 @@ public class DragonCombatHandler implements Listener {
             }
 
             // Phase Shift: WHITE phase teleport on heavy damage
-                        Location loc = dragon.getLocation().add(random.nextInt(31) - 15, random.nextInt(11) - 5,
+            if (phaseColor == BarColor.WHITE && scaledDamage > phaseShiftThreshold) {
+                Location loc = dragon.getLocation().add(random.nextInt(31) - 15, random.nextInt(11) - 5,
                         random.nextInt(31) - 15);
                 dragon.teleport(loc);
                 dragon.getWorld().spawnParticle(Particle.DRAGON_BREATH, dragon.getLocation(), 40, 1.5, 1.5, 1.5, 0.1);
                 dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
+            }
 
             // Abyssal Thorns and other combat triggers
             if (event instanceof EntityDamageByEntityEvent) {
@@ -1330,5 +1330,17 @@ public class DragonCombatHandler implements Listener {
         double b = c1 / c2;
         Vector pb = start.toVector().add(v.multiply(b));
         return p.toVector().distance(pb);
+    }
+
+    public void cleanup() {
+        for (BossBar bar : bossBars.values()) {
+            bar.removeAll();
+        }
+        bossBars.clear();
+        currentPhaseColors.clear();
+        activeRoulettes.clear();
+        activeStorms.clear();
+        activeBreathFloors.clear();
+        slammingDragons.clear();
     }
 }

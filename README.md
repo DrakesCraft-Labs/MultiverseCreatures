@@ -1,55 +1,103 @@
 # MultiverseCreatures
 
-Plugin for custom themed creatures and items on Spigot/Paper **1.20.1 - 1.20.6**.
+Advanced procedural world generation and themed entity plugin for Spigot/Paper **1.21+**.
 
-## Main Features
+MultiverseCreatures (v5.0.DEV) transforms your Minecraft server by introducing a custom modular terrain generator, unique biomes with NMS injection, and high-performance procedural population.
+
+## 🌍 World Generation Features
+
+The plugin implements a custom **MSCTerraGenerator** that provides full control over terrain shape, biome distribution, and resource population.
+
+- **Modular Terrain:** High-performance noise sampling and slant calculation for smooth, natural-looking landscapes.
+- **Custom Biome System:**
+  - **NMS Injection:** Biomes are injected directly into the server registry for maximum compatibility.
+  - **Thematic Visuals:** Customizable fog, water, sky, and grass colors via `biomes.yml`.
+  - **Biome HUD:** Real-time Action Bar display showing the current custom biome name.
+- **Procedural Flora & Structures:**
+  - Support for **.json**, **.schem**, and **.litematic** schematics.
+  - Custom tree registry for varied, realistic forest generation.
+  - Precise control over ore distribution and vein clustering.
+
+### 🏞️ Active Biome: Mountain Valley
+- 🌿 **Mountain Valley:** Lush, emerald-rich valleys with custom procedural trees and unique resource distribution.
+
+---
+
+## 🐲 Bosses & Special Entities
 
 ### 🌌 Sovereign of the End (The Dragon)
 The Ender Dragon has been completely reworked into a multi-phase boss with massive health and unique abilities.
 
-- **Dynamic Health & Naming:** 5000 HP with 4 distinct boss phases and names.
+- **Dynamic Health & Naming:** 2000 HP with 4 distinct boss phases and unique names.
 - **Ability Roulette:** Every 60 seconds, the dragon rolls for a random powerful ability.
-- **Damage Cap:** Maximum of 200 damage per hit to prevent instant kills.
 - **Phase-Based Passives:**
-  - ⚪ **White Phase (Phase Shift):** Chance to teleport away on heavy hits.
-  - 🟢 **Green Phase (Siphon Life):** Heals 0.5% max health when damaging players.
-  - 🔵 **Blue Phase (Static Discharge):** Strikes attackers with lightning and knockback.
-  - 🟡 **Yellow Phase (Solar Flare):** Chance to blind players on hit.
-  - 🔴 **Red Phase (Shadow Armor):** 30% flat damage reduction.
-- **Special Abilities:**
-  - **💥 Abyssal Dash:** Charges at players with explosive force.
-  - **⚡ Lightning Storm:** Constant lightning strikes across the arena.
-  - **🟣 Void Corruption:** The floor (End Stone) damages players standing on it.
-  - **🦇 Shadow Enemies:** Spawns "Void Shadows" (Bats) that blind and darken players.
-  - **🔊 Abyssal Scream:** Massive wave that launches players into the air.
-  - **☄️ Meteor Shower:** Meteors rain from the sky targeting player positions.
-  - **🌫️ Abyssal Mist:** Blinds and darkens everyone in the world.
-  - **⚛️ Void Beam:** Devastating beam attack.
+  - ⚪ **White:** Phase Shift (Teleportation on heavy hits).
+  - 🟢 **Green:** Siphon Life (Healing on hit).
+  - 🔵 **Blue:** Static Discharge (Lightning knockback).
+  - 🟡 **Yellow:** Solar Flare (Blinding).
+  - 🔴 **Red:** Shadow Armor (30% Damage Reduction).
+- **Abilities:** Meteor Showers, Abyssal Screams, Void Beams, and Corrupting Breath.
 
 ### 🧔 Shaggy & Themed Items
-- **Shaggy:** Wandering Trader replacement (30% chance) with custom AI and trades.
-- **Excalibur Sword:** Rare trade that grants **Strength III** while held.
-- **Scooby Cookies:** Custom food that grants **Resistance VI** for 10 seconds.
-- **Player Skin System:** Entities can render as player skins using `LibsDisguises`.
+- **Shaggy NPC:** A Wandering Trader replacement with custom AI and unique trades.
+- **Excalibur Sword:** Rare legendary trade granting **Strength III**.
+- **Scooby Cookies:** Custom food providing **Resistance VI** for 10 seconds.
 
-## Configuration
-File: `plugins/MultiverseCreatures/config.yml`
+---
 
+## 🛠️ Commands
+
+All plugin interactions are handled via the `/msc` command (**Permission:** `msc.admin`).
+
+| Command | Description |
+|---|---|
+| `/msc spawn <shaggy/dragon>` | Spawns a custom themed entity. |
+| `/msc reload` | Reloads `biomes.yml` and re-initializes world generators. |
+| `/msc check` | Performs a system diagnostic (Registry audit & World audit). |
+| `/msc damage <amount>` | Applies damage to the nearest custom dragon (for testing). |
+| `/msc ability <name>` | Forces the dragon to perform a specific ability. |
+| `/msc phase <color>` | Forces a specific boss phase color. |
+| `/msc chests` | Spawns reward chests behind the exit portal. |
+
+---
+
+## ⚙️ Configuration
+
+The plugin uses two main configuration files:
+
+1. **`config.yml`**: General settings, including the entity skin system.
+2. **`biomes.yml`**: Detailed biome definitions including terrain altitude, flora, and resource percentage.
+
+### Example Biome entry in `biomes.yml`:
 ```yaml
-skins:
-  enabled: false
-  source: fixed                # fixed | nearest-player | random-online-player | entity-name
-  fixed-name: Notch
-  nearest-player-max-distance: 64.0
+abyssal_plains:
+  display_name: "§1Abyssal Plains"
+  base_biome: "DEEP_OCEAN"
+  water_color: 16711904
+  terrain:
+    base_height: 32
+    amplitude: 12
+  resources:
+    ores:
+      - material: DIAMOND_ORE
+        chance: 0.01
 ```
 
-## Requirements
-- **Minecraft Server:** Paper/Spigot 1.20.1 - 1.20.6
-- **Java:** 21+
-- **Optional:** `LibsDisguises` (required for player skin rendering - **Not compatible with 1.20.1**)
+---
 
-## Build
+## 🚀 Requirements
+
+- **Server:** Paper or Spigot **1.21.1+**
+- **Java:** **21** or higher.
+- **Optional Dependencies:**
+  - `LibsDisguises`: Required for custom player skin rendering on entities.
+
+## 🔨 Build
+
+To build the project from source using Maven:
+
 ```bash
 mvn clean package -DskipTests
 ```
-Output jar: `target/MultiverseCreatures-v1.0.jar`
+The output jar will be located in the `target/` directory as `MultiverseCreatures-v5.0.DEV.jar`.
+

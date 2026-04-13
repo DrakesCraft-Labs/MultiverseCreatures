@@ -51,15 +51,15 @@ public class BiomeDisplayHandler extends BukkitRunnable {
         for (Player player : Bukkit.getOnlinePlayers()) {
             org.bukkit.generator.ChunkGenerator gen = player.getWorld().getGenerator();
             if (gen instanceof com.Chagui68.worldgen.MSCTerraGenerator mscGen) {
-                com.Chagui68.worldgen.MSCBiomeProvider provider = (com.Chagui68.worldgen.MSCBiomeProvider) mscGen.getDefaultBiomeProvider(player.getWorld());
+                com.Chagui68.biome.BiomeProvider provider = mscGen.getInternalBiomeProvider();
                 if (provider != null) {
                     int x = player.getLocation().getBlockX();
                     int y = player.getLocation().getBlockY();
                     int z = player.getLocation().getBlockZ();
-                    String thematicId = provider.getThematicId(x, y, z);
+                    com.Chagui68.biome.BiomeConfig biomeConfig = provider.getBiome(x, y, z, player.getWorld().getSeed());
                     
-                    if (displayNames.containsKey(thematicId)) {
-                        String name = displayNames.get(thematicId);
+                    if (biomeConfig != null && displayNames.containsKey(biomeConfig.getId())) {
+                        String name = displayNames.get(biomeConfig.getId());
                         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§7Currently in: " + name));
                     }
                 }

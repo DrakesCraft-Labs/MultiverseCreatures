@@ -26,11 +26,6 @@ import java.util.stream.Collectors;
 
 import com.Chagui68.entities.MobHandler;
 import com.Chagui68.entities.dragon.DragonCombatHandler;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
-import org.bukkit.entity.EnderDragon;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
 
 public class MSCCommand implements CommandExecutor, TabCompleter {
 
@@ -68,7 +63,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             case "ability":
                 handleAbility(sender, args);
                 break;
-            case "chests":
+                case "chests":
                 if (sender instanceof Player) {
                     dragonCombatHandler.spawnRewardChests(((Player) sender).getWorld());
                     sender.sendMessage(ChatColor.GREEN + "Spawned reward chests for testing.");

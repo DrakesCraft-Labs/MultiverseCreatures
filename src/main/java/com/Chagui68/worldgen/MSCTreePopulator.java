@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Random;
 
+
+
 public class MSCTreePopulator extends BlockPopulator {
     private final MultiverseCreatures plugin;
     private final MSCTerraGenerator generator;
@@ -22,66 +24,108 @@ public class MSCTreePopulator extends BlockPopulator {
 
     @Override
     public void populate(@NotNull WorldInfo worldInfo, @NotNull Random random, int chunkX, int chunkZ, @NotNull LimitedRegion limitedRegion) {
-        MSCBiomeProvider biomeProvider = generator.getBiomeProvider();
+        // Get the internal biome provider (not the Bukkit adapter)
+        com.Chagui68.biome.BiomeProvider biomeProvider = generator.getInternalBiomeProvider();
         if (biomeProvider == null) return;
 
-        // Number of attempts to place a tree in this chunk
-        int attempts = 4 + random.nextInt(4);
+        // Number of attempts to place a tree in this chunk.
+        // Scaled by per-biome `treeRate` (configured in biomes.yml). We sample the center of the chunk
+        // to decide density for this chunk.
+        int baseAttempts = 6 + random.nextInt(6);
+        int centerX = (chunkX << 4) + 8;
+        int centerZ = (chunkZ << 4) + 8;
+        com.Chagui68.biome.BiomeConfig centerBiome = biomeProvider.getBiome(centerX, 64, centerZ, worldInfo.getSeed());
+        double treeRate = centerBiome != null ? centerBiome.getTreeRate() : 1.0;
+        int attempts = Math.max(0, (int) Math.round(baseAttempts * treeRate));
 
         for (int i = 0; i < attempts; i++) {
             int x = (chunkX << 4) + random.nextInt(16);
             int z = (chunkZ << 4) + random.nextInt(16);
-            
-            int y = limitedRegion.getHighestBlockYAt(x, z);
-            if (y < worldInfo.getMinHeight() || y > 150) continue;
 
-            Material base = limitedRegion.getType(x, y, z);
-            if (base != Material.GRASS_BLOCK && base != Material.DIRT && base != Material.MOSS_BLOCK) continue;
-
-            String thematicId = biomeProvider.getThematicId(x, y, z);
-            List<MSCTerraGenerator.TreeDefinition> trees = generator.getTrees(thematicId);
-            
-            if (trees != null && !trees.isEmpty()) {
-                for (MSCTerraGenerator.TreeDefinition tree : trees) {
-                    if (random.nextDouble() < tree.chance) {
-                        generateTree(limitedRegion, x, y + 1, z, tree.type, random);
-                        break; // Only one tree per spot
-                    }
+            // Find the surface manually instead of using getHighestBlockYAt
+            int y = -1;
+            for (int checkY = worldInfo.getMaxHeight() - 1; checkY >= worldInfo.getMinHeight(); checkY--) {
+                Material mat = limitedRegion.getType(x, checkY, z);
+                if (mat == Material.GRASS_BLOCK || mat == Material.DIRT || mat == Material.MOSS_BLOCK || mat == Material.COARSE_DIRT || mat == Material.PODZOL) {
+                    y = checkY;
+                    break;
                 }
             }
+            
+            if (y < worldInfo.getMinHeight() || y > 255) continue;
+
+            // Check base block for trees (allow a few more ground types)
+            Material base = limitedRegion.getType(x, y, z);
+            if (base != Material.GRASS_BLOCK && base != Material.DIRT && base != Material.MOSS_BLOCK
+                && base != Material.COARSE_DIRT && base != Material.PODZOL) continue;
+
+            // Check that we have space above for the tree (at least 5 blocks of air)
+            boolean hasSpace = true;
+            int requiredSpace = 5;
+            for (int checkY = y + 1; checkY <= Math.min(y + requiredSpace, worldInfo.getMaxHeight() - 1); checkY++) {
+                Material blockAbove = limitedRegion.getType(x, checkY, z);
+                if (!blockAbove.isAir()) {
+                    hasSpace = false;
+                    break;
+                }
+            }
+            if (!hasSpace) continue;
+
+                // Get biome and trees from it
+                com.Chagui68.biome.BiomeConfig biomeConfig = biomeProvider.getBiome(x, y, z, worldInfo.getSeed());
+                if (biomeConfig == null) continue;
+
+                List<com.Chagui68.biome.BiomeConfig.TreeDefinition> trees = biomeConfig.getTrees();
+
+                if (trees != null && !trees.isEmpty()) {
+                    // Try each tree type with configured chances
+                    for (com.Chagui68.biome.BiomeConfig.TreeDefinition tree : trees) {
+                        if (random.nextDouble() < tree.chance) {
+                            boolean treeGenerated = false;
+                            if (tree.isCustom && tree.customId != null) {
+                                treeGenerated = CustomTreeRegistry.generate(tree.customId, limitedRegion, x, y + 1, z, random);
+                            } else {
+                                treeGenerated = generateTree(limitedRegion, x, y + 1, z, tree.type, random);
+                            }
+                            if (treeGenerated) break; // Only one tree per spot
+                        }
+                    }
+                }
         }
     }
 
-    private void generateTree(LimitedRegion region, int x, int y, int z, TreeType type, Random random) {
+    private boolean generateTree(LimitedRegion region, int x, int y, int z, TreeType type, Random random) {
         switch (type) {
             case REDWOOD:
             case TALL_REDWOOD:
-                spawnSpruce(region, x, y, z, random);
-                break;
+                return spawnSpruce(region, x, y, z, random);
             case TREE:
             case BIG_TREE:
-                spawnOak(region, x, y, z, random);
-                break;
+                return spawnOak(region, x, y, z, random);
             case BIRCH:
             case TALL_BIRCH:
-                spawnBirch(region, x, y, z, random);
-                break;
-            case DARK_OAK:
-                spawnDarkOak(region, x, y, z, random);
-                break;
+                return spawnBirch(region, x, y, z, random);
+            case ACACIA:
+                return spawnOak(region, x, y, z, random); // Fallback to oak
             default:
-                spawnOak(region, x, y, z, random);
-                break;
+                return spawnOak(region, x, y, z, random);
         }
     }
 
-    private void spawnOak(LimitedRegion region, int x, int y, int z, Random random) {
+    private boolean spawnOak(LimitedRegion region, int x, int y, int z, Random random) {
         int height = 4 + random.nextInt(3);
-        // Trunk
+        
+        // Verify we can place the trunk
+        for (int i = 0; i < height; i++) {
+            if (!region.isInRegion(x, y + i, z)) return false;
+        }
+        
+        // Place trunk
         for (int i = 0; i < height; i++) {
             setLog(region, x, y + i, z, Material.OAK_LOG);
         }
-        // Leaves
+        
+        // Place leaves
         for (int ly = -2; ly <= 1; ly++) {
             int radius = (ly > -1) ? 1 : 2;
             for (int lx = -radius; lx <= radius; lx++) {
@@ -91,10 +135,16 @@ public class MSCTreePopulator extends BlockPopulator {
                 }
             }
         }
+        return true;
     }
 
-    private void spawnBirch(LimitedRegion region, int x, int y, int z, Random random) {
+    private boolean spawnBirch(LimitedRegion region, int x, int y, int z, Random random) {
         int height = 5 + random.nextInt(3);
+        
+        for (int i = 0; i < height; i++) {
+            if (!region.isInRegion(x, y + i, z)) return false;
+        }
+        
         for (int i = 0; i < height; i++) {
             setLog(region, x, y + i, z, Material.BIRCH_LOG);
         }
@@ -107,10 +157,16 @@ public class MSCTreePopulator extends BlockPopulator {
                 }
             }
         }
+        return true;
     }
 
-    private void spawnSpruce(LimitedRegion region, int x, int y, int z, Random random) {
+    private boolean spawnSpruce(LimitedRegion region, int x, int y, int z, Random random) {
         int height = 6 + random.nextInt(4);
+        
+        for (int i = 0; i < height; i++) {
+            if (!region.isInRegion(x, y + i, z)) return false;
+        }
+        
         for (int i = 0; i < height; i++) {
             setLog(region, x, y + i, z, Material.SPRUCE_LOG);
         }
@@ -125,26 +181,10 @@ public class MSCTreePopulator extends BlockPopulator {
                 }
             }
         }
+        return true;
     }
 
-    private void spawnDarkOak(LimitedRegion region, int x, int y, int z, Random random) {
-        // Simple 2x2 trunk approximation or just 1x1 with bigger canopy
-        int height = 6 + random.nextInt(2);
-        for (int i = 0; i < height; i++) {
-            setLog(region, x, y + i, z, Material.DARK_OAK_LOG);
-            setLog(region, x + 1, y + i, z, Material.DARK_OAK_LOG);
-            setLog(region, x, y + i, z + 1, Material.DARK_OAK_LOG);
-            setLog(region, x + 1, y + i, z + 1, Material.DARK_OAK_LOG);
-        }
-        for (int ly = -1; ly <= 2; ly++) {
-            int radius = 3 - ly / 2;
-            for (int lx = -radius; lx <= radius + 1; lx++) {
-                for (int lz = -radius; lz <= radius + 1; lz++) {
-                    setLeaves(region, x + lx, y + height + ly, z + lz, Material.DARK_OAK_LEAVES);
-                }
-            }
-        }
-    }
+
 
     private void setLog(LimitedRegion region, int x, int y, int z, Material log) {
         if (region.isInRegion(x, y, z)) {

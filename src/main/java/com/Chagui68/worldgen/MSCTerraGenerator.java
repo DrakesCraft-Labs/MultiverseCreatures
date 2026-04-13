@@ -1,10 +1,17 @@
 package com.Chagui68.worldgen;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.biome.BiomeConfig;
+import com.Chagui68.biome.BiomeProvider;
+import com.Chagui68.config.ConfigPack;
+import com.Chagui68.worldgen.MSCBiomeProvider;
+import com.Chagui68.worldgen.MSCBiomeProviderCompat;
+import com.Chagui68.worldgen.NoiseSampler;
 import org.bukkit.Material;
+import org.bukkit.TreeType;
 import org.bukkit.World;
-import org.bukkit.block.Biome;
 import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.generator.ChunkGenerator.ChunkData;
 import org.bukkit.generator.WorldInfo;
 import org.bukkit.generator.BlockPopulator;
 import org.jetbrains.annotations.NotNull;
@@ -12,216 +19,37 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Random;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A Bukkit ChunkGenerator that uses 3D noise and slant calculations.
- * Includes Abyssal, Cliffs, and Valley logic, plus custom caves and resources.
+ * Main world generator implementing a Terra-style heightmap fill,
+ * ore embedding checks, sparse flora, ponds and simple structure placement.
  */
 public class MSCTerraGenerator extends ChunkGenerator {
+
     private final MultiverseCreatures plugin;
-    private NoiseSampler sampler;
-    private SlantCalculator slantCalculator;
-    private MSCBiomeProvider biomeProvider;
-    private long lastSeed = -1;
-    private boolean resourcesLoaded = false;
+    private final ConfigPack configPack;
+    private com.Chagui68.biome.BiomeProvider biomeProvider;
+    private NoiseSampler noiseSampler;
+    private MSCBiomeProvider compatBiomeProvider;
 
-    private final Map<String, List<OreDefinition>> biomeResources = new ConcurrentHashMap<>();
-    private final Map<String, Double> spawnerChances = new ConcurrentHashMap<>();
-    private final Map<String, List<FloraDefinition>> biomeFlora = new ConcurrentHashMap<>();
-    private final Map<String, List<TreeDefinition>> biomeTrees = new ConcurrentHashMap<>();
-    private final Map<String, TerrainProperties> biomeTerrain = new ConcurrentHashMap<>();
-
-    public MSCTerraGenerator(MultiverseCreatures plugin) {
+    public MSCTerraGenerator(MultiverseCreatures plugin, ConfigPack configPack) {
         this.plugin = plugin;
-    }
-
-    static class TreeDefinition {
-        org.bukkit.TreeType type;
-        double chance;
-        TreeDefinition(org.bukkit.TreeType t, double c) { this.type = t; this.chance = c; }
-    }
-
-    static class OreDefinition {
-        Material material;
-        double chance;
-        OreDefinition(Material m, double c) { this.material = m; this.chance = c; }
-    }
-
-    static class FloraLayer {
-        Material material;
-        int count;
-        FloraLayer(Material m, int c) { this.material = m; this.count = c; }
-    }
-
-    static class FloraDefinition {
-        double chance;
-        List<FloraLayer> layers;
-        FloraDefinition(double c, List<FloraLayer> l) { this.chance = c; this.layers = l; }
-    }
-
-    static class TerrainProperties {
-        double baseHeight;
-        double amplitude;
-        TerrainProperties(double bh, double amp) { this.baseHeight = bh; this.amplitude = amp; }
+        this.configPack = configPack;
     }
 
     private void checkInit(long seed) {
-        if (sampler == null || seed != lastSeed) {
-            this.sampler = new NoiseSampler(seed, 0.005f);
-            this.slantCalculator = new SlantCalculator(sampler);
-            this.biomeProvider = new MSCBiomeProvider(plugin, sampler);
-            this.lastSeed = seed;
-            this.resourcesLoaded = false; // Trigger reload for new world/seed
+        if (this.noiseSampler == null) {
+            this.noiseSampler = new NoiseSampler(seed, 0.02f);
         }
-        if (!resourcesLoaded) {
-            synchronized (this) {
-                if (!resourcesLoaded) {
-                    loadResources();
-                    resourcesLoaded = true;
-                }
-            }
+        if (this.configPack.getBiomeProvider() == null) {
+            this.configPack.initializeBiomeProvider(this.noiseSampler);
         }
-    }
-
-    public void reload() {
-        this.resourcesLoaded = false;
-    }
-
-    private void loadResources() {
-        try {
-            if (plugin == null) return;
-            
-            java.io.File file = new java.io.File(plugin.getDataFolder(), "biomes.yml");
-            org.bukkit.Bukkit.getLogger().info("[MSC] Loading biomes from: " + file.getAbsolutePath());
-            if (!file.exists()) {
-                org.bukkit.Bukkit.getLogger().warning("[MSC] biomes.yml not found at " + file.getAbsolutePath() + ". Creating default.");
-                plugin.saveResource("biomes.yml", true);
-            }
-
-            biomeResources.clear();
-            spawnerChances.clear();
-            biomeFlora.clear();
-            biomeTrees.clear();
-            biomeTerrain.clear();
-
-            org.bukkit.configuration.file.YamlConfiguration config = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
-            org.bukkit.configuration.ConfigurationSection biomes = config.getConfigurationSection("biomes");
-            if (biomes != null) {
-                for (String key : biomes.getKeys(false)) {
-                    String thematicId = key;
-                    org.bukkit.configuration.ConfigurationSection section = biomes.getConfigurationSection(key);
-                    if (section == null) {
-                        org.bukkit.Bukkit.getLogger().warning("[MSC] Biome section " + key + " is null!");
-                        continue;
-                    }
-                    
-                    // DEBUG: Log the keys in this section
-                    org.bukkit.Bukkit.getLogger().info("[MSC] Section '" + thematicId + "' keys: " + section.getKeys(false));
-
-                    // Load Resources/Ores
-                    org.bukkit.configuration.ConfigurationSection res = section.getConfigurationSection("resources");
-                    if (res != null) {
-                        spawnerChances.put(thematicId, res.getDouble("spawner_chance", 0.0));
-                        List<OreDefinition> ores = new ArrayList<>();
-                        List<?> oreList = res.getList("ores");
-                        if (oreList != null) {
-                            for (Object obj : oreList) {
-                                if (obj instanceof Map<?, ?> map) {
-                                    try {
-                                        Object matObj = map.get("material");
-                                        Object chanceObj = map.get("chance");
-                                        if (matObj != null && chanceObj != null) {
-                                            Material mat = Material.valueOf(matObj.toString().toUpperCase());
-                                            double chance = ((Number) chanceObj).doubleValue();
-                                            ores.add(new OreDefinition(mat, chance));
-                                        }
-                                    } catch (Exception e) {
-                                        org.bukkit.Bukkit.getLogger().warning("[MSC] Failed to parse ore in " + thematicId + ": " + e.getMessage());
-                                    }
-                                }
-                            }
-                        }
-                        biomeResources.put(thematicId, ores);
-                    } else {
-                        org.bukkit.Bukkit.getLogger().warning("[MSC] No 'resources' section for " + thematicId);
-                    }
-
-                    // Load Terrain
-                    org.bukkit.configuration.ConfigurationSection terrain = section.getConfigurationSection("terrain");
-                    if (terrain != null) {
-                        double bh = terrain.getDouble("base_height", 62.0);
-                        double amp = terrain.getDouble("amplitude", 48.0);
-                        biomeTerrain.put(thematicId, new TerrainProperties(bh, amp));
-                    }
-
-                    // Load Flora
-                    List<?> floraList = section.getList("flora");
-                    int floraCount = 0;
-                    if (floraList != null && !floraList.isEmpty()) {
-                        List<FloraDefinition> floras = new ArrayList<>();
-                        for (Object obj : floraList) {
-                            if (obj instanceof Map<?, ?> floraMap) {
-                                try {
-                                    Object chanceObj = floraMap.get("chance");
-                                    if (chanceObj == null) continue;
-                                    double chance = ((Number) chanceObj).doubleValue();
-                                    
-                                    List<?> rawLayers = (List<?>) floraMap.get("layers");
-                                    if (rawLayers == null) continue;
-                                    
-                                    List<FloraLayer> layers = new ArrayList<>();
-                                    for (Object layerObj : rawLayers) {
-                                        if (layerObj instanceof Map<?, ?> layerMap) {
-                                            Material mat = Material.valueOf(layerMap.get("material").toString().toUpperCase());
-                                            int count = ((Number) layerMap.get("count")).intValue();
-                                            layers.add(new FloraLayer(mat, count));
-                                        }
-                                    }
-                                    if (!layers.isEmpty()) {
-                                        floras.add(new FloraDefinition(chance, layers));
-                                        floraCount++;
-                                    }
-                                } catch (Exception e) {
-                                    org.bukkit.Bukkit.getLogger().warning("[MSC] Failed to parse flora in " + thematicId + ": " + e.getMessage());
-                                }
-                            }
-                        }
-                        biomeFlora.put(thematicId, floras);
-                    }
-
-                    // Load Trees
-                    List<?> treeList = section.getList("trees");
-                    if (treeList != null && !treeList.isEmpty()) {
-                        List<TreeDefinition> trees = new ArrayList<>();
-                        for (Object obj : treeList) {
-                            if (obj instanceof Map<?, ?> treeMap) {
-                                try {
-                                    org.bukkit.TreeType type = org.bukkit.TreeType.valueOf(treeMap.get("type").toString().toUpperCase());
-                                    double chance = ((Number) treeMap.get("chance")).doubleValue();
-                                    trees.add(new TreeDefinition(type, chance));
-                                } catch (Exception e) {
-                                    org.bukkit.Bukkit.getLogger().warning("[MSC] Failed to parse tree in " + thematicId + ": " + e.getMessage());
-                                }
-                            }
-                        }
-                        biomeTrees.put(thematicId, trees);
-                    }
-                    org.bukkit.Bukkit.getLogger().info("[MSC] Loaded Biome: " + thematicId + " (Ores: " + (biomeResources.get(thematicId) != null ? biomeResources.get(thematicId).size() : 0) + ", Flora: " + floraCount + ", Trees: " + (biomeTrees.get(thematicId) != null ? biomeTrees.get(thematicId).size() : 0) + ")");
-                }
-            }
-        } catch (Exception e) {
-            org.bukkit.Bukkit.getLogger().warning("[MSC] Failed to load resources/flora: " + e.getMessage());
-            e.printStackTrace();
+        if (this.biomeProvider == null) {
+            this.biomeProvider = this.configPack.getBiomeProvider();
         }
-    }
-
-    @Override
-    public org.bukkit.generator.BiomeProvider getDefaultBiomeProvider(@NotNull WorldInfo worldInfo) {
-        checkInit(worldInfo.getSeed());
-        return biomeProvider;
+        if (this.compatBiomeProvider == null) {
+            this.compatBiomeProvider = new MSCBiomeProviderCompat(this.biomeProvider, this.plugin, this.noiseSampler);
+        }
     }
 
     @Override
@@ -230,191 +58,196 @@ public class MSCTerraGenerator extends ChunkGenerator {
 
         int xOrig = chunkX << 4;
         int zOrig = chunkZ << 4;
+        int minY = worldInfo.getMinHeight();
+        int maxY = worldInfo.getMaxHeight();
 
-                for (int x = 0; x < 16; x++) {
+        // Heightmap-based fill: compute a target surface height per column and fill below it.
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                int absX = xOrig + x;
+                int absZ = zOrig + z;
+
+                BiomeConfig biome = biomeProvider.getBiome(absX, 64, absZ, worldInfo.getSeed());
+                if (biome == null) continue;
+
+                double avgBaseHeight = 0;
+                double avgAmplitude = 0;
+                int count = 0;
+                for (int dx = -4; dx <= 4; dx += 4) {
+                    for (int dz = -4; dz <= 4; dz += 4) {
+                        BiomeConfig b = biomeProvider.getBiome(absX + dx, 64, absZ + dz, worldInfo.getSeed());
+                        if (b != null) {
+                            avgBaseHeight += b.getBaseHeight();
+                            avgAmplitude += b.getAmplitude();
+                            count++;
+                        }
+                    }
+                }
+                if (count > 0) {
+                    avgBaseHeight /= count;
+                    avgAmplitude /= count;
+                } else {
+                    avgBaseHeight = biome.getBaseHeight();
+                    avgAmplitude = biome.getAmplitude();
+                }
+
+                double baseNoise = noiseSampler.sample(absX, avgBaseHeight, absZ);
+                double jitter = noiseSampler.sampleCave(absX, avgBaseHeight, absZ) * 0.08;
+                double columnNoise = baseNoise + jitter;
+
+                int targetHeight = (int) Math.round(avgBaseHeight + columnNoise * avgAmplitude);
+                targetHeight = Math.max(minY, Math.min(maxY - 1, targetHeight));
+
+                for (int y = minY; y < maxY; y++) {
+                    if (y < minY + 3) {
+                        chunkData.setBlock(x, y, z, Material.BEDROCK);
+                        continue;
+                    }
+
+                    if (y > targetHeight) {
+                        chunkData.setBlock(x, y, z, Material.AIR);
+                        continue;
+                    }
+
+
+
+                    Material block = getBlockFromBiomePalette(biome, y, targetHeight, x, z, absX, absZ, random, worldInfo, chunkData);
+                    chunkData.setBlock(x, y, z, block);
+                }
+
+                if (biome.getId().equals("abyssal_plains")) {
+                    for (int y = minY; y <= Math.min(62, maxY - 1); y++) {
+                        if (y < maxY) {
+                            chunkData.setBlock(x, y, z, Material.WATER);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Get block from biome palette with embedded ore checks.
+     */
+    private Material getBlockFromBiomePalette(BiomeConfig biome, int y, int targetHeight, int localX, int localZ, int absX, int absZ,
+                                             Random random, WorldInfo worldInfo, ChunkData chunkData) {
+        List<Material> palette = biome.getPalette();
+
+        Material block;
+        if (palette.isEmpty()) {
+            if (biome.getId().equals("abyssal_plains")) {
+                block = y < 5 ? Material.DEEPSLATE : Material.BLACKSTONE;
+            } else if (biome.getId().equals("cliffs")) {
+                block = y > 150 ? Material.SNOW_BLOCK : (y <= 0 ? Material.DEEPSLATE : Material.STONE);
+            } else {
+                block = y > 62 ? Material.DIRT : (y <= 0 ? Material.DEEPSLATE : Material.STONE);
+            }
+        } else {
+            int depth = targetHeight - y;
+            if (depth < 0) depth = 0;
+            int idx = Math.max(0, Math.min(depth, palette.size() - 1));
+            block = palette.get(idx);
+        }
+
+
+
+        if (y <= 0) {
+            if (block == Material.STONE) return Material.DEEPSLATE;
+            if (block == Material.DIRT && y < -10) return Material.DEEPSLATE;
+        }
+
+        return block;
+    }
+
+    @Override
+    public void generateSurface(@NotNull WorldInfo worldInfo, @NotNull Random random,
+                               int chunkX, int chunkZ, @NotNull ChunkData chunkData) {
+        checkInit(worldInfo.getSeed());
+
+        int xOrig = chunkX << 4;
+        int zOrig = chunkZ << 4;
+
+        boolean pondPlanned = false;
+        int pondLocalX = -1;
+        int pondLocalZ = -1;
+        boolean structurePlanned = false;
+        int structLocalX = -1;
+        int structLocalZ = -1;
+
+        com.Chagui68.biome.BiomeConfig centerBiome = biomeProvider.getBiome(xOrig + 8, 64, zOrig + 8, worldInfo.getSeed());
+        if (centerBiome != null && (centerBiome.getId().equals("valley") || centerBiome.getId().toLowerCase().contains("meadow"))) {
+            if (random.nextDouble() < 0.006) {
+                structurePlanned = true;
+                structLocalX = random.nextInt(16);
+                structLocalZ = random.nextInt(16);
+            }
+        }
+
+        for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int absX = xOrig + x;
                 int absZ = zOrig + z;
 
                 for (int y = worldInfo.getMaxHeight() - 1; y >= worldInfo.getMinHeight(); y--) {
-                    if (y < worldInfo.getMinHeight() + 3) {
-                        chunkData.setBlock(x, y, z, Material.BEDROCK);
-                        continue;
-                    }
-
-                    // Sync noise scale (0.02) with MSCBiomeProvider for more detail
-                    double noise = sampler.sample(absX * 0.02, y * 0.02, absZ * 0.02);
-                    
-                    String thematicId = biomeProvider.getThematicId(absX, y, absZ);
-                    TerrainProperties props = biomeTerrain.getOrDefault(thematicId, new TerrainProperties(62.0, 48.0));
-
-                    // Vertical bias: biome-specific terrain parameters
-                    double heightGradient = (double) (y - props.baseHeight) / props.amplitude; 
-                    double density = noise - heightGradient;
-
-                    if (density > 0) {
-                        double slant = slantCalculator.getSlant(absX, y, absZ);
-                        
-                        // --- CAVE SYSTEM ---
-                        double caveNoise = sampler.sampleCave(absX, y, absZ);
-                        if (y < 60 && caveNoise > 0.6) {
-                            chunkData.setBlock(x, y, z, Material.AIR);
-                            
-                            // Potential Spawner on cave floor
-                            double sChance = spawnerChances.getOrDefault(thematicId, 0.0);
-                            if (sChance > 0 && random.nextDouble() < sChance) {
-                                if (y > worldInfo.getMinHeight() && isSolidAt(worldInfo, absX, y - 1, absZ)) {
-                                    chunkData.setBlock(x, y, z, Material.SPAWNER);
-                                }
-                            }
-                            continue; 
-                        }
-
-                        // --- ORE PLACEMENT ---
-                        List<OreDefinition> ores = biomeResources.get(thematicId);
-                        Material blockType = null;
-                        
-                        // Only roll if embedded: solid block above (from chunkData) and solid block below (from density)
-                        Material above = (y + 1 < worldInfo.getMaxHeight()) ? chunkData.getType(x, y + 1, z) : Material.AIR;
-                        boolean solidAbove = !above.isAir() && above != Material.WATER;
-                        
-                        if (ores != null && solidAbove && isSolidAt(worldInfo, absX, y - 1, absZ)) { 
-                            for (OreDefinition ore : ores) {
-                                // Apply a 0.2 multiplier to the chance to prevent oversaturation given we roll per block
-                                if (random.nextDouble() < (ore.chance * 0.2)) {
-                                    blockType = ore.material;
-                                    break;
-                                }
-                            }
-                        }
-
-                        // --- THEMATIC BLOCK PLACEMENT ---
-                        if (thematicId.equals("abyssal_plains") || (y < 8)) {
-                            if (blockType == null) {
-                                blockType = (slant > 0.85) ? Material.BLACKSTONE : Material.DEEPSLATE;
-                            } else if (!blockType.name().startsWith("DEEPSLATE_")) {
-                                try {
-                                    Material dsVersion = Material.valueOf("DEEPSLATE_" + blockType.name());
-                                    blockType = dsVersion;
-                                } catch (Exception ignored) {}
-                            }
-                            chunkData.setBlock(x, y, z, blockType);
-                        } else if (thematicId.equals("cliffs")) {
-                            chunkData.setBlock(x, y, z, (blockType != null) ? blockType : Material.STONE);
-                        } else if (thematicId.equals("valley")) {
-                            chunkData.setBlock(x, y, z, (blockType != null) ? blockType : (slant > 0.75 ? Material.STONE : Material.DIRT));
-                        } else {
-                            if (y > 100) {
-                                chunkData.setBlock(x, y, z, (blockType != null) ? blockType : Material.SNOW_BLOCK);
-                            } else {
-                                chunkData.setBlock(x, y, z, (blockType != null) ? blockType : (slant > 0.75 ? Material.STONE : Material.DIRT));
-                            }
-                        }
-
-                        // --- VEIN CLUSTERING (ONE-STEP DOWN) ---
-                        if (blockType != null && blockType.name().contains("ORE") && y - 1 > worldInfo.getMinHeight()) {
-                            if (random.nextDouble() < 0.4) { // Reduced chance for extra blocks
-                                if (isSolidAt(worldInfo, absX, y - 1, absZ)) {
-                                    chunkData.setBlock(x, y - 1, z, blockType);
-                                }
-                            }
-                        }
-                    } else if (y < 62 && thematicId.equals("abyssal_plains")) {
-                        // Only fill water in abyssal zones, dry biomes (valley/cliffs) stay air
-                        chunkData.setBlock(x, y, z, Material.WATER);
-                    }
-                }
-            }
-        }
-    }
-
-    private boolean isSolidAt(WorldInfo worldInfo, int absX, int y, int absZ) {
-        if (y < worldInfo.getMinHeight() || y >= worldInfo.getMaxHeight()) return false;
-        
-        String thematicId = biomeProvider.getThematicId(absX, y, absZ);
-        TerrainProperties props = biomeTerrain.getOrDefault(thematicId, new TerrainProperties(62.0, 48.0));
-        
-        // Use the same noise parameters as generateNoise
-        double noise = sampler.sample(absX * 0.02, y * 0.02, absZ * 0.02);
-        double heightGradient = (double) (y - props.baseHeight) / props.amplitude;
-        double density = noise - heightGradient;
-        
-        if (density <= 0) return false;
-        
-        // Check for cave at this location
-        double caveNoise = sampler.sampleCave(absX, y, absZ);
-        if (y < 60 && caveNoise > 0.6) return false;
-        
-        return true;
-    }
-
-    @Override
-    public void generateSurface(@NotNull WorldInfo worldInfo, @NotNull Random random, int chunkX, int chunkZ, @NotNull ChunkData chunkData) {
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                for (int y = worldInfo.getMaxHeight() - 1; y >= worldInfo.getMinHeight(); y--) {
                     Material type = chunkData.getType(x, y, z);
-                    if (type == Material.GRASS_BLOCK || type == Material.DIRT) {
-                        if (y + 1 < worldInfo.getMaxHeight() && chunkData.getType(x, y + 1, z).isAir()) {
-                             if (type == Material.DIRT) {
-                                chunkData.setBlock(x, y, z, Material.GRASS_BLOCK);
-                             }
-                             // Spawn Flora
-                             String thematicId = biomeProvider.getThematicId(chunkX << 4 | x, y, chunkZ << 4 | z);
-                             spawnFlora(worldInfo, random, x, y + 1, z, chunkData, thematicId);
-                        }
-                        break;
-                    } else if (type == Material.DEEPSLATE) {
-                        if (y + 1 < worldInfo.getMaxHeight() && chunkData.getType(x, y + 1, z).isAir()) {
-                             if (random.nextDouble() < 0.1) {
-                                chunkData.setBlock(x, y, z, Material.MAGMA_BLOCK);
-                            } else {
-                                // Potential Abyssal Flora?
-                                String thematicId = biomeProvider.getThematicId(chunkX << 4 | x, y, chunkZ << 4 | z);
-                                spawnFlora(worldInfo, random, x, y + 1, z, chunkData, thematicId);
-                            }
-                        }
-                        break;
-                    } else if (type == Material.STONE) {
-                         break;
-                    }
-                }
-            }
-        }
-    }
 
-    private void spawnFlora(@NotNull WorldInfo worldInfo, @NotNull Random random, int x, int y, int z, @NotNull ChunkData chunkData, String thematicId) {
-        List<FloraDefinition> floras = biomeFlora.get(thematicId);
-        if (floras == null || floras.isEmpty()) return;
+                    if (type == Material.DIRT || type == Material.GRASS_BLOCK) {
+                        if (y + 1 < worldInfo.getMaxHeight() && chunkData.getType(x, y + 1, z).isAir()) {
+                            chunkData.setBlock(x, y, z, Material.GRASS_BLOCK);
 
-        for (FloraDefinition flora : floras) {
-            if (random.nextDouble() < flora.chance) {
-                int currentY = y;
-                for (FloraLayer layer : flora.layers) {
-                    for (int i = 0; i < layer.count; i++) {
-                        if (currentY < worldInfo.getMaxHeight()) {
-                            Material mat = layer.material;
-                            org.bukkit.block.data.BlockData data = org.bukkit.Bukkit.createBlockData(mat);
-                            
-                            if (data instanceof org.bukkit.block.data.Bisected bisected) {
-                                if (layer.count == 2) {
-                                    bisected.setHalf(i == 0 ? org.bukkit.block.data.Bisected.Half.BOTTOM : org.bukkit.block.data.Bisected.Half.TOP);
-                                } else {
-                                    // Fallback for single-layer bisected (usually shouldn't happen for tall plants)
-                                    bisected.setHalf(org.bukkit.block.data.Bisected.Half.BOTTOM);
+                            if (structurePlanned && x == structLocalX && z == structLocalZ) {
+                                if (CustomStructureRegistry.isRegistered("RUIN")) {
+                                    CustomStructureRegistry.generate("RUIN", chunkData, x, y + 1, z, random, worldInfo);
                                 }
-                                chunkData.setBlock(x, currentY, z, bisected);
                             } else {
-                                chunkData.setBlock(x, currentY, z, mat);
+                                BiomeConfig biome = biomeProvider.getBiome(absX, y, absZ, worldInfo.getSeed());
+                                if (biome != null) {
+                                    generateFlora(biome, chunkData, x, y + 1, z, random, worldInfo);
+                                }
                             }
-                            currentY++;
                         }
+                        break;
+                    } else if (type == Material.STONE || type == Material.DEEPSLATE) {
+                        break;
                     }
                 }
-                break; // Only spawn one flora type per block
             }
         }
     }
+
+    /**
+     * Generate flora at surface level
+     */
+    private void generateFlora(BiomeConfig biome, ChunkData chunkData, int x, int y, int z,
+                          Random random, WorldInfo worldInfo) {
+    List<BiomeConfig.FloraDefinition> floraList = biome.getFlora();
+    if (floraList == null || floraList.isEmpty()) return;
+
+    for (BiomeConfig.FloraDefinition flora : floraList) {
+        if (random.nextDouble() < flora.chance) {
+            int currentY = y;
+            int maxY = worldInfo.getMaxHeight();
+
+            for (BiomeConfig.FloraLayer layer : flora.layers) {
+                for (int i = 0; i < layer.count && currentY < maxY; i++) {
+                    Material mat = layer.material;
+                    org.bukkit.block.data.BlockData data = org.bukkit.Bukkit.createBlockData(mat);
+
+                    if (data instanceof org.bukkit.block.data.Bisected bisected) {
+                        bisected.setHalf(i == 0 ? org.bukkit.block.data.Bisected.Half.BOTTOM : org.bukkit.block.data.Bisected.Half.TOP);
+                        chunkData.setBlock(x, currentY, z, bisected);
+                    } else {
+                        chunkData.setBlock(x, currentY, z, mat);
+                    }
+                    currentY++;
+                }
+            }
+            break;
+        }
+    }
+}
+
+    // Pond generation migrated to MSCOrePopulator for cross-chunk support
 
     @Override
     public boolean shouldGenerateNoise() { return true; }
@@ -430,14 +263,59 @@ public class MSCTerraGenerator extends ChunkGenerator {
 
     @Override
     public @NotNull List<BlockPopulator> getDefaultPopulators(@NotNull World world) {
-        return List.of(new MSCTreePopulator(plugin, this));
+        return List.of(new MSCOrePopulator(plugin, this), new MSCTreePopulator(plugin, this));
     }
 
-    public List<TreeDefinition> getTrees(String thematicId) {
-        return biomeTrees.get(thematicId);
+    @Override
+    public org.bukkit.generator.BiomeProvider getDefaultBiomeProvider(@NotNull WorldInfo worldInfo) {
+        checkInit(worldInfo.getSeed());
+        return new MSCBiomeProviderAdapter(this.biomeProvider);
     }
-    
+
+    // Compatibility helpers
     public MSCBiomeProvider getBiomeProvider() {
-        return biomeProvider;
+        checkInit(0);
+        return compatBiomeProvider;
     }
+
+    public List<TreeDefinition> getTrees(String biomeId) {
+        BiomeConfig biome = configPack.getBiomeRegistry().getByID(biomeId).orElse(null);
+        if (biome == null) return new ArrayList<>();
+
+        List<TreeDefinition> trees = new ArrayList<>();
+        for (BiomeConfig.TreeDefinition treeDef : biome.getTrees()) {
+            if (treeDef.isCustom && treeDef.customId != null) {
+                trees.add(new TreeDefinition(treeDef.customId, treeDef.chance));
+            } else {
+                trees.add(new TreeDefinition(treeDef.type, treeDef.chance));
+            }
+        }
+        return trees;
+    }
+
+    public static class TreeDefinition {
+        public TreeType type;
+        public String customId;
+        public double chance;
+        public boolean isCustom;
+
+        public TreeDefinition(TreeType type, double chance) {
+            this.type = type;
+            this.customId = null;
+            this.chance = chance;
+            this.isCustom = false;
+        }
+
+        public TreeDefinition(String customId, double chance) {
+            this.type = null;
+            this.customId = customId;
+            this.chance = chance;
+            this.isCustom = true;
+        }
+    }
+
+    // Getters
+    public ConfigPack getConfigPack() { return configPack; }
+    public BiomeProvider getInternalBiomeProvider() { return biomeProvider; }
+    public NoiseSampler getNoiseSampler() { return noiseSampler; }
 }

@@ -1,13 +1,12 @@
 name: MultiverseCreatures
-version: '3.0.DEV'
+version: '1.2'
 main: com.Chagui68.MultiverseCreatures
 api-version: '1.21'
 load: STARTUP
 author: Chagui68
 description: A themed creatures and items plugin 
 website: https://github.com/Chagui68/MultiverseCreatures
-softdepend:
-  - LibsDisguises
+softdepend: []
 
 commands:
   msc:

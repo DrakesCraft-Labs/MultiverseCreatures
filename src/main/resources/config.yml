@@ -1,14 +1,2 @@
-# Enable player-skin disguises for themed mobs.
-# Requires LibsDisguises installed in the server.
-skins:
-  enabled: false
-
-  # fixed | nearest-player | random-online-player | entity-name
-  source: fixed
-
-  # Used when source is fixed, or as fallback when player-based sources fail.
-  fixed-name: Notch
-
-  # Max search radius for nearest-player mode.
-  nearest-player-max-distance: 64.0
+# MultiverseCreatures Configuration
 

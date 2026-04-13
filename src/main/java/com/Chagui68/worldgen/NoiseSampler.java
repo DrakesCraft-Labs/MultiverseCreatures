@@ -25,8 +25,13 @@ public class NoiseSampler {
     }
 
     public double sampleCave(double x, double y, double z) {
-        // Higher frequency for caves
-        return sampleInternal(caveEngine, x, y, z, frequency * 4.0f);
+        // Lower frequency for larger, more vanilla-like caves
+        return sampleInternal(caveEngine, x, y, z, frequency * 0.75f);
+    }
+
+    public boolean isCave(double x, double y, double z) {
+        // Determine whether this point should be carved as a cave
+        return Math.abs(sampleCave(x, y, z)) < 0.045; // 0.045 width gives nice round caves
     }
 
     private double sampleInternal(SimplexNoise e, double x, double y, double z, float freq) {

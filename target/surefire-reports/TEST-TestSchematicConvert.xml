@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="TestSchematicConvert" time="0.014" tests="0" errors="0" skipped="0" failures="0">
+  <properties>
+    <property name="java.specification.version" value="21"/>
+    <property name="sun.cpu.isalist" value="amd64"/>
+    <property name="sun.jnu.encoding" value="Cp1252"/>
+    <property name="java.class.path" value="C:\Users\danie\OneDrive\Documentos\Proyectos\MultiverseCreatures2\target\test-classes;C:\Users\danie\OneDrive\Documentos\Proyectos\MultiverseCreatures2\target\classes;C:\Users\danie\.m2\repository\org\spigotmc\spigot-api\1.21.11-R0.1-SNAPSHOT\spigot-api-1.21.11-R0.1-SNAPSHOT.jar;C:\Users\danie\.m2\repository\com\google\guava\guava\33.5.0-jre\guava-33.5.0-jre.jar;C:\Users\danie\.m2\repository\com\google\guava\failureaccess\1.0.3\failureaccess-1.0.3.jar;C:\Users\danie\.m2\repository\com\google\guava\listenablefuture\9999.0-empty-to-avoid-conflict-with-guava\listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;C:\Users\danie\.m2\repository\org\jspecify\jspecify\1.0.0\jspecify-1.0.0.jar;C:\Users\danie\.m2\repository\com\google\errorprone\error_prone_annotations\2.41.0\error_prone_annotations-2.41.0.jar;C:\Users\danie\.m2\repository\com\google\j2objc\j2objc-annotations\3.1\j2objc-annotations-3.1.jar;C:\Users\danie\.m2\repository\net\md-5\bungeecord-serializer\1.21-R0.4\bungeecord-serializer-1.21-R0.4.jar;C:\Users\danie\.m2\repository\net\md-5\bungeecord-chat\1.21-R0.4\bungeecord-chat-1.21-R0.4.jar;C:\Users\danie\.m2\repository\net\md-5\bungeecord-dialog\1.21-R0.4\bungeecord-dialog-1.21-R0.4.jar;C:\Users\danie\.m2\repository\org\yaml\snakeyaml\2.2\snakeyaml-2.2.jar;C:\Users\danie\.m2\repository\org\joml\joml\1.10.5\joml-1.10.5.jar;C:\Users\danie\.m2\repository\com\google\code\findbugs\jsr305\3.0.2\jsr305-3.0.2.jar;C:\Users\danie\.m2\repository\org\jetbrains\annotations\24.0.1\annotations-24.0.1.jar;C:\Users\danie\.m2\repository\com\google\code\gson\gson\2.10.1\gson-2.10.1.jar;"/>
+    <property name="java.vm.vendor" value="Microsoft"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="user.variant" value=""/>
+    <property name="java.vendor.url" value="https://www.microsoft.com"/>
+    <property name="user.timezone" value="America/Bogota"/>
+    <property name="os.name" value="Windows 11"/>
+    <property name="java.vm.specification.version" value="21"/>
+    <property name="user.country" value="CO"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.boot.library.path" value="C:\Users\danie\.jdks\ms-21.0.10\bin"/>
+    <property name="sun.java.command" value="C:\Users\danie\AppData\Local\Temp\surefire16066297142619047757\surefirebooter-20260413163410013_3.jar C:\Users\danie\AppData\Local\Temp\surefire16066297142619047757 2026-04-13T16-34-09_843-jvmRun1 surefire-20260413163410013_1tmp surefire_0-20260413163410013_2tmp"/>
+    <property name="jdk.debug" value="release"/>
+    <property name="surefire.test.class.path" value="C:\Users\danie\OneDrive\Documentos\Proyectos\MultiverseCreatures2\target\test-classes;C:\Users\danie\OneDrive\Documentos\Proyectos\MultiverseCreatures2\target\classes;C:\Users\danie\.m2\repository\org\spigotmc\spigot-api\1.21.11-R0.1-SNAPSHOT\spigot-api-1.21.11-R0.1-SNAPSHOT.jar;C:\Users\danie\.m2\repository\com\google\guava\guava\33.5.0-jre\guava-33.5.0-jre.jar;C:\Users\danie\.m2\repository\com\google\guava\failureaccess\1.0.3\failureaccess-1.0.3.jar;C:\Users\danie\.m2\repository\com\google\guava\listenablefuture\9999.0-empty-to-avoid-conflict-with-guava\listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;C:\Users\danie\.m2\repository\org\jspecify\jspecify\1.0.0\jspecify-1.0.0.jar;C:\Users\danie\.m2\repository\com\google\errorprone\error_prone_annotations\2.41.0\error_prone_annotations-2.41.0.jar;C:\Users\danie\.m2\repository\com\google\j2objc\j2objc-annotations\3.1\j2objc-annotations-3.1.jar;C:\Users\danie\.m2\repository\net\md-5\bungeecord-serializer\1.21-R0.4\bungeecord-serializer-1.21-R0.4.jar;C:\Users\danie\.m2\repository\net\md-5\bungeecord-chat\1.21-R0.4\bungeecord-chat-1.21-R0.4.jar;C:\Users\danie\.m2\repository\net\md-5\bungeecord-dialog\1.21-R0.4\bungeecord-dialog-1.21-R0.4.jar;C:\Users\danie\.m2\repository\org\yaml\snakeyaml\2.2\snakeyaml-2.2.jar;C:\Users\danie\.m2\repository\org\joml\joml\1.10.5\joml-1.10.5.jar;C:\Users\danie\.m2\repository\com\google\code\findbugs\jsr305\3.0.2\jsr305-3.0.2.jar;C:\Users\danie\.m2\repository\org\jetbrains\annotations\24.0.1\annotations-24.0.1.jar;C:\Users\danie\.m2\repository\com\google\code\gson\gson\2.10.1\gson-2.10.1.jar;"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="user.home" value="C:\Users\danie"/>
+    <property name="user.language" value="es"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.version.date" value="2026-01-20"/>
+    <property name="java.home" value="C:\Users\danie\.jdks\ms-21.0.10"/>
+    <property name="file.separator" value="\"/>
+    <property name="basedir" value="C:\Users\danie\OneDrive\Documentos\Proyectos\MultiverseCreatures2"/>
+    <property name="style.color" value="always"/>
+    <property name="java.vm.compressedOopsMode" value="Zero based"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="surefire.real.class.path" value="C:\Users\danie\AppData\Local\Temp\surefire16066297142619047757\surefirebooter-20260413163410013_3.jar"/>
+    <property name="user.script" value=""/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="java.runtime.version" value="21.0.10+7-LTS"/>
+    <property name="user.name" value="danie"/>
+    <property name="stdout.encoding" value="Cp1252"/>
+    <property name="path.separator" value=";"/>
+    <property name="os.version" value="10.0"/>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="file.encoding" value="IBM850"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="java.vendor.version" value="Microsoft-13106404"/>
+    <property name="maven.ext.class.path" value="C:\Program Files\JetBrains\IntelliJ IDEA 2025.3.3\plugins\maven\lib\maven-event-listener.jar"/>
+    <property name="localRepository" value="C:\Users\danie\.m2\repository"/>
+    <property name="java.vendor.url.bug" value="https://github.com/microsoft/openjdk/issues"/>
+    <property name="java.io.tmpdir" value="C:\Users\danie\AppData\Local\Temp\"/>
+    <property name="idea.version" value="2025.3.3"/>
+    <property name="java.version" value="21.0.10"/>
+    <property name="user.dir" value="C:\Users\danie\OneDrive\Documentos\Proyectos\MultiverseCreatures2"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="jansi.passthrough" value="true"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="sun.os.patch.level" value=""/>
+    <property name="native.encoding" value="Cp1252"/>
+    <property name="java.library.path" value="C:\Users\danie\.jdks\ms-21.0.10\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Program Files\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\PuTTY\;C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\Git\cmd;C:\Program Files\nodejs\;C:\Users\danie\AppData\Local\Programs\Python\Launcher\;C:\Users\danie\AppData\Local\Microsoft\WindowsApps;C:\Users\danie\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\danie\AppData\Local\Programs\Antigravity\bin;C:\Users\danie\AppData\Local\Programs\Ollama;C:\Users\danie\.lmstudio\bin;C:\Users\danie\OneDrive\Documentos\apache-maven-3.9.14-bin\maven\bin;C:\Users\danie\AppData\Roaming\npm;C:\Users\danie\AppData\Local\Python\bin;C:\Users\danie\AppData\Roaming\Python\Python314\Scripts;;."/>
+    <property name="java.vm.info" value="mixed mode, sharing"/>
+    <property name="stderr.encoding" value="Cp1252"/>
+    <property name="java.vendor" value="Microsoft"/>
+    <property name="java.vm.version" value="21.0.10+7-LTS"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="maven.repo.local" value="C:\Users\danie\.m2\repository"/>
+    <property name="java.class.version" value="65.0"/>
+  </properties>
+</testsuite>

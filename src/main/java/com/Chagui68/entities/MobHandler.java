@@ -2,7 +2,6 @@ package com.Chagui68.entities;
 
 import com.Chagui68.items.ItemCombatTrades;
 import com.Chagui68.items.ItemsFoodTrades;
-import com.Chagui68.skin.PlayerSkinDisguiseService;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
@@ -26,10 +25,8 @@ public class MobHandler implements Listener {
     private static final double SHAGGY_CHANCE = 0.3;
 
     private final Random random = new Random();
-    private final PlayerSkinDisguiseService disguiseService;
-
-    public MobHandler(Plugin plugin) {
-        this.disguiseService = new PlayerSkinDisguiseService(plugin);
+ 
+    public MobHandler() {
     }
 
     @EventHandler
@@ -46,7 +43,6 @@ public class MobHandler implements Listener {
         if (entity.getEntityType() == EntityType.WANDERING_TRADER && roll < SHAGGY_CHANCE) {
             WanderingTrader wanderingTrader = (WanderingTrader) entity.getEntity();
             equipWanderingVillager(wanderingTrader);
-            disguiseService.applyPlayerSkin(wanderingTrader);
         }
     }
 
@@ -75,6 +71,5 @@ public class MobHandler implements Listener {
         WanderingTrader shaggy = (WanderingTrader) location.getWorld().spawnEntity(location,
                 EntityType.WANDERING_TRADER);
         equipWanderingVillager(shaggy);
-        disguiseService.applyPlayerSkin(shaggy);
     }
 }
