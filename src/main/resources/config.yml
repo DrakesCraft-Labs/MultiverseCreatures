@@ -1,2 +1,356 @@
 # MultiverseCreatures Configuration
 
+### General Settings
+general:
+  debug: false
+  locale: "en"
+  # Global multiplier applied to every entity spawn-chance (0.5 = half the spawns)
+  spawn-rate-multiplier: 0.5
+
+### Crafting Recipes
+recipes:
+  enabled: true
+  # Registers recipes a few ticks after startup instead of during plugin enable.
+  # Required on servers with EquivalencyTech (EMC): it indexes every registered
+  # recipe at enable and our custom items share material types with vanilla
+  # ingredients, causing an exponential EMC graph walk that hangs startup.
+  deferred-registration: true
+
+### Wandering Trader (Multiverse Merchant)
+merchant:
+  enabled: true
+  spawn-chance: 0.3
+  custom-name: "&6Multiverse Merchant"
+  name-visible: true
+  trades:
+    scooby-cookies:
+      enabled: true
+      price:
+        material: "DIAMOND"
+        amount: 20
+      result-amount: 5
+      max-uses: 999
+    excalibur:
+      enabled: true
+      price:
+        - material: "NETHER_STAR"
+          amount: 16
+          custom-item: "starcore"
+        - material: "NETHERITE_INGOT"
+          amount: 32
+      max-uses: 1
+    ice-crown:
+      enabled: true
+      price:
+        - material: "NETHER_STAR"
+          amount: 48
+        - material: "BLUE_ICE"
+          amount: 64
+      max-uses: 1
+    wirts-lantern:
+      enabled: true
+      price:
+        - material: "SOUL_SAND"
+          amount: 32
+        - material: "SOUL_SOIL"
+          amount: 16
+      max-uses: 1
+
+### Scooby Cookies
+scooby-cookies:
+  enabled: true
+  effects:
+    resistance:
+      duration-ticks: 200
+      amplifier: 5
+
+### Excalibur
+excalibur:
+  enabled: true
+  passive-effect:
+    enabled: true
+    interval-ticks: 20
+    strength:
+      duration-ticks: 80
+      amplifier: 2
+  solar-flare:
+    enabled: true
+    cooldown-ms: 15000
+    range: 20.0
+    radius: 1.5
+    damage: 12.0
+    fire-ticks: 100
+    blindness-duration: 60
+    knockback-horizontal: 1.5
+    knockback-vertical: 0.8
+
+### Star Core
+star-core:
+  enabled: true
+  recipe:
+    enabled: true
+
+### Ice Crown
+ice-crown:
+  enabled: true
+  snow-block-launch:
+    enabled: true
+    cooldown-ms: 10000
+    search-radius: 5.0
+    projectile-speed: 2.0
+    max-ticks: 100
+    damage: 6.0
+    snow-effects:
+      slowness:
+        duration-ticks: 100
+        amplifier: 2
+      weakness:
+        duration-ticks: 100
+        amplifier: 1
+    ice-effects:
+      slowness:
+        duration-ticks: 100
+        amplifier: 2
+      weakness:
+        duration-ticks: 100
+        amplifier: 2
+      nausea:
+        duration-ticks: 100
+        amplifier: 0
+    impact-radius: 2
+    freeze-water-chance: 1.0
+    place-snow-chance: 0.2
+    knockback:
+      horizontal: 0.8
+      vertical: 0.3
+  blizzard:
+    enabled: true
+    cooldown-ms: 60000
+    duration-ticks: 100
+    starting-radius: 1.0
+    max-radius: 8.0
+    radius-growth-per-tick: 0.07
+    damage-per-tick: 3.5
+    slowness:
+      duration-ticks: 40
+      amplifier: 2
+    darkness:
+      duration-ticks: 40
+      amplifier: 2
+    push-strength: 0.50
+    freeze-water: true
+    place-snow-chance: 0.1
+  ice-path:
+    enabled: true
+    frost-water: true
+    frost-radius: 1
+    adjacent-freeze-chance: 0.3
+  damage-reduction:
+    enabled: true
+    multiplier: 0.8
+  freeze-immunity: true
+
+### Wirt's Lantern
+wirts-lantern:
+  enabled: true
+  mob-repel:
+    enabled: true
+    radius: 12.0
+    interval-ticks: 20
+    horizontal-force: 0.6
+    vertical-force: 0.2
+    particle-chance: 0.3
+  night-vision:
+    enabled: true
+  target-protection:
+    enabled: true
+
+### Dio Boss
+dio-boss:
+  enabled: true
+  spawn-chance: 0.005
+  health: 300.0
+  damage: 10.0
+  stand-offset-y: 2.0
+  stand-offset-z: -1.0
+  stand-damage: 4.0
+  stand-duration-ticks: 100
+  stand-interval-ticks: 3
+  cooldown-ms: 120000
+  freeze-radius: 50.0
+  freeze-duration-ticks: 100
+  freeze-damage-radius: 30.0
+  freeze-damage: 10.0
+  teleport-inner-radius: 25.0
+  teleport-radius: 50.0
+  teleport-darkness-duration: 100
+  teleport-slowness-duration: 100
+  teleport-slowness-amplifier: 0
+  drop-chance: 0.1
+
+### Dio Stand Item
+dio-stand:
+  enabled: true
+  cooldown-ms: 120000
+  freeze-radius: 50.0
+  freeze-duration-ticks: 100
+  stand-damage: 4.0
+  stand-duration-ticks: 100
+  stand-interval-ticks: 3
+
+### Head Slime
+head-slime:
+  enabled: true
+  spawn-chance: 0.1
+  size: 1
+  speed: 0.5
+  leap-range: 5.0
+  leap-speed: 1.2
+  blind-interval-ticks: 20
+  damage-interval-ticks: 40
+  damage-per-interval: 3.0
+  max-attach-ticks: 200
+  target-entities: true
+  skeleton-burst-cooldown: 60
+  buff-interval-ticks: 40
+  max-attach-ticks-mob: 600
+  death-messages:
+    - "&a%player% got head-slimed!"
+    - "&a%player% couldn't get the slime off their face"
+    - "&a%player% was suffocated by a Head Slime"
+    - "&a%player% learned to fear the green blob"
+
+### Creeper Jr.
+creeper-jr:
+  enabled: true
+  spawn-chance: 0.15
+  scale: 0.6
+  speed: 0.5
+  explosion-radius: 2
+  true-damage: 12.0
+  death-messages:
+    - "&a%player% was blown up by Creeper Jr."
+    - "&a%player% got too close to a Creeper Jr."
+    - "&a%player% learned that size isn't everything"
+    - "&a%player% underestimated the little guy"
+
+### Adapter
+adapter:
+  enabled: true
+  spawn-chance: 0.05
+
+### Mahoraga
+mahoraga:
+  enabled: true
+  spawn-chance: 0.05
+  death-messages:
+    - "&f%player% was crushed by Mahoraga"
+    - "&f%player% could not adapt to Mahoraga"
+    - "&f%player% was obliterated by Mahoraga"
+    - "&f%player% stood no chance against Mahoraga"
+
+### Zombie Horse Trap
+zombie-horse-trap:
+  military-component-drop-chance: 0.3
+
+### Custom Mobs Spawn Chances
+bone-shield:
+  enabled: true
+  spawn-chance: 0.06
+chaos-mage:
+  enabled: true
+  spawn-chance: 0.06
+ender-knight:
+  enabled: true
+  spawn-chance: 0.04
+disc-trader:
+  enabled: true
+  spawn-chance: 0.05
+flame-elemental:
+  enabled: true
+  spawn-chance: 0.1
+frost-golem:
+  enabled: true
+  spawn-chance: 0.08
+obsidian-guard:
+  enabled: true
+  spawn-chance: 0.02
+shadow-rogue:
+  enabled: true
+  spawn-chance: 0.05
+soul-reaper:
+  enabled: true
+  spawn-chance: 0.05
+storm-caller:
+  enabled: true
+  spawn-chance: 0.04
+venom-witch:
+  enabled: true
+  spawn-chance: 0.05
+void-crawler:
+  enabled: true
+  spawn-chance: 0.07
+
+### Armor Stand Boss
+armor-stand-boss:
+  enabled: true
+  health: 1000.0
+  max-damage-per-hit: 50.0
+  aggro-range: 50.0
+  seal-damage: 15.0
+  hover-barrage-damage: 12.0
+  sentinel-core-drop-chance: 100.0
+
+### Sentinel Grimoire (book of spells)
+grimoire:
+  blazing-pentagram:
+    damage: 10.0
+    cooldown: 8
+  lance-rain:
+    damage: 12.0
+    cooldown: 7
+  divine-judgment:
+    damage: 18.0
+    cooldown: 10
+  executioners-mark:
+    damage: 14.0
+    cooldown: 10
+  singular-vortex:
+    damage: 8.0
+    cooldown: 15
+  earthquake:
+    damage: 10.0
+    cooldown: 9
+  celestial-bulwark:
+    damage: 0.0
+    cooldown: 20
+  sentinel-aura:
+    damage: 0.0
+    cooldown: 45
+
+### Kinger
+kinger:
+  enabled: true
+  spawn-on-armorstand-chance: 0.01
+  health: 120.0
+  aggro-range: 25.0
+  move-speed: 0.32
+  melee-range: 3.0
+  melee-damage: 8.0
+  melee-radius: 3.5
+  melee-cooldown-ticks: 25
+  melee-anim-ticks: 12
+  ranged-range: 30.0
+  ranged-damage: 6.0
+  ranged-cooldown-ticks: 45
+  ranged-anim-ticks: 20
+  death-messages:
+    - "&d%player% was checked by the King"
+    - "&d%player% was knocked off the board by Kinger"
+    - "&d%player% lost the game to Kinger"
+    - "&d%player% was outplayed by the chess piece"
+
+### Commands
+commands:
+  permission: "msc.admin"
+  op-only: true

@@ -11,5 +11,10 @@ softdepend: []
 commands:
   msc:
     description: Main command for MultiverseCreatures
-    usage: /msc <spawn|damage|ability|chests|check>
+    usage: /msc <spawn|give|seal|dummy|attack|music|dimtp|cleanstands>
     permission: msc.admin
+
+permissions:
+  msc.admin:
+    description: Allows all /msc commands
+    default: op
