@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/banner.svg" alt="MultiverseCreatures" width="100%">
+
 # ✦ MultiverseCreatures ✦
 
 ### Themed creatures, bosses & legendary items pulled from across the multiverse
@@ -60,6 +62,38 @@ The project has a complete documentation site built into the repository. It cove
 | [Commands](./wiki/Commands.md) | Full `/msc` reference (spawn, give, seal, dummy, attack, music, dimtp, cleanstands) |
 | [Architecture](./wiki/Architecture.md) | Code structure, conventions and how to extend the plugin |
 | [Installation](./wiki/Installation.md) | Step-by-step install, config.yml guide, troubleshooting |
+
+---
+
+## 🧩 Extending: reusing the 42 boss attacks
+
+The boss attacks live behind a small interface so they are **not tied to one boss**.
+
+```java
+public interface BossHost {
+    MultiverseCreatures getPlugin();
+    void resetBossPose(BossInstance instance);
+    Player detectTarget(ArmorStand stand);
+    void spawnShockwaveWave(World world, Location center, double maxRadius);
+    // plus defaults: getValidPlayers, getValidPlayersNear, launchPlayer,
+    // getGroundY, isOnGround, countPlayersInRange, findNearestPlayer
+}
+```
+
+Any boss that implements `BossHost` can reuse the attack classes as they are. **39 of the 42 are
+host-agnostic**; the remaining three reach for something only THE OBSIDIAN SENTINEL has — the
+netherite lance, the shield timings and the sky pentagram — and cast explicitly, with a comment
+saying so.
+
+Terrain and player queries live in `BossArena` as stateless helpers, so they can be called from
+anywhere and tested on their own. The "is this player a valid target?" rule (skip dead, creative
+and spectator) is decided in exactly one place.
+
+> **Heads-up if you are writing a non-ArmorStand boss:** the attacks animate the boss through
+> ArmorStand poses — `setHeadPose`, `setBodyPose`, arm poses — over 250 calls across the 42
+> classes. A mob-based boss can reuse an attack's *effect* (damage, particles, projectiles) but
+> not its choreography. Splitting each attack into "effect" and "animation" is the natural next
+> step if that is needed.
 
 ---
 
