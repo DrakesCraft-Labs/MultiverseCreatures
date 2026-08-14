@@ -248,6 +248,7 @@ mahoraga:
   slimefun-adaptation: true
   instakill-infinity-armor: true
   ignore-diamond-mod: true
+  infinity-weapon-adaptation: true
   death-messages:
     - "&f%player% was crushed by Mahoraga"
     - "&f%player% could not adapt to Mahoraga"

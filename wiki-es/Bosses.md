@@ -118,7 +118,8 @@ Objetivos adicionales de `/msc attack` para **mecánicas y transiciones de fase*
 | Armadura de Diamante/Netherita + niveles de Protección | bonificación de **Daño de Ataque** escalada |
 | Armadura de Slimefun / Tinker (`mahoraga.slimefun-adaptation`, dependencia suave) | bonificación de **Daño de Ataque** por nivel del material (0.3 blando → 3.0 Singularidades/Infinity) |
 | Set completo de Mail Links de Infinity Singularity (`mahoraga.instakill-infinity-armor`) | **Muerte instantánea** — atraviesa el trait "Infinite Defence" (daño = 1) |
-| Mejora de **Diamante** de Tinker en el arma empuñada (`mahoraga.ignore-diamond-mod`) | **30%** de probabilidad de ignorar el reflejo y la cancelación de cada golpe |
+| Mejora de **Diamante** de Tinker en el arma empuñada (`mahoraga.ignore-diamond-mod`) | **Siempre ignorada** — el reflejo y la cancelación de cada golpe nunca aplican |
+| Espada Tinker con material **Infinity Singularity** (`mahoraga.infinity-weapon-adaptation`) | Mahoraga solo recibe **1 de daño** por golpe |
 | Protección total > 5 (Diamante/Netherita) | amplificador de **Fuerza** = total/5 |
 | Nitidez **o Castigo** totales máximos en cualquier arma (5 niveles por rango) | nivel de **Resistencia** (máx. 4) = floor((Nitidez + Castigo)/5) |
 | Encantamientos de Knockback | **Resistencia al Knockback** = totalKnockback × 0.3 |

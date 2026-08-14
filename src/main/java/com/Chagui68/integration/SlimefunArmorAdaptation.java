@@ -27,10 +27,14 @@ public final class SlimefunArmorAdaptation {
     private static final boolean INFINITY_ENABLED = Bukkit.getPluginManager().isPluginEnabled("InfinityExpansion");
 
     private static final NamespacedKey SF_ITEM_ID = new NamespacedKey("slimefun", "slimefun_item");
-    private static final NamespacedKey ST_IS_ARMOUR = new NamespacedKey("slimetinker", "ST_Armour");
-    private static final NamespacedKey ST_PLATE = new NamespacedKey("slimetinker", "ST_Material_Plate");
-    private static final NamespacedKey ST_LINKS = new NamespacedKey("slimetinker", "ST_Material_Links");
-    private static final NamespacedKey ST_MODS = new NamespacedKey("slimetinker", "ST_Modifier_Map");
+    // Modern SlimeTinker stores its keys lowercased; uppercase keys are invalid
+    // on Paper 1.21.6+ and would throw in the NamespacedKey constructor.
+    private static final NamespacedKey ST_IS_ARMOUR = new NamespacedKey("slimetinker", "st_armour");
+    private static final NamespacedKey ST_PLATE = new NamespacedKey("slimetinker", "st_material_plate");
+    private static final NamespacedKey ST_LINKS = new NamespacedKey("slimetinker", "st_material_links");
+    private static final NamespacedKey ST_HEAD = new NamespacedKey("slimetinker", "st_material_head");
+    private static final NamespacedKey ST_MODS = new NamespacedKey("slimetinker", "st_modifier_map");
+    private static final NamespacedKey ST_DIAMOND_MOD = new NamespacedKey("slimetinker", "st_mod_level_diamond");
 
     private static final double TINKER_TIER_1 = 0.3;
     private static final double TINKER_TIER_2 = 0.6;
@@ -143,10 +147,26 @@ public final class SlimefunArmorAdaptation {
         if (!TINKER_ENABLED) return false;
         if (item == null || !item.hasItemMeta()) return false;
         PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
-        if (!pdc.has(ST_MODS, PersistentDataType.INTEGER_ARRAY)) return false;
-        int[] mods = pdc.get(ST_MODS, PersistentDataType.INTEGER_ARRAY);
-        if (mods == null || mods.length <= 3) return false;
-        return mods[3] > 0;
+        Integer level = pdc.get(ST_DIAMOND_MOD, PersistentDataType.INTEGER);
+        if (level != null) return level > 0;
+        // Fallback: the tool mod map array, indexed by SlimeTinker's tool
+        // order (REDSTONE, LAPIS, QUARTZ, DIAMOND, EMERALD, MOD_PLATE).
+        if (pdc.has(ST_MODS, PersistentDataType.INTEGER_ARRAY)) {
+            int[] mods = pdc.get(ST_MODS, PersistentDataType.INTEGER_ARRAY);
+            if (mods != null && mods.length > 3) return mods[3] > 0;
+        }
+        return false;
+    }
+
+    /**
+     * True when the item is a Tinker tool whose head is made of the Infinity
+     * Singularity material.
+     */
+    public static boolean isInfinitySingularityWeapon(ItemStack item) {
+        if (!TINKER_ENABLED) return false;
+        if (item == null || !item.hasItemMeta()) return false;
+        PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
+        return "INFINITY_SINGULARITY".equals(pdc.get(ST_HEAD, PersistentDataType.STRING));
     }
 
     private static boolean isArmorMaterial(org.bukkit.Material material) {

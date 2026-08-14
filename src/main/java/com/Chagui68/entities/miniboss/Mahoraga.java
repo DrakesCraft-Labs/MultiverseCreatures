@@ -44,14 +44,17 @@ public class Mahoraga implements Listener {
     private final boolean slimefunAdaptation;
     private final boolean instakillInfinityArmor;
     private final boolean ignoreDiamondMod;
+    private final boolean infinityWeaponAdaptation;
     private static final String TAG = "MSC_Mahoraga";
-    private static final double IGNORE_DIAMOND_CHANCE = 0.30;
+    private static final double IGNORE_DIAMOND_CHANCE = 1.0;
+    private static final double INFINITY_WEAPON_DAMAGE = 1.0;
 
     public Mahoraga(MultiverseCreatures plugin) {
         this.plugin = plugin;
         this.slimefunAdaptation = plugin.getConfig().getBoolean("mahoraga.slimefun-adaptation", true);
         this.instakillInfinityArmor = plugin.getConfig().getBoolean("mahoraga.instakill-infinity-armor", true);
         this.ignoreDiamondMod = plugin.getConfig().getBoolean("mahoraga.ignore-diamond-mod", true);
+        this.infinityWeaponAdaptation = plugin.getConfig().getBoolean("mahoraga.infinity-weapon-adaptation", true);
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -308,11 +311,19 @@ public class Mahoraga implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onDiamondModHitsMahoraga(EntityDamageByEntityEvent event) {
-        if (!ignoreDiamondMod) return;
         if (!(event.getDamager() instanceof Player player)) return;
         if (!(event.getEntity() instanceof Zombie zombie) || !zombie.getScoreboardTags().contains(TAG)) return;
-        if (!SlimefunArmorAdaptation.hasDiamondMod(player.getInventory().getItemInMainHand())) return;
-        if (random.nextDouble() < IGNORE_DIAMOND_CHANCE) {
+
+        ItemStack weapon = player.getInventory().getItemInMainHand();
+
+        if (infinityWeaponAdaptation && SlimefunArmorAdaptation.isInfinitySingularityWeapon(weapon)) {
+            // Mahoraga has adapted to the Infinity Singularity sword: only a
+            // fixed 1 damage gets through, no matter the raw hit.
+            event.setDamage(Math.min(event.getDamage(), INFINITY_WEAPON_DAMAGE));
+            return;
+        }
+
+        if (ignoreDiamondMod && SlimefunArmorAdaptation.hasDiamondMod(weapon)) {
             event.setCancelled(true);
         }
     }
