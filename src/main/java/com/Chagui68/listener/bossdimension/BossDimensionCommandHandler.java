@@ -16,6 +16,21 @@ public class BossDimensionCommandHandler implements Listener {
         this.plugin = plugin;
     }
 
+    private boolean isInBossWorld(Player player) {
+        com.Chagui68.ritual.BossDimensionManager dimensionManager = plugin.getBossDimensionManager();
+        return dimensionManager != null
+                && dimensionManager.getBossWorld() != null
+                && player.getWorld().equals(dimensionManager.getBossWorld());
+    }
+
+    private boolean isAllowedCommand(String command) {
+        return command.startsWith("/say") ||
+                command.startsWith("/me") ||
+                command.startsWith("/help") ||
+                command.startsWith("/?") ||
+                command.startsWith("/dimtp");
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
@@ -24,47 +39,22 @@ public class BossDimensionCommandHandler implements Listener {
             return;
         }
 
-        com.Chagui68.ritual.BossDimensionManager dimensionManager = plugin.getBossDimensionManager();
-        if (dimensionManager == null || dimensionManager.getBossWorld() == null) {
+        if (!isInBossWorld(player)) {
             return;
         }
 
-        if (player.getWorld().equals(dimensionManager.getBossWorld())) {
-            String command = event.getMessage().toLowerCase();
-
-            if (command.startsWith("/msc") ||
-                    command.startsWith("/multiversecreatures") ||
-                    command.startsWith("/return") ||
-                    command.startsWith("/back") ||
-                    command.startsWith("/tp") ||
-                    command.startsWith("/teleport") ||
-                    command.startsWith("/gamemode") ||
-                    command.startsWith("/gm") ||
-                    command.startsWith("/give") ||
-                    command.startsWith("/ban") ||
-                    command.startsWith("/pardon") ||
-                    command.startsWith("/kick") ||
-                    command.startsWith("/difficulty") ||
-                    command.startsWith("/whitelist") ||
-                    command.startsWith("/stop") ||
-                    command.startsWith("/reload") ||
-                    command.startsWith("/tpa") ||
-                    command.startsWith("/rl")) {
-
-                event.setCancelled(true);
-                player.sendMessage(ChatColor.RED + "You cannot use commands in this dimension.");
-                return;
-            }
-
-            if (!command.startsWith("/say") &&
-                    !command.startsWith("/me") &&
-                    !command.startsWith("/help") &&
-                    !command.startsWith("/?") &&
-                    !command.startsWith("/dimtp")) {
-
-                event.setCancelled(true);
-                player.sendMessage(ChatColor.RED + "You cannot use commands in this dimension.");
-            }
+        com.Chagui68.entities.boss.ArmorStandBoss boss = plugin.getArmorStandBoss();
+        if (boss == null || !boss.isBossActive()) {
+            return;
         }
+
+        String command = event.getMessage().toLowerCase();
+
+        if (isAllowedCommand(command)) {
+            return;
+        }
+
+        event.setCancelled(true);
+        player.sendMessage(ChatColor.RED + "You cannot use commands while the boss is active.");
     }
 }

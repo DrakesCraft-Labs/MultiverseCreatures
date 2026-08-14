@@ -21,13 +21,16 @@ import com.Chagui68.entities.boss.attack.ground.ArmorSpikesAttack;
 import com.Chagui68.entities.boss.attack.ground.ChainGrappleAttack;
 import com.Chagui68.entities.boss.attack.ground.DoomBeamAttack;
 import com.Chagui68.entities.boss.attack.ground.EarthPillarAttack;
+import com.Chagui68.entities.boss.attack.ground.ExecutionerSweepAttack;
 import com.Chagui68.entities.boss.attack.ground.GroundShatterAttack;
 import com.Chagui68.entities.boss.attack.ground.GroundSlamAttack;
+import com.Chagui68.entities.boss.attack.ground.LanceFlurryAttack;
 import com.Chagui68.entities.boss.attack.ground.LanceStormAttack;
 import com.Chagui68.entities.boss.attack.ground.MirrorImageAttack;
 import com.Chagui68.entities.boss.attack.ground.ShieldBashAttack;
 import com.Chagui68.entities.boss.attack.ground.VortexPullAttack;
 import com.Chagui68.entities.boss.attack.ground.WarStompAttack;
+import com.Chagui68.entities.boss.attack.ground.WhirlwindSlashAttack;
 import com.Chagui68.entities.boss.attack.ranged.ArcaneMissilesAttack;
 import com.Chagui68.entities.boss.attack.ranged.ArcaneOrbAttack;
 import com.Chagui68.entities.boss.attack.ranged.ChainLightningAttack;
@@ -142,6 +145,9 @@ public class ArmorStandBoss implements Listener, BossHost {
         registerAttack(new VortexPullAttack(this));
         registerAttack(new MirrorImageAttack(this));
         registerAttack(new DoomBeamAttack(this));
+        registerAttack(new LanceFlurryAttack(this));
+        registerAttack(new WhirlwindSlashAttack(this));
+        registerAttack(new ExecutionerSweepAttack(this));
         // Ranged
         registerAttack(new LanceSnipeAttack(this));
         registerAttack(new MeteorStormAttack(this));
@@ -220,7 +226,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         ArmorStand stand = (ArmorStand) location.getWorld().spawnEntity(location, EntityType.ARMOR_STAND);
         if (stand == null) return false;
 
-        double health = plugin.getConfig().getDouble("armor-stand-boss.health", 1000.0);
+        double health = plugin.getConfig().getDouble("armor-stand-boss.health", 1000.0) * 1.5;
         AttributeInstance maxHealthAttr = stand.getAttribute(Attribute.MAX_HEALTH);
         if (maxHealthAttr != null) maxHealthAttr.setBaseValue(health);
         stand.setHealth(health);
@@ -626,7 +632,7 @@ public class ArmorStandBoss implements Listener, BossHost {
                             }
                         } else if (instance.defenseCooldown > 0) {
                             instance.defenseCooldown--;
-                        } else if (instance.groundAttackCooldown >= 60 + random.nextInt(60)) {
+                        } else if (instance.groundAttackCooldown >= 40 + random.nextInt(40)) {
                             instance.groundAttackCooldown = 0;
                             double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
                                     ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : 500.0;
@@ -1271,15 +1277,17 @@ public class ArmorStandBoss implements Listener, BossHost {
 
         double nearestDist = getNearestPlayerDistance(stand.getLocation());
 
-        String[] closeAttacks = {"shieldbash", "warstomp", "chaingrapple", "armorspikes", "mirrorimage", "vortexpull", "groundshatter"};
-        String[] mediumAttacks = {"lancestorm", "earthpillar", "groundshatter", "groundshatter", "armorspikes", "vortexpull"};
+        String[] closeAttacks = {"shieldbash", "warstomp", "chaingrapple", "armorspikes", "mirrorimage", "vortexpull", "groundshatter",
+                "lanceflurry", "whirlwindslash", "executionsweep"};
+        String[] mediumAttacks = {"lancestorm", "earthpillar", "groundshatter", "groundshatter", "armorspikes", "vortexpull",
+                "lanceflurry", "whirlwindslash"};
         String[] farAttacks = {"shieldbash"};
 
         String choice;
         if (nearestDist < DIST_CLOSE) {
             choice = closeAttacks[random.nextInt(closeAttacks.length)];
         } else if (nearestDist < DIST_MEDIUM) {
-            if (random.nextInt(100) < 25) {
+            if (random.nextInt(100) < 15) {
                 executeRangedAttack(instance);
                 return;
             }
@@ -1665,6 +1673,10 @@ public class ArmorStandBoss implements Listener, BossHost {
         return nearest;
     }
 
+    public boolean isBossActive() {
+        return !activeBosses.isEmpty();
+    }
+
     public boolean triggerAttack(UUID bossId, String attackName) {
         BossInstance instance = activeBosses.get(bossId);
         if (instance == null) return false;
@@ -1732,7 +1744,8 @@ public class ArmorStandBoss implements Listener, BossHost {
             }
             // Ground attacks — only while NOT flying
             case "groundshatter", "shieldbash", "lancestorm", "earthpillar", "chaingrapple",
-                 "warstomp", "armorspikes", "vortexpull", "mirrorimage", "doombeamer", "doombeam" -> {
+                 "warstomp", "armorspikes", "vortexpull", "mirrorimage", "doombeamer", "doombeam",
+                 "lanceflurry", "whirlwindslash", "executionsweep" -> {
                 if (instance.isFlying) return false;
                 String lookup = key.equals("doombeamer") ? "doombeam" : key;
                 BossAttack a = attackRegistry.get(lookup);
@@ -1793,7 +1806,8 @@ public class ArmorStandBoss implements Listener, BossHost {
 
     private static final java.util.Set<String> GROUND_ATTACK_NAMES = java.util.Set.of(
             "groundslam", "groundshatter", "shieldbash", "lancestorm", "earthpillar",
-            "chaingrapple", "warstomp", "armorspikes", "vortexpull", "mirrorimage", "doombeam"
+            "chaingrapple", "warstomp", "armorspikes", "vortexpull", "mirrorimage", "doombeam",
+            "lanceflurry", "whirlwindslash", "executionsweep"
     );
 
     private boolean isAerialAttackName(String name) {

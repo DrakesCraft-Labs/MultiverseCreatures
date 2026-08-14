@@ -60,6 +60,7 @@ public class HeadSlime implements Listener {
     private int maxAttachTicksMob;
     private boolean targetEntities;
     private int skeletonBurstCooldown;
+    private boolean debug;
     public static final Set<UUID> immunePlayers = ConcurrentHashMap.newKeySet();
     private static final String TAG = "MSC_HeadSlime";
     private static final Set<String> MSC_ENTITY_TAGS = Set.of(
@@ -103,6 +104,7 @@ public class HeadSlime implements Listener {
         maxAttachTicksMob = plugin.getConfig().getInt("head-slime.max-attach-ticks-mob", 600);
         targetEntities = plugin.getConfig().getBoolean("head-slime.target-entities", true);
         skeletonBurstCooldown = plugin.getConfig().getInt("head-slime.skeleton-burst-cooldown", 60);
+        debug = plugin.getConfig().getBoolean("head-slime.debug", false);
     }
 
     private void reloadExisting() {
@@ -221,7 +223,7 @@ public class HeadSlime implements Listener {
             if (inst.targetId == null) return;
             target = Bukkit.getEntity(inst.targetId);
             if (target == null) return;
-            plugin.getLogger().info("[HeadSlime] Tracking target: " + target.getName());
+            if (debug) plugin.getLogger().info("[HeadSlime] Tracking target: " + target.getName());
         }
 
         // The player consumed gelatin mid-chase: drop the target and pick another.
@@ -249,7 +251,7 @@ public class HeadSlime implements Listener {
             inst.attached = true;
             inst.damageTicks = 0;
             inst.targetId = target.getUniqueId();
-            plugin.getLogger().info("[HeadSlime] Attached to " + target.getName());
+            if (debug) plugin.getLogger().info("[HeadSlime] Attached to " + target.getName());
         }
     }
 

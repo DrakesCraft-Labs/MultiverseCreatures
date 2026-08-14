@@ -6,7 +6,7 @@ load: STARTUP
 author: Chagui68
 description: A themed creatures and items plugin 
 website: https://github.com/DrakesCraft-Labs/MultiverseCreatures
-softdepend: []
+softdepend: [Slimefun, InfinityExpansion, SlimeTinker]
 
 commands:
   msc:

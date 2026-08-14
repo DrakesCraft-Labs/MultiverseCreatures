@@ -79,6 +79,7 @@ A shield carved from reinforced bone.
 | Unbreakable | Yes |
 
 - **Give:** `/msc give marrowaegis` (alias `aegis`)
+- **Crafting:** 3-component chain — 8× Reinforced Bone → **Bone Marrow** → 4× Marrow + Calcite + Diamond → **Ossified Plate** → *Blast Furnace (only)* → **Molten Marrow** → Marrow Aegis (see [Recipes](./Recipes.md))
 - **Theme:** Multiverse (Bone Shield chain via Reinforced Bone)
 
 ---

@@ -109,6 +109,9 @@ Amount defaults to 1 and can be 1–64.
 | `obsidianshard` | `shard` |
 | `reaperessence` | `reaper` |
 | `reinforcedbone` | `bone` |
+| `bonemarrow` | `marrow` |
+| `ossifiedplate` | `plate` |
+| `moltenmarrow` | — |
 | `shadowcloak` | `cloak` |
 | `stormcrystal` | `storm` |
 | `venomgland` | `venom` |
