@@ -17,6 +17,13 @@ public class BossDimensionBlockHandler implements Listener {
         this.plugin = plugin;
     }
 
+    private boolean isInBossWorld(Player player) {
+        com.Chagui68.ritual.BossDimensionManager dimensionManager = plugin.getBossDimensionManager();
+        return dimensionManager != null
+                && dimensionManager.getBossWorld() != null
+                && player.getWorld().equals(dimensionManager.getBossWorld());
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
@@ -25,15 +32,17 @@ public class BossDimensionBlockHandler implements Listener {
             return;
         }
 
-        com.Chagui68.ritual.BossDimensionManager dimensionManager = plugin.getBossDimensionManager();
-        if (dimensionManager == null || dimensionManager.getBossWorld() == null) {
+        if (!isInBossWorld(player)) {
             return;
         }
 
-        if (player.getWorld().equals(dimensionManager.getBossWorld())) {
-            event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "You cannot place blocks in this dimension.");
+        com.Chagui68.entities.boss.ArmorStandBoss boss = plugin.getArmorStandBoss();
+        if (boss == null || !boss.isBossActive()) {
+            return;
         }
+
+        event.setCancelled(true);
+        player.sendMessage(ChatColor.RED + "You cannot place blocks while the boss is active.");
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -44,14 +53,16 @@ public class BossDimensionBlockHandler implements Listener {
             return;
         }
 
-        com.Chagui68.ritual.BossDimensionManager dimensionManager = plugin.getBossDimensionManager();
-        if (dimensionManager == null || dimensionManager.getBossWorld() == null) {
+        if (!isInBossWorld(player)) {
             return;
         }
 
-        if (player.getWorld().equals(dimensionManager.getBossWorld())) {
-            event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "You cannot break blocks in this dimension.");
+        com.Chagui68.entities.boss.ArmorStandBoss boss = plugin.getArmorStandBoss();
+        if (boss == null || !boss.isBossActive()) {
+            return;
         }
+
+        event.setCancelled(true);
+        player.sendMessage(ChatColor.RED + "You cannot break blocks while the boss is active.");
     }
 }

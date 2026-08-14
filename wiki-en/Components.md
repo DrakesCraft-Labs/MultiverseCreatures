@@ -16,6 +16,9 @@ Drop sources — for each component, the mob and chance:
 | **Void Essence** `§5§lVoid Essence` (ENDER_EYE) | Void Crawler | 50% | Multiverse |
 | **Reaper Essence** `§0§lReaper Essence` (SOUL_LANTERN) | Soul Reaper | 60% | Multiverse |
 | **Reinforced Bone** `§f§lReinforced Bone` (BONE) | Bone Shield | 80% | Multiverse |
+| **Bone Marrow** `§f§lBone Marrow` (BONE_MEAL) | crafted from **Reinforced Bone** + Redstone Blocks + Nether Wart | — | Multiverse |
+| **Ossified Plate** `§f§lOssified Plate` (CALCITE) | crafted from **Bone Marrow** + Calcite + Diamond | — | Multiverse |
+| **Molten Marrow** `§6§lMolten Marrow` (REDSTONE) | **Blast Furnace ONLY**: 1 Ossified Plate (100 ticks, 0.5 XP) | — | Multiverse |
 | **Shadow Cloak Fragment** `§8§lShadow Cloak Fragment` (BLACK_WOOL) | Shadow Rogue | 50% | Multiverse |
 | **Obsidian Shard** `§8§lObsidian Shard` (OBSIDIAN) | Obsidian Guard | 85% | Multiverse |
 | **Head Slime Heart** `§a§lHead Slime Heart` (SLIME_BALL) | Head Slime | always (100%) | Slime Kingdom |
@@ -44,7 +47,7 @@ Storm Caller ─► Storm Crystal ──► Skyfire Talisman
 Venom Witch ─► Venom Gland ─────► Venomfang (dagger)
 Void Crawler ─► Void Essence ───► Nullshear Edge
 Soul Reaper ─► Reaper Essence ──► Soulreap Scythe
-Bone Shield ─► Reinforced Bone ─► Marrow Aegis (shield)
+Bone Shield ─► Reinforced Bone ─► [Bone Marrow ─► Ossified Plate ─► *Blast Furnace (only)* Molten Marrow] ─► Marrow Aegis (shield)
 Shadow Rogue ─► Shadow Cloak ──► Veilwalker Mantle (off-hand)
 Obsidian Guard ─► Obsidian Shard► Obsidian Bastion (4-piece set)
 Head Slime ─► Head Slime Heart ─► Head Slime Gelatin (food)
@@ -70,6 +73,9 @@ You can hand yourself any component directly for testing:
 /msc give obsidianshard     (alias: shard)
 /msc give reaperessence     (alias: reaper)
 /msc give reinforcedbone    (alias: bone)
+/msc give bonemarrow        (alias: marrow)
+/msc give ossifiedplate     (alias: plate)
+/msc give moltenmarrow
 /msc give shadowcloak       (alias: cloak)
 /msc give stormcrystal      (alias: storm)
 /msc give venomgland        (alias: venom)

@@ -1,6 +1,7 @@
 package com.Chagui68.entities.miniboss;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.integration.SlimefunArmorAdaptation;
 import com.Chagui68.items.components.WheelEssence;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -16,6 +17,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Zombie;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -39,10 +41,17 @@ public class Mahoraga implements Listener {
     private final Random random = new Random();
     private final Set<UUID> adapters = new HashSet<>();
     private final Set<UUID> removeQueue = new HashSet<>();
+    private final boolean slimefunAdaptation;
+    private final boolean instakillInfinityArmor;
+    private final boolean ignoreDiamondMod;
     private static final String TAG = "MSC_Mahoraga";
+    private static final double IGNORE_DIAMOND_CHANCE = 0.30;
 
     public Mahoraga(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        this.slimefunAdaptation = plugin.getConfig().getBoolean("mahoraga.slimefun-adaptation", true);
+        this.instakillInfinityArmor = plugin.getConfig().getBoolean("mahoraga.instakill-infinity-armor", true);
+        this.ignoreDiamondMod = plugin.getConfig().getBoolean("mahoraga.ignore-diamond-mod", true);
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -105,6 +114,10 @@ public class Mahoraga implements Listener {
                 bonus += getProtectionBonus(type) * protLevel;
             }
 
+            if (slimefunAdaptation) {
+                bonus += SlimefunArmorAdaptation.getBonus(armor);
+            }
+
             int thornsLevel = armor.getEnchantmentLevel(Enchantment.THORNS);
             bonus += thornsLevel * 0.5;
 
@@ -122,7 +135,9 @@ public class Mahoraga implements Listener {
         for (ItemStack item : target.getInventory().getContents()) {
             if (item == null || item.getType().isAir()) continue;
             int sharp = item.getEnchantmentLevel(Enchantment.SHARPNESS);
-            if (sharp > maxSharpness) maxSharpness = sharp;
+            int smite = item.getEnchantmentLevel(Enchantment.SMITE);
+            int fighting = sharp + smite;
+            if (fighting > maxSharpness) maxSharpness = fighting;
             int kb = item.getEnchantmentLevel(Enchantment.KNOCKBACK);
             if (kb > maxKnockback) maxKnockback = kb;
         }
@@ -138,9 +153,9 @@ public class Mahoraga implements Listener {
             zombie.removePotionEffect(PotionEffectType.STRENGTH);
         }
 
-        int resistanceAmp = Math.min(maxSharpness / 5, 3);
-        if (resistanceAmp > 0) {
-            zombie.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 30, resistanceAmp - 1, false, false));
+        int resistanceLevel = Math.min(maxSharpness / 5, 4);
+        if (resistanceLevel > 0) {
+            zombie.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 30, resistanceLevel - 1, false, false));
         } else {
             zombie.removePotionEffect(PotionEffectType.RESISTANCE);
         }
@@ -263,6 +278,42 @@ public class Mahoraga implements Listener {
         if (!messages.isEmpty()) {
             String raw = messages.get(random.nextInt(messages.size()));
             event.setDeathMessage(ChatColor.translateAlternateColorCodes('&', raw.replace("%player%", event.getEntity().getName())));
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onMahoragaHitsInfinityArmor(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Zombie zombie) || !zombie.getScoreboardTags().contains(TAG)) return;
+        if (!(event.getEntity() instanceof Player player)) return;
+
+        if (instakillInfinityArmor && SlimefunArmorAdaptation.isInfinitySingularityLinksSet(player)) {
+            // Mahoraga has adapted: it pierces the "Infinite Defence" Tinker trait
+            // that would force all damage to 1, killing the wearer outright.
+            event.setCancelled(true);
+            player.setAbsorptionAmount(0);
+            player.setHealth(0);
+            return;
+        }
+
+        if (ignoreDiamondMod && event.isCancelled() && !player.isDead()
+                && SlimefunArmorAdaptation.hasDiamondMod(player.getInventory().getItemInMainHand())
+                && random.nextDouble() < IGNORE_DIAMOND_CHANCE) {
+            // 30% chance to ignore the Tinker Diamond modification, which
+            // reflects the hit back at Mahoraga and cancels it. Un-cancel so
+            // the blow lands (the reflected damage was already dealt and is
+            // handled by onDiamondModHitsMahoraga).
+            event.setCancelled(false);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onDiamondModHitsMahoraga(EntityDamageByEntityEvent event) {
+        if (!ignoreDiamondMod) return;
+        if (!(event.getDamager() instanceof Player player)) return;
+        if (!(event.getEntity() instanceof Zombie zombie) || !zombie.getScoreboardTags().contains(TAG)) return;
+        if (!SlimefunArmorAdaptation.hasDiamondMod(player.getInventory().getItemInMainHand())) return;
+        if (random.nextDouble() < IGNORE_DIAMOND_CHANCE) {
+            event.setCancelled(true);
         }
     }
 

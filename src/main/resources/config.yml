@@ -195,6 +195,7 @@ dio-stand:
   freeze-radius: 50.0
   freeze-duration-ticks: 100
   stand-damage: 4.0
+  stand-total-damage: 20.0
   stand-duration-ticks: 100
   stand-interval-ticks: 3
 
@@ -214,6 +215,7 @@ head-slime:
   skeleton-burst-cooldown: 60
   buff-interval-ticks: 40
   max-attach-ticks-mob: 600
+  debug: false
   death-messages:
     - "&a%player% got head-slimed!"
     - "&a%player% couldn't get the slime off their face"
@@ -243,6 +245,9 @@ adapter:
 mahoraga:
   enabled: true
   spawn-chance: 0.05
+  slimefun-adaptation: true
+  instakill-infinity-armor: true
+  ignore-diamond-mod: true
   death-messages:
     - "&f%player% was crushed by Mahoraga"
     - "&f%player% could not adapt to Mahoraga"
