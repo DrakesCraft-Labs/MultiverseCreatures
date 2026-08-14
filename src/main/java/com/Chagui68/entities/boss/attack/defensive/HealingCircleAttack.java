@@ -1,7 +1,7 @@
 package com.Chagui68.entities.boss.attack.defensive;
 
 import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -16,7 +16,7 @@ import java.util.Random;
 
 public class HealingCircleAttack extends BossAttackBase {
 
-    public HealingCircleAttack(ArmorStandBoss boss) {
+    public HealingCircleAttack(BossHost boss) {
         super(boss);
     }
 

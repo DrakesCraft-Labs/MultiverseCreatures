@@ -2,7 +2,7 @@ package com.Chagui68.entities.boss.attack.ranged;
 
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
-import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -17,7 +17,7 @@ import org.bukkit.util.EulerAngle;
 import java.util.List;
 
 public class ChainLightningAttack extends BossAttackBase {
-    public ChainLightningAttack(ArmorStandBoss boss) {
+    public ChainLightningAttack(BossHost boss) {
         super(boss);
     }
 

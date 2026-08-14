@@ -2,7 +2,7 @@ package com.Chagui68.entities.boss.attack.aerial;
 
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
-import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -15,7 +15,7 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 public class StarfallAttack extends BossAttackBase {
-    public StarfallAttack(ArmorStandBoss boss) {
+    public StarfallAttack(BossHost boss) {
         super(boss);
     }
 

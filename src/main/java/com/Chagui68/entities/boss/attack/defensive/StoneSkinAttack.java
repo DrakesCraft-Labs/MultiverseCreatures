@@ -1,7 +1,7 @@
 package com.Chagui68.entities.boss.attack.defensive;
 
 import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -15,7 +15,7 @@ import java.util.Random;
 
 public class StoneSkinAttack extends BossAttackBase {
 
-    public StoneSkinAttack(ArmorStandBoss boss) {
+    public StoneSkinAttack(BossHost boss) {
         super(boss);
     }
 

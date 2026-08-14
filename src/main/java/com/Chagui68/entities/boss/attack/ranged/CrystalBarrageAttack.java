@@ -2,7 +2,7 @@ package com.Chagui68.entities.boss.attack.ranged;
 
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
-import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -19,7 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class CrystalBarrageAttack extends BossAttackBase {
-    public CrystalBarrageAttack(ArmorStandBoss boss) {
+    public CrystalBarrageAttack(BossHost boss) {
         super(boss);
     }
 

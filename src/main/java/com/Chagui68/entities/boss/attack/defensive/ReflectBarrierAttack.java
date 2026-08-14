@@ -1,7 +1,7 @@
 package com.Chagui68.entities.boss.attack.defensive;
 
 import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -15,7 +15,7 @@ import java.util.Random;
 
 public class ReflectBarrierAttack extends BossAttackBase {
 
-    public ReflectBarrierAttack(ArmorStandBoss boss) {
+    public ReflectBarrierAttack(BossHost boss) {
         super(boss);
     }
 

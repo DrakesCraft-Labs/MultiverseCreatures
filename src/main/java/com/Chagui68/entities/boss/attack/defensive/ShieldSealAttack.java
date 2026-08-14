@@ -1,7 +1,7 @@
 package com.Chagui68.entities.boss.attack.defensive;
 
 import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.MagicSealListener;
 import org.bukkit.Color;
@@ -26,7 +26,7 @@ public class ShieldSealAttack extends BossAttackBase {
 
     private static final double SHIELD_RADIUS = 5.5;
 
-    public ShieldSealAttack(ArmorStandBoss boss) {
+    public ShieldSealAttack(BossHost boss) {
         super(boss);
     }
 

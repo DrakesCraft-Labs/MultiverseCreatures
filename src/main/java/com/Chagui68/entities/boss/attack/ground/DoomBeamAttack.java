@@ -2,7 +2,7 @@ package com.Chagui68.entities.boss.attack.ground;
 
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
-import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.MagicSealListener;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -18,7 +18,7 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 public class DoomBeamAttack extends BossAttackBase {
-    public DoomBeamAttack(ArmorStandBoss boss) {
+    public DoomBeamAttack(BossHost boss) {
         super(boss);
     }
 

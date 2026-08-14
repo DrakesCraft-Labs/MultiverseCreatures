@@ -82,7 +82,7 @@ import java.util.*;
 import com.Chagui68.entities.BossInstance.ShieldState;
 import com.Chagui68.entities.BossInstance.DefenseState;
 
-public class ArmorStandBoss implements Listener {
+public class ArmorStandBoss implements Listener, BossHost {
 
     private final MultiverseCreatures plugin;
     private final Map<UUID, BossInstance> activeBosses = new HashMap<>();
@@ -183,30 +183,19 @@ public class ArmorStandBoss implements Listener {
         return hoverBarrageDamage;
     }
 
+    @Override
     public List<Player> getValidPlayers(World world) {
-        List<Player> result = new ArrayList<>();
-        for (Player p : world.getPlayers()) {
-            if (!p.isDead() && p.getGameMode() != GameMode.CREATIVE && p.getGameMode() != GameMode.SPECTATOR) {
-                result.add(p);
-            }
-        }
-        return result;
+        return BossArena.getValidPlayers(world);
     }
 
+    @Override
     public List<Player> getValidPlayersNear(Location center, double radiusSq) {
-        List<Player> result = new ArrayList<>();
-        for (Player p : center.getWorld().getPlayers()) {
-            if (p.isDead() || p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) continue;
-            if (p.getLocation().distanceSquared(center) <= radiusSq) {
-                result.add(p);
-            }
-        }
-        return result;
+        return BossArena.getValidPlayersNear(center, radiusSq);
     }
 
+    @Override
     public void launchPlayer(Player p, double y) {
-        if (p.getVelocity().getY() > 0.1) return;
-        p.setVelocity(p.getVelocity().setY(y));
+        BossArena.launchPlayer(p, y);
     }
 
     private void reloadExistingBosses() {
@@ -1237,24 +1226,12 @@ public class ArmorStandBoss implements Listener {
     }
 
     public double getNearestPlayerDistance(Location loc) {
-        double nearest = Double.MAX_VALUE;
-        World world = loc.getWorld();
-        if (world == null) return nearest;
-        for (Player p : world.getPlayers()) {
-            if (p.isDead() || p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) continue;
-            double dist = p.getLocation().distanceSquared(loc);
-            if (dist < nearest) nearest = dist;
-        }
-        return Math.sqrt(nearest);
+        return BossArena.getNearestPlayerDistance(loc);
     }
 
+    @Override
     public double getGroundY(Location loc, double maxScan) {
-        for (double dy = 1; dy <= maxScan; dy++) {
-            if (loc.clone().subtract(0, dy, 0).getBlock().getType().isSolid()) {
-                return loc.getY() - dy + 1;
-            }
-        }
-        return loc.getY();
+        return BossArena.getGroundY(loc, maxScan);
     }
 
     private enum DistCategory {CLOSE, MEDIUM, FAR}
@@ -1849,43 +1826,24 @@ public class ArmorStandBoss implements Listener {
         }
     }
 
+    @Override
     public Player detectTarget(ArmorStand stand) {
-        Player closest = null;
-        double closestDistSq = Double.MAX_VALUE;
-        for (Player p : getValidPlayers(stand.getWorld())) {
-            double distSq = p.getLocation().distanceSquared(stand.getLocation());
-            if (distSq <= aggroRange * aggroRange && distSq < closestDistSq) {
-                closestDistSq = distSq;
-                closest = p;
-            }
-        }
-        return closest;
+        return BossArena.detectTarget(stand, aggroRange);
     }
 
+    @Override
     public int countPlayersInRange(Location center, double radius) {
-        double radiusSq = radius * radius;
-        int count = 0;
-        for (Player p : getValidPlayers(center.getWorld())) {
-            if (p.getLocation().distanceSquared(center) <= radiusSq) count++;
-        }
-        return count;
+        return BossArena.countPlayersInRange(center, radius);
     }
 
+    @Override
     public Player findNearestPlayer(Location center, double range) {
-        Player nearest = null;
-        double nearestDistSq = range * range;
-        for (Player p : getValidPlayers(center.getWorld())) {
-            double distSq = p.getLocation().distanceSquared(center);
-            if (distSq < nearestDistSq) {
-                nearestDistSq = distSq;
-                nearest = p;
-            }
-        }
-        return nearest;
+        return BossArena.findNearestPlayer(center, range);
     }
 
+    @Override
     public boolean isOnGround(ArmorStand stand) {
-        return stand.getLocation().subtract(0, 0.1, 0).getBlock().getType().isSolid();
+        return BossArena.isOnGround(stand);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

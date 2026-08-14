@@ -2,7 +2,7 @@ package com.Chagui68.entities.boss.attack.ground;
 
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
-import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -15,7 +15,7 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 public class VortexPullAttack extends BossAttackBase {
-    public VortexPullAttack(ArmorStandBoss boss) {
+    public VortexPullAttack(BossHost boss) {
         super(boss);
     }
 

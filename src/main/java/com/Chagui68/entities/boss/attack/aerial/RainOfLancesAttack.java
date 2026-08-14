@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.aerial;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -20,7 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class RainOfLancesAttack extends BossAttackBase {
-    public RainOfLancesAttack(ArmorStandBoss boss) {
+    public RainOfLancesAttack(BossHost boss) {
         super(boss);
     }
 
@@ -108,7 +109,7 @@ public class RainOfLancesAttack extends BossAttackBase {
                         boss.resetBossPose(instance);
                         world.playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 1.5f, 0.8f);
 
-                        ItemStack lance = boss.createNetheriteLance();
+                        ItemStack lance = ((ArmorStandBoss) boss).createNetheriteLance();
                         for (Location sp : spawnPoints) {
                             org.bukkit.entity.Item lanceItem = world.dropItem(sp, lance.clone());
                             if (lanceItem == null) continue;

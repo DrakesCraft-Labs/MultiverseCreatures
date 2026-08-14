@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.aerial;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -18,7 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class HoverBarrageAttack extends BossAttackBase {
-    public HoverBarrageAttack(ArmorStandBoss boss) {
+    public HoverBarrageAttack(BossHost boss) {
         super(boss);
     }
 
@@ -90,7 +91,7 @@ public class HoverBarrageAttack extends BossAttackBase {
                         if (fwd.lengthSquared() > 0.01) {
                             xOrigin.add(fwd.clone().multiply(3));
                         }
-                        xMarks.add(boss.new XMark(xOrigin, t));
+                        xMarks.add(((ArmorStandBoss) boss).new XMark(xOrigin, t));
                         xMarksFired++;
                     }
 

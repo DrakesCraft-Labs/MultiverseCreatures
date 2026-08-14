@@ -1,7 +1,7 @@
 package com.Chagui68.entities.boss.attack.defensive;
 
 import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.MagicSealListener;
 import com.Chagui68.MultiverseCreatures;
@@ -23,7 +23,7 @@ import java.util.Random;
 
 public class TriangleCallAttack extends BossAttackBase {
 
-    public TriangleCallAttack(ArmorStandBoss boss) {
+    public TriangleCallAttack(BossHost boss) {
         super(boss);
     }
 

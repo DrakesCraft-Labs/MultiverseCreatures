@@ -2,6 +2,7 @@ package com.Chagui68.entities.boss.attack.ground;
 
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -23,7 +24,7 @@ public class GroundSlamAttack extends BossAttackBase {
 
     private static final double SHIELD_RADIUS = 6.0;
 
-    public GroundSlamAttack(ArmorStandBoss boss) {
+    public GroundSlamAttack(BossHost boss) {
         super(boss);
     }
 
@@ -61,7 +62,7 @@ public class GroundSlamAttack extends BossAttackBase {
                             return;
                         }
                         tick++;
-                        if (tick >= boss.getShieldPlantInterval()) {
+                        if (tick >= ((ArmorStandBoss) boss).getShieldPlantInterval()) {
                             plantShield(instance, center, world);
                             phase = 1;
                             tick = 0;
@@ -84,7 +85,7 @@ public class GroundSlamAttack extends BossAttackBase {
                     }
                     case 2 -> {
                         tick++;
-                        if (tick >= boss.getShieldRetrieveDelay(instance.currentPhase)) {
+                        if (tick >= ((ArmorStandBoss) boss).getShieldRetrieveDelay(instance.currentPhase)) {
                             retrieveShield(instance, center, world);
                             instance.groundSlamTask = null;
                             cancel();
@@ -190,7 +191,7 @@ public class GroundSlamAttack extends BossAttackBase {
         stand.setRightLegPose(new EulerAngle(Math.toRadians(15), 0, 0));
         stand.setLeftLegPose(new EulerAngle(Math.toRadians(-2), 0, 0));
 
-        boss.skyPentagramAttack(instance);
+        ((ArmorStandBoss) boss).skyPentagramAttack(instance);
 
         instance.shieldState = BossInstance.ShieldState.SLAM_DONE;
         instance.shieldTimer = 0;

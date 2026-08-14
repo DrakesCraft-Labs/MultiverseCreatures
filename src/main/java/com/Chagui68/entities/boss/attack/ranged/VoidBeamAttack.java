@@ -2,7 +2,7 @@ package com.Chagui68.entities.boss.attack.ranged;
 
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
-import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossHost;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -17,7 +17,7 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 public class VoidBeamAttack extends BossAttackBase {
-    public VoidBeamAttack(ArmorStandBoss boss) {
+    public VoidBeamAttack(BossHost boss) {
         super(boss);
     }
 
