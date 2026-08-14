@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.defensive;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
@@ -28,7 +29,7 @@ public class HealingCircleAttack extends BossAttackBase {
     public void startHealingCircle(BossInstance instance, boolean telegraph) {
         if (instance.healingCircleActive) return;
         if (instance.isFlying) return;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
         World world = stand.getWorld();
 

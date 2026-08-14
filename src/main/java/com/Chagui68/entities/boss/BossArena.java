@@ -119,12 +119,12 @@ public final class BossArena {
     }
 
     /** Si la entidad esta pisando suelo solido. */
-    public static boolean isOnGround(ArmorStand stand) {
+    public static boolean isOnGround(BossPuppet stand) {
         return stand.getLocation().subtract(0, 0.1, 0).getBlock().getType().isSolid();
     }
 
     /** El jugador valido mas cercano dentro del alcance de agresion, o null. */
-    public static Player detectTarget(ArmorStand stand, double aggroRange) {
+    public static Player detectTarget(BossPuppet stand, double aggroRange) {
         return findNearestPlayer(stand.getLocation(), aggroRange);
     }
 }

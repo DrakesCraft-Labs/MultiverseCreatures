@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.defensive;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
@@ -26,7 +27,7 @@ public class AbsorbShieldAttack extends BossAttackBase {
         instance.activeDefense = instance.activeDefense.ABSORB_SHIELD;
         instance.defenseTimer = 0;
         instance.absorbShieldHealth = 100.0;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         World world = stand.getWorld();
         Location loc = stand.getLocation();
 
@@ -42,7 +43,9 @@ public class AbsorbShieldAttack extends BossAttackBase {
         stand.setHeadPose(new EulerAngle(Math.toRadians(5), 0, 0));
 
         if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnCelestialSeal(stand, 300);
+            if (stand.armorStand() != null) {
+                plugin.getMagicSealListener().spawnCelestialSeal(stand.armorStand(), 300);
+            }
         }
 
         instance.defenseTask = new org.bukkit.scheduler.BukkitRunnable() {

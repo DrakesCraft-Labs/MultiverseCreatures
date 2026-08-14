@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.ground;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
@@ -22,7 +23,7 @@ public class ChainGrappleAttack extends BossAttackBase {
     @Override
     public void execute(BossInstance instance) {
         if (instance.isFlying) return;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         World world = stand.getWorld();
         Location center = stand.getLocation();
         if (plugin.getMagicSealListener() != null) {

@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.defensive;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
@@ -24,7 +25,7 @@ public class StoneSkinAttack extends BossAttackBase {
         if (instance.activeDefense != instance.activeDefense.NONE || !boss.isOnGround(instance.stand)) return;
         instance.activeDefense = instance.activeDefense.STONE_SKIN;
         instance.defenseTimer = 0;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         World world = stand.getWorld();
         Location loc = stand.getLocation();
 

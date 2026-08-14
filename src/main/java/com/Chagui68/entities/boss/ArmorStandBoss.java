@@ -321,7 +321,7 @@ public class ArmorStandBoss implements Listener, BossHost {
 
     public void skyPentagramAttack(BossInstance instance) {
         if (plugin.getMagicSealListener() == null) return;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         World world = stand.getWorld();
         MagicSealListener seals = plugin.getMagicSealListener();
 
@@ -348,7 +348,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     public void skyPentagramStrike(BossInstance instance, int columnHeight) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         World world = stand.getWorld();
         double damage = sealDamage;
         final double sealRadius = 6.0;
@@ -418,7 +418,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     private void updatePhase(BossInstance instance) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         AttributeInstance maxHealthAttr = stand.getAttribute(Attribute.MAX_HEALTH);
         double maxHealth = maxHealthAttr != null ? maxHealthAttr.getValue() : 500.0;
         double currentHealth = stand.getHealth();
@@ -493,7 +493,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         new BukkitRunnable() {
             @Override
             public void run() {
-                ArmorStand stand = instance.stand;
+                BossPuppet stand = instance.stand;
 
                 if (stand.isDead() || !stand.isValid()) {
                     cleanupShield(instance);
@@ -704,7 +704,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     private void phaseTransitionRage(BossInstance instance) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
         World world = stand.getWorld();
         Location loc = stand.getLocation();
@@ -742,7 +742,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     private void phaseTransitionBarrier(BossInstance instance) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
         World world = stand.getWorld();
         Location loc = stand.getLocation();
@@ -785,7 +785,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     private void phaseTransitionStorm(BossInstance instance) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
         World world = stand.getWorld();
         Location loc = stand.getLocation();
@@ -832,7 +832,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     private void phaseTransitionDespair(BossInstance instance) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
         World world = stand.getWorld();
         Location loc = stand.getLocation();
@@ -887,7 +887,7 @@ public class ArmorStandBoss implements Listener, BossHost {
             instance.hoverBarrageTask = null;
         }
 
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         Location startLoc = stand.getLocation();
         boolean fromAir = instance.isFlying;
         double targetY = startLoc.getY() + (fromAir ? 0 : 15);
@@ -1020,7 +1020,7 @@ public class ArmorStandBoss implements Listener, BossHost {
 
     public void flyUp(BossInstance instance, boolean telegraph) {
         if (instance.isFlying) return;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
         World world = stand.getWorld();
 
@@ -1129,7 +1129,7 @@ public class ArmorStandBoss implements Listener, BossHost {
 
     public void land(BossInstance instance, boolean telegraph) {
         if (!instance.isFlying) return;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
         World world = stand.getWorld();
 
@@ -1237,7 +1237,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     private enum DistCategory {CLOSE, MEDIUM, FAR}
 
     private void executeRandomAerialAttack(BossInstance instance) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
 
         double nearestDist = getNearestPlayerDistance(stand.getLocation());
@@ -1266,7 +1266,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     private void executeRandomGroundAttack(BossInstance instance) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
 
         double nearestDist = getNearestPlayerDistance(stand.getLocation());
@@ -1297,7 +1297,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     private void executeRangedAttack(BossInstance instance) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
 
         String[] rangedAttacks = {"lancesnipe", "meteorstorm", "voidbeam", "frostlance", "lightningspear",
@@ -1669,7 +1669,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         BossInstance instance = activeBosses.get(bossId);
         if (instance == null) return false;
         if (instance.stand.isDead() || !instance.stand.isValid()) return false;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
 
         String key = attackName.toLowerCase();
         BossAttack attack = attackRegistry.get(key);
@@ -1807,7 +1807,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     private void syncBossBarPlayers(BossInstance instance) {
         if (instance.bossBar == null) return;
         BossBar bar = instance.bossBar;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
 
         List<Player> toRemove = new ArrayList<>();
         for (Player p : bar.getPlayers()) {
@@ -1827,7 +1827,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     @Override
-    public Player detectTarget(ArmorStand stand) {
+    public Player detectTarget(BossPuppet stand) {
         return BossArena.detectTarget(stand, aggroRange);
     }
 
@@ -1842,7 +1842,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     @Override
-    public boolean isOnGround(ArmorStand stand) {
+    public boolean isOnGround(BossPuppet stand) {
         return BossArena.isOnGround(stand);
     }
 
