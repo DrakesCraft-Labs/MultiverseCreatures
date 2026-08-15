@@ -377,7 +377,6 @@ D P D
 
 - `D` = DIAMOND_BLOCK, `P` = Placa Osificada (exacta), `M` = Médula Fundida (exacta)
 
-![Receta de Marrow Aegis](images/recipes/marrow-aegis.png)
 
 ### Rueda de Ocho Manos (casco de nivel muy alto)
 Primero funde y refina un **Núcleo de Rueda Refinado** (arriba), luego:
