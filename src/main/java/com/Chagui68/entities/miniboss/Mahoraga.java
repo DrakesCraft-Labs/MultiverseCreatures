@@ -94,10 +94,13 @@ public class Mahoraga implements Listener {
     }
 
     private void tickAdapter(Zombie zombie) {
-        if (!(zombie.getTarget() instanceof Player target)) return;
-        if (target.isDead() || !target.isOnline()) return;
+        if (!(zombie.getTarget() instanceof Player target) || target.isDead() || !target.isOnline()) {
+            resetAdaptation(zombie);
+            return;
+        }
         if (target.getGameMode() == org.bukkit.GameMode.CREATIVE || target.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
             zombie.setTarget(null);
+            resetAdaptation(zombie);
             return;
         }
 
@@ -177,6 +180,18 @@ public class Mahoraga implements Listener {
         if (zombie.getAttribute(Attribute.ATTACK_DAMAGE) != null) {
             zombie.getAttribute(Attribute.ATTACK_DAMAGE).setBaseValue(totalDamage);
         }
+    }
+
+    private void resetAdaptation(Zombie zombie) {
+        if (zombie.getAttribute(Attribute.ATTACK_DAMAGE) != null) {
+            zombie.getAttribute(Attribute.ATTACK_DAMAGE).setBaseValue(4.0);
+        }
+        if (zombie.getAttribute(Attribute.KNOCKBACK_RESISTANCE) != null) {
+            zombie.getAttribute(Attribute.KNOCKBACK_RESISTANCE).setBaseValue(0);
+        }
+        zombie.removePotionEffect(PotionEffectType.STRENGTH);
+        zombie.removePotionEffect(PotionEffectType.RESISTANCE);
+        zombie.removePotionEffect(PotionEffectType.SPEED);
     }
 
     private boolean isDiamondOrNetherite(Material material) {
