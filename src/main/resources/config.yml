@@ -246,7 +246,8 @@ mahoraga:
   enabled: true
   spawn-chance: 0.05
   slimefun-adaptation: true
-  instakill-infinity-armor: true
+  # Retirado: Mahoraga ya no puede matar de un golpe atravesando Infinity Singularity.
+  adaptation-cooldown-seconds: 6
   ignore-diamond-mod: true
   infinity-weapon-adaptation: true
   death-messages:

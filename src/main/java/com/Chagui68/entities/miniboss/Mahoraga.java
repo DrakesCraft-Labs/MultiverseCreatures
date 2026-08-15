@@ -2,6 +2,7 @@ package com.Chagui68.entities.miniboss;
 
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.integration.SlimefunArmorAdaptation;
+import com.Chagui68.integration.DrakesBossesIntegration;
 import com.Chagui68.items.components.WheelEssence;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -29,8 +30,10 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -41,10 +44,11 @@ public class Mahoraga implements Listener {
     private final Random random = new Random();
     private final Set<UUID> adapters = new HashSet<>();
     private final Set<UUID> removeQueue = new HashSet<>();
+    private final Map<UUID, Map<UUID, AdaptationState>> armorAdaptations = new HashMap<>();
     private final boolean slimefunAdaptation;
-    private final boolean instakillInfinityArmor;
     private final boolean ignoreDiamondMod;
     private final boolean infinityWeaponAdaptation;
+    private final long armorAdaptationCooldownMillis;
     private static final String TAG = "MSC_Mahoraga";
     private static final double IGNORE_DIAMOND_CHANCE = 1.0;
     private static final double INFINITY_WEAPON_DAMAGE = 1.0;
@@ -52,9 +56,12 @@ public class Mahoraga implements Listener {
     public Mahoraga(MultiverseCreatures plugin) {
         this.plugin = plugin;
         this.slimefunAdaptation = plugin.getConfig().getBoolean("mahoraga.slimefun-adaptation", true);
-        this.instakillInfinityArmor = plugin.getConfig().getBoolean("mahoraga.instakill-infinity-armor", true);
         this.ignoreDiamondMod = plugin.getConfig().getBoolean("mahoraga.ignore-diamond-mod", true);
         this.infinityWeaponAdaptation = plugin.getConfig().getBoolean("mahoraga.infinity-weapon-adaptation", true);
+        this.armorAdaptationCooldownMillis = plugin.getConfig().getLong("mahoraga.adaptation-cooldown-seconds", 6L) * 1_000L;
+        if (DrakesBossesIntegration.isAvailable()) {
+            plugin.getLogger().info("[Mahoraga] Integración DrakesBosses activa: respeta UltraGod y boss_arena.");
+        }
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -222,6 +229,10 @@ public class Mahoraga implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (DrakesBossesIntegration.isArenaWorld(location.getWorld())) {
+            plugin.getLogger().warning("[Mahoraga] Spawn rechazado dentro de boss_arena; DrakesBosses controla ese mundo.");
+            return false;
+        }
         Zombie zombie = (Zombie) location.getWorld().spawnEntity(location, org.bukkit.entity.EntityType.ZOMBIE);
         if (zombie == null) return false;
         zombie.setBaby(false);
@@ -281,6 +292,7 @@ public class Mahoraga implements Listener {
     public void onMahoragaDeath(EntityDeathEvent event) {
         if (!(event.getEntity() instanceof Zombie zombie)) return;
         if (!zombie.getScoreboardTags().contains(TAG)) return;
+        armorAdaptations.remove(zombie.getUniqueId());
         event.getDrops().clear();
         if (Math.random() < 0.75) {
             zombie.getWorld().dropItemNaturally(zombie.getLocation(), WheelEssence.WHEEL_ESSENCE.clone());
@@ -304,12 +316,8 @@ public class Mahoraga implements Listener {
         if (!(event.getDamager() instanceof Zombie zombie) || !zombie.getScoreboardTags().contains(TAG)) return;
         if (!(event.getEntity() instanceof Player player)) return;
 
-        if (instakillInfinityArmor && SlimefunArmorAdaptation.isInfinitySingularityLinksSet(player)) {
-            // Mahoraga has adapted: it pierces the "Infinite Defence" Tinker trait
-            // that would force all damage to 1, killing the wearer outright.
-            event.setCancelled(true);
-            player.setAbsorptionAmount(0);
-            player.setHealth(0);
+        if (SlimefunArmorAdaptation.isInfinitySingularityLinksSet(player)) {
+            applyInfinityArmorAdaptation(zombie, player, event);
             return;
         }
 
@@ -322,6 +330,48 @@ public class Mahoraga implements Listener {
             // handled by onDiamondModHitsMahoraga).
             event.setCancelled(false);
         }
+    }
+
+    /**
+     * El conjunto Infinity no es una sentencia de muerte: Mahoraga aprende por jugador y escala
+     * su presión cada pocos segundos. Respeta la invulnerabilidad nativa usada por UltraGod y no
+     * llama nunca a {@code setHealth}, evitando instakills y cruces con tumbas o Soulbound.
+     */
+    private void applyInfinityArmorAdaptation(Zombie zombie, Player player, EntityDamageByEntityEvent event) {
+        if (DrakesBossesIntegration.isUltraGod(player)) return;
+
+        long now = System.currentTimeMillis();
+        Map<UUID, AdaptationState> byPlayer = armorAdaptations.computeIfAbsent(zombie.getUniqueId(), ignored -> new HashMap<>());
+        AdaptationState previous = byPlayer.get(player.getUniqueId());
+        int stage = previous == null ? 1 : previous.stage();
+        boolean advanced = previous == null || now - previous.lastAdvanceMillis() >= armorAdaptationCooldownMillis;
+        if (advanced && previous != null) stage = Math.min(4, stage + 1);
+        byPlayer.put(player.getUniqueId(), new AdaptationState(stage, advanced ? now : previous.lastAdvanceMillis()));
+
+        // SlimeTinker puede cancelar el golpe antes de llegar aquí. Lo reabrimos, pero sin forzar
+        // daño letal: los modificadores propios de la armadura todavía pueden mitigarlo.
+        event.setCancelled(false);
+        event.setDamage(Math.max(event.getDamage(), 4.0D + stage * 2.0D));
+        player.setAbsorptionAmount(0.0D);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40 + stage * 12, Math.min(2, stage - 1), true, true, true));
+        if (stage >= 2) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30 + stage * 10, 0, true, true, true));
+        }
+        if (stage >= 4) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 30, 0, true, true, true));
+        }
+
+        zombie.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 60, Math.min(3, stage - 1), false, false));
+        zombie.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, Math.min(2, stage - 1), false, false));
+        if (advanced) {
+            player.sendActionBar(ChatColor.DARK_PURPLE + "Mahoraga adapta su rueda a tu Infinity "
+                    + ChatColor.LIGHT_PURPLE + "(" + stage + "/4)");
+            player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.BLOCK_RESPAWN_ANCHOR_CHARGE,
+                    0.9F, 0.65F + stage * 0.08F);
+        }
+    }
+
+    private record AdaptationState(int stage, long lastAdvanceMillis) {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
