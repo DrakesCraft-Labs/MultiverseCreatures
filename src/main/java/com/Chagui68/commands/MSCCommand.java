@@ -349,17 +349,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleGive(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(RED + "Only players can receive items.");
-            return;
-        }
-
         if (args.length < 2) {
             sendGiveHelp(sender, 1);
             return;
         }
 
-        Player target = (Player) sender;
         String itemName = args[1].toLowerCase();
         int amount = 1;
 
@@ -457,9 +451,52 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        List<Player> targets = resolveGiveTargets(sender, args.length >= 4 ? args[3] : null);
+        if (targets.isEmpty()) return;
+
         item.setAmount(amount);
-        target.getInventory().addItem(item);
-        sender.sendMessage(GREEN + "Gave " + amount + "x " + item.getItemMeta().getDisplayName() + GREEN + "!");
+        String display = item.getItemMeta().getDisplayName();
+        for (Player target : targets) {
+            target.getInventory().addItem(item.clone());
+        }
+        if (targets.size() == 1) {
+            sender.sendMessage(GREEN + "Gave " + amount + "x " + display + GREEN + " to " + targets.get(0).getName() + "!");
+        } else {
+            sender.sendMessage(GREEN + "Gave " + amount + "x " + display + GREEN + " to " + targets.size() + " players!");
+        }
+    }
+
+    private List<Player> resolveGiveTargets(CommandSender sender, String targetArg) {
+        if (targetArg == null) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage(RED + "Only players can use this without a target. Specify a player or selector.");
+                return List.of();
+            }
+            return List.of(player);
+        }
+        if (targetArg.startsWith("@")) {
+            List<Entity> entities;
+            try {
+                entities = Bukkit.selectEntities(sender, targetArg);
+            } catch (IllegalArgumentException e) {
+                sender.sendMessage(RED + "Cannot use " + targetArg + ": " + e.getMessage());
+                return List.of();
+            }
+            List<Player> players = new ArrayList<>();
+            for (Entity entity : entities) {
+                if (entity instanceof Player player) players.add(player);
+            }
+            if (players.isEmpty()) {
+                sender.sendMessage(RED + "No players matched " + targetArg + ".");
+            }
+            return players;
+        }
+        Player target = Bukkit.getPlayerExact(targetArg);
+        if (target == null) {
+            sender.sendMessage(RED + "Player " + targetArg + " not found or offline.");
+            return List.of();
+        }
+        return List.of(target);
     }
 
     private void handleMusic(CommandSender sender, String[] args) {
@@ -1481,7 +1518,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 "wheelessence", "wheelcore", "reapercore", "refinednetherite", "swordmold",
                 "reinforcedboneblock", "endercore", "sentinelcore", "multiversalcore", "compressedgoldblock",
                 "moltenwheelcore", "moltennetherite", "refinedwheelcore")));
-        sendPaginatedMenu(sender, "MSC GIVE", "/msc give <item> [amount]", lines, page, "give");
+        sendPaginatedMenu(sender, "MSC GIVE", "/msc give <item> [amount] [player|@a|@p|@r|@s|@e]", lines, page, "give");
     }
 
     private void sendSealHelp(CommandSender sender, int page) {
@@ -1561,7 +1598,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     private void sendHelp(CommandSender sender) {
         sendMenuHeader(sender, "MULTIVERSE CREATURES");
         sendCommandEntry(sender, "/msc spawn <type>", "Spawn custom mobs. Use /msc spawn alone to list them.");
-        sendCommandEntry(sender, "/msc give <item> [amount]", "Give custom items. Use /msc give alone to list them.");
+        sendCommandEntry(sender, "/msc give <item> [amount] [player|@a|@p|@r|@s|@e]", "Give custom items. Use /msc give alone to list them.");
         sendCommandEntry(sender, "/msc seal <pattern> [plane]", "Spawn particle seals & battle effects.");
         sendCommandEntry(sender, "/msc attack <attack> [range]", "Trigger a registered boss attack on the nearest boss.");
         sendCommandEntry(sender, "/msc dummy", "Spawn and pose a test armor stand.");
@@ -1609,6 +1646,16 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 completions.addAll(items.stream()
                         .filter(i -> i.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList()));
+            } else if (subCmd.equals("give") && args.length == 4) {
+                List<String> selectors = Arrays.asList("@a", "@p", "@r", "@s", "@e");
+                completions.addAll(selectors.stream()
+                        .filter(t -> t.startsWith(args[3].toLowerCase()))
+                        .collect(Collectors.toList()));
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (p.getName().toLowerCase().startsWith(args[3].toLowerCase())) {
+                        completions.add(p.getName());
+                    }
+                }
             } else if (subCmd.equals("seal")) {
                 List<String> seals = Arrays.asList("pentagram", "triangle", "celestial", "circle", "ring", "star", "floating", "wings", "wings2", "vortex", "quake", "divine", "storm");
                 completions.addAll(seals.stream()
