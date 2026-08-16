@@ -60,6 +60,7 @@ public class MobHandler implements Listener {
     private double stormCallerRaidChance;
     private double venomWitchRaidChance;
     private double chaosMageRaidChance;
+    private boolean debug;
 
     public MobHandler(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -90,6 +91,14 @@ public class MobHandler implements Listener {
         stormCallerRaidChance = config.getDouble("storm-caller.raid-spawn-chance", 0.5) * spawnRateMultiplier;
         venomWitchRaidChance = config.getDouble("venom-witch.raid-spawn-chance", 0.5) * spawnRateMultiplier;
         chaosMageRaidChance = config.getDouble("chaos-mage.raid-spawn-chance", 0.5) * spawnRateMultiplier;
+        debug = config.getBoolean("general.debug", false);
+        if (debug) {
+            plugin.getLogger().info("[MobHandler] spawnRateMultiplier=" + spawnRateMultiplier
+                    + " warlordRaidChance=" + warlordRaidChance
+                    + " stormCallerRaidChance=" + stormCallerRaidChance
+                    + " venomWitchRaidChance=" + venomWitchRaidChance
+                    + " chaosMageRaidChance=" + chaosMageRaidChance);
+        }
     }
 
     @EventHandler
@@ -128,6 +137,14 @@ public class MobHandler implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onRaidSpawn(CreatureSpawnEvent event) {
+        if (debug) {
+            EntityType type = event.getEntityType();
+            if (type == EntityType.WITCH || type == EntityType.EVOKER || type == EntityType.PILLAGER
+                    || type == EntityType.RAVAGER || type == EntityType.VINDICATOR) {
+                plugin.getLogger().info("[MobHandler] Raid-tracked spawn: " + type
+                        + " reason=" + event.getSpawnReason() + " at " + event.getLocation());
+            }
+        }
         if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.RAID) return;
         switch (event.getEntityType()) {
             case WITCH -> handleRaidWitchSpawn(event);
@@ -138,22 +155,26 @@ public class MobHandler implements Listener {
 
     private void handleRaidWitchSpawn(CreatureSpawnEvent event) {
         if (random.nextDouble() < stormCallerRaidChance) {
+            if (debug) plugin.getLogger().info("[MobHandler] Converting witch to Storm Caller at " + event.getLocation());
             plugin.getStormCaller().convertExisting((Witch) event.getEntity());
             return;
         }
         if (random.nextDouble() < venomWitchRaidChance) {
+            if (debug) plugin.getLogger().info("[MobHandler] Converting witch to Venom Witch at " + event.getLocation());
             plugin.getVenomWitch().convertExisting((Witch) event.getEntity());
         }
     }
 
     private void handleRaidEvokerSpawn(CreatureSpawnEvent event) {
         if (random.nextDouble() < chaosMageRaidChance) {
+            if (debug) plugin.getLogger().info("[MobHandler] Converting evoker to Chaos Mage at " + event.getLocation());
             plugin.getChaosMage().convertExisting((Evoker) event.getEntity());
         }
     }
 
     private void handleRaidPillagerSpawn(CreatureSpawnEvent event) {
         if (random.nextDouble() < warlordRaidChance) {
+            if (debug) plugin.getLogger().info("[MobHandler] Converting pillager to Warlord at " + event.getLocation());
             plugin.getWarlord().convertExisting((Pillager) event.getEntity());
         }
     }
