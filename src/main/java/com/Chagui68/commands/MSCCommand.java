@@ -475,6 +475,10 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             return List.of(player);
         }
         if (targetArg.startsWith("@")) {
+            if (targetArg.equalsIgnoreCase("@e")) {
+                sender.sendMessage(RED + "@e is not supported. Use @a to target players.");
+                return List.of();
+            }
             List<Entity> entities;
             try {
                 entities = Bukkit.selectEntities(sender, targetArg);
@@ -1518,7 +1522,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 "wheelessence", "wheelcore", "reapercore", "refinednetherite", "swordmold",
                 "reinforcedboneblock", "endercore", "sentinelcore", "multiversalcore", "compressedgoldblock",
                 "moltenwheelcore", "moltennetherite", "refinedwheelcore")));
-        sendPaginatedMenu(sender, "MSC GIVE", "/msc give <item> [amount] [player|@a|@p|@r|@s|@e]", lines, page, "give");
+        sendPaginatedMenu(sender, "MSC GIVE", "/msc give <item> [amount] [player|@a|@p|@r|@s]", lines, page, "give");
     }
 
     private void sendSealHelp(CommandSender sender, int page) {
@@ -1598,7 +1602,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     private void sendHelp(CommandSender sender) {
         sendMenuHeader(sender, "MULTIVERSE CREATURES");
         sendCommandEntry(sender, "/msc spawn <type>", "Spawn custom mobs. Use /msc spawn alone to list them.");
-        sendCommandEntry(sender, "/msc give <item> [amount] [player|@a|@p|@r|@s|@e]", "Give custom items. Use /msc give alone to list them.");
+        sendCommandEntry(sender, "/msc give <item> [amount] [player|@a|@p|@r|@s]", "Give custom items. Use /msc give alone to list them.");
         sendCommandEntry(sender, "/msc seal <pattern> [plane]", "Spawn particle seals & battle effects.");
         sendCommandEntry(sender, "/msc attack <attack> [range]", "Trigger a registered boss attack on the nearest boss.");
         sendCommandEntry(sender, "/msc dummy", "Spawn and pose a test armor stand.");
@@ -1647,7 +1651,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                         .filter(i -> i.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList()));
             } else if (subCmd.equals("give") && args.length == 4) {
-                List<String> selectors = Arrays.asList("@a", "@p", "@r", "@s", "@e");
+                List<String> selectors = Arrays.asList("@a", "@p", "@r", "@s");
                 completions.addAll(selectors.stream()
                         .filter(t -> t.startsWith(args[3].toLowerCase()))
                         .collect(Collectors.toList()));
