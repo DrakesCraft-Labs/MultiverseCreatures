@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.aerial;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -72,7 +73,7 @@ public class CrossSlashAttack extends BossAttackBase {
                         Vector diff = pLoc.toVector().subtract(center.toVector());
                         diff.setY(0);
                         if (diff.length() < sz && Math.abs(pLoc.getY() - baseY) < 3.5) {
-                            p.damage(dmg);
+                            MscEntityUtils.damageBy(stand, p, dmg);
                             boss.launchPlayer(p, 0.8);
                         }
                     }

@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.ranged;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -64,7 +65,7 @@ public class MeteorStormAttack extends BossAttackBase {
                                         double dmg = sealDamage * 0.5;
                                         for (Player p : boss.getValidPlayers(world)) {
                                             if (p.getLocation().distanceSquared(fall) < 16) {
-                                                p.damage(dmg);
+                                                MscEntityUtils.damageBy(stand, p, dmg);
                                                 p.setFireTicks(60);
                                                 boss.launchPlayer(p, 0.5);
                                             }

@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.ground;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -73,7 +74,7 @@ public class WarStompAttack extends BossAttackBase {
                                     }
                                     for (Player p : boss.getValidPlayers(world)) {
                                         if (p.getLocation().distance(center) < radius + 1) {
-                                            p.damage(8.0 * (1 - r * 0.1));
+                                            MscEntityUtils.damageBy(stand, p, 8.0 * (1 - r * 0.1));
                                             boss.launchPlayer(p, 0.5);
                                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1));
                                         }

@@ -3,6 +3,7 @@ package com.Chagui68.entities.miniboss;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.ability.FreezeAbility;
 import com.Chagui68.items.dio.DioStandHead;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -14,6 +15,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
@@ -49,6 +51,7 @@ public class DioBoss implements Listener {
     private final Map<UUID, Long> bossCooldowns = new HashMap<>();
     private final Random random = new Random();
 
+    private boolean debug;
     private double standOffsetZ = -1.0;
     private double standOffsetY = 2.0;
     private long cooldownMs = 120000;
@@ -80,6 +83,7 @@ public class DioBoss implements Listener {
         teleportInnerRadius = plugin.getConfig().getDouble("dio-boss.teleport-inner-radius", 25.0);
         teleportDarknessDuration = plugin.getConfig().getInt("dio-boss.teleport-darkness-duration", 100);
         teleportSlownessDuration = plugin.getConfig().getInt("dio-boss.teleport-slowness-duration", 100);
+        debug = plugin.getConfig().getBoolean("dio-boss.debug", false);
     }
 
     private void reloadExistingBosses() {
@@ -96,13 +100,13 @@ public class DioBoss implements Listener {
                 }
 
                 if (stand == null || !stand.isValid()) {
-                    plugin.getLogger().warning("Dio boss stand missing at " + zombie.getLocation() + ", will be respawned");
+                    if (debug) plugin.getLogger().warning("[DioBoss] Stand missing at " + zombie.getLocation() + ", will be respawned");
                 }
 
                 DioBossInstance instance = new DioBossInstance(zombie, stand);
                 activeBosses.put(zombie.getUniqueId(), instance);
                 startBossAI(instance);
-                plugin.getLogger().info("Restarted Dio boss AI for zombie at " + zombie.getLocation());
+                if (debug) plugin.getLogger().info("[DioBoss] Restarted boss AI for zombie at " + zombie.getLocation());
             }
         }
     }
@@ -576,13 +580,13 @@ public class DioBoss implements Listener {
             }
 
             if (stand == null || !stand.isValid()) {
-                plugin.getLogger().warning("Dio boss stand missing at " + zombie.getLocation() + ", will be respawned");
+                if (debug) plugin.getLogger().warning("[DioBoss] Stand missing at " + zombie.getLocation() + ", will be respawned");
             }
 
             DioBossInstance instance = new DioBossInstance(zombie, stand);
             activeBosses.put(zombie.getUniqueId(), instance);
             startBossAI(instance);
-            plugin.getLogger().info("Restarted Dio boss AI from chunk load at " + zombie.getLocation());
+            if (debug) plugin.getLogger().info("[DioBoss] Restarted boss AI from chunk load at " + zombie.getLocation());
         }
     }
 
@@ -620,6 +624,11 @@ public class DioBoss implements Listener {
 
         zombie.getWorld().strikeLightningEffect(zombie.getLocation());
         zombie.getWorld().playSound(zombie.getLocation(), Sound.ENTITY_WITHER_DEATH, 1.5f, 0.5f);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, "MSC_DioBoss", "dio-boss.death-messages");
     }
 
     @EventHandler

@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.aerial;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -159,7 +160,7 @@ public class AerialRushAttack extends BossAttackBase {
                 world.playSound(p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_STRONG, 1.5f, 0.6f);
                 world.playSound(p.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.2f);
                 double dmg = sealDamage * 0.8;
-                p.damage(dmg);
+                MscEntityUtils.damageBy(stand, p, dmg);
                 Vector knock = p.getLocation().toVector().subtract(stand.getLocation().toVector());
                 if (knock.lengthSquared() > 0) knock.normalize();
                 knock.multiply(1.2).setY(0.7);
@@ -251,7 +252,7 @@ public class AerialRushAttack extends BossAttackBase {
                     double dsq = p.getLocation().distanceSquared(loc);
                     if (dsq <= IMPACT_RADIUS_SQ) {
                         double factor = 1.0 - Math.sqrt(dsq) / IMPACT_RADIUS * 0.4;
-                        p.damage(dmg * factor);
+                        MscEntityUtils.damageBy(stand, p, dmg * factor);
                         Vector away = p.getLocation().toVector().subtract(loc.toVector());
                         away.setY(0);
                         if (away.lengthSquared() > 0) away.normalize();

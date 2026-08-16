@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.ground;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -69,7 +70,7 @@ public class EarthPillarAttack extends BossAttackBase {
                             }
                             world.playSound(tLoc, Sound.BLOCK_STONE_BREAK, 1.0f, 0.7f);
                             double dmg = sealDamage * 0.8;
-                            target.damage(dmg);
+                            MscEntityUtils.damageBy(stand, target, dmg);
                             boss.launchPlayer(target, 1.2);
                             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2));
                         }

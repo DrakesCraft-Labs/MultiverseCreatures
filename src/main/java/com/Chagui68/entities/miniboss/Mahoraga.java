@@ -13,6 +13,7 @@ import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -45,26 +46,32 @@ public class Mahoraga implements Listener {
     private final Set<UUID> adapters = new HashSet<>();
     private final Set<UUID> removeQueue = new HashSet<>();
     private final Map<UUID, Map<UUID, AdaptationState>> armorAdaptations = new HashMap<>();
-    private final boolean slimefunAdaptation;
-    private final boolean ignoreDiamondMod;
-    private final boolean infinityWeaponAdaptation;
-    private final long armorAdaptationCooldownMillis;
+    private boolean slimefunAdaptation;
+    private boolean ignoreDiamondMod;
+    private boolean infinityWeaponAdaptation;
+    private long armorAdaptationCooldownMillis;
     private static final String TAG = "MSC_Mahoraga";
     private static final double IGNORE_DIAMOND_CHANCE = 1.0;
     private static final double INFINITY_WEAPON_DAMAGE = 1.0;
+    private static final double ARROW_REDUCTION_PER_STEP = 0.2;
+    private static final double ARROW_MAX_REDUCTION = 0.8;
 
     public Mahoraga(MultiverseCreatures plugin) {
         this.plugin = plugin;
-        this.slimefunAdaptation = plugin.getConfig().getBoolean("mahoraga.slimefun-adaptation", true);
-        this.ignoreDiamondMod = plugin.getConfig().getBoolean("mahoraga.ignore-diamond-mod", true);
-        this.infinityWeaponAdaptation = plugin.getConfig().getBoolean("mahoraga.infinity-weapon-adaptation", true);
-        this.armorAdaptationCooldownMillis = plugin.getConfig().getLong("mahoraga.adaptation-cooldown-seconds", 6L) * 1_000L;
+        reloadConfig();
         if (DrakesBossesIntegration.isAvailable()) {
             plugin.getLogger().info("[Mahoraga] Integración DrakesBosses activa: respeta UltraGod y boss_arena.");
         }
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
+    }
+
+    public void reloadConfig() {
+        slimefunAdaptation = plugin.getConfig().getBoolean("mahoraga.slimefun-adaptation", true);
+        ignoreDiamondMod = plugin.getConfig().getBoolean("mahoraga.ignore-diamond-mod", true);
+        infinityWeaponAdaptation = plugin.getConfig().getBoolean("mahoraga.infinity-weapon-adaptation", true);
+        armorAdaptationCooldownMillis = plugin.getConfig().getLong("mahoraga.adaptation-cooldown-seconds", 6L) * 1_000L;
     }
 
     private void reloadExisting() {
@@ -393,6 +400,26 @@ public class Mahoraga implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onArrowHitsMahoraga(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Arrow arrow)) return;
+        if (!(arrow.getShooter() instanceof Player player)) return;
+        if (!(event.getEntity() instanceof Zombie zombie) || !zombie.getScoreboardTags().contains(TAG)) return;
+
+        ItemStack main = player.getInventory().getItemInMainHand();
+        ItemStack off = player.getInventory().getItemInOffHand();
+        int power = Math.max(bowPower(main), bowPower(off));
+        if (power <= 0) return;
+
+        double reduction = Math.min(ARROW_MAX_REDUCTION, (power / 5) * ARROW_REDUCTION_PER_STEP);
+        event.setDamage(event.getDamage() * (1.0 - reduction));
+    }
+
+    private int bowPower(ItemStack item) {
+        if (item == null || item.getType() != Material.BOW) return 0;
+        return item.getEnchantmentLevel(Enchantment.POWER);
+    }
+
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         Entity damager = event.getDamager();
@@ -415,7 +442,11 @@ public class Mahoraga implements Listener {
         }
 
         if (damagerIsMSC && damagedIsMSC) {
-            event.setCancelled(true);
+            boolean involvesFrostGolem = damager.getScoreboardTags().contains("MSC_FrostGolem")
+                    || damaged.getScoreboardTags().contains("MSC_FrostGolem");
+            if (!involvesFrostGolem) {
+                event.setCancelled(true);
+            }
         }
     }
 }

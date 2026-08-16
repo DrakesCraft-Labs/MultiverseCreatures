@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.ranged;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -55,7 +56,7 @@ public class FrostLanceAttack extends BossAttackBase {
                             new Particle.DustOptions(Color.fromRGB(0x88DDFF), 1.5f));
                     for (Player p : boss.getValidPlayers(world)) {
                         if (p.getLocation().distanceSquared(pos) < 6) {
-                            p.damage(sealDamage * 0.8);
+                            MscEntityUtils.damageBy(stand, p, sealDamage * 0.8);
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 3));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 100, -4));
                             world.spawnParticle(Particle.EXPLOSION, pos, 5, 0.5, 0.5, 0.5, 0);

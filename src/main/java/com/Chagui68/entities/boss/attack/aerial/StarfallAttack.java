@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.aerial;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -84,7 +85,7 @@ public class StarfallAttack extends BossAttackBase {
                                     double dmg = sealDamage * 0.6;
                                     for (Player p : boss.getValidPlayers(world)) {
                                         if (p.getLocation().distanceSquared(fall) < 25) {
-                                            p.damage(dmg);
+                                            MscEntityUtils.damageBy(stand, p, dmg);
                                             boss.launchPlayer(p, 0.6);
                                         }
                                     }

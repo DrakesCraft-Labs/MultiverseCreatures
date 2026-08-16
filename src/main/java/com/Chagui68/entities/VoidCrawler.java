@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -137,7 +138,7 @@ public class VoidCrawler implements Listener {
             }
             target.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 100, 2));
             target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 1));
-            target.damage(6.0);
+            MscEntityUtils.damageBy(spider, target, 6.0);
             sLoc.getWorld().playSound(sLoc, Sound.ENTITY_SPIDER_AMBIENT, 1.0f, 0.5f);
             inst.poisonBurstCooldown = 0;
         }
@@ -175,6 +176,11 @@ public class VoidCrawler implements Listener {
             spider.getWorld().dropItemNaturally(spider.getLocation(), VoidEssence.VOID_ESSENCE.clone());
         }
         event.setDroppedExp(35);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "void-crawler.death-messages");
     }
 
     private static class VoidCrawlerInstance {

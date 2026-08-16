@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.aerial;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -79,7 +80,7 @@ public class WindCutterAttack extends BossAttackBase {
                                 double dmg = sealDamage * 0.25;
                                 for (Player p : boss.getValidPlayers(world)) {
                                     if (p.getLocation().distanceSquared(wLoc) < 9) {
-                                        p.damage(dmg);
+                                        MscEntityUtils.damageBy(stand, p, dmg);
                                         p.setVelocity(p.getVelocity().add(new Vector(Math.cos(fAngle) * 0.5, 0.2, Math.sin(fAngle) * 0.5)));
                                     }
                                 }

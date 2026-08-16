@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.ranged;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -64,7 +65,7 @@ public class ArcaneOrbAttack extends BossAttackBase {
                             world.playSound(pos, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.5f);
                             for (Player near : boss.getValidPlayers(world)) {
                                 if (near.getLocation().distanceSquared(pos) < 25) {
-                                    near.damage(sealDamage * 0.6);
+                                    MscEntityUtils.damageBy(stand, near, sealDamage * 0.6);
                                     Vector away = near.getLocation().toVector().subtract(pos.toVector());
                                     if (away.lengthSquared() > 0)
                                         near.setVelocity(away.normalize().multiply(0.8).setY(0.4));

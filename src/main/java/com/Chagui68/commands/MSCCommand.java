@@ -98,7 +98,8 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             "armorstand", "merchant", "dio", "creeperjr", "headslime", "zombietrap", "tank",
             "duelist", "lancer", "camel", "sniper", "mahoraga", "shadowrogue", "flameelemental",
             "frostgolem", "voidcrawler", "stormcaller", "boneshield", "venomwitch",
-            "obsidianguard", "soulreaper", "chaosmage", "enderknight", "kinger", "disctrader"
+            "obsidianguard", "soulreaper", "chaosmage", "enderknight", "kinger", "disctrader",
+            "warlord"
     );
 
     public MSCCommand(MultiverseCreatures plugin, MobHandler mobHandler) {
@@ -144,6 +145,9 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 break;
             case "cleanstands":
                 handleCleanStands(sender);
+                break;
+            case "reload":
+                handleReload(sender);
                 break;
             default:
                 sender.sendMessage(RED + "Unknown command. Use /msc for help.");
@@ -319,6 +323,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 boolean success = plugin.getChaosMage().trySpawn(p.getLocation());
                 if (success) sender.sendMessage(GREEN + "Spawned Chaos Mage!");
                 else sender.sendMessage(RED + "Failed to spawn Chaos Mage.");
+            }
+            case "warlord" -> {
+                boolean success = plugin.getWarlord().trySpawn(p.getLocation());
+                if (success) sender.sendMessage(GREEN + "Spawned Warlord!");
+                else sender.sendMessage(RED + "Failed to spawn Warlord.");
             }
             case "enderknight", "ender" -> {
                 boolean success = plugin.getEnderKnight().trySpawn(p.getLocation());
@@ -548,6 +557,16 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         } else {
             sender.sendMessage(RED + "Cannot use " + attackName + " in the boss's current state.");
         }
+    }
+
+    private void handleReload(CommandSender sender) {
+        plugin.reloadConfig();
+        mobHandler.reloadConfig();
+        plugin.getMahoraga().reloadConfig();
+        plugin.getDioBoss().reloadConfig();
+        plugin.getArmorStandBoss().reloadConfig();
+        plugin.getHeadSlime().reloadConfig();
+        sender.sendMessage(GREEN + "Configuration reloaded. All changes have been applied.");
     }
 
     private void handleCleanStands(CommandSender sender) {
@@ -1549,6 +1568,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         sendCommandEntry(sender, "/msc music <play|stop|list|disc> [name] [loop]", "Play .nbs music files or get a jukebox disc.");
         sendCommandEntry(sender, "/msc dimtp <world>", "Teleport between dimensions.");
         sendCommandEntry(sender, "/msc cleanstands", "Remove all custom plugin armor stands.");
+        sendCommandEntry(sender, "/msc reload", "Reload config.yml and apply all changes.");
         sendLine(sender, "");
         sendLine(sender, " &7&oTip: &e/msc <spawn|give|seal|attack|dummy> help [page]");
         sendMenuFooter(sender);
@@ -1563,7 +1583,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            List<String> subCommands = Arrays.asList("spawn", "give", "attack", "music", "cleanstands", "seal", "dummy", "dimtp");
+            List<String> subCommands = Arrays.asList("spawn", "give", "attack", "music", "cleanstands", "reload", "seal", "dummy", "dimtp");
             completions.addAll(subCommands.stream()
                     .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList()));

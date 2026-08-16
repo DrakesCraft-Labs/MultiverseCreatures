@@ -12,6 +12,7 @@ import org.bukkit.entity.Witch;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -127,11 +128,16 @@ public class VenomWitch implements Listener {
             target.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 100, 1));
             target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 1));
             target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0));
-            target.damage(4.0);
+            MscEntityUtils.damageBy(witch, target, 4.0);
             tLoc.getWorld().spawnParticle(Particle.WITCH, tLoc.add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0);
             wLoc.getWorld().playSound(tLoc, Sound.ENTITY_WITCH_THROW, 1.0f, 1.2f);
             inst.debuffCooldown = 0;
         }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "venom-witch.death-messages");
     }
 
     @EventHandler

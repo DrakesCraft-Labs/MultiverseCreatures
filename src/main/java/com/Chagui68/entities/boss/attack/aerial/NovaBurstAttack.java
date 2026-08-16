@@ -4,6 +4,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -74,7 +75,7 @@ public class NovaBurstAttack extends BossAttackBase {
                     for (Player p : boss.getValidPlayers(world)) {
                         double dist = p.getLocation().distance(boomLoc);
                         if (dist < 20) {
-                            p.damage(dmg * (1 - dist / 20 * 0.6));
+                            MscEntityUtils.damageBy(stand, p, dmg * (1 - dist / 20 * 0.6));
                             boss.launchPlayer(p, 1.0 + (1 - dist / 20) * 0.5);
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
                         }

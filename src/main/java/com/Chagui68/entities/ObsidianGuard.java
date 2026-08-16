@@ -14,6 +14,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -150,6 +151,11 @@ public class ObsidianGuard implements Listener {
             p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1));
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1));
         }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "obsidian-guard.death-messages");
     }
 
     @EventHandler

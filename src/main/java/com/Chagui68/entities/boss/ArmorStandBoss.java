@@ -50,6 +50,7 @@ import com.Chagui68.entities.boss.attack.defensive.ShieldSealAttack;
 import com.Chagui68.entities.boss.attack.defensive.StoneSkinAttack;
 import com.Chagui68.entities.boss.attack.defensive.TriangleCallAttack;
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -63,6 +64,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -388,7 +390,7 @@ public class ArmorStandBoss implements Listener, BossHost {
 
             double distSq = player.getLocation().distanceSquared(base);
             if (distSq <= sealRadiusSq) {
-                player.damage(damage);
+                MscEntityUtils.damageBy(stand, player, damage);
                 player.setVelocity(player.getVelocity().add(new org.bukkit.util.Vector(0, 0.4, 0)));
             }
         }
@@ -730,7 +732,7 @@ public class ArmorStandBoss implements Listener, BossHost {
             if (dist < 30) {
                 Vector away = p.getLocation().toVector().subtract(loc.toVector()).normalize();
                 p.setVelocity(away.multiply(2.0).setY(1.0));
-                p.damage(10.0);
+                MscEntityUtils.damageBy(stand, p, 10.0);
                 p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 0));
             }
         }
@@ -819,7 +821,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         for (Player p : getValidPlayers(world)) {
             double dist = p.getLocation().distance(loc);
             if (dist < 25) {
-                p.damage(dmg * 0.5 * (1 - dist / 25));
+                MscEntityUtils.damageBy(stand, p, dmg * 0.5 * (1 - dist / 25));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1));
             }
@@ -863,7 +865,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         for (Player p : getValidPlayers(world)) {
             double dist = p.getLocation().distance(loc);
             if (dist < 35) {
-                p.damage(dmg * (1 - dist / 35));
+                MscEntityUtils.damageBy(stand, p, dmg * (1 - dist / 35));
                 p.setVelocity(new Vector(0, 1.5, 0));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 100, 1));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0));
@@ -1321,6 +1323,15 @@ public class ArmorStandBoss implements Listener, BossHost {
         executeAttack("airslam", instance, telegraph);
     }
 
+    private ArmorStand getBossStand(World world) {
+        for (BossInstance instance : activeBosses.values()) {
+            if (instance.stand.getWorld().equals(world)) {
+                return instance.stand;
+            }
+        }
+        return null;
+    }
+
     public void spawnShockwaveWave(World world, Location center, double maxRadius) {
         final int ringCount = 10;
         final double ringSpacing = maxRadius / ringCount;
@@ -1328,6 +1339,8 @@ public class ArmorStandBoss implements Listener, BossHost {
 
         Location impactLoc = center.clone();
         impactLoc.setY(impactLoc.getY() + 0.1);
+
+        final ArmorStand stand = getBossStand(world);
 
         for (int i = 0; i < ringCount; i++) {
             final int ringIndex = i;
@@ -1359,7 +1372,7 @@ public class ArmorStandBoss implements Listener, BossHost {
                         for (Player p : getValidPlayers(world)) {
                             double dist = p.getLocation().distance(pl);
                             if (dist < 2.0 && p.getLocation().getY() <= pl.getY() + 2) {
-                                p.damage(damageMultiplier * 5.0);
+                            if (stand != null) MscEntityUtils.damageBy(stand, p, damageMultiplier * 5.0);
                                 p.setVelocity(p.getVelocity().add(knockbackStrength.clone()));
                             }
                         }
@@ -1508,11 +1521,13 @@ public class ArmorStandBoss implements Listener, BossHost {
             w.spawnParticle(Particle.CRIT, pos, 20, 1, 1, 1, 0.1);
             w.playSound(pos, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.8f);
 
+            final ArmorStand stand = getBossStand(w);
+
             double damage = hoverBarrageDamage;
             double radius = 4.0;
             for (Player p : getValidPlayers(w)) {
                 if (p.getLocation().distanceSquared(pos) <= radius * radius) {
-                    p.damage(damage);
+                    if (stand != null) MscEntityUtils.damageBy(stand, p, damage);
                     p.setVelocity(p.getVelocity().add(new Vector(0, 0.5, 0)));
                 }
             }
@@ -1947,7 +1962,7 @@ public class ArmorStandBoss implements Listener, BossHost {
                         case STONE_SKIN -> damage *= 0.5;
                         case REFLECT_BARRIER -> {
                             damage *= 0.7;
-                            player.damage(damage * 0.3);
+                            MscEntityUtils.damageBy(stand, player, damage * 0.3);
                             player.getWorld().spawnParticle(Particle.CRIT, player.getLocation().add(0, 1, 0), 8, 0.3, 0.5, 0.3, 0.1);
                         }
                         case ABSORB_SHIELD -> {
@@ -1984,6 +1999,15 @@ public class ArmorStandBoss implements Listener, BossHost {
         }
 
         event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (!MscEntityUtils.applyDeathMessage(plugin, event, TAG, "armor-stand-boss.death-messages")) {
+            if (!MscEntityUtils.applyDeathMessage(plugin, event, SUMMON_TAG, "armor-stand-boss.death-messages")) {
+                MscEntityUtils.applyDeathMessage(plugin, event, "MSC_BossMirror", "armor-stand-boss.death-messages");
+            }
+        }
     }
 
     @EventHandler

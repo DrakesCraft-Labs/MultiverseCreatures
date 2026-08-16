@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -110,7 +111,7 @@ public class EnderKnight implements Listener {
 
         if (dist > 5 && dist < 25 && inst.enderPullCooldown > 60) {
             target.setVelocity(eLoc.toVector().subtract(tLoc.toVector()).normalize().multiply(0.8));
-            target.damage(4.0);
+            MscEntityUtils.damageBy(em, target, 4.0);
             for (int i = 0; i < 8; i++) {
                 Location pl = tLoc.clone().add((random.nextDouble() - 0.5) * 3, random.nextDouble() * 2, (random.nextDouble() - 0.5) * 3);
                 eLoc.getWorld().spawnParticle(Particle.PORTAL, pl, 3, 0.1, 0.1, 0.1, 0.02);
@@ -127,7 +128,7 @@ public class EnderKnight implements Listener {
             eLoc.getWorld().spawnParticle(Particle.PORTAL, eLoc, 20, 0.5, 1, 0.5, 0.05);
             eLoc.getWorld().spawnParticle(Particle.PORTAL, behind, 20, 0.5, 1, 0.5, 0.05);
             eLoc.getWorld().playSound(behind, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
-            target.damage(8.0);
+            MscEntityUtils.damageBy(em, target, 8.0);
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
             inst.enderRushCooldown = 0;
         }
@@ -156,6 +157,11 @@ public class EnderKnight implements Listener {
             em.getWorld().dropItemNaturally(em.getLocation(), EnderFragment.ENDER_FRAGMENT.clone());
         }
         event.setDroppedExp(70);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "ender-knight.death-messages");
     }
 
     private static class EnderKnightInstance {
