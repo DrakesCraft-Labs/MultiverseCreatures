@@ -13,7 +13,9 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Evoker;
 import org.bukkit.entity.WanderingTrader;
+import org.bukkit.entity.Witch;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
@@ -190,14 +192,23 @@ public class MobHandler implements Listener {
     }
 
     private void handleWitchSpawn(CreatureSpawnEvent event, Location loc) {
+        boolean raid = event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.RAID;
         if (random.nextDouble() < stormCallerChance) {
-            event.setCancelled(true);
-            plugin.getStormCaller().trySpawn(loc);
+            if (raid) {
+                plugin.getStormCaller().convertExisting((Witch) event.getEntity());
+            } else {
+                event.setCancelled(true);
+                plugin.getStormCaller().trySpawn(loc);
+            }
             return;
         }
         if (random.nextDouble() < venomWitchChance) {
-            event.setCancelled(true);
-            plugin.getVenomWitch().trySpawn(loc);
+            if (raid) {
+                plugin.getVenomWitch().convertExisting((Witch) event.getEntity());
+            } else {
+                event.setCancelled(true);
+                plugin.getVenomWitch().trySpawn(loc);
+            }
         }
     }
 
@@ -210,8 +221,12 @@ public class MobHandler implements Listener {
 
     private void handleEvokerSpawn(CreatureSpawnEvent event, Location loc) {
         if (random.nextDouble() < chaosMageChance) {
-            event.setCancelled(true);
-            plugin.getChaosMage().trySpawn(loc);
+            if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.RAID) {
+                plugin.getChaosMage().convertExisting((Evoker) event.getEntity());
+            } else {
+                event.setCancelled(true);
+                plugin.getChaosMage().trySpawn(loc);
+            }
         }
     }
 

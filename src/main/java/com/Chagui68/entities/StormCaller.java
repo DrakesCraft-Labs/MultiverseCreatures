@@ -62,18 +62,28 @@ public class StormCaller implements Listener {
     public boolean trySpawn(Location location) {
         Witch witch = (Witch) location.getWorld().spawnEntity(location, EntityType.WITCH);
         if (witch == null) return false;
+        witch.setPersistent(true);
+        witch.setRemoveWhenFarAway(false);
+        customize(witch);
+        return true;
+    }
+
+    public boolean convertExisting(Witch witch) {
+        if (witch == null || witch.isDead() || !witch.isValid()) return false;
+        customize(witch);
+        return true;
+    }
+
+    private void customize(Witch witch) {
         witch.addScoreboardTag(TAG);
         witch.setCustomName(ChatColor.YELLOW + "" + ChatColor.BOLD + "Storm Caller");
         witch.setCustomNameVisible(true);
-        witch.setPersistent(true);
-        witch.setRemoveWhenFarAway(false);
         MscEntityUtils.setAttribute(witch, Attribute.MAX_HEALTH, 60.0);
         witch.setHealth(60.0);
         MscEntityUtils.setAttribute(witch, Attribute.MOVEMENT_SPEED, 0.28);
         witch.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 0, false, false));
         witch.setAI(true);
         active.put(witch.getUniqueId(), new StormCallerInstance(witch));
-        return true;
     }
 
     private void tickStorm(StormCallerInstance inst) {
