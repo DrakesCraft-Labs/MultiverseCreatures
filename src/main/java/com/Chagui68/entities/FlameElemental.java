@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -132,7 +133,7 @@ public class FlameElemental implements Listener {
                     if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) continue;
                     if (p.getLocation().distanceSquared(meteor.pos) < 4) {
                         p.setFireTicks(100);
-                        p.damage(12.0);
+                        MscEntityUtils.damageBy(blaze, p, 12.0);
                         meteor.world.spawnParticle(Particle.EXPLOSION, pLoc, 10, 1, 1, 1, 0.1);
                         meteor.world.playSound(pLoc, Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 0.6f);
                         inst.activeMeteor = null;
@@ -148,7 +149,7 @@ public class FlameElemental implements Listener {
                     if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) continue;
                     if (p.getLocation().distanceSquared(meteor.pos) < 9) {
                         p.setFireTicks(80);
-                        p.damage(6.0);
+                        MscEntityUtils.damageBy(blaze, p, 6.0);
                     }
                 }
                 inst.activeMeteor = null;
@@ -157,7 +158,7 @@ public class FlameElemental implements Listener {
 
         if (dist < 5 && blaze.getFireTicks() > 0) {
             target.setFireTicks(target.getFireTicks() + 20);
-            target.damage(3.0);
+            MscEntityUtils.damageBy(blaze, target, 3.0);
             tLoc.getWorld().spawnParticle(Particle.FLAME, tLoc.add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0.03);
         }
 
@@ -183,6 +184,11 @@ public class FlameElemental implements Listener {
             blaze.getWorld().dropItemNaturally(blaze.getLocation(), MagmaCore.MAGMA_CORE.clone());
         }
         event.setDroppedExp(40);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "flame-elemental.death-messages");
     }
 
     private static class FlameElementalInstance {

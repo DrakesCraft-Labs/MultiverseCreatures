@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.ground;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -81,7 +82,7 @@ public class WhirlwindSlashAttack extends BossAttackBase {
                             if (distSq > 81) continue;
                             if (distSq < 0.01) continue;
 
-                            p.damage(9.0);
+                            MscEntityUtils.damageBy(stand, p, 9.0);
                             Vector pull = toP.normalize().multiply(-1.3);
                             p.setVelocity(p.getVelocity().add(pull.setY(0.25)));
                         }
@@ -90,7 +91,7 @@ public class WhirlwindSlashAttack extends BossAttackBase {
                             world.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.7f);
                             for (Player p : boss.getValidPlayers(world)) {
                                 if (p.getLocation().distanceSquared(loc) < 49) {
-                                    p.damage(6.0);
+                                    MscEntityUtils.damageBy(stand, p, 6.0);
                                     Vector away = p.getLocation().toVector().subtract(loc.toVector());
                                     if (away.lengthSquared() > 0.01) {
                                         p.setVelocity(away.normalize().multiply(1.6).setY(0.6));

@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.ranged;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -55,7 +56,7 @@ public class LanceSnipeAttack extends BossAttackBase {
                             new Particle.DustOptions(Color.fromRGB(0xFFAA00), 1.8f));
                     for (Player p : boss.getValidPlayers(world)) {
                         if (p.getLocation().distanceSquared(pos) < 4) {
-                            p.damage(sealDamage);
+                            MscEntityUtils.damageBy(stand, p, sealDamage);
                             p.setVelocity(dir.clone().setY(0.4).multiply(0.5));
                             world.spawnParticle(Particle.EXPLOSION, pos, 5, 0.3, 0.3, 0.3, 0);
                             world.playSound(pos, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.2f);

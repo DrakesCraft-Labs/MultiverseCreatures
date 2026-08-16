@@ -12,6 +12,7 @@ import org.bukkit.entity.Witch;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -110,7 +111,7 @@ public class StormCaller implements Listener {
                         new Particle.DustOptions(Color.fromRGB(0x666688), 2.5f));
                 wLoc.getWorld().spawnParticle(Particle.CLOUD, pl, 2, 0.5, 0.2, 0.5, 0.02);
             }
-            target.damage(8.0);
+            MscEntityUtils.damageBy(witch, target, 8.0);
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
             wLoc.getWorld().playSound(wLoc, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.5f, 0.5f);
             inst.cloudCooldown = 0;
@@ -137,11 +138,16 @@ public class StormCaller implements Listener {
             for (Player p : wLoc.getWorld().getPlayers()) {
                 if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) continue;
                 if (p.getLocation().distanceSquared(strikeLoc) < 16) {
-                    p.damage(10.0);
+                    MscEntityUtils.damageBy(witch, p, 10.0);
                     p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2));
                 }
             }
         }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "storm-caller.death-messages");
     }
 
     @EventHandler

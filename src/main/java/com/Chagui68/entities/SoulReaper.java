@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -122,7 +123,7 @@ public class SoulReaper implements Listener {
 
         if (dist < 8 && inst.soulDrainCooldown > 60) {
             double dmg = 10.0;
-            target.damage(dmg);
+            MscEntityUtils.damageBy(ws, target, dmg);
             double heal = dmg * 0.5;
             ws.setHealth(Math.min(ws.getAttribute(Attribute.MAX_HEALTH).getValue(), ws.getHealth() + heal));
             target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 80, 2));
@@ -164,6 +165,11 @@ public class SoulReaper implements Listener {
             ws.setHealth(Math.min(ws.getAttribute(Attribute.MAX_HEALTH).getValue(), ws.getHealth() + heal));
             p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 100, 1));
         }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "soul-reaper.death-messages");
     }
 
     @EventHandler

@@ -2,6 +2,7 @@ package com.Chagui68.entities;
 
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.HeadSlimeHeart;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -576,7 +577,12 @@ public class HeadSlime implements Listener {
             double multiplier = 1.0 - (dist / creeper.getExplosionRadius());
             double damage = 24.0 * multiplier;
             if (damage < 1) damage = 1;
-            player.damage(damage);
+            for (Entity p : creeper.getPassengers()) {
+                if (p instanceof Slime s && s.getScoreboardTags().contains(TAG)) {
+                    MscEntityUtils.damageBy(s, player, damage);
+                    break;
+                }
+            }
         }
     }
 

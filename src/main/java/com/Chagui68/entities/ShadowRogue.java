@@ -12,6 +12,7 @@ import org.bukkit.entity.Skeleton;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -125,7 +126,7 @@ public class ShadowRogue implements Listener {
             double dot = dirToTarget.normalize().dot(targetDir);
             if (dot > 0.7) {
                 double dmg = 18.0;
-                target.damage(dmg);
+                MscEntityUtils.damageBy(sk, target, dmg);
                 target.setVelocity(targetDir.multiply(-1.5).setY(0.5));
                 target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 1));
                 target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2));
@@ -136,6 +137,11 @@ public class ShadowRogue implements Listener {
             }
         }
         inst.backstabCooldown++;
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "shadow-rogue.death-messages");
     }
 
     @EventHandler

@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.ground;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -74,7 +75,7 @@ public class ExecutionerSweepAttack extends BossAttackBase {
                             if (toP.lengthSquared() < 0.01) continue;
                             if (toP.normalize().dot(fDir) < 0.0) continue;
 
-                            p.damage(16.0);
+                            MscEntityUtils.damageBy(stand, p, 16.0);
                             p.setVelocity(fDir.clone().multiply(2.0).setY(0.9));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 1));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 2));

@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.aerial;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -81,9 +82,9 @@ public class GravityWellAttack extends BossAttackBase {
                         double dist = toCenter.length();
                         if (dist < 10 && dist > 2) {
                             p.setVelocity(p.getVelocity().add(toCenter.normalize().multiply(0.2)));
-                            p.damage(3.0);
+                            MscEntityUtils.damageBy(stand, p, 3.0);
                         } else if (dist <= 2) {
-                            p.damage(8.0);
+                            MscEntityUtils.damageBy(stand, p, 8.0);
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 3));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 2));
                         }

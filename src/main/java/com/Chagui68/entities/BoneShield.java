@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -163,10 +164,15 @@ public class BoneShield implements Listener {
             sk.getWorld().spawnParticle(Particle.BLOCK, sk.getLocation().add(0, 1, 0), 5, 0.3, 0.5, 0.3, 0.05, Material.BONE_BLOCK.createBlockData());
             sk.getWorld().playSound(sk.getLocation(), Sound.ITEM_SHIELD_BLOCK, 0.8f, 1.2f);
             if (event.getDamager() instanceof Player p) {
-                p.damage(3.0);
+                MscEntityUtils.damageBy(sk, p, 3.0);
                 p.getWorld().spawnParticle(Particle.CRIT, p.getLocation().add(0, 1, 0), 5, 0.2, 0.3, 0.2, 0.02);
             }
         }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "bone-shield.death-messages");
     }
 
     @EventHandler

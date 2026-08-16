@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.ranged;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -77,7 +78,7 @@ public class ShadowVolleyAttack extends BossAttackBase {
                             new Particle.DustOptions(Color.fromRGB(0x330044), 1.5f));
                     for (Player pl : boss.getValidPlayers(world)) {
                         if (pl.getLocation().distanceSquared(p) < 4) {
-                            pl.damage(sealDamage * 0.5);
+                            MscEntityUtils.damageBy(stand, pl, sealDamage * 0.5);
                             pl.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 1));
                             pl.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0));
                             world.spawnParticle(Particle.EXPLOSION, p, 3, 0.3, 0.3, 0.3, 0);

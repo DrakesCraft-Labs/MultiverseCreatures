@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.ranged;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -51,11 +52,11 @@ public class ChainLightningAttack extends BossAttackBase {
                         Player p = targets.get(strikes % targets.size());
                         strikes++;
                         world.strikeLightningEffect(p.getLocation());
-                        p.damage(sealDamage * 0.5);
+                        MscEntityUtils.damageBy(stand, p, sealDamage * 0.5);
                         p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 80, 1));
                         for (Player near : boss.getValidPlayers(world)) {
                             if (near != p && near.getLocation().distanceSquared(p.getLocation()) < 16) {
-                                near.damage(sealDamage * 0.3);
+                                MscEntityUtils.damageBy(stand, near, sealDamage * 0.3);
                                 world.spawnParticle(Particle.ELECTRIC_SPARK, near.getLocation(), 8, 0.3, 0.5, 0.3, 0.1);
                             }
                         }

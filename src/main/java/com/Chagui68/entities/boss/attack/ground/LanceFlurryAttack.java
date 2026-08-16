@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.ground;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -76,7 +77,7 @@ public class LanceFlurryAttack extends BossAttackBase {
                             if (toP.lengthSquared() < 0.01) continue;
                             if (toP.normalize().dot(fDir) < 0.5) continue;
 
-                            p.damage(7.0);
+                            MscEntityUtils.damageBy(stand, p, 7.0);
                             p.setVelocity(fDir.clone().multiply(1.4).setY(0.4));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1));
                         }

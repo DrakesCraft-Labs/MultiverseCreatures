@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss.attack.aerial;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -149,7 +150,7 @@ public class AirSlamAttack extends BossAttackBase {
                     for (Player p : boss.getValidPlayers(world)) {
                         double dist = p.getLocation().distance(loc);
                         if (dist <= ATTACK_RADIUS) {
-                            p.damage(damage * (1 - dist / ATTACK_RADIUS * 0.5));
+                            MscEntityUtils.damageBy(stand, p, damage * (1 - dist / ATTACK_RADIUS * 0.5));
                             boss.launchPlayer(p, 0.8 + (1 - dist / ATTACK_RADIUS) * 0.5);
                         }
                     }

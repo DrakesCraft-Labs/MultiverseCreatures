@@ -14,9 +14,11 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Evoker;
+import org.bukkit.entity.Pillager;
 import org.bukkit.entity.WanderingTrader;
 import org.bukkit.entity.Witch;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.inventory.ItemStack;
@@ -45,7 +47,7 @@ public class MobHandler implements Listener {
     private double shadowRogueChance;
     private double boneShieldChance;
     private double flameElementalChance;
-    private double frostGolemChance;
+    private double frostGolemBuildChance;
     private double voidCrawlerChance;
     private double stormCallerChance;
     private double venomWitchChance;
@@ -53,6 +55,11 @@ public class MobHandler implements Listener {
     private double chaosMageChance;
     private double enderKnightChance;
     private double discTraderChance;
+    private double warlordChance;
+    private double warlordRaidChance;
+    private double stormCallerRaidChance;
+    private double venomWitchRaidChance;
+    private double chaosMageRaidChance;
 
     public MobHandler(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -70,7 +77,7 @@ public class MobHandler implements Listener {
         shadowRogueChance = config.getDouble("shadow-rogue.spawn-chance", 0.05) * spawnRateMultiplier;
         boneShieldChance = config.getDouble("bone-shield.spawn-chance", 0.06) * spawnRateMultiplier;
         flameElementalChance = config.getDouble("flame-elemental.spawn-chance", 0.1) * spawnRateMultiplier;
-        frostGolemChance = config.getDouble("frost-golem.spawn-chance", 0.08) * spawnRateMultiplier;
+        frostGolemBuildChance = config.getDouble("frost-golem.build-spawn-chance", 0.2) * spawnRateMultiplier;
         voidCrawlerChance = config.getDouble("void-crawler.spawn-chance", 0.07) * spawnRateMultiplier;
         stormCallerChance = config.getDouble("storm-caller.spawn-chance", 0.04) * spawnRateMultiplier;
         venomWitchChance = config.getDouble("venom-witch.spawn-chance", 0.05) * spawnRateMultiplier;
@@ -78,6 +85,11 @@ public class MobHandler implements Listener {
         chaosMageChance = config.getDouble("chaos-mage.spawn-chance", 0.06) * spawnRateMultiplier;
         enderKnightChance = config.getDouble("ender-knight.spawn-chance", 0.04) * spawnRateMultiplier;
         discTraderChance = config.getDouble("disc-trader.spawn-chance", 0.05) * spawnRateMultiplier;
+        warlordChance = config.getDouble("warlord.spawn-chance", 0.1) * spawnRateMultiplier;
+        warlordRaidChance = config.getDouble("warlord.raid-spawn-chance", 0.5) * spawnRateMultiplier;
+        stormCallerRaidChance = config.getDouble("storm-caller.raid-spawn-chance", 0.5) * spawnRateMultiplier;
+        venomWitchRaidChance = config.getDouble("venom-witch.raid-spawn-chance", 0.5) * spawnRateMultiplier;
+        chaosMageRaidChance = config.getDouble("chaos-mage.raid-spawn-chance", 0.5) * spawnRateMultiplier;
     }
 
     @EventHandler
@@ -86,8 +98,10 @@ public class MobHandler implements Listener {
                 && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER_EGG
                 && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.REINFORCEMENTS
                 && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.BREEDING
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.RAID
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER) {
+                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.VILLAGE_INVASION
+                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER
+                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.PATROL
+                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.BUILD_IRONGOLEM) {
             return;
         }
 
@@ -106,8 +120,41 @@ public class MobHandler implements Listener {
             case WITCH -> handleWitchSpawn(event, loc);
             case WITHER_SKELETON -> handleWitherSkeletonSpawn(event, loc);
             case EVOKER -> handleEvokerSpawn(event, loc);
+            case PILLAGER -> handlePillagerSpawn(event, loc);
             case ENDERMAN -> handleEndermanSpawn(event, loc);
             case VILLAGER -> handleVillagerSpawn(event, loc);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onRaidSpawn(CreatureSpawnEvent event) {
+        if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.RAID) return;
+        switch (event.getEntityType()) {
+            case WITCH -> handleRaidWitchSpawn(event);
+            case EVOKER -> handleRaidEvokerSpawn(event);
+            case PILLAGER -> handleRaidPillagerSpawn(event);
+        }
+    }
+
+    private void handleRaidWitchSpawn(CreatureSpawnEvent event) {
+        if (random.nextDouble() < stormCallerRaidChance) {
+            plugin.getStormCaller().convertExisting((Witch) event.getEntity());
+            return;
+        }
+        if (random.nextDouble() < venomWitchRaidChance) {
+            plugin.getVenomWitch().convertExisting((Witch) event.getEntity());
+        }
+    }
+
+    private void handleRaidEvokerSpawn(CreatureSpawnEvent event) {
+        if (random.nextDouble() < chaosMageRaidChance) {
+            plugin.getChaosMage().convertExisting((Evoker) event.getEntity());
+        }
+    }
+
+    private void handleRaidPillagerSpawn(CreatureSpawnEvent event) {
+        if (random.nextDouble() < warlordRaidChance) {
+            plugin.getWarlord().convertExisting((Pillager) event.getEntity());
         }
     }
 
@@ -178,7 +225,8 @@ public class MobHandler implements Listener {
     }
 
     private void handleGolemSpawn(CreatureSpawnEvent event, Location loc) {
-        if (random.nextDouble() < frostGolemChance) {
+        if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.BUILD_IRONGOLEM) return;
+        if (random.nextDouble() < frostGolemBuildChance) {
             event.setCancelled(true);
             plugin.getFrostGolem().trySpawn(loc);
         }
@@ -192,23 +240,14 @@ public class MobHandler implements Listener {
     }
 
     private void handleWitchSpawn(CreatureSpawnEvent event, Location loc) {
-        boolean raid = event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.RAID;
         if (random.nextDouble() < stormCallerChance) {
-            if (raid) {
-                plugin.getStormCaller().convertExisting((Witch) event.getEntity());
-            } else {
-                event.setCancelled(true);
-                plugin.getStormCaller().trySpawn(loc);
-            }
+            event.setCancelled(true);
+            plugin.getStormCaller().trySpawn(loc);
             return;
         }
         if (random.nextDouble() < venomWitchChance) {
-            if (raid) {
-                plugin.getVenomWitch().convertExisting((Witch) event.getEntity());
-            } else {
-                event.setCancelled(true);
-                plugin.getVenomWitch().trySpawn(loc);
-            }
+            event.setCancelled(true);
+            plugin.getVenomWitch().trySpawn(loc);
         }
     }
 
@@ -221,12 +260,15 @@ public class MobHandler implements Listener {
 
     private void handleEvokerSpawn(CreatureSpawnEvent event, Location loc) {
         if (random.nextDouble() < chaosMageChance) {
-            if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.RAID) {
-                plugin.getChaosMage().convertExisting((Evoker) event.getEntity());
-            } else {
-                event.setCancelled(true);
-                plugin.getChaosMage().trySpawn(loc);
-            }
+            event.setCancelled(true);
+            plugin.getChaosMage().trySpawn(loc);
+        }
+    }
+
+    private void handlePillagerSpawn(CreatureSpawnEvent event, Location loc) {
+        if (random.nextDouble() < warlordChance) {
+            event.setCancelled(true);
+            plugin.getWarlord().trySpawn(loc);
         }
     }
 
