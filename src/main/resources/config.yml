@@ -2,7 +2,7 @@
 
 ### General Settings
 general:
-  debug: true
+  debug: false
   locale: "en"
   # Global multiplier applied to every entity spawn-chance (0.5 = half the spawns)
   spawn-rate-multiplier: 0.5
