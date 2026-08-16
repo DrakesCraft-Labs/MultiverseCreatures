@@ -65,18 +65,28 @@ public class ChaosMage implements Listener {
     public boolean trySpawn(Location location) {
         Evoker evoker = (Evoker) location.getWorld().spawnEntity(location, EntityType.EVOKER);
         if (evoker == null) return false;
+        evoker.setPersistent(true);
+        evoker.setRemoveWhenFarAway(false);
+        customize(evoker);
+        return true;
+    }
+
+    public boolean convertExisting(Evoker evoker) {
+        if (evoker == null || evoker.isDead() || !evoker.isValid()) return false;
+        customize(evoker);
+        return true;
+    }
+
+    private void customize(Evoker evoker) {
         evoker.addScoreboardTag(TAG);
         evoker.setCustomName(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Chaos Mage");
         evoker.setCustomNameVisible(true);
-        evoker.setPersistent(true);
-        evoker.setRemoveWhenFarAway(false);
         MscEntityUtils.setAttribute(evoker, Attribute.MAX_HEALTH, 70.0);
         evoker.setHealth(70.0);
         MscEntityUtils.setAttribute(evoker, Attribute.MOVEMENT_SPEED, 0.25);
         evoker.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 0, false, false));
         evoker.setAI(true);
         active.put(evoker.getUniqueId(), new ChaosMageInstance(evoker));
-        return true;
     }
 
     private void tickChaos(ChaosMageInstance inst) {
