@@ -83,6 +83,8 @@ public class MobHandler implements Listener {
         if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL
                 && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER_EGG
                 && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.REINFORCEMENTS
+                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.BREEDING
+                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.RAID
                 && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER) {
             return;
         }
