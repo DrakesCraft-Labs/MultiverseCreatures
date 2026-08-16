@@ -123,6 +123,9 @@ public final class MscEntityUtils {
      * Lets PlayerDeathEvent attribute the kill to the attacking mob.
      */
     public static void damageBy(LivingEntity attacker, LivingEntity victim, double amount) {
-        victim.damage(amount, DamageSource.builder(DamageType.GENERIC).withCausingEntity(attacker).build());
+        victim.damage(amount, DamageSource.builder(DamageType.GENERIC)
+                .withDirectEntity(attacker)
+                .withCausingEntity(attacker)
+                .build());
     }
 }
