@@ -607,6 +607,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         plugin.getDioBoss().reloadConfig();
         plugin.getArmorStandBoss().reloadConfig();
         plugin.getHeadSlime().reloadConfig();
+        plugin.getWarlord().reloadConfig();
         sender.sendMessage(GREEN + "Configuration reloaded. All changes have been applied.");
     }
 

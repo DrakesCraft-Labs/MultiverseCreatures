@@ -358,6 +358,7 @@ warlord:
   enabled: true
   spawn-chance: 0.1
   raid-spawn-chance: 0.5
+  debug: false
   death-messages:
     - "&f%player% was struck down by a Warlord"
     - "&f%player% could not survive the Warlord's true damage"
