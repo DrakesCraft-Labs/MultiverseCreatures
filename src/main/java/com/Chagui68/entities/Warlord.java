@@ -32,11 +32,17 @@ public class Warlord implements Listener {
     private final Random random = new Random();
     private static final String TAG = "MSC_Warlord";
     private static final double TRUE_DAMAGE = 4.0;
+    private boolean debug;
 
     public Warlord(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        reloadConfig();
         Bukkit.getPluginManager().registerEvents(this, plugin);
         reloadExisting();
+    }
+
+    public void reloadConfig() {
+        debug = plugin.getConfig().getBoolean("warlord.debug", false);
     }
 
     private void reloadExisting() {
@@ -53,12 +59,14 @@ public class Warlord implements Listener {
         Pillager pillager = (Pillager) location.getWorld().spawnEntity(location, EntityType.PILLAGER);
         if (pillager == null) return false;
         customize(pillager);
+        if (debug) plugin.getLogger().info("[Warlord] Spawned Warlord at " + location);
         return true;
     }
 
     public boolean convertExisting(Pillager pillager) {
         if (pillager == null || pillager.isDead() || !pillager.isValid()) return false;
         customize(pillager);
+        if (debug) plugin.getLogger().info("[Warlord] Converted raider to Warlord at " + pillager.getLocation());
         return true;
     }
 

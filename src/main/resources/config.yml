@@ -2,7 +2,7 @@
 
 ### General Settings
 general:
-  debug: false
+  debug: true
   locale: "en"
   # Global multiplier applied to every entity spawn-chance (0.5 = half the spawns)
   spawn-rate-multiplier: 0.5
@@ -358,6 +358,7 @@ warlord:
   enabled: true
   spawn-chance: 0.1
   raid-spawn-chance: 0.5
+  debug: true
   death-messages:
     - "&f%player% was struck down by a Warlord"
     - "&f%player% could not survive the Warlord's true damage"

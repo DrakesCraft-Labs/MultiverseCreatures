@@ -8,6 +8,7 @@ import com.Chagui68.items.misc.MantisClaws;
 import com.Chagui68.items.components.StarCore;
 import com.Chagui68.items.misc.WirtsLantern;
 import io.papermc.paper.world.MoonPhase;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -60,6 +61,7 @@ public class MobHandler implements Listener {
     private double stormCallerRaidChance;
     private double venomWitchRaidChance;
     private double chaosMageRaidChance;
+    private boolean debug;
 
     public MobHandler(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -90,6 +92,14 @@ public class MobHandler implements Listener {
         stormCallerRaidChance = config.getDouble("storm-caller.raid-spawn-chance", 0.5) * spawnRateMultiplier;
         venomWitchRaidChance = config.getDouble("venom-witch.raid-spawn-chance", 0.5) * spawnRateMultiplier;
         chaosMageRaidChance = config.getDouble("chaos-mage.raid-spawn-chance", 0.5) * spawnRateMultiplier;
+        debug = config.getBoolean("general.debug", false);
+        if (debug) {
+            plugin.getLogger().info("[MobHandler] spawnRateMultiplier=" + spawnRateMultiplier
+                    + " warlordRaidChance=" + warlordRaidChance
+                    + " stormCallerRaidChance=" + stormCallerRaidChance
+                    + " venomWitchRaidChance=" + venomWitchRaidChance
+                    + " chaosMageRaidChance=" + chaosMageRaidChance);
+        }
     }
 
     @EventHandler
@@ -128,6 +138,14 @@ public class MobHandler implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onRaidSpawn(CreatureSpawnEvent event) {
+        if (debug) {
+            EntityType type = event.getEntityType();
+            if (type == EntityType.WITCH || type == EntityType.EVOKER || type == EntityType.PILLAGER
+                    || type == EntityType.RAVAGER || type == EntityType.VINDICATOR) {
+                plugin.getLogger().info("[MobHandler] Raid-tracked spawn: " + type
+                        + " reason=" + event.getSpawnReason() + " at " + event.getLocation());
+            }
+        }
         if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.RAID) return;
         switch (event.getEntityType()) {
             case WITCH -> handleRaidWitchSpawn(event);
@@ -138,24 +156,36 @@ public class MobHandler implements Listener {
 
     private void handleRaidWitchSpawn(CreatureSpawnEvent event) {
         if (random.nextDouble() < stormCallerRaidChance) {
-            plugin.getStormCaller().convertExisting((Witch) event.getEntity());
+            if (debug) plugin.getLogger().info("[MobHandler] Converting witch to Storm Caller at " + event.getLocation());
+            Witch witch = (Witch) event.getEntity();
+            scheduleRaidConversion(() -> plugin.getStormCaller().convertExisting(witch));
             return;
         }
         if (random.nextDouble() < venomWitchRaidChance) {
-            plugin.getVenomWitch().convertExisting((Witch) event.getEntity());
+            if (debug) plugin.getLogger().info("[MobHandler] Converting witch to Venom Witch at " + event.getLocation());
+            Witch witch = (Witch) event.getEntity();
+            scheduleRaidConversion(() -> plugin.getVenomWitch().convertExisting(witch));
         }
     }
 
     private void handleRaidEvokerSpawn(CreatureSpawnEvent event) {
         if (random.nextDouble() < chaosMageRaidChance) {
-            plugin.getChaosMage().convertExisting((Evoker) event.getEntity());
+            if (debug) plugin.getLogger().info("[MobHandler] Converting evoker to Chaos Mage at " + event.getLocation());
+            Evoker evoker = (Evoker) event.getEntity();
+            scheduleRaidConversion(() -> plugin.getChaosMage().convertExisting(evoker));
         }
     }
 
     private void handleRaidPillagerSpawn(CreatureSpawnEvent event) {
         if (random.nextDouble() < warlordRaidChance) {
-            plugin.getWarlord().convertExisting((Pillager) event.getEntity());
+            if (debug) plugin.getLogger().info("[MobHandler] Converting pillager to Warlord at " + event.getLocation());
+            Pillager pillager = (Pillager) event.getEntity();
+            scheduleRaidConversion(() -> plugin.getWarlord().convertExisting(pillager));
         }
+    }
+
+    private void scheduleRaidConversion(Runnable conversion) {
+        Bukkit.getScheduler().runTask(plugin, conversion);
     }
 
     private void handleZombieSpawn(CreatureSpawnEvent event, Location loc) {
