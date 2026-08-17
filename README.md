@@ -184,7 +184,7 @@ The `wiki/` folder is **pure Markdown documentation** and is excluded from the M
 
 ## 📜 License
 
-[GPL-3.0](./LICENSE) — MultiverseCreatures is open source. Not affiliated with Mojang/Microsoft. Not affiliated with any of the universes referenced — all themes are fan-made tributes.
+[GPL-3.0](./LICENSE) — MultiverseCreatures is open source.
 
 ---
 
