@@ -114,7 +114,7 @@ public class MirrorImageAttack extends BossAttackBase {
                         world.spawnParticle(Particle.END_ROD, m.getLocation(), 1, 0.3, 0.5, 0.3, 0);
                         Player near = boss.findNearestPlayer(m.getLocation(), 5);
                         if (near != null) {
-                            MscEntityUtils.damageBy(stand, near, 6.0);
+                            MscEntityUtils.damageBy(stand.entidad(), near, 6.0);
                             near.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0));
                             world.playSound(m.getLocation(), Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.8f, 1.2f);
                             world.spawnParticle(Particle.CRIT, near.getLocation().add(0, 1, 0), 8, 0.3, 0.5, 0.3, 0.05);

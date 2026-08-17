@@ -33,6 +33,7 @@ public class ObsidianGuard implements Listener {
 
     public ObsidianGuard(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.obsidian-guard")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -65,6 +66,7 @@ public class ObsidianGuard implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.obsidian-guard")) return false;
         Zombie zombie = (Zombie) location.getWorld().spawnEntity(location, EntityType.ZOMBIE);
         if (zombie == null) return false;
         zombie.setBaby(false);
@@ -155,7 +157,7 @@ public class ObsidianGuard implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "obsidian-guard.death-messages");
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.obsidian-guard.death-messages");
     }
 
     @EventHandler

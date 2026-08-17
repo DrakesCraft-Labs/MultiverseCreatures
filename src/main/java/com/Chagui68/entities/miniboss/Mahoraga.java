@@ -59,6 +59,7 @@ public class Mahoraga implements Listener {
     public Mahoraga(MultiverseCreatures plugin) {
         this.plugin = plugin;
         reloadConfig();
+        if (!plugin.isEnabled("entities.mahoraga")) return;
         if (DrakesBossesIntegration.isAvailable()) {
             plugin.getLogger().info("[Mahoraga] Integración DrakesBosses activa: respeta UltraGod y boss_arena.");
         }
@@ -68,10 +69,10 @@ public class Mahoraga implements Listener {
     }
 
     public void reloadConfig() {
-        slimefunAdaptation = plugin.getConfig().getBoolean("mahoraga.slimefun-adaptation", true);
-        ignoreDiamondMod = plugin.getConfig().getBoolean("mahoraga.ignore-diamond-mod", true);
-        infinityWeaponAdaptation = plugin.getConfig().getBoolean("mahoraga.infinity-weapon-adaptation", true);
-        armorAdaptationCooldownMillis = plugin.getConfig().getLong("mahoraga.adaptation-cooldown-seconds", 6L) * 1_000L;
+        slimefunAdaptation = plugin.getConfig().getBoolean("entities.mahoraga.slimefun-adaptation", true);
+        ignoreDiamondMod = plugin.getConfig().getBoolean("entities.mahoraga.ignore-diamond-mod", true);
+        infinityWeaponAdaptation = plugin.getConfig().getBoolean("entities.mahoraga.infinity-weapon-adaptation", true);
+        armorAdaptationCooldownMillis = plugin.getConfig().getLong("entities.mahoraga.adaptation-cooldown-seconds", 6L) * 1_000L;
     }
 
     private void reloadExisting() {
@@ -236,6 +237,7 @@ public class Mahoraga implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.mahoraga")) return false;
         if (DrakesBossesIntegration.isArenaWorld(location.getWorld())) {
             plugin.getLogger().warning("[Mahoraga] Spawn rechazado dentro de boss_arena; DrakesBosses controla ese mundo.");
             return false;
@@ -311,7 +313,7 @@ public class Mahoraga implements Listener {
     public void onDeath(PlayerDeathEvent event) {
         if (!(event.getDamageSource().getCausingEntity() instanceof Zombie zombie)) return;
         if (!zombie.getScoreboardTags().contains(TAG)) return;
-        List<String> messages = plugin.getConfig().getStringList("mahoraga.death-messages");
+        List<String> messages = plugin.getConfig().getStringList("entities.mahoraga.death-messages");
         if (!messages.isEmpty()) {
             String raw = messages.get(random.nextInt(messages.size()));
             event.setDeathMessage(ChatColor.translateAlternateColorCodes('&', raw.replace("%player%", event.getEntity().getName())));

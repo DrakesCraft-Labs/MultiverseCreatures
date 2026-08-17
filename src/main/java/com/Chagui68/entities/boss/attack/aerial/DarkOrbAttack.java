@@ -93,7 +93,7 @@ public class DarkOrbAttack extends BossAttackBase {
                                     world.spawnParticle(Particle.EXPLOSION, target.getLocation().add(0, 1, 0), 10, 1, 0.5, 1, 0);
                                     world.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 0.7f);
                                     double dmg = sealDamage * 0.8;
-                                    MscEntityUtils.damageBy(stand, target, dmg);
+                                    MscEntityUtils.damageBy(stand.entidad(), target, dmg);
                                     target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 80, 1));
                                     target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0));
                                     cancel();

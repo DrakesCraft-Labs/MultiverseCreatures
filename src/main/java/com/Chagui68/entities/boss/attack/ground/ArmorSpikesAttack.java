@@ -72,7 +72,7 @@ public class ArmorSpikesAttack extends BossAttackBase {
                         double dmg = sealDamage * 0.25;
                         for (Player p : boss.getValidPlayers(world)) {
                             if (p.getLocation().distanceSquared(center) < 49) {
-                                MscEntityUtils.damageBy(stand, p, dmg);
+                                MscEntityUtils.damageBy(stand.entidad(), p, dmg);
                                 Vector away = p.getLocation().toVector().subtract(center.toVector());
                                 if (away.lengthSquared() > 0) p.setVelocity(away.normalize().multiply(0.8).setY(0.3));
                             }

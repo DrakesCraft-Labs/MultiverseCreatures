@@ -89,6 +89,15 @@ public class MultiverseCreatures extends JavaPlugin {
     private Warlord warlord;
     private DiscJukeboxHandler discJukeboxHandler;
 
+    /**
+     * Returns whether a config feature (item/entity section) is enabled.
+     * Sections live under `items.<name>` or `entities.<name>` and each carries
+     * an `enabled` switch. Missing flags default to true (backwards compatible).
+     */
+    public boolean isEnabled(String section) {
+        return getConfig().getBoolean(section + ".enabled", true);
+    }
+
     @Override
     public void onEnable() {
         saveDefaultConfig();

@@ -28,6 +28,7 @@ public class VenomWitch implements Listener {
 
     public VenomWitch(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.venom-witch")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -60,6 +61,7 @@ public class VenomWitch implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.venom-witch")) return false;
         Witch witch = (Witch) location.getWorld().spawnEntity(location, EntityType.WITCH);
         if (witch == null) return false;
         witch.setPersistent(true);
@@ -69,6 +71,7 @@ public class VenomWitch implements Listener {
     }
 
     public boolean convertExisting(Witch witch) {
+        if (!plugin.isEnabled("entities.venom-witch")) return false;
         if (witch == null || witch.isDead() || !witch.isValid()) return false;
         customize(witch);
         return true;
@@ -137,7 +140,7 @@ public class VenomWitch implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "venom-witch.death-messages");
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.venom-witch.death-messages");
     }
 
     @EventHandler

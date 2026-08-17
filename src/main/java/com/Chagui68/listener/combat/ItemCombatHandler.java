@@ -44,6 +44,9 @@ public class ItemCombatHandler implements Listener {
     }
 
     private void startPassiveEffect() {
+        if (!config.getBoolean("items.excalibur.enabled", true)
+                || !config.getBoolean("items.excalibur.passive-effect.enabled", true)) return;
+        int strengthLevel = config.getInt("items.excalibur.passive-effect.strength.amplifier", 2);
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -58,7 +61,7 @@ public class ItemCombatHandler implements Listener {
 
                     if (meta.getPersistentDataContainer().has(Excalibur.EXCALIBUR_KEY,
                             PersistentDataType.INTEGER)) {
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 80, 2));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 80, strengthLevel));
                     }
                 }
             }
@@ -78,12 +81,12 @@ public class ItemCombatHandler implements Listener {
         if (meta == null || !meta.getPersistentDataContainer().has(Excalibur.EXCALIBUR_KEY, PersistentDataType.INTEGER))
             return;
 
-        if (!config.getBoolean("excalibur.solar-flare.enabled", true)) {
+        if (!config.getBoolean("items.excalibur.solar-flare.enabled", true)) {
             p.sendMessage(ChatColor.RED + "Solar Flare is disabled in config.");
             return;
         }
 
-        long cooldownMs = config.getLong("excalibur.solar-flare.cooldown-ms", SOLAR_FLARE_COOLDOWN_MS);
+        long cooldownMs = config.getLong("items.excalibur.solar-flare.cooldown-ms", SOLAR_FLARE_COOLDOWN_MS);
         UUID id = p.getUniqueId();
         Long last = solarFlareCooldowns.get(id);
         if (last != null && System.currentTimeMillis() - last < cooldownMs) {
@@ -99,13 +102,13 @@ public class ItemCombatHandler implements Listener {
     }
 
     private void performSolarFlare(Player p) {
-        double range = config.getDouble("excalibur.solar-flare.range", 20.0);
-        double beamRadius = config.getDouble("excalibur.solar-flare.radius", 1.5);
-        double damage = config.getDouble("excalibur.solar-flare.damage", 12.0);
-        int fireTicks = config.getInt("excalibur.solar-flare.fire-ticks", 100);
-        int blindnessDuration = config.getInt("excalibur.solar-flare.blindness-duration", 60);
-        double knockbackHorizontal = config.getDouble("excalibur.solar-flare.knockback-horizontal", 1.5);
-        double knockbackVertical = config.getDouble("excalibur.solar-flare.knockback-vertical", 0.8);
+        double range = config.getDouble("items.excalibur.solar-flare.range", 20.0);
+        double beamRadius = config.getDouble("items.excalibur.solar-flare.radius", 1.5);
+        double damage = config.getDouble("items.excalibur.solar-flare.damage", 12.0);
+        int fireTicks = config.getInt("items.excalibur.solar-flare.fire-ticks", 100);
+        int blindnessDuration = config.getInt("items.excalibur.solar-flare.blindness-duration", 60);
+        double knockbackHorizontal = config.getDouble("items.excalibur.solar-flare.knockback-horizontal", 1.5);
+        double knockbackVertical = config.getDouble("items.excalibur.solar-flare.knockback-vertical", 0.8);
 
         Location start = p.getEyeLocation();
         Vector direction = start.getDirection().normalize();

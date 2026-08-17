@@ -67,7 +67,7 @@ public class VoidBeamAttack extends BossAttackBase {
                             Vector norm = toP.clone().normalize();
                             double proj = norm.dot(toTarget);
                             if (proj > 0 && proj > 0.95) {
-                                MscEntityUtils.damageBy(stand, p, sealDamage * 0.25);
+                                MscEntityUtils.damageBy(stand.entidad(), p, sealDamage * 0.25);
                                 p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 40, 0));
                                 p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 40, 0));
                             }

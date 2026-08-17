@@ -174,34 +174,35 @@ public class Kinger implements Listener {
 
     public Kinger(MultiverseCreatures plugin) {
         this.plugin = plugin;
-        Bukkit.getPluginManager().registerEvents(this, plugin);
         reloadConfig();
+        if (!plugin.isEnabled("entities.kinger")) return;
+        Bukkit.getPluginManager().registerEvents(this, plugin);
         reloadExisting();
         startTicker();
     }
 
     public void reloadConfig() {
         var config = plugin.getConfig();
-        health = config.getDouble("kinger.health", 120.0);
-        aggroRange = config.getDouble("kinger.aggro-range", 25.0);
-        moveSpeed = config.getDouble("kinger.move-speed", 0.32);
-        meleeRange = config.getDouble("kinger.melee-range", 3.0);
-        meleeDamage = config.getDouble("kinger.melee-damage", 8.0);
-        meleeRadius = config.getDouble("kinger.melee-radius", 3.5);
-        rangedRange = config.getDouble("kinger.ranged-range", 30.0);
-        rangedDamage = config.getDouble("kinger.ranged-damage", 6.0);
-        meleeCooldownTicks = config.getInt("kinger.melee-cooldown-ticks", 25);
-        rangedCooldownTicks = config.getInt("kinger.ranged-cooldown-ticks", 45);
-        meleeAnimTicks = config.getInt("kinger.melee-anim-ticks", 12);
-        rangedAnimTicks = config.getInt("kinger.ranged-anim-ticks", 20);
-        armorStandChance = config.getDouble("kinger.spawn-on-armorstand-chance", 1.0);
+        health = config.getDouble("entities.kinger.health", 120.0);
+        aggroRange = config.getDouble("entities.kinger.aggro-range", 25.0);
+        moveSpeed = config.getDouble("entities.kinger.move-speed", 0.32);
+        meleeRange = config.getDouble("entities.kinger.melee-range", 3.0);
+        meleeDamage = config.getDouble("entities.kinger.melee-damage", 8.0);
+        meleeRadius = config.getDouble("entities.kinger.melee-radius", 3.5);
+        rangedRange = config.getDouble("entities.kinger.ranged-range", 30.0);
+        rangedDamage = config.getDouble("entities.kinger.ranged-damage", 6.0);
+        meleeCooldownTicks = config.getInt("entities.kinger.melee-cooldown-ticks", 25);
+        rangedCooldownTicks = config.getInt("entities.kinger.ranged-cooldown-ticks", 45);
+        meleeAnimTicks = config.getInt("entities.kinger.melee-anim-ticks", 12);
+        rangedAnimTicks = config.getInt("entities.kinger.ranged-anim-ticks", 20);
+        armorStandChance = config.getDouble("entities.kinger.spawn-on-armorstand-chance", 1.0);
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onArmorStandPlace(EntityPlaceEvent event) {
         if (event.getEntityType() != EntityType.ARMOR_STAND) return;
         if (event.getPlayer() == null) return;
-        if (!plugin.getConfig().getBoolean("kinger.enabled", true)) return;
+        if (!plugin.getConfig().getBoolean("entities.kinger.enabled", true)) return;
         if (random.nextDouble() >= armorStandChance) return;
         Location loc = event.getEntity().getLocation();
         event.setCancelled(true);
@@ -530,6 +531,7 @@ public class Kinger implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.kinger")) return false;
         ArmorStand stand = (ArmorStand) location.getWorld().spawnEntity(location, EntityType.ARMOR_STAND);
         if (stand == null) return false;
 
@@ -704,7 +706,7 @@ public class Kinger implements Listener {
     public void onPlayerDeath(PlayerDeathEvent event) {
         if (!(event.getDamageSource().getCausingEntity() instanceof ArmorStand stand)) return;
         if (!stand.getScoreboardTags().contains(TAG)) return;
-        List<String> messages = plugin.getConfig().getStringList("kinger.death-messages");
+        List<String> messages = plugin.getConfig().getStringList("entities.kinger.death-messages");
         if (!messages.isEmpty()) {
             String raw = messages.get(random.nextInt(messages.size()));
             event.setDeathMessage(ChatColor.translateAlternateColorCodes('&', raw.replace("%player%", event.getEntity().getName())));

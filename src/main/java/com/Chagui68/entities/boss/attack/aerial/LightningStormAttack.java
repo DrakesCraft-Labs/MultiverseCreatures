@@ -74,7 +74,7 @@ public class LightningStormAttack extends BossAttackBase {
                         double dmg = sealDamage * 0.6;
                         for (Player p : boss.getValidPlayers(world)) {
                             if (p.getLocation().distanceSquared(strikeLoc) < 16) {
-                                MscEntityUtils.damageBy(stand, p, dmg);
+                                MscEntityUtils.damageBy(stand.entidad(), p, dmg);
                                 boss.launchPlayer(p, 0.4);
                                 p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2));
                             }

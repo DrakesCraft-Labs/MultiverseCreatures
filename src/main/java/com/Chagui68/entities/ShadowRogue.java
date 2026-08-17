@@ -32,6 +32,7 @@ public class ShadowRogue implements Listener {
 
     public ShadowRogue(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.shadow-rogue")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -64,6 +65,7 @@ public class ShadowRogue implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.shadow-rogue")) return false;
         Skeleton sk = (Skeleton) location.getWorld().spawnEntity(location, EntityType.SKELETON);
         if (sk == null) return false;
         sk.addScoreboardTag(TAG);
@@ -141,7 +143,7 @@ public class ShadowRogue implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "shadow-rogue.death-messages");
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.shadow-rogue.death-messages");
     }
 
     @EventHandler

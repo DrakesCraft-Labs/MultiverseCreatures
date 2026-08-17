@@ -61,6 +61,7 @@ public class ZombieHorseTrap implements Listener {
 
     public ZombieHorseTrap(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.zombie-horse-trap")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
     }
@@ -82,6 +83,7 @@ public class ZombieHorseTrap implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.zombie-horse-trap")) return false;
         ZombieHorse horse = (ZombieHorse) location.getWorld().spawnEntity(location, EntityType.ZOMBIE_HORSE);
         if (horse == null) return false;
 
@@ -96,6 +98,7 @@ public class ZombieHorseTrap implements Listener {
     }
 
     public boolean trySpawnTank(Location location) {
+        if (!plugin.isEnabled("entities.zombie-horse-trap")) return false;
         Zombie tank = spawnTank(location);
         if (tank == null) return false;
         ArmyInstance army = new ArmyInstance();
@@ -107,6 +110,7 @@ public class ZombieHorseTrap implements Listener {
     }
 
     public boolean trySpawnDuelist(Location location) {
+        if (!plugin.isEnabled("entities.zombie-horse-trap")) return false;
         Skeleton duelist = spawnDuelist(location);
         if (duelist == null) return false;
         ArmyInstance army = new ArmyInstance();
@@ -118,6 +122,7 @@ public class ZombieHorseTrap implements Listener {
     }
 
     public boolean trySpawnLancer(Location location) {
+        if (!plugin.isEnabled("entities.zombie-horse-trap")) return false;
         ArmyInstance army = new ArmyInstance();
         spawnLancer(location, army);
         if (army.lancer == null) return false;
@@ -127,6 +132,7 @@ public class ZombieHorseTrap implements Listener {
     }
 
     public boolean trySpawnCamel(Location location) {
+        if (!plugin.isEnabled("entities.zombie-horse-trap")) return false;
         ArmyInstance army = new ArmyInstance();
         spawnCamel(location, army, true);
         if (army.camel1 == null) return false;
@@ -136,6 +142,7 @@ public class ZombieHorseTrap implements Listener {
     }
 
     public boolean trySpawnSniper(Location location) {
+        if (!plugin.isEnabled("entities.zombie-horse-trap")) return false;
         WitherSkeleton sniper = spawnSniper(location);
         if (sniper == null) return false;
         ArmyInstance army = new ArmyInstance();
@@ -172,7 +179,7 @@ public class ZombieHorseTrap implements Listener {
     public void onPlayerDeath(PlayerDeathEvent event) {
         String[] tags = {ARMY_TAG, TANK_TAG, DUELIST_TAG, LANCER_TAG, SNIPER_TAG, CAMEL_ZOMBIE_TAG, CAMEL_SKELETON_TAG};
         for (String tag : tags) {
-            if (MscEntityUtils.applyDeathMessage(plugin, event, tag, "zombie-horse-trap.death-messages")) {
+            if (MscEntityUtils.applyDeathMessage(plugin, event, tag, "entities.zombie-horse-trap.death-messages")) {
                 return;
             }
         }
@@ -235,7 +242,7 @@ public class ZombieHorseTrap implements Listener {
             }
         }
 
-        double dropChance = plugin.getConfig().getDouble("zombie-horse-trap.military-component-drop-chance", 0.3);
+        double dropChance = plugin.getConfig().getDouble("entities.zombie-horse-trap.military-component-drop-chance", 0.3);
         if (Math.random() < dropChance) {
             for (String tag : new String[]{TANK_TAG, DUELIST_TAG, LANCER_TAG, CAMEL_ZOMBIE_TAG, CAMEL_SKELETON_TAG, SNIPER_TAG}) {
                 if (entity.getScoreboardTags().contains(tag)) {

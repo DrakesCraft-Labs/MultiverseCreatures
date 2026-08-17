@@ -80,7 +80,7 @@ public class SpiritBeamAttack extends BossAttackBase {
                             world.spawnParticle(Particle.END_ROD, pl, 1, 0, 0, 0, 0);
                         }
                         if (t % 10 == 0) {
-                            MscEntityUtils.damageBy(stand, p, sealDamage * 0.4);
+                            MscEntityUtils.damageBy(stand.entidad(), p, sealDamage * 0.4);
                             p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 50, 1));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 50, 1));
                         }

@@ -30,6 +30,7 @@ public class CreeperJr implements Listener {
 
     public CreeperJr(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.creeper-jr")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         reloadExisting();
     }
@@ -45,6 +46,7 @@ public class CreeperJr implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.creeper-jr")) return false;
         for (int i = 0; i < 3; i++) {
             Location spawnLoc = i == 0 ? location : location.clone().add(
                     (random.nextDouble() - 0.5) * 3, 0, (random.nextDouble() - 0.5) * 3
@@ -66,9 +68,9 @@ public class CreeperJr implements Listener {
     }
 
     private void applyAttributes(Creeper creeper) {
-        double scale = plugin.getConfig().getDouble("creeper-jr.scale", 0.6);
-        double speed = plugin.getConfig().getDouble("creeper-jr.speed", 0.5);
-        int radius = plugin.getConfig().getInt("creeper-jr.explosion-radius", 2);
+        double scale = plugin.getConfig().getDouble("entities.creeper-jr.scale", 0.6);
+        double speed = plugin.getConfig().getDouble("entities.creeper-jr.speed", 0.5);
+        int radius = plugin.getConfig().getInt("entities.creeper-jr.explosion-radius", 2);
 
         if (creeper.getAttribute(Attribute.SCALE) != null) {
             creeper.getAttribute(Attribute.SCALE).setBaseValue(scale);
@@ -89,7 +91,7 @@ public class CreeperJr implements Listener {
             pushEntitiesAway(creeper);
 
             int maxRadius = creeper.getExplosionRadius();
-            double maxDamage = plugin.getConfig().getDouble("creeper-jr.true-damage", 12.0);
+            double maxDamage = plugin.getConfig().getDouble("entities.creeper-jr.true-damage", 12.0);
             Location explosionLoc = event.getLocation();
 
             for (Player player : explosionLoc.getWorld().getPlayers()) {
@@ -130,7 +132,7 @@ public class CreeperJr implements Listener {
     public void onDeath(PlayerDeathEvent event) {
         if (!(event.getDamageSource().getCausingEntity() instanceof Creeper creeper)) return;
         if (!creeper.getScoreboardTags().contains(TAG)) return;
-        java.util.List<String> messages = plugin.getConfig().getStringList("creeper-jr.death-messages");
+        java.util.List<String> messages = plugin.getConfig().getStringList("entities.creeper-jr.death-messages");
         if (messages.isEmpty()) return;
         String raw = messages.get(random.nextInt(messages.size()));
         event.setDeathMessage(ChatColor.translateAlternateColorCodes('&', raw.replace("%player%", event.getEntity().getName())));

@@ -1,13 +1,25 @@
-# MultiverseCreatures Configuration
+# ============================================================
+#  MULTIVERSE CREATURES — CONFIGURATION
+# ============================================================
+#  Every feature (item or entity) has its own `enabled` switch.
+#  Set it to `false` to disable that feature completely:
+#  - No natural/raid spawns, no /msc spawn, no listeners/tickers.
+#  - Vanilla mobs are left untouched when a mob is disabled.
+# ============================================================
 
-### General Settings
+# ---------- General settings ----------
 general:
   debug: false
   locale: "en"
   # Global multiplier applied to every entity spawn-chance (0.5 = half the spawns)
   spawn-rate-multiplier: 0.5
 
-### Crafting Recipes
+# ---------- Command settings ----------
+commands:
+  permission: "msc.admin"
+  op-only: true
+
+# ---------- Crafting recipes ----------
 recipes:
   enabled: true
   # Registers recipes a few ticks after startup instead of during plugin enable.
@@ -16,418 +28,446 @@ recipes:
   # ingredients, causing an exponential EMC graph walk that hangs startup.
   deferred-registration: true
 
-### Wandering Trader (Multiverse Merchant)
-merchant:
-  enabled: true
-  spawn-chance: 0.3
-  custom-name: "&6Multiverse Merchant"
-  name-visible: true
-  trades:
-    scooby-cookies:
-      enabled: true
-      price:
-        material: "DIAMOND"
-        amount: 20
-      result-amount: 5
-      max-uses: 999
-    excalibur:
-      enabled: true
-      price:
-        - material: "NETHER_STAR"
-          amount: 16
-          custom-item: "starcore"
-        - material: "NETHERITE_INGOT"
-          amount: 32
-      max-uses: 1
-    ice-crown:
-      enabled: true
-      price:
-        - material: "NETHER_STAR"
-          amount: 48
-        - material: "BLUE_ICE"
-          amount: 64
-      max-uses: 1
-    wirts-lantern:
-      enabled: true
-      price:
-        - material: "SOUL_SAND"
-          amount: 32
-        - material: "SOUL_SOIL"
-          amount: 16
-      max-uses: 1
+# ============================================================
+#  ITEMS
+# ============================================================
+items:
 
-### Scooby Cookies
-scooby-cookies:
-  enabled: true
-  effects:
-    resistance:
-      duration-ticks: 200
-      amplifier: 5
+  ### Scooby Cookies
+  scooby-cookies:
+    enabled: true
+    effects:
+      resistance:
+        duration-ticks: 200
+        amplifier: 5
 
-### Excalibur
-excalibur:
-  enabled: true
-  passive-effect:
+  ### Excalibur
+  excalibur:
     enabled: true
-    interval-ticks: 20
-    strength:
-      duration-ticks: 80
-      amplifier: 2
-  solar-flare:
-    enabled: true
-    cooldown-ms: 15000
-    range: 20.0
-    radius: 1.5
-    damage: 12.0
-    fire-ticks: 100
-    blindness-duration: 60
-    knockback-horizontal: 1.5
-    knockback-vertical: 0.8
+    passive-effect:
+      enabled: true
+      interval-ticks: 20
+      strength:
+        duration-ticks: 80
+        amplifier: 2
+    solar-flare:
+      enabled: true
+      cooldown-ms: 15000
+      range: 20.0
+      radius: 1.5
+      damage: 12.0
+      fire-ticks: 100
+      blindness-duration: 60
+      knockback-horizontal: 1.5
+      knockback-vertical: 0.8
 
-### Star Core
-star-core:
-  enabled: true
-  recipe:
+  ### Star Core
+  star-core:
     enabled: true
+    recipe:
+      enabled: true
 
-### Ice Crown
-ice-crown:
-  enabled: true
-  snow-block-launch:
+  ### Ice Crown
+  ice-crown:
     enabled: true
-    cooldown-ms: 10000
-    search-radius: 5.0
-    projectile-speed: 2.0
-    max-ticks: 100
-    damage: 6.0
-    snow-effects:
+    snow-block-launch:
+      enabled: true
+      cooldown-ms: 10000
+      search-radius: 5.0
+      projectile-speed: 2.0
+      max-ticks: 100
+      damage: 6.0
+      snow-effects:
+        slowness:
+          duration-ticks: 100
+          amplifier: 2
+        weakness:
+          duration-ticks: 100
+          amplifier: 1
+      ice-effects:
+        slowness:
+          duration-ticks: 100
+          amplifier: 2
+        weakness:
+          duration-ticks: 100
+          amplifier: 2
+        nausea:
+          duration-ticks: 100
+          amplifier: 0
+      impact-radius: 2
+      freeze-water-chance: 1.0
+      place-snow-chance: 0.2
+      knockback:
+        horizontal: 0.8
+        vertical: 0.3
+    blizzard:
+      enabled: true
+      cooldown-ms: 60000
+      duration-ticks: 100
+      starting-radius: 1.0
+      max-radius: 8.0
+      radius-growth-per-tick: 0.07
+      damage-per-tick: 3.5
       slowness:
-        duration-ticks: 100
+        duration-ticks: 40
         amplifier: 2
-      weakness:
-        duration-ticks: 100
-        amplifier: 1
-    ice-effects:
-      slowness:
-        duration-ticks: 100
+      darkness:
+        duration-ticks: 40
         amplifier: 2
-      weakness:
-        duration-ticks: 100
-        amplifier: 2
-      nausea:
-        duration-ticks: 100
-        amplifier: 0
-    impact-radius: 2
-    freeze-water-chance: 1.0
-    place-snow-chance: 0.2
-    knockback:
-      horizontal: 0.8
-      vertical: 0.3
-  blizzard:
+      push-strength: 0.50
+      freeze-water: true
+      place-snow-chance: 0.1
+    ice-path:
+      enabled: true
+      frost-water: true
+      frost-radius: 1
+      adjacent-freeze-chance: 0.3
+    damage-reduction:
+      enabled: true
+      multiplier: 0.8
+    freeze-immunity: true
+
+  ### Wirt's Lantern
+  wirts-lantern:
     enabled: true
-    cooldown-ms: 60000
-    duration-ticks: 100
-    starting-radius: 1.0
-    max-radius: 8.0
-    radius-growth-per-tick: 0.07
-    damage-per-tick: 3.5
-    slowness:
-      duration-ticks: 40
-      amplifier: 2
-    darkness:
-      duration-ticks: 40
-      amplifier: 2
-    push-strength: 0.50
-    freeze-water: true
-    place-snow-chance: 0.1
-  ice-path:
+    mob-repel:
+      enabled: true
+      radius: 12.0
+      interval-ticks: 20
+      horizontal-force: 0.6
+      vertical-force: 0.2
+      particle-chance: 0.3
+    night-vision:
+      enabled: true
+    target-protection:
+      enabled: true
+
+  ### Dio Stand Head
+  dio-stand:
     enabled: true
-    frost-water: true
-    frost-radius: 1
-    adjacent-freeze-chance: 0.3
-  damage-reduction:
+    cooldown-ms: 120000
+    freeze-radius: 50.0
+    freeze-duration-ticks: 100
+    stand-damage: 4.0
+    stand-total-damage: 20.0
+    stand-duration-ticks: 100
+    stand-interval-ticks: 3
+
+  ### Sentinel Grimoire (book of spells)
+  grimoire:
     enabled: true
-    multiplier: 0.8
-  freeze-immunity: true
+    blazing-pentagram:
+      damage: 10.0
+      cooldown: 8
+    lance-rain:
+      damage: 12.0
+      cooldown: 7
+    divine-judgment:
+      damage: 18.0
+      cooldown: 10
+    executioners-mark:
+      damage: 14.0
+      cooldown: 10
+    singular-vortex:
+      damage: 8.0
+      cooldown: 15
+    earthquake:
+      damage: 10.0
+      cooldown: 9
+    celestial-bulwark:
+      damage: 0.0
+      cooldown: 20
+    sentinel-aura:
+      damage: 0.0
+      cooldown: 45
 
-### Wirt's Lantern
-wirts-lantern:
-  enabled: true
-  mob-repel:
+# ============================================================
+#  ENTITIES
+# ============================================================
+entities:
+
+  ### Multiverse Merchant (Wandering Trader)
+  merchant:
     enabled: true
-    radius: 12.0
-    interval-ticks: 20
-    horizontal-force: 0.6
-    vertical-force: 0.2
-    particle-chance: 0.3
-  night-vision:
-    enabled: true
-  target-protection:
-    enabled: true
+    spawn-chance: 0.3
+    custom-name: "&6Multiverse Merchant"
+    name-visible: true
+    trades:
+      scooby-cookies:
+        enabled: true
+        price:
+          material: "DIAMOND"
+          amount: 20
+        result-amount: 5
+        max-uses: 999
+      excalibur:
+        enabled: true
+        price:
+          - material: "NETHER_STAR"
+            amount: 16
+            custom-item: "starcore"
+          - material: "NETHERITE_INGOT"
+            amount: 32
+        max-uses: 1
+      ice-crown:
+        enabled: true
+        price:
+          - material: "NETHER_STAR"
+            amount: 48
+          - material: "BLUE_ICE"
+            amount: 64
+        max-uses: 1
+      wirts-lantern:
+        enabled: true
+        price:
+          - material: "SOUL_SAND"
+            amount: 32
+          - material: "SOUL_SOIL"
+            amount: 16
+        max-uses: 1
 
-### Dio Boss
-dio-boss:
-  enabled: true
-  spawn-chance: 0.005
-  health: 300.0
-  damage: 10.0
-  stand-offset-y: 2.0
-  stand-offset-z: -1.0
-  stand-damage: 4.0
-  stand-duration-ticks: 100
-  stand-interval-ticks: 3
-  cooldown-ms: 120000
-  freeze-radius: 50.0
-  freeze-duration-ticks: 100
-  freeze-damage-radius: 30.0
-  freeze-damage: 10.0
-  debug: false
-  teleport-inner-radius: 25.0
-  teleport-radius: 50.0
-  teleport-darkness-duration: 100
-  teleport-slowness-duration: 100
-  teleport-slowness-amplifier: 0
-  drop-chance: 0.1
-  death-messages:
-    - "&c%player% was frozen in time by Dio"
-    - "&c%player% felt the power of THE WORLD"
-    - "&c%player% was erased by Dio's stand"
-
-### Dio Stand Item
-dio-stand:
-  enabled: true
-  cooldown-ms: 120000
-  freeze-radius: 50.0
-  freeze-duration-ticks: 100
-  stand-damage: 4.0
-  stand-total-damage: 20.0
-  stand-duration-ticks: 100
-  stand-interval-ticks: 3
-
-### Head Slime
-head-slime:
-  enabled: true
-  spawn-chance: 0.1
-  size: 1
-  speed: 0.5
-  leap-range: 5.0
-  leap-speed: 1.2
-  blind-interval-ticks: 20
-  damage-interval-ticks: 40
-  damage-per-interval: 3.0
-  max-attach-ticks: 200
-  target-entities: true
-  skeleton-burst-cooldown: 60
-  buff-interval-ticks: 40
-  max-attach-ticks-mob: 600
-  debug: false
-  death-messages:
-    - "&a%player% got head-slimed!"
-    - "&a%player% couldn't get the slime off their face"
-    - "&a%player% was suffocated by a Head Slime"
-    - "&a%player% learned to fear the green blob"
-
-### Creeper Jr.
-creeper-jr:
-  enabled: true
-  spawn-chance: 0.15
-  scale: 0.6
-  speed: 0.5
-  explosion-radius: 2
-  true-damage: 12.0
-  death-messages:
-    - "&a%player% was blown up by Creeper Jr."
-    - "&a%player% got too close to a Creeper Jr."
-    - "&a%player% learned that size isn't everything"
-    - "&a%player% underestimated the little guy"
-
-### Adapter
-adapter:
-  enabled: true
-  spawn-chance: 0.05
-
-### Mahoraga
-mahoraga:
-  enabled: true
-  spawn-chance: 0.05
-  slimefun-adaptation: true
-  # Retirado: Mahoraga ya no puede matar de un golpe atravesando Infinity Singularity.
-  adaptation-cooldown-seconds: 6
-  ignore-diamond-mod: true
-  infinity-weapon-adaptation: true
-  death-messages:
-    - "&f%player% was crushed by Mahoraga"
-    - "&f%player% could not adapt to Mahoraga"
-    - "&f%player% was obliterated by Mahoraga"
-    - "&f%player% stood no chance against Mahoraga"
-
-### Zombie Horse Trap
-zombie-horse-trap:
-  military-component-drop-chance: 0.3
-  death-messages:
-    - "&a%player% was overrun by the zombie cavalry"
-    - "&a%player% was outnumbered by the undead legion"
-    - "&a%player% fell to the military zombie horse trap"
-
-### Custom Mobs Spawn Chances
-bone-shield:
-  enabled: true
-  spawn-chance: 0.06
-  death-messages:
-    - "&7%player% broke their bones against the Bone Shield"
-    - "&7%player% was boned by the Bone Shield"
-    - "&7%player% shattered against the bone wall"
-chaos-mage:
-  enabled: true
-  spawn-chance: 0.4
-  raid-spawn-chance: 0.5
-  death-messages:
-    - "&5%player% was consumed by chaos magic"
-    - "&5%player% could not escape the Chaos Mage's spells"
-    - "&5%player% was turned to dust by a Chaos Mage"
-ender-knight:
-  enabled: true
-  spawn-chance: 0.04
-  death-messages:
-    - "&5%player% was pulled into the void by the Ender Knight"
-    - "&5%player% was overwhelmed by the Ender Knight"
-    - "&5%player% was banished by the Ender Knight"
-disc-trader:
-  enabled: true
-  spawn-chance: 0.05
-flame-elemental:
-  enabled: true
-  spawn-chance: 0.1
-  death-messages:
-    - "&c%player% was burned to ashes by a Flame Elemental"
-    - "&c%player% got too close to the fire"
-    - "&c%player% was incinerated by a Flame Elemental"
-frost-golem:
-  enabled: true
-  # Chance of a player-built iron golem becoming a Frost Golem
-  build-spawn-chance: 0.2
-  death-messages:
-    - "&b%player% was frozen solid by the Frost Golem"
-    - "&b%player% was crushed by the Frost Golem's ice"
-    - "&b%player% became part of the permafrost"
-obsidian-guard:
-  enabled: true
-  spawn-chance: 0.02
-  death-messages:
-    - "&8%player% was smashed by the Obsidian Guard"
-    - "&8%player% was shattered by obsidian"
-    - "&8%player% was crushed by the Obsidian Guard"
-shadow-rogue:
-  enabled: true
-  spawn-chance: 0.05
-  death-messages:
-    - "&8%player% was backstabbed by a Shadow Rogue"
-    - "&8%player% was eliminated from the shadows"
-    - "&8%player% never saw the Shadow Rogue coming"
-soul-reaper:
-  enabled: true
-  spawn-chance: 0.05
-  death-messages:
-    - "&5%player%'s soul was harvested by the Soul Reaper"
-    - "&5%player% was drained of life"
-    - "&5%player% joined the reaper's collection"
-storm-caller:
-  enabled: true
-  spawn-chance: 0.04
-  raid-spawn-chance: 0.5
-  death-messages:
-    - "&e%player% was struck down by the Storm Caller"
-    - "&e%player% was caught in the storm"
-    - "&e%player% was electrified by the Storm Caller"
-venom-witch:
-  enabled: true
-  spawn-chance: 0.05
-  raid-spawn-chance: 0.5
-  death-messages:
-    - "&a%player% was poisoned by the Venom Witch"
-    - "&a%player% fell to the Venom Witch's brew"
-    - "&a%player% drank the wrong potion"
-void-crawler:
-  enabled: true
-  spawn-chance: 0.07
-  death-messages:
-    - "&5%player% was dragged into the void by a Void Crawler"
-    - "&5%player% was consumed by darkness"
-    - "&5%player% was dissolved by the Void Crawler"
-warlord:
-  enabled: true
-  spawn-chance: 0.1
-  raid-spawn-chance: 0.5
-  debug: true
-  death-messages:
-    - "&f%player% was struck down by a Warlord"
-    - "&f%player% could not survive the Warlord's true damage"
-
-### Armor Stand Boss
-armor-stand-boss:
-  enabled: true
-  health: 1000.0
-  max-damage-per-hit: 50.0
-  aggro-range: 50.0
-  seal-damage: 15.0
-  hover-barrage-damage: 12.0
-  sentinel-core-drop-chance: 100.0
-  death-messages:
-    - "&c%player% was sealed by the Obsidian Sentinel"
-    - "&c%player% was judged by the Obsidian Sentinel"
-    - "&c%player% could not withstand the Sentinel's power"
-    - "&c%player% was erased by the Sentinel's magic"
-
-### Sentinel Grimoire (book of spells)
-grimoire:
-  blazing-pentagram:
+  ### Dio Boss (miniboss)
+  dio-boss:
+    # DISABLED: temporarily out of service due to excessive resource consumption
+    # (secondary/stand ticker and FreezeAbility). Re-enable only after a performance audit.
+    enabled: false
+    spawn-chance: 0.005
+    health: 300.0
     damage: 10.0
-    cooldown: 8
-  lance-rain:
-    damage: 12.0
-    cooldown: 7
-  divine-judgment:
-    damage: 18.0
-    cooldown: 10
-  executioners-mark:
-    damage: 14.0
-    cooldown: 10
-  singular-vortex:
-    damage: 8.0
-    cooldown: 15
-  earthquake:
-    damage: 10.0
-    cooldown: 9
-  celestial-bulwark:
-    damage: 0.0
-    cooldown: 20
-  sentinel-aura:
-    damage: 0.0
-    cooldown: 45
+    stand-offset-y: 2.0
+    stand-offset-z: -1.0
+    stand-damage: 4.0
+    stand-duration-ticks: 100
+    stand-interval-ticks: 3
+    cooldown-ms: 120000
+    freeze-radius: 50.0
+    freeze-duration-ticks: 100
+    freeze-damage-radius: 30.0
+    freeze-damage: 10.0
+    debug: false
+    teleport-inner-radius: 25.0
+    teleport-radius: 50.0
+    teleport-darkness-duration: 100
+    teleport-slowness-duration: 100
+    teleport-slowness-amplifier: 0
+    drop-chance: 0.1
+    death-messages:
+      - "&c%player% was frozen in time by Dio"
+      - "&c%player% felt the power of THE WORLD"
+      - "&c%player% was erased by Dio's stand"
 
-### Kinger
-kinger:
-  enabled: true
-  spawn-on-armorstand-chance: 0.01
-  health: 120.0
-  aggro-range: 25.0
-  move-speed: 0.32
-  melee-range: 3.0
-  melee-damage: 8.0
-  melee-radius: 3.5
-  melee-cooldown-ticks: 25
-  melee-anim-ticks: 12
-  ranged-range: 30.0
-  ranged-damage: 6.0
-  ranged-cooldown-ticks: 45
-  ranged-anim-ticks: 20
-  death-messages:
-    - "&d%player% was checked by the King"
-    - "&d%player% was knocked off the board by Kinger"
-    - "&d%player% lost the game to Kinger"
-    - "&d%player% was outplayed by the chess piece"
+  ### Mahoraga (miniboss)
+  mahoraga:
+    enabled: true
+    spawn-chance: 0.02
+    slimefun-adaptation: true
+    # Retirado: Mahoraga ya no puede matar de un golpe atravesando Infinity Singularity.
+    adaptation-cooldown-seconds: 6
+    ignore-diamond-mod: true
+    infinity-weapon-adaptation: true
+    death-messages:
+      - "&f%player% was crushed by Mahoraga"
+      - "&f%player% could not adapt to Mahoraga"
+      - "&f%player% was obliterated by Mahoraga"
+      - "&f%player% stood no chance against Mahoraga"
 
-### Commands
-commands:
-  permission: "msc.admin"
-  op-only: true
+  ### Head Slime
+  head-slime:
+    enabled: true
+    spawn-chance: 0.1
+    size: 1
+    speed: 0.5
+    leap-range: 5.0
+    leap-speed: 1.2
+    blind-interval-ticks: 20
+    damage-interval-ticks: 40
+    damage-per-interval: 3.0
+    max-attach-ticks: 200
+    target-entities: true
+    skeleton-burst-cooldown: 60
+    buff-interval-ticks: 40
+    max-attach-ticks-mob: 600
+    debug: false
+    death-messages:
+      - "&a%player% got head-slimed!"
+      - "&a%player% couldn't get the slime off their face"
+      - "&a%player% was suffocated by a Head Slime"
+      - "&a%player% learned to fear the green blob"
+
+  ### Creeper Jr.
+  creeper-jr:
+    enabled: true
+    spawn-chance: 0.15
+    scale: 0.6
+    speed: 0.5
+    explosion-radius: 2
+    true-damage: 12.0
+    death-messages:
+      - "&a%player% was blown up by Creeper Jr."
+      - "&a%player% got too close to a Creeper Jr."
+      - "&a%player% learned that size isn't everything"
+      - "&a%player% underestimated the little guy"
+
+  ### Zombie Horse Trap (Military)
+  zombie-horse-trap:
+    enabled: true
+    military-component-drop-chance: 0.3
+    death-messages:
+      - "&a%player% was overrun by the zombie cavalry"
+      - "&a%player% was outnumbered by the undead legion"
+      - "&a%player% fell to the military zombie horse trap"
+
+  ### Bone Shield
+  bone-shield:
+    enabled: true
+    spawn-chance: 0.06
+    death-messages:
+      - "&7%player% broke their bones against the Bone Shield"
+      - "&7%player% was boned by the Bone Shield"
+      - "&7%player% shattered against the bone wall"
+
+  ### Chaos Mage
+  chaos-mage:
+    enabled: true
+    spawn-chance: 0.4
+    raid-spawn-chance: 0.5
+    death-messages:
+      - "&5%player% was consumed by chaos magic"
+      - "&5%player% could not escape the Chaos Mage's spells"
+      - "&5%player% was turned to dust by a Chaos Mage"
+
+  ### Ender Knight
+  ender-knight:
+    enabled: true
+    spawn-chance: 0.04
+    death-messages:
+      - "&5%player% was pulled into the void by the Ender Knight"
+      - "&5%player% was overwhelmed by the Ender Knight"
+      - "&5%player% was banished by the Ender Knight"
+
+  ### Disc Trader
+  disc-trader:
+    enabled: true
+    spawn-chance: 0.05
+
+  ### Flame Elemental
+  flame-elemental:
+    enabled: true
+    spawn-chance: 0.1
+    death-messages:
+      - "&c%player% was burned to ashes by a Flame Elemental"
+      - "&c%player% got too close to the fire"
+      - "&c%player% was incinerated by a Flame Elemental"
+
+  ### Frost Golem
+  frost-golem:
+    enabled: true
+    # Chance of a player-built iron golem becoming a Frost Golem
+    build-spawn-chance: 0.2
+    death-messages:
+      - "&b%player% was frozen solid by the Frost Golem"
+      - "&b%player% was crushed by the Frost Golem's ice"
+      - "&b%player% became part of the permafrost"
+
+  ### Obsidian Guard
+  obsidian-guard:
+    enabled: true
+    spawn-chance: 0.02
+    death-messages:
+      - "&8%player% was smashed by the Obsidian Guard"
+      - "&8%player% was shattered by obsidian"
+      - "&8%player% was crushed by the Obsidian Guard"
+
+  ### Shadow Rogue
+  shadow-rogue:
+    enabled: true
+    spawn-chance: 0.05
+    death-messages:
+      - "&8%player% was backstabbed by a Shadow Rogue"
+      - "&8%player% was eliminated from the shadows"
+      - "&8%player% never saw the Shadow Rogue coming"
+
+  ### Soul Reaper
+  soul-reaper:
+    enabled: true
+    spawn-chance: 0.05
+    death-messages:
+      - "&5%player%'s soul was harvested by the Soul Reaper"
+      - "&5%player% was drained of life"
+      - "&5%player% joined the reaper's collection"
+
+  ### Storm Caller
+  storm-caller:
+    enabled: true
+    spawn-chance: 0.04
+    raid-spawn-chance: 0.5
+    death-messages:
+      - "&e%player% was struck down by the Storm Caller"
+      - "&e%player% was caught in the storm"
+      - "&e%player% was electrified by the Storm Caller"
+
+  ### Venom Witch
+  venom-witch:
+    enabled: true
+    spawn-chance: 0.05
+    raid-spawn-chance: 0.5
+    death-messages:
+      - "&a%player% was poisoned by the Venom Witch"
+      - "&a%player% fell to the Venom Witch's brew"
+      - "&a%player% drank the wrong potion"
+
+  ### Void Crawler
+  void-crawler:
+    enabled: true
+    spawn-chance: 0.07
+    death-messages:
+      - "&5%player% was dragged into the void by a Void Crawler"
+      - "&5%player% was consumed by darkness"
+      - "&5%player% was dissolved by the Void Crawler"
+
+  ### Warlord
+  warlord:
+    enabled: true
+    spawn-chance: 0.1
+    raid-spawn-chance: 0.5
+    debug: true
+    death-messages:
+      - "&f%player% was struck down by a Warlord"
+      - "&f%player% could not survive the Warlord's true damage"
+
+  ### Kinger
+  kinger:
+    enabled: true
+    spawn-on-armorstand-chance: 0.01
+    health: 120.0
+    aggro-range: 25.0
+    move-speed: 0.32
+    melee-range: 3.0
+    melee-damage: 8.0
+    melee-radius: 3.5
+    melee-cooldown-ticks: 25
+    melee-anim-ticks: 12
+    ranged-range: 30.0
+    ranged-damage: 6.0
+    ranged-cooldown-ticks: 45
+    ranged-anim-ticks: 20
+    death-messages:
+      - "&d%player% was checked by the King"
+      - "&d%player% was knocked off the board by Kinger"
+      - "&d%player% lost the game to Kinger"
+      - "&d%player% was outplayed by the chess piece"
+
+  ### Armor Stand Boss (Obsidian Sentinel)
+  armor-stand-boss:
+    enabled: true
+    health: 1000.0
+    max-damage-per-hit: 50.0
+    aggro-range: 50.0
+    seal-damage: 15.0
+    hover-barrage-damage: 12.0
+    sentinel-core-drop-chance: 100.0
+    death-messages:
+      - "&c%player% was sealed by the Obsidian Sentinel"
+      - "&c%player% was judged by the Obsidian Sentinel"
+      - "&c%player% could not withstand the Sentinel's power"
+      - "&c%player% was erased by the Sentinel's magic"

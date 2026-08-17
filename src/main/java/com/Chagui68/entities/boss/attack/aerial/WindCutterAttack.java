@@ -81,7 +81,7 @@ public class WindCutterAttack extends BossAttackBase {
                                 double dmg = sealDamage * 0.25;
                                 for (Player p : boss.getValidPlayers(world)) {
                                     if (p.getLocation().distanceSquared(wLoc) < 9) {
-                                        MscEntityUtils.damageBy(stand, p, dmg);
+                                        MscEntityUtils.damageBy(stand.entidad(), p, dmg);
                                         p.setVelocity(p.getVelocity().add(new Vector(Math.cos(fAngle) * 0.5, 0.2, Math.sin(fAngle) * 0.5)));
                                     }
                                 }

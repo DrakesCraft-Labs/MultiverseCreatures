@@ -28,6 +28,7 @@ public class VoidCrawler implements Listener {
 
     public VoidCrawler(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.void-crawler")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -60,6 +61,7 @@ public class VoidCrawler implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.void-crawler")) return false;
         Spider spider = (Spider) location.getWorld().spawnEntity(location, EntityType.SPIDER);
         if (spider == null) return false;
         spider.addScoreboardTag(TAG);
@@ -180,7 +182,7 @@ public class VoidCrawler implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "void-crawler.death-messages");
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.void-crawler.death-messages");
     }
 
     private static class VoidCrawlerInstance {

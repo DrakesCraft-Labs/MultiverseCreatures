@@ -187,6 +187,10 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(GREEN + "Spawned Multiverse Merchant!");
             }
             case "dio" -> {
+                if (!plugin.isEnabled("entities.dio-boss")) {
+                    sender.sendMessage(RED + "Dio Boss is disabled due to excessive resource consumption.");
+                    return;
+                }
                 boolean success = plugin.getDioBoss().trySpawnDio(p.getLocation());
                 if (success) {
                     sender.sendMessage(GREEN + "Spawned Dio Brando!");

@@ -71,7 +71,7 @@ public class EarthPillarAttack extends BossAttackBase {
                             }
                             world.playSound(tLoc, Sound.BLOCK_STONE_BREAK, 1.0f, 0.7f);
                             double dmg = sealDamage * 0.8;
-                            MscEntityUtils.damageBy(stand, target, dmg);
+                            MscEntityUtils.damageBy(stand.entidad(), target, dmg);
                             boss.launchPlayer(target, 1.2);
                             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2));
                         }

@@ -37,6 +37,7 @@ public class FrostGolem implements Listener {
 
     public FrostGolem(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.frost-golem")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -44,6 +45,7 @@ public class FrostGolem implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
+        if (!plugin.isEnabled("entities.frost-golem")) return;
         Block placed = event.getBlockPlaced();
         if (placed.getType() != Material.CARVED_PUMPKIN && placed.getType() != Material.JACK_O_LANTERN) return;
 
@@ -100,6 +102,7 @@ public class FrostGolem implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.frost-golem")) return false;
         IronGolem golem = (IronGolem) location.getWorld().spawnEntity(location, EntityType.IRON_GOLEM);
         if (golem == null) return false;
         golem.addScoreboardTag(TAG);
@@ -217,7 +220,7 @@ public class FrostGolem implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "frost-golem.death-messages");
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.frost-golem.death-messages");
     }
 
     private static class FrostGolemInstance {

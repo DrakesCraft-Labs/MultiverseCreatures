@@ -30,6 +30,7 @@ public class BoneShield implements Listener {
 
     public BoneShield(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.bone-shield")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -62,6 +63,7 @@ public class BoneShield implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.bone-shield")) return false;
         Skeleton sk = (Skeleton) location.getWorld().spawnEntity(location, EntityType.SKELETON);
         if (sk == null) return false;
         sk.addScoreboardTag(TAG);
@@ -172,7 +174,7 @@ public class BoneShield implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "bone-shield.death-messages");
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.bone-shield.death-messages");
     }
 
     @EventHandler

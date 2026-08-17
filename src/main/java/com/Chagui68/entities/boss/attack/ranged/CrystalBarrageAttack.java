@@ -69,7 +69,7 @@ public class CrystalBarrageAttack extends BossAttackBase {
                             new Particle.DustOptions(Color.fromRGB(0xAA66FF), 1.5f));
                     for (Player pl : boss.getValidPlayers(world)) {
                         if (pl.getLocation().distanceSquared(p) < 9) {
-                            MscEntityUtils.damageBy(stand, pl, sealDamage * 0.55);
+                            MscEntityUtils.damageBy(stand.entidad(), pl, sealDamage * 0.55);
                             pl.setVelocity(d.clone().setY(0.4).multiply(0.4));
                             world.spawnParticle(Particle.EXPLOSION, p, 8, 0.5, 0.5, 0.5, 0);
                             world.playSound(p, Sound.BLOCK_GLASS_BREAK, 1.5f, 0.7f);
