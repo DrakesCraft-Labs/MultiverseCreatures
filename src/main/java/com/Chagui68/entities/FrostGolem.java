@@ -181,7 +181,13 @@ public class FrostGolem implements Listener {
     public void onPotionApply(EntityPotionEffectEvent event) {
         if (!(event.getEntity() instanceof IronGolem golem)) return;
         if (!golem.getScoreboardTags().contains(TAG)) return;
-        PotionEffectType type = event.getNewEffect().getType();
+        // getNewEffect() es null cuando el evento es la RETIRADA de un efecto, no su aplicacion.
+        // Este manejador escucha EntityPotionEffectEvent sin filtrar, asi que le llega cualquier
+        // efecto de cualquier entidad del servidor: en los logs del 16 esto reventaba decenas de
+        // veces seguidas y se llevaba por delante el evento entero.
+        PotionEffect nuevo = event.getNewEffect();
+        if (nuevo == null) return;
+        PotionEffectType type = nuevo.getType();
         if (type == PotionEffectType.SLOWNESS || type == PotionEffectType.WEAKNESS || type == PotionEffectType.JUMP_BOOST) {
             event.setCancelled(true);
         }
