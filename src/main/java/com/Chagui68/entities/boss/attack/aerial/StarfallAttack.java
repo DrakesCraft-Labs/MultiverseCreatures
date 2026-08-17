@@ -86,7 +86,7 @@ public class StarfallAttack extends BossAttackBase {
                                     double dmg = sealDamage * 0.6;
                                     for (Player p : boss.getValidPlayers(world)) {
                                         if (p.getLocation().distanceSquared(fall) < 25) {
-                                            MscEntityUtils.damageBy(stand, p, dmg);
+                                            MscEntityUtils.damageBy(stand.entidad(), p, dmg);
                                             boss.launchPlayer(p, 0.6);
                                         }
                                     }

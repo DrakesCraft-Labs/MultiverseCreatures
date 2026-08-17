@@ -66,7 +66,7 @@ public class MeteorStormAttack extends BossAttackBase {
                                         double dmg = sealDamage * 0.5;
                                         for (Player p : boss.getValidPlayers(world)) {
                                             if (p.getLocation().distanceSquared(fall) < 16) {
-                                                MscEntityUtils.damageBy(stand, p, dmg);
+                                                MscEntityUtils.damageBy(stand.entidad(), p, dmg);
                                                 p.setFireTicks(60);
                                                 boss.launchPlayer(p, 0.5);
                                             }

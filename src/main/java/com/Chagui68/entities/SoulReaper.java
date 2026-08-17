@@ -34,6 +34,7 @@ public class SoulReaper implements Listener {
 
     public SoulReaper(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.soul-reaper")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -66,6 +67,7 @@ public class SoulReaper implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.soul-reaper")) return false;
         WitherSkeleton ws = (WitherSkeleton) location.getWorld().spawnEntity(location, EntityType.WITHER_SKELETON);
         if (ws == null) return false;
         ws.addScoreboardTag(TAG);
@@ -169,7 +171,7 @@ public class SoulReaper implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "soul-reaper.death-messages");
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.soul-reaper.death-messages");
     }
 
     @EventHandler

@@ -161,7 +161,7 @@ public class AerialRushAttack extends BossAttackBase {
                 world.playSound(p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_STRONG, 1.5f, 0.6f);
                 world.playSound(p.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.2f);
                 double dmg = sealDamage * 0.8;
-                MscEntityUtils.damageBy(stand, p, dmg);
+                MscEntityUtils.damageBy(stand.entidad(), p, dmg);
                 Vector knock = p.getLocation().toVector().subtract(stand.getLocation().toVector());
                 if (knock.lengthSquared() > 0) knock.normalize();
                 knock.multiply(1.2).setY(0.7);
@@ -253,7 +253,7 @@ public class AerialRushAttack extends BossAttackBase {
                     double dsq = p.getLocation().distanceSquared(loc);
                     if (dsq <= IMPACT_RADIUS_SQ) {
                         double factor = 1.0 - Math.sqrt(dsq) / IMPACT_RADIUS * 0.4;
-                        MscEntityUtils.damageBy(stand, p, dmg * factor);
+                        MscEntityUtils.damageBy(stand.entidad(), p, dmg * factor);
                         Vector away = p.getLocation().toVector().subtract(loc.toVector());
                         away.setY(0);
                         if (away.lengthSquared() > 0) away.normalize();

@@ -57,11 +57,11 @@ public class LightningSpearAttack extends BossAttackBase {
                         if (p.getLocation().distanceSquared(pos) < 5) {
                             world.strikeLightningEffect(pos);
                             world.playSound(pos, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.5f, 0.8f);
-                            MscEntityUtils.damageBy(stand, p, sealDamage * 0.7);
+                            MscEntityUtils.damageBy(stand.entidad(), p, sealDamage * 0.7);
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2));
                             for (Player near : boss.getValidPlayers(world)) {
                                 if (near.getLocation().distanceSquared(pos) < 16) {
-                                    MscEntityUtils.damageBy(stand, near, sealDamage * 0.3);
+                                    MscEntityUtils.damageBy(stand.entidad(), near, sealDamage * 0.3);
                                     near.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1));
                                 }
                             }

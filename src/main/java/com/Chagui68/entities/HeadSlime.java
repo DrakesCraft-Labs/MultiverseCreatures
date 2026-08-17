@@ -85,6 +85,7 @@ public class HeadSlime implements Listener {
 
     public HeadSlime(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.head-slime")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         reloadConfig();
         startTicker();
@@ -93,19 +94,19 @@ public class HeadSlime implements Listener {
     }
 
     public void reloadConfig() {
-        speed = plugin.getConfig().getDouble("head-slime.speed", 0.5);
-        size = plugin.getConfig().getInt("head-slime.size", 1);
-        leapRange = plugin.getConfig().getDouble("head-slime.leap-range", 5.0);
-        leapSpeed = plugin.getConfig().getDouble("head-slime.leap-speed", 1.2);
-        blindIntervalTicks = plugin.getConfig().getInt("head-slime.blind-interval-ticks", 20);
-        damageIntervalTicks = plugin.getConfig().getInt("head-slime.damage-interval-ticks", 40);
-        damagePerInterval = plugin.getConfig().getDouble("head-slime.damage-per-interval", 3.0);
-        maxAttachTicks = plugin.getConfig().getInt("head-slime.max-attach-ticks", 200);
-        buffIntervalTicks = plugin.getConfig().getInt("head-slime.buff-interval-ticks", 40);
-        maxAttachTicksMob = plugin.getConfig().getInt("head-slime.max-attach-ticks-mob", 600);
-        targetEntities = plugin.getConfig().getBoolean("head-slime.target-entities", true);
-        skeletonBurstCooldown = plugin.getConfig().getInt("head-slime.skeleton-burst-cooldown", 60);
-        debug = plugin.getConfig().getBoolean("head-slime.debug", false);
+        speed = plugin.getConfig().getDouble("entities.head-slime.speed", 0.5);
+        size = plugin.getConfig().getInt("entities.head-slime.size", 1);
+        leapRange = plugin.getConfig().getDouble("entities.head-slime.leap-range", 5.0);
+        leapSpeed = plugin.getConfig().getDouble("entities.head-slime.leap-speed", 1.2);
+        blindIntervalTicks = plugin.getConfig().getInt("entities.head-slime.blind-interval-ticks", 20);
+        damageIntervalTicks = plugin.getConfig().getInt("entities.head-slime.damage-interval-ticks", 40);
+        damagePerInterval = plugin.getConfig().getDouble("entities.head-slime.damage-per-interval", 3.0);
+        maxAttachTicks = plugin.getConfig().getInt("entities.head-slime.max-attach-ticks", 200);
+        buffIntervalTicks = plugin.getConfig().getInt("entities.head-slime.buff-interval-ticks", 40);
+        maxAttachTicksMob = plugin.getConfig().getInt("entities.head-slime.max-attach-ticks-mob", 600);
+        targetEntities = plugin.getConfig().getBoolean("entities.head-slime.target-entities", true);
+        skeletonBurstCooldown = plugin.getConfig().getInt("entities.head-slime.skeleton-burst-cooldown", 60);
+        debug = plugin.getConfig().getBoolean("entities.head-slime.debug", false);
     }
 
     private void reloadExisting() {
@@ -165,6 +166,7 @@ public class HeadSlime implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.head-slime")) return false;
         Slime slime = (Slime) location.getWorld().spawnEntity(location, EntityType.SLIME);
         if (slime == null) return false;
 
@@ -590,7 +592,7 @@ public class HeadSlime implements Listener {
     public void onDeath(PlayerDeathEvent event) {
         if (!(event.getDamageSource().getCausingEntity() instanceof Slime slime)) return;
         if (!slime.getScoreboardTags().contains(TAG)) return;
-        List<String> messages = plugin.getConfig().getStringList("head-slime.death-messages");
+        List<String> messages = plugin.getConfig().getStringList("entities.head-slime.death-messages");
         if (!messages.isEmpty()) {
             String raw = messages.get(random.nextInt(messages.size()));
             event.setDeathMessage(ChatColor.translateAlternateColorCodes('&', raw.replace("%player%", event.getEntity().getName())));

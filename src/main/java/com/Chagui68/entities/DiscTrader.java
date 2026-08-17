@@ -29,6 +29,7 @@ public class DiscTrader {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.disc-trader")) return false;
         if (location.getWorld() == null) return false;
 
         Villager villager = (Villager) location.getWorld().spawnEntity(location, EntityType.VILLAGER);

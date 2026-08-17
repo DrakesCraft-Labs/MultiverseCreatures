@@ -111,6 +111,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     public ArmorStandBoss(MultiverseCreatures plugin) {
         this.plugin = plugin;
         reloadConfig();
+        if (!plugin.isEnabled("entities.armor-stand-boss")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         reloadExistingBosses();
         initAttacks();
@@ -173,10 +174,10 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     public void reloadConfig() {
-        this.sealDamage = plugin.getConfig().getDouble("armor-stand-boss.seal-damage", 15.0);
-        this.hoverBarrageDamage = plugin.getConfig().getDouble("armor-stand-boss.hover-barrage-damage", 12.0);
-        this.aggroRange = plugin.getConfig().getDouble("armor-stand-boss.aggro-range", 50.0);
-        this.maxDamagePerHit = plugin.getConfig().getDouble("armor-stand-boss.max-damage-per-hit", 50.0);
+        this.sealDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.seal-damage", 15.0);
+        this.hoverBarrageDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.hover-barrage-damage", 12.0);
+        this.aggroRange = plugin.getConfig().getDouble("entities.armor-stand-boss.aggro-range", 50.0);
+        this.maxDamagePerHit = plugin.getConfig().getDouble("entities.armor-stand-boss.max-damage-per-hit", 50.0);
     }
 
     public MultiverseCreatures getPlugin() {
@@ -225,10 +226,11 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.armor-stand-boss")) return false;
         ArmorStand stand = (ArmorStand) location.getWorld().spawnEntity(location, EntityType.ARMOR_STAND);
         if (stand == null) return false;
 
-        double health = plugin.getConfig().getDouble("armor-stand-boss.health", 1000.0) * 1.5;
+        double health = plugin.getConfig().getDouble("entities.armor-stand-boss.health", 1000.0) * 1.5;
         AttributeInstance maxHealthAttr = stand.getAttribute(Attribute.MAX_HEALTH);
         if (maxHealthAttr != null) maxHealthAttr.setBaseValue(health);
         stand.setHealth(health);
@@ -390,7 +392,7 @@ public class ArmorStandBoss implements Listener, BossHost {
 
             double distSq = player.getLocation().distanceSquared(base);
             if (distSq <= sealRadiusSq) {
-                MscEntityUtils.damageBy(stand, player, damage);
+                MscEntityUtils.damageBy(stand.entidad(), player, damage);
                 player.setVelocity(player.getVelocity().add(new org.bukkit.util.Vector(0, 0.4, 0)));
             }
         }
@@ -732,7 +734,7 @@ public class ArmorStandBoss implements Listener, BossHost {
             if (dist < 30) {
                 Vector away = p.getLocation().toVector().subtract(loc.toVector()).normalize();
                 p.setVelocity(away.multiply(2.0).setY(1.0));
-                MscEntityUtils.damageBy(stand, p, 10.0);
+                MscEntityUtils.damageBy(stand.entidad(), p, 10.0);
                 p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 0));
             }
         }
@@ -821,7 +823,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         for (Player p : getValidPlayers(world)) {
             double dist = p.getLocation().distance(loc);
             if (dist < 25) {
-                MscEntityUtils.damageBy(stand, p, dmg * 0.5 * (1 - dist / 25));
+                MscEntityUtils.damageBy(stand.entidad(), p, dmg * 0.5 * (1 - dist / 25));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1));
             }
@@ -865,7 +867,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         for (Player p : getValidPlayers(world)) {
             double dist = p.getLocation().distance(loc);
             if (dist < 35) {
-                MscEntityUtils.damageBy(stand, p, dmg * (1 - dist / 35));
+                MscEntityUtils.damageBy(stand.entidad(), p, dmg * (1 - dist / 35));
                 p.setVelocity(new Vector(0, 1.5, 0));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 100, 1));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0));
@@ -1326,7 +1328,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     private ArmorStand getBossStand(World world) {
         for (BossInstance instance : activeBosses.values()) {
             if (instance.stand.getWorld().equals(world)) {
-                return instance.stand;
+                return instance.stand.armorStand();
             }
         }
         return null;
@@ -2003,9 +2005,9 @@ public class ArmorStandBoss implements Listener, BossHost {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        if (!MscEntityUtils.applyDeathMessage(plugin, event, TAG, "armor-stand-boss.death-messages")) {
-            if (!MscEntityUtils.applyDeathMessage(plugin, event, SUMMON_TAG, "armor-stand-boss.death-messages")) {
-                MscEntityUtils.applyDeathMessage(plugin, event, "MSC_BossMirror", "armor-stand-boss.death-messages");
+        if (!MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.armor-stand-boss.death-messages")) {
+            if (!MscEntityUtils.applyDeathMessage(plugin, event, SUMMON_TAG, "entities.armor-stand-boss.death-messages")) {
+                MscEntityUtils.applyDeathMessage(plugin, event, "MSC_BossMirror", "entities.armor-stand-boss.death-messages");
             }
         }
     }
@@ -2048,7 +2050,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         event.getDrops().clear();
         event.setDroppedExp(1000);
 
-        double dropChance = plugin.getConfig().getDouble("armor-stand-boss.sentinel-core-drop-chance", 100.0);
+        double dropChance = plugin.getConfig().getDouble("entities.armor-stand-boss.sentinel-core-drop-chance", 100.0);
         if (dropChance > 0.0 && Math.random() * 100.0 < dropChance) {
             event.getDrops().add(SentinelCore.SENTINEL_CORE.clone());
         }

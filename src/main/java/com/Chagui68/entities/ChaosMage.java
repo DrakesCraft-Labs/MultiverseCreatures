@@ -32,6 +32,7 @@ public class ChaosMage implements Listener {
 
     public ChaosMage(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.chaos-mage")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -64,6 +65,7 @@ public class ChaosMage implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.chaos-mage")) return false;
         Evoker evoker = (Evoker) location.getWorld().spawnEntity(location, EntityType.EVOKER);
         if (evoker == null) return false;
         evoker.setPersistent(true);
@@ -73,6 +75,7 @@ public class ChaosMage implements Listener {
     }
 
     public boolean convertExisting(Evoker evoker) {
+        if (!plugin.isEnabled("entities.chaos-mage")) return false;
         if (evoker == null || evoker.isDead() || !evoker.isValid()) return false;
         customize(evoker);
         return true;
@@ -188,8 +191,8 @@ public class ChaosMage implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        if (!MscEntityUtils.applyDeathMessage(plugin, event, TAG, "chaos-mage.death-messages")) {
-            MscEntityUtils.applyDeathMessage(plugin, event, "MSC_ChaosVex", "chaos-mage.death-messages");
+        if (!MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.chaos-mage.death-messages")) {
+            MscEntityUtils.applyDeathMessage(plugin, event, "MSC_ChaosVex", "entities.chaos-mage.death-messages");
         }
     }
 

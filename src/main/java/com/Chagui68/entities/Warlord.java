@@ -37,12 +37,13 @@ public class Warlord implements Listener {
     public Warlord(MultiverseCreatures plugin) {
         this.plugin = plugin;
         reloadConfig();
+        if (!plugin.isEnabled("entities.warlord")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         reloadExisting();
     }
 
     public void reloadConfig() {
-        debug = plugin.getConfig().getBoolean("warlord.debug", false);
+        debug = plugin.getConfig().getBoolean("entities.warlord.debug", false);
     }
 
     private void reloadExisting() {
@@ -56,6 +57,7 @@ public class Warlord implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.warlord")) return false;
         Pillager pillager = (Pillager) location.getWorld().spawnEntity(location, EntityType.PILLAGER);
         if (pillager == null) return false;
         customize(pillager);
@@ -64,6 +66,7 @@ public class Warlord implements Listener {
     }
 
     public boolean convertExisting(Pillager pillager) {
+        if (!plugin.isEnabled("entities.warlord")) return false;
         if (pillager == null || pillager.isDead() || !pillager.isValid()) return false;
         customize(pillager);
         if (debug) plugin.getLogger().info("[Warlord] Converted raider to Warlord at " + pillager.getLocation());
@@ -118,7 +121,7 @@ public class Warlord implements Listener {
     public void onDeath(PlayerDeathEvent event) {
         if (!(event.getDamageSource().getCausingEntity() instanceof Pillager pillager)) return;
         if (!pillager.getScoreboardTags().contains(TAG)) return;
-        List<String> messages = plugin.getConfig().getStringList("warlord.death-messages");
+        List<String> messages = plugin.getConfig().getStringList("entities.warlord.death-messages");
         if (messages.isEmpty()) return;
         String raw = messages.get(random.nextInt(messages.size()));
         event.setDeathMessage(ChatColor.translateAlternateColorCodes('&', raw.replace("%player%", event.getEntity().getName())));

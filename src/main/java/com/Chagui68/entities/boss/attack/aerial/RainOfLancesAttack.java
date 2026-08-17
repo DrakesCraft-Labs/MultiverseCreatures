@@ -172,7 +172,7 @@ public class RainOfLancesAttack extends BossAttackBase {
                         double damage = sealDamage * 0.6;
                         for (Player p : boss.getValidPlayers(world)) {
                             if (p.getLocation().distanceSquared(loc) < 16) {
-                                MscEntityUtils.damageBy(stand, p, damage);
+                                MscEntityUtils.damageBy(stand.entidad(), p, damage);
                                 boss.launchPlayer(p, 0.3);
                             }
                         }

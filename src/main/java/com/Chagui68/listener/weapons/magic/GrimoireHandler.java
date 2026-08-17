@@ -53,6 +53,7 @@ public class GrimoireHandler implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
+        if (!plugin.isEnabled("items.grimoire")) return;
         if (event.getHand() != EquipmentSlot.HAND) return;
         if (event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_AIR
                 && event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return;
@@ -91,7 +92,7 @@ public class GrimoireHandler implements Listener {
             return;
         }
 
-        int cooldown = plugin.getConfig().getInt("grimoire." + spell.getConfigKey() + ".cooldown",
+        int cooldown = plugin.getConfig().getInt("items.grimoire." + spell.getConfigKey() + ".cooldown",
                 spell.getCooldownSeconds());
         setCooldown(player, spell, now + cooldown * 1000L);
 
@@ -234,7 +235,7 @@ public class GrimoireHandler implements Listener {
     }
 
     private double damageOf(GrimoireSpell spell) {
-        return plugin.getConfig().getDouble("grimoire." + spell.getConfigKey() + ".damage",
+        return plugin.getConfig().getDouble("items.grimoire." + spell.getConfigKey() + ".damage",
                 spell.getDefaultDamage());
     }
 

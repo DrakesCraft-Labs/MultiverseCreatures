@@ -74,7 +74,7 @@ public class CrossSlashAttack extends BossAttackBase {
                         Vector diff = pLoc.toVector().subtract(center.toVector());
                         diff.setY(0);
                         if (diff.length() < sz && Math.abs(pLoc.getY() - baseY) < 3.5) {
-                            MscEntityUtils.damageBy(stand, p, dmg);
+                            MscEntityUtils.damageBy(stand.entidad(), p, dmg);
                             boss.launchPlayer(p, 0.8);
                         }
                     }

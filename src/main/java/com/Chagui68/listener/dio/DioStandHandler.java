@@ -38,6 +38,7 @@ public class DioStandHandler implements Listener {
 
     public DioStandHandler(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("items.dio-stand")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startStandVisualTask();
     }
@@ -139,7 +140,7 @@ public class DioStandHandler implements Listener {
 
         UUID pid = player.getUniqueId();
         long now = System.currentTimeMillis();
-        long cooldownMs = plugin.getConfig().getLong("dio-stand.cooldown-ms", 120000);
+        long cooldownMs = plugin.getConfig().getLong("items.dio-stand.cooldown-ms", 120000);
         Long lastUse = freezeCooldowns.get(pid);
 
         if (lastUse != null && now - lastUse < cooldownMs) {
@@ -150,8 +151,8 @@ public class DioStandHandler implements Listener {
 
         freezeCooldowns.put(pid, now);
 
-        double freezeRadius = plugin.getConfig().getDouble("dio-stand.freeze-radius", 50.0);
-        int freezeDurationTicks = plugin.getConfig().getInt("dio-stand.freeze-duration-ticks", 100);
+        double freezeRadius = plugin.getConfig().getDouble("items.dio-stand.freeze-radius", 50.0);
+        int freezeDurationTicks = plugin.getConfig().getInt("items.dio-stand.freeze-duration-ticks", 100);
         FreezeAbility freeze = plugin.getFreezeAbility();
 
         for (Player target : player.getWorld().getPlayers()) {
@@ -208,11 +209,10 @@ public class DioStandHandler implements Listener {
         if (dps == null || dps.stand == null || !dps.stand.isValid()) return;
 
         ArmorStand stand = dps.stand;
-        double standDamage = plugin.getConfig().getDouble("dio-stand.stand-damage", 4.0);
-        int durationTicks = plugin.getConfig().getInt("dio-stand.stand-duration-ticks", 100);
-        int intervalTicks = plugin.getConfig().getInt("dio-stand.stand-interval-ticks", 3);
-        // Total damage budget across the whole Stand Rush (default 10 hearts = 20 HP).
-        double maxTotalDamage = plugin.getConfig().getDouble("dio-stand.stand-total-damage", 20.0);
+double standDamage = plugin.getConfig().getDouble("items.dio-stand.stand-damage", 4.0);
+        int durationTicks = plugin.getConfig().getInt("items.dio-stand.stand-duration-ticks", 100);
+        int intervalTicks = plugin.getConfig().getInt("items.dio-stand.stand-interval-ticks", 3);
+        double maxTotalDamage = plugin.getConfig().getDouble("items.dio-stand.stand-total-damage", 20.0);
 
         new BukkitRunnable() {
             int tick = 0;

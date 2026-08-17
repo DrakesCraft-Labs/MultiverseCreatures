@@ -32,6 +32,7 @@ public class EnderKnight implements Listener {
 
     public EnderKnight(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.ender-knight")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -64,6 +65,7 @@ public class EnderKnight implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.ender-knight")) return false;
         Enderman em = (Enderman) location.getWorld().spawnEntity(location, EntityType.ENDERMAN);
         if (em == null) return false;
         em.addScoreboardTag(TAG);
@@ -161,7 +163,7 @@ public class EnderKnight implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "ender-knight.death-messages");
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.ender-knight.death-messages");
     }
 
     private static class EnderKnightInstance {

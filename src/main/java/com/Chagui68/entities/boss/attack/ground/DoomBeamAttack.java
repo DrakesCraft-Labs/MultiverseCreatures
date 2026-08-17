@@ -82,7 +82,7 @@ public class DoomBeamAttack extends BossAttackBase {
                         }
                         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.5f);
                         double dmg = sealDamage * 1.5;
-                        MscEntityUtils.damageBy(stand, target, dmg);
+                        MscEntityUtils.damageBy(stand.entidad(), target, dmg);
                         target.setVelocity(dir.multiply(1.5).setY(0.5));
                         target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 100, 1));
                         target.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 100, 0));

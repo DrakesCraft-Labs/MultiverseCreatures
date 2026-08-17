@@ -57,7 +57,7 @@ public class FrostLanceAttack extends BossAttackBase {
                             new Particle.DustOptions(Color.fromRGB(0x88DDFF), 1.5f));
                     for (Player p : boss.getValidPlayers(world)) {
                         if (p.getLocation().distanceSquared(pos) < 6) {
-                            MscEntityUtils.damageBy(stand, p, sealDamage * 0.8);
+                            MscEntityUtils.damageBy(stand.entidad(), p, sealDamage * 0.8);
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 3));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 100, -4));
                             world.spawnParticle(Particle.EXPLOSION, pos, 5, 0.5, 0.5, 0.5, 0);

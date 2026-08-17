@@ -76,7 +76,7 @@ public class SonicBoomAttack extends BossAttackBase {
                             double dot = toPlayer.normalize().dot(dir);
                             if (dot > 0.3) {
                                 double dmg = sealDamage * (1 - dist / 25 * 0.5);
-                                MscEntityUtils.damageBy(stand, p, dmg);
+                                MscEntityUtils.damageBy(stand.entidad(), p, dmg);
                                 p.setVelocity(dir.clone().multiply(2.0 * (1 - dist / 25)).setY(0.5));
                                 p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 60, 1));
                                 p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2));

@@ -66,7 +66,7 @@ public class ArcaneOrbAttack extends BossAttackBase {
                             world.playSound(pos, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.5f);
                             for (Player near : boss.getValidPlayers(world)) {
                                 if (near.getLocation().distanceSquared(pos) < 25) {
-                                    MscEntityUtils.damageBy(stand, near, sealDamage * 0.6);
+                                    MscEntityUtils.damageBy(stand.entidad(), near, sealDamage * 0.6);
                                     Vector away = near.getLocation().toVector().subtract(pos.toVector());
                                     if (away.lengthSquared() > 0)
                                         near.setVelocity(away.normalize().multiply(0.8).setY(0.4));

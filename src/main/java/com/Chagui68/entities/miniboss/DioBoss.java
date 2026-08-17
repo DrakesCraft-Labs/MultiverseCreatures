@@ -67,23 +67,28 @@ public class DioBoss implements Listener {
 
     public DioBoss(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.dio-boss")) {
+            plugin.getLogger().warning("[DioBoss] Disabled in config due to excessive resource consumption. "
+                    + "Natural spawns and /msc spawn dio are disabled.");
+            return;
+        }
         Bukkit.getPluginManager().registerEvents(this, plugin);
         reloadConfig();
         reloadExistingBosses();
     }
 
     public void reloadConfig() {
-        standOffsetZ = plugin.getConfig().getDouble("dio-boss.stand-offset-z", -1.0);
-        standOffsetY = plugin.getConfig().getDouble("dio-boss.stand-offset-y", 2.0);
-        cooldownMs = plugin.getConfig().getLong("dio-boss.cooldown-ms", 120000);
-        freezeRadius = plugin.getConfig().getDouble("dio-boss.freeze-radius", 50.0);
-        freezeDamageRadius = plugin.getConfig().getDouble("dio-boss.freeze-damage-radius", 30.0);
-        freezeDamage = plugin.getConfig().getDouble("dio-boss.freeze-damage", 10.0);
-        freezeDurationTicks = plugin.getConfig().getInt("dio-boss.freeze-duration-ticks", 100);
-        teleportInnerRadius = plugin.getConfig().getDouble("dio-boss.teleport-inner-radius", 25.0);
-        teleportDarknessDuration = plugin.getConfig().getInt("dio-boss.teleport-darkness-duration", 100);
-        teleportSlownessDuration = plugin.getConfig().getInt("dio-boss.teleport-slowness-duration", 100);
-        debug = plugin.getConfig().getBoolean("dio-boss.debug", false);
+        standOffsetZ = plugin.getConfig().getDouble("entities.dio-boss.stand-offset-z", -1.0);
+        standOffsetY = plugin.getConfig().getDouble("entities.dio-boss.stand-offset-y", 2.0);
+        cooldownMs = plugin.getConfig().getLong("entities.dio-boss.cooldown-ms", 120000);
+        freezeRadius = plugin.getConfig().getDouble("entities.dio-boss.freeze-radius", 50.0);
+        freezeDamageRadius = plugin.getConfig().getDouble("entities.dio-boss.freeze-damage-radius", 30.0);
+        freezeDamage = plugin.getConfig().getDouble("entities.dio-boss.freeze-damage", 10.0);
+        freezeDurationTicks = plugin.getConfig().getInt("entities.dio-boss.freeze-duration-ticks", 100);
+        teleportInnerRadius = plugin.getConfig().getDouble("entities.dio-boss.teleport-inner-radius", 25.0);
+        teleportDarknessDuration = plugin.getConfig().getInt("entities.dio-boss.teleport-darkness-duration", 100);
+        teleportSlownessDuration = plugin.getConfig().getInt("entities.dio-boss.teleport-slowness-duration", 100);
+        debug = plugin.getConfig().getBoolean("entities.dio-boss.debug", false);
     }
 
     private void reloadExistingBosses() {
@@ -129,15 +134,16 @@ public class DioBoss implements Listener {
     }
 
     public boolean trySpawnDio(Location location) {
+        if (!plugin.isEnabled("entities.dio-boss")) return false;
         Zombie zombie = (Zombie) location.getWorld().spawnEntity(location, EntityType.ZOMBIE);
         if (zombie == null) return false;
 
-        double health = plugin.getConfig().getDouble("dio-boss.health", 300.0);
+        double health = plugin.getConfig().getDouble("entities.dio-boss.health", 300.0);
         AttributeInstance maxHealthAttr = zombie.getAttribute(Attribute.MAX_HEALTH);
         if (maxHealthAttr != null) maxHealthAttr.setBaseValue(health);
         zombie.setHealth(health);
         AttributeInstance atkDmgAttr = zombie.getAttribute(Attribute.ATTACK_DAMAGE);
-        if (atkDmgAttr != null) atkDmgAttr.setBaseValue(plugin.getConfig().getDouble("dio-boss.damage", 10.0));
+        if (atkDmgAttr != null) atkDmgAttr.setBaseValue(plugin.getConfig().getDouble("entities.dio-boss.damage", 10.0));
         zombie.setCustomName(ChatColor.RED + "" + ChatColor.BOLD + "Dio Brando");
         zombie.setCustomNameVisible(true);
         zombie.setRemoveWhenFarAway(false);
@@ -617,7 +623,7 @@ public class DioBoss implements Listener {
         event.getDrops().clear();
         event.setDroppedExp(500);
 
-        double dropChance = plugin.getConfig().getDouble("dio-boss.drop-chance", 0.1);
+        double dropChance = plugin.getConfig().getDouble("entities.dio-boss.drop-chance", 0.1);
         if (random.nextDouble() < dropChance) {
             zombie.getWorld().dropItemNaturally(zombie.getLocation(), DioStandHead.getHead());
         }
@@ -628,7 +634,7 @@ public class DioBoss implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        MscEntityUtils.applyDeathMessage(plugin, event, "MSC_DioBoss", "dio-boss.death-messages");
+        MscEntityUtils.applyDeathMessage(plugin, event, "MSC_DioBoss", "entities.dio-boss.death-messages");
     }
 
     @EventHandler

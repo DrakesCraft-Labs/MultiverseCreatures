@@ -29,6 +29,7 @@ public class FlameElemental implements Listener {
 
     public FlameElemental(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.flame-elemental")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -61,6 +62,7 @@ public class FlameElemental implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.flame-elemental")) return false;
         Blaze blaze = (Blaze) location.getWorld().spawnEntity(location, EntityType.BLAZE);
         if (blaze == null) return false;
         blaze.addScoreboardTag(TAG);
@@ -188,7 +190,7 @@ public class FlameElemental implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "flame-elemental.death-messages");
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.flame-elemental.death-messages");
     }
 
     private static class FlameElementalInstance {

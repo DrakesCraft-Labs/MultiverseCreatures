@@ -83,9 +83,9 @@ public class VortexPullAttack extends BossAttackBase {
                         double dist = toCenter.length();
                         if (dist < 8 && dist > 1) {
                             p.setVelocity(p.getVelocity().add(toCenter.normalize().multiply(0.15)));
-                            MscEntityUtils.damageBy(stand, p, 2.0);
+                            MscEntityUtils.damageBy(stand.entidad(), p, 2.0);
                         } else if (dist < 1) {
-                            MscEntityUtils.damageBy(stand, p, 6.0);
+                            MscEntityUtils.damageBy(stand.entidad(), p, 6.0);
                         }
                     }
                     world.playSound(center, Sound.BLOCK_BEACON_AMBIENT, 0.5f, 0.5f);

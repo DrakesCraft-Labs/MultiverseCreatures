@@ -75,7 +75,7 @@ public class VoidRiftAttack extends BossAttackBase {
                         if (dist < 8 && dist > 0.5) {
                             p.setVelocity(p.getVelocity().add(toCenter.normalize().multiply(0.12)));
                             if (dist < 4.5) {
-                                MscEntityUtils.damageBy(stand, p, sealDamage * 0.3);
+                                MscEntityUtils.damageBy(stand.entidad(), p, sealDamage * 0.3);
                                 p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 30, 0));
                             }
                         }
@@ -86,7 +86,7 @@ public class VoidRiftAttack extends BossAttackBase {
                     world.playSound(riftLoc, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.4f);
                     for (Player p : boss.getValidPlayers(world)) {
                         if (p.getLocation().distanceSquared(riftLoc) < 25) {
-                            MscEntityUtils.damageBy(stand, p, sealDamage * 0.7);
+                            MscEntityUtils.damageBy(stand.entidad(), p, sealDamage * 0.7);
                             Vector away = p.getLocation().toVector().subtract(riftLoc.toVector());
                             if (away.lengthSquared() > 0) p.setVelocity(away.normalize().multiply(0.6).setY(0.6));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 80, 1));

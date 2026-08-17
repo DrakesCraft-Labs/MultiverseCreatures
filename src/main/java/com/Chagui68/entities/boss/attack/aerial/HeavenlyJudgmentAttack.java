@@ -90,7 +90,7 @@ public class HeavenlyJudgmentAttack extends BossAttackBase {
                             if (y % 5 == 0) world.spawnParticle(Particle.SONIC_BOOM, beam, 1);
                         }
                         double dmg = sealDamage * 2.0;
-                        MscEntityUtils.damageBy(stand, p, dmg);
+                        MscEntityUtils.damageBy(stand.entidad(), p, dmg);
                         p.setVelocity(new Vector(0, -0.5, 0));
                         p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 100, 2));
                         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 3));

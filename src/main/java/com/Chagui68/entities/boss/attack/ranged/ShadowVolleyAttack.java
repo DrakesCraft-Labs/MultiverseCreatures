@@ -79,7 +79,7 @@ public class ShadowVolleyAttack extends BossAttackBase {
                             new Particle.DustOptions(Color.fromRGB(0x330044), 1.5f));
                     for (Player pl : boss.getValidPlayers(world)) {
                         if (pl.getLocation().distanceSquared(p) < 4) {
-                            MscEntityUtils.damageBy(stand, pl, sealDamage * 0.5);
+                            MscEntityUtils.damageBy(stand.entidad(), pl, sealDamage * 0.5);
                             pl.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 1));
                             pl.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0));
                             world.spawnParticle(Particle.EXPLOSION, p, 3, 0.3, 0.3, 0.3, 0);

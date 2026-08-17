@@ -77,7 +77,7 @@ public class ArcaneMissilesAttack extends BossAttackBase {
                             new Particle.DustOptions(Color.fromRGB(0xFF6644), 1.5f));
                     for (Player pl : boss.getValidPlayers(world)) {
                         if (pl.getLocation().distanceSquared(p) < 5) {
-                            MscEntityUtils.damageBy(stand, pl, sealDamage * 0.4);
+                            MscEntityUtils.damageBy(stand.entidad(), pl, sealDamage * 0.4);
                             pl.setFireTicks(40);
                             world.spawnParticle(Particle.EXPLOSION, p, 4, 0.3, 0.3, 0.3, 0);
                             it.remove();

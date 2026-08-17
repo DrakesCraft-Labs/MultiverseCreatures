@@ -29,6 +29,7 @@ public class StormCaller implements Listener {
 
     public StormCaller(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        if (!plugin.isEnabled("entities.storm-caller")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
         reloadExisting();
@@ -61,6 +62,7 @@ public class StormCaller implements Listener {
     }
 
     public boolean trySpawn(Location location) {
+        if (!plugin.isEnabled("entities.storm-caller")) return false;
         Witch witch = (Witch) location.getWorld().spawnEntity(location, EntityType.WITCH);
         if (witch == null) return false;
         witch.setPersistent(true);
@@ -70,6 +72,7 @@ public class StormCaller implements Listener {
     }
 
     public boolean convertExisting(Witch witch) {
+        if (!plugin.isEnabled("entities.storm-caller")) return false;
         if (witch == null || witch.isDead() || !witch.isValid()) return false;
         customize(witch);
         return true;
@@ -147,7 +150,7 @@ public class StormCaller implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "storm-caller.death-messages");
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "entities.storm-caller.death-messages");
     }
 
     @EventHandler
