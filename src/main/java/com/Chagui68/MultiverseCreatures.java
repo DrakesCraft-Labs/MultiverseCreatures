@@ -21,6 +21,7 @@ import com.Chagui68.entities.SoulReaper;
 import com.Chagui68.entities.StormCaller;
 import com.Chagui68.entities.VenomWitch;
 import com.Chagui68.entities.VoidCrawler;
+import com.Chagui68.entities.Warlord;
 import com.Chagui68.entities.ZombieHorseTrap;
 import com.Chagui68.items.recipes.RecipeManager;
 import com.Chagui68.listener.armor.EightHandledWheelHandler;
@@ -85,6 +86,7 @@ public class MultiverseCreatures extends JavaPlugin {
     private EnderKnight enderKnight;
     private Kinger kinger;
     private DiscTrader discTrader;
+    private Warlord warlord;
     private DiscJukeboxHandler discJukeboxHandler;
 
     @Override
@@ -122,6 +124,7 @@ public class MultiverseCreatures extends JavaPlugin {
         enderKnight = new EnderKnight(this);
         kinger = new Kinger(this);
         discTrader = new DiscTrader(this);
+        warlord = new Warlord(this);
 
         bossDimensionManager = new BossDimensionManager(this);
 
@@ -276,6 +279,10 @@ public class MultiverseCreatures extends JavaPlugin {
 
     public EnderKnight getEnderKnight() {
         return enderKnight;
+    }
+
+    public Warlord getWarlord() {
+        return warlord;
     }
 
     public Kinger getKinger() {

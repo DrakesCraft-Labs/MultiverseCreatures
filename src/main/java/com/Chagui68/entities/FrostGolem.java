@@ -9,6 +9,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.IronGolem;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,6 +17,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPotionEffectEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
@@ -129,9 +131,10 @@ public class FrostGolem implements Listener {
 
     private void tickFrost(FrostGolemInstance inst) {
         IronGolem golem = inst.golem;
-        if (!(golem.getTarget() instanceof Player target)) return;
-        if (target.isDead() || !target.isOnline()) return;
-        if (target.getGameMode() == GameMode.CREATIVE || target.getGameMode() == GameMode.SPECTATOR) {
+        LivingEntity target = golem.getTarget();
+        if (target == null || target.isDead()) return;
+        if (target instanceof Player p
+                && (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR)) {
             golem.setTarget(null);
             return;
         }
@@ -155,7 +158,7 @@ public class FrostGolem implements Listener {
             }
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 3));
             target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1));
-            target.damage(4.0);
+            MscEntityUtils.damageBy(golem, target, 4.0);
             gLoc.getWorld().playSound(gLoc, Sound.BLOCK_POWDER_SNOW_BREAK, 1.0f, 0.7f);
             inst.iceAuraCooldown = 0;
         }
@@ -169,7 +172,7 @@ public class FrostGolem implements Listener {
                         new Particle.DustOptions(Color.fromRGB(0x88DDFF), 1.8f));
                 gLoc.getWorld().spawnParticle(Particle.SNOWFLAKE, pl, 1, 0, 0, 0, 0);
             }
-            target.damage(10.0);
+            MscEntityUtils.damageBy(golem, target, 10.0);
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 5));
             target.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 100, -4));
             tLoc.getWorld().playSound(tLoc, Sound.ENTITY_PLAYER_HURT_FREEZE, 1.2f, 0.8f);
@@ -181,13 +184,9 @@ public class FrostGolem implements Listener {
     public void onPotionApply(EntityPotionEffectEvent event) {
         if (!(event.getEntity() instanceof IronGolem golem)) return;
         if (!golem.getScoreboardTags().contains(TAG)) return;
-        // getNewEffect() es null cuando el evento es la RETIRADA de un efecto, no su aplicacion.
-        // Este manejador escucha EntityPotionEffectEvent sin filtrar, asi que le llega cualquier
-        // efecto de cualquier entidad del servidor: en los logs del 16 esto reventaba decenas de
-        // veces seguidas y se llevaba por delante el evento entero.
-        PotionEffect nuevo = event.getNewEffect();
-        if (nuevo == null) return;
-        PotionEffectType type = nuevo.getType();
+        PotionEffect newEffect = event.getNewEffect();
+        if (newEffect == null) return;
+        PotionEffectType type = newEffect.getType();
         if (type == PotionEffectType.SLOWNESS || type == PotionEffectType.WEAKNESS || type == PotionEffectType.JUMP_BOOST) {
             event.setCancelled(true);
         }
@@ -197,10 +196,10 @@ public class FrostGolem implements Listener {
     public void onHit(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof IronGolem golem)) return;
         if (!golem.getScoreboardTags().contains(TAG)) return;
-        if (event.getEntity() instanceof Player p) {
-            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 2));
-            p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 80, 1));
-            p.getWorld().spawnParticle(Particle.SNOWFLAKE, p.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0);
+        if (event.getEntity() instanceof LivingEntity le) {
+            le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 2));
+            le.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 80, 1));
+            le.getWorld().spawnParticle(Particle.SNOWFLAKE, le.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0);
         }
     }
 
@@ -214,6 +213,11 @@ public class FrostGolem implements Listener {
             golem.getWorld().dropItemNaturally(golem.getLocation(), FrostHeart.FROST_HEART.clone());
         }
         event.setDroppedExp(80);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "frost-golem.death-messages");
     }
 
     private static class FrostGolemInstance {

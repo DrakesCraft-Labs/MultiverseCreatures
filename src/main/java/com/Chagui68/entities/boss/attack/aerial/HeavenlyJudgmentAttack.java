@@ -4,6 +4,7 @@ import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -89,7 +90,7 @@ public class HeavenlyJudgmentAttack extends BossAttackBase {
                             if (y % 5 == 0) world.spawnParticle(Particle.SONIC_BOOM, beam, 1);
                         }
                         double dmg = sealDamage * 2.0;
-                        p.damage(dmg);
+                        MscEntityUtils.damageBy(stand, p, dmg);
                         p.setVelocity(new Vector(0, -0.5, 0));
                         p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 100, 2));
                         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 3));

@@ -62,6 +62,8 @@ public class DiscJukeboxHandler implements Listener {
                 } else {
                     plugin.getLogger().warning("DiscJukeboxHandler: song not found for key '" + songKey + "'");
                 }
+                held.setAmount(held.getAmount() - 1);
+                event.getPlayer().getInventory().setItemInMainHand(held);
             }
         } else if (held == null || held.getType() == Material.AIR) {
             ItemStack record = jukebox.getRecord();

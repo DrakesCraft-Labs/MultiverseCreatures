@@ -15,7 +15,7 @@
 **A Paper/Purpur/Spigot plugin that brings adaptive bosses, signature weapons, and themed mobs inspired by JoJo, Jujutsu Kaisen, Hollow Knight, Adventure Time, Arthurian legend, Half-Life, Scooby-Doo, Diablo and more.**
 
 [📥 Download on Modrinth](https://modrinth.com/plugin/multiversecreatures) ·
-[📖 Full Wiki](./wiki/Home.md) ·
+[📖 Full Wiki](wiki-en/Home.md) ·
 [🐛 Report Issues](https://github.com/Chagui68/MultiverseCreatures/issues)
 
 </div>
@@ -52,16 +52,16 @@ The project has a complete documentation site built into the repository. It cove
 
 | Page | Topic |
 |------|-------|
-| [Home](./wiki/Home.md) | Overview + featured themes |
-| [Bosses](./wiki/Bosses.md) | THE OBSIDIAN SENTINEL · Dio Brando · Mahoraga |
-| [Creatures](./wiki/Creatures.md) | 14 natural-spawn replacement mobs + ZombieHorseTrap army |
-| [Weapons](./wiki/Weapons.md) | Excalibur, Cinder Greatsword, Nullshear Edge, Soulreap Scythe, Aether Pullshot, Skyfire Talisman, Chaos Forge |
-| [Armor-and-Relics](./wiki/Armor-and-Relics.md) | Eight-Handled Wheel, Obsidian Bastion set, off-hand relics (Marrow Aegis, Veilwalker Mantle, Frost Heart) |
-| [Items](./wiki/Items.md) | Ice King's Crown, Mantis Claws, Wirt's Lantern, Dio's Stand Head, Military Mine, Scooby Cookie, Head Slime Gelatin |
-| [Components](./wiki/Components.md) | The 16 mob-drop crafting ingredients + the loot → item chains |
-| [Commands](./wiki/Commands.md) | Full `/msc` reference (spawn, give, seal, dummy, attack, music, dimtp, cleanstands) |
-| [Architecture](./wiki/Architecture.md) | Code structure, conventions and how to extend the plugin |
-| [Installation](./wiki/Installation.md) | Step-by-step install, config.yml guide, troubleshooting |
+| [Home](wiki-en/Home.md) | Overview + featured themes |
+| [Bosses](wiki-en/Bosses.md) | THE OBSIDIAN SENTINEL · Dio Brando · Mahoraga |
+| [Creatures](wiki-en/Creatures.md) | 14 natural-spawn replacement mobs + ZombieHorseTrap army |
+| [Weapons](wiki-en/Weapons.md) | Excalibur, Cinder Greatsword, Nullshear Edge, Soulreap Scythe, Aether Pullshot, Skyfire Talisman, Chaos Forge |
+| [Armor-and-Relics](wiki-en/Armor-and-Relics.md) | Eight-Handled Wheel, Obsidian Bastion set, off-hand relics (Marrow Aegis, Veilwalker Mantle, Frost Heart) |
+| [Items](wiki-en/Items.md) | Ice King's Crown, Mantis Claws, Wirt's Lantern, Dio's Stand Head, Military Mine, Scooby Cookie, Head Slime Gelatin |
+| [Components](wiki-en/Components.md) | The 16 mob-drop crafting ingredients + the loot → item chains |
+| [Commands](wiki-en/Commands.md) | Full `/msc` reference (spawn, give, seal, dummy, attack, music, dimtp, cleanstands) |
+| [Architecture](wiki-en/Architecture.md) | Code structure, conventions and how to extend the plugin |
+| [Installation](wiki-en/Installation.md) | Step-by-step install, config.yml guide, troubleshooting |
 
 ---
 
@@ -107,7 +107,7 @@ and spectator) is decided in exactly one place.
 
 > **Requirements:** Paper / Purpur / Spigot **1.21+** (built against `purpur-api 1.21.11`) · **Java 21+**
 
-A full install guide lives in the [Installation wiki page](./wiki/Installation.md).
+A full install guide lives in the [Installation wiki page](wiki-en/Installation.md).
 
 ---
 
@@ -138,7 +138,7 @@ All interactions use the `/msc` command. **Permission:** `msc.admin` (server OP 
 /msc cleanstands        Remove all MSC-related armor stands
 ```
 
-Full breakdown (alias tables, all spawn types, giveable items, attack names, seal patterns, dummy animations) is in the [Commands wiki page](./wiki/Commands.md).
+Full breakdown (alias tables, all spawn types, giveable items, attack names, seal patterns, dummy animations) is in the [Commands wiki page](wiki-en/Commands.md).
 
 ---
 

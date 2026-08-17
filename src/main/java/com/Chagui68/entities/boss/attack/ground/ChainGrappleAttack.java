@@ -5,6 +5,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -57,7 +58,7 @@ public class ChainGrappleAttack extends BossAttackBase {
                             double dist = toBoss.length();
                             if (dist > 3) {
                                 target.setVelocity(toBoss.normalize().multiply(Math.min(1.5, dist * 0.05)));
-                                target.damage(2.0);
+                                MscEntityUtils.damageBy(stand, target, 2.0);
                                 for (double y = 0; y < dist; y += 1) {
                                     Location chain = tLoc.clone().add(toBoss.normalize().multiply(y));
                                     chain.setY(chain.getY() + 1);
@@ -82,7 +83,7 @@ public class ChainGrappleAttack extends BossAttackBase {
                         world.spawnParticle(Particle.EXPLOSION, center, 5, 1, 0.5, 1, 0);
                         Player target = boss.detectTarget(stand);
                         if (target != null && target.getLocation().distanceSquared(center) < 16) {
-                            target.damage(sealDamage);
+                            MscEntityUtils.damageBy(stand, target, sealDamage);
                             boss.launchPlayer(target, 1.5);
                         }
                     } else {

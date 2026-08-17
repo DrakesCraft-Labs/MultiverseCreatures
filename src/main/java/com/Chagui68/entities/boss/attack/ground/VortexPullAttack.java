@@ -4,6 +4,7 @@ import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -82,9 +83,9 @@ public class VortexPullAttack extends BossAttackBase {
                         double dist = toCenter.length();
                         if (dist < 8 && dist > 1) {
                             p.setVelocity(p.getVelocity().add(toCenter.normalize().multiply(0.15)));
-                            p.damage(2.0);
+                            MscEntityUtils.damageBy(stand, p, 2.0);
                         } else if (dist < 1) {
-                            p.damage(6.0);
+                            MscEntityUtils.damageBy(stand, p, 6.0);
                         }
                     }
                     world.playSound(center, Sound.BLOCK_BEACON_AMBIENT, 0.5f, 0.5f);

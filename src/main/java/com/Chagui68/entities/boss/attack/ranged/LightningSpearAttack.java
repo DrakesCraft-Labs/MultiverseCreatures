@@ -4,6 +4,7 @@ import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -56,11 +57,11 @@ public class LightningSpearAttack extends BossAttackBase {
                         if (p.getLocation().distanceSquared(pos) < 5) {
                             world.strikeLightningEffect(pos);
                             world.playSound(pos, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.5f, 0.8f);
-                            p.damage(sealDamage * 0.7);
+                            MscEntityUtils.damageBy(stand, p, sealDamage * 0.7);
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2));
                             for (Player near : boss.getValidPlayers(world)) {
                                 if (near.getLocation().distanceSquared(pos) < 16) {
-                                    near.damage(sealDamage * 0.3);
+                                    MscEntityUtils.damageBy(stand, near, sealDamage * 0.3);
                                     near.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1));
                                 }
                             }

@@ -4,6 +4,7 @@ import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -66,7 +67,7 @@ public class VoidBeamAttack extends BossAttackBase {
                             Vector norm = toP.clone().normalize();
                             double proj = norm.dot(toTarget);
                             if (proj > 0 && proj > 0.95) {
-                                p.damage(sealDamage * 0.25);
+                                MscEntityUtils.damageBy(stand, p, sealDamage * 0.25);
                                 p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 40, 0));
                                 p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 40, 0));
                             }

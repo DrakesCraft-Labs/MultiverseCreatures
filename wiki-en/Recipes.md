@@ -345,16 +345,37 @@ I B I
 
 ![Frost Heart recipe](images/recipes/frost-heart.png)
 
-### Marrow Aegis (mid-high tier)
-**Result:** `§f§lMarrow Aegis` (SHIELD) — bone shield.
+### Marrow Aegis (high tier)
+The full shield chain:
 
+**Bone Marrow** — `§f§lBone Marrow` (BONE_MEAL):
 ```
-D B D
 B R B
-D N D
+B W B
+B R B
 ```
 
-- `D` = DIAMOND_BLOCK, `B` = Reinforced Bone (exact), `R` = Reinforced Bone Block (exact), `N` = NETHERITE_INGOT
+- `B` = Reinforced Bone (exact), `R` = REDSTONE_BLOCK, `W` = NETHER_WART (8 bones per marrow)
+
+**Ossified Plate** — `§f§lOssified Plate` (CALCITE):
+```
+C M C
+M D M
+C M C
+```
+
+- `C` = CALCITE, `M` = Bone Marrow (exact), `D` = DIAMOND
+
+**Molten Marrow** — `§6§lMolten Marrow` (REDSTONE): an Ossified Plate held past its melting point. **Blast Furnace only** (`BlastingRecipe`, 100 ticks, 0.5 XP) — a regular furnace will not work.
+
+**Final result:** `§f§lMarrow Aegis` (SHIELD) — bone shield:
+```
+D P D
+P M P
+D P D
+```
+
+- `D` = DIAMOND_BLOCK, `P` = Ossified Plate (exact), `M` = Molten Marrow (exact)
 
 ![Marrow Aegis recipe](images/recipes/marrow-aegis.png)
 
@@ -470,6 +491,9 @@ I M I
 | Refined Netherite | `refined_netherite` | high (4× Star Core + scrap + compressed gold) |
 | Compressed Gold Block | `compressed_gold_block` | mid |
 | Wheel Core | `wheel_core` | high |
+| Bone Marrow | `bone_marrow` | mid (8× Reinforced Bone) |
+| Ossified Plate | `ossified_plate` | mid-high |
+| Molten Marrow | `molten_marrow_blast` | high *(Blast Furnace ONLY)* |
 | Molten Wheel Core | `molten_wheel_core` | high *(any furnace)* |
 | Molten Netherite | `molten_netherite` | high *(any furnace)* |
 | Refined Wheel Core | `refined_wheel_core` | very high |
@@ -484,7 +508,7 @@ I M I
 | **Sentinel Grimoire** | `sentinel_grimoire` | **apex** (needs boss drop) |
 | Chaos Forge | `chaos_forge` | high |
 | Frost Heart (off-hand) | `frost_heart_offhand` | low |
-| Marrow Aegis | `marrow_aegis` | mid-high |
+| Marrow Aegis | `marrow_aegis` | high (3-component chain + Blast Furnace) |
 | Eight-Handled Wheel | `eight_handled_wheel` | high |
 | Veilwalker Mantle | `veilwalker_mantle` | high |
 | Obsidian Bastion (×4) | `obsidian_bastion_*` | very high |

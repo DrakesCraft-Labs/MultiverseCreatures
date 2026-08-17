@@ -211,16 +211,19 @@ public class DioStandHandler implements Listener {
         double standDamage = plugin.getConfig().getDouble("dio-stand.stand-damage", 4.0);
         int durationTicks = plugin.getConfig().getInt("dio-stand.stand-duration-ticks", 100);
         int intervalTicks = plugin.getConfig().getInt("dio-stand.stand-interval-ticks", 3);
+        // Total damage budget across the whole Stand Rush (default 10 hearts = 20 HP).
+        double maxTotalDamage = plugin.getConfig().getDouble("dio-stand.stand-total-damage", 20.0);
 
         new BukkitRunnable() {
             int tick = 0;
             boolean leftArm = true;
             int totalHits = 0;
+            double dealt = 0;
             final int maxTicks = durationTicks;
 
             @Override
             public void run() {
-                if (tick >= maxTicks || target.isDead() || !player.isOnline()) {
+                if (tick >= maxTicks || dealt >= maxTotalDamage || target.isDead() || !player.isOnline()) {
                     if (stand.isValid()) {
                         stand.setLeftArmPose(new EulerAngle(0, 0, 0));
                         stand.setRightArmPose(new EulerAngle(0, 0, 0));
@@ -258,9 +261,11 @@ public class DioStandHandler implements Listener {
                         // damage() returns void in this API, so a health change
                         // is used to detect blocked hits (e.g. cancelled by the
                         // Eight-Handled Wheel) and skip their impact effects.
+                        double hitDamage = Math.min(standDamage, maxTotalDamage - dealt);
                         double before = target.getHealth();
-                        target.damage(standDamage, source);
+                        target.damage(hitDamage, source);
                         if (target.getHealth() < before) {
+                            dealt += hitDamage;
                             target.getWorld().spawnParticle(Particle.CRIT, target.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0.1);
                             target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.8f, 1.2f);
                         }

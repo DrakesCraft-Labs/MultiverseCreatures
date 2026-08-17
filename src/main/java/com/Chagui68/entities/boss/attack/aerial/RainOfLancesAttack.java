@@ -5,6 +5,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.ArmorStandBoss;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -171,7 +172,7 @@ public class RainOfLancesAttack extends BossAttackBase {
                         double damage = sealDamage * 0.6;
                         for (Player p : boss.getValidPlayers(world)) {
                             if (p.getLocation().distanceSquared(loc) < 16) {
-                                p.damage(damage);
+                                MscEntityUtils.damageBy(stand, p, damage);
                                 boss.launchPlayer(p, 0.3);
                             }
                         }

@@ -2,6 +2,7 @@ package com.Chagui68.entities;
 
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.HeadSlimeHeart;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -60,6 +61,7 @@ public class HeadSlime implements Listener {
     private int maxAttachTicksMob;
     private boolean targetEntities;
     private int skeletonBurstCooldown;
+    private boolean debug;
     public static final Set<UUID> immunePlayers = ConcurrentHashMap.newKeySet();
     private static final String TAG = "MSC_HeadSlime";
     private static final Set<String> MSC_ENTITY_TAGS = Set.of(
@@ -103,6 +105,7 @@ public class HeadSlime implements Listener {
         maxAttachTicksMob = plugin.getConfig().getInt("head-slime.max-attach-ticks-mob", 600);
         targetEntities = plugin.getConfig().getBoolean("head-slime.target-entities", true);
         skeletonBurstCooldown = plugin.getConfig().getInt("head-slime.skeleton-burst-cooldown", 60);
+        debug = plugin.getConfig().getBoolean("head-slime.debug", false);
     }
 
     private void reloadExisting() {
@@ -221,7 +224,7 @@ public class HeadSlime implements Listener {
             if (inst.targetId == null) return;
             target = Bukkit.getEntity(inst.targetId);
             if (target == null) return;
-            plugin.getLogger().info("[HeadSlime] Tracking target: " + target.getName());
+            if (debug) plugin.getLogger().info("[HeadSlime] Tracking target: " + target.getName());
         }
 
         // The player consumed gelatin mid-chase: drop the target and pick another.
@@ -249,7 +252,7 @@ public class HeadSlime implements Listener {
             inst.attached = true;
             inst.damageTicks = 0;
             inst.targetId = target.getUniqueId();
-            plugin.getLogger().info("[HeadSlime] Attached to " + target.getName());
+            if (debug) plugin.getLogger().info("[HeadSlime] Attached to " + target.getName());
         }
     }
 
@@ -574,7 +577,12 @@ public class HeadSlime implements Listener {
             double multiplier = 1.0 - (dist / creeper.getExplosionRadius());
             double damage = 24.0 * multiplier;
             if (damage < 1) damage = 1;
-            player.damage(damage);
+            for (Entity p : creeper.getPassengers()) {
+                if (p instanceof Slime s && s.getScoreboardTags().contains(TAG)) {
+                    MscEntityUtils.damageBy(s, player, damage);
+                    break;
+                }
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -76,7 +77,7 @@ public class ArcaneMissilesAttack extends BossAttackBase {
                             new Particle.DustOptions(Color.fromRGB(0xFF6644), 1.5f));
                     for (Player pl : boss.getValidPlayers(world)) {
                         if (pl.getLocation().distanceSquared(p) < 5) {
-                            pl.damage(sealDamage * 0.4);
+                            MscEntityUtils.damageBy(stand, pl, sealDamage * 0.4);
                             pl.setFireTicks(40);
                             world.spawnParticle(Particle.EXPLOSION, p, 4, 0.3, 0.3, 0.3, 0);
                             it.remove();

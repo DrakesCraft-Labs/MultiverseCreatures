@@ -2,6 +2,7 @@ package com.Chagui68.items.recipes;
 
 import com.Chagui68.items.armor.EightHandledWheel;
 import com.Chagui68.items.armor.ObsidianBastion;
+import com.Chagui68.items.components.BoneMarrow;
 import com.Chagui68.items.components.ChaosCore;
 import com.Chagui68.items.components.ChaosFragment;
 import com.Chagui68.items.components.ChaosOrb;
@@ -14,10 +15,12 @@ import com.Chagui68.items.components.FrostHeart;
 import com.Chagui68.items.components.HeadSlimeHeart;
 import com.Chagui68.items.components.MagmaCore;
 import com.Chagui68.items.components.MilitaryComponent;
+import com.Chagui68.items.components.MoltenMarrow;
 import com.Chagui68.items.components.MoltenNetherite;
 import com.Chagui68.items.components.MoltenWheelCore;
 import com.Chagui68.items.components.MultiversalCore;
 import com.Chagui68.items.components.ObsidianShard;
+import com.Chagui68.items.components.OssifiedPlate;
 import com.Chagui68.items.components.ReaperCore;
 import com.Chagui68.items.components.ReaperEssence;
 import com.Chagui68.items.components.RefinedWheelCore;
@@ -72,6 +75,7 @@ public class RecipeManager {
         registerFrostHeartOffhand();
         registerSkyfireTalisman();
         registerMarrowAegis();
+        registerMarrowChain();
         registerEightHandledWheel();
         registerSoulreapScythe();
         registerChaosForge();
@@ -200,14 +204,34 @@ public class RecipeManager {
         Bukkit.addRecipe(recipe);
     }
 
-    // Marrow Aegis (mid-high tier)
+    // Bone Marrow -> Ossified Plate -> [blast furnace only] Molten Marrow -> Marrow Aegis (high tier)
+    private static void registerMarrowChain() {
+        ShapedRecipe marrowRecipe = new ShapedRecipe(key("bone_marrow"), BoneMarrow.BONE_MARROW.clone());
+        marrowRecipe.shape("BRB", "BWB", "BRB");
+        marrowRecipe.setIngredient('B', new RecipeChoice.ExactChoice(ReinforcedBone.REINFORCED_BONE.clone()));
+        marrowRecipe.setIngredient('R', Material.REDSTONE_BLOCK);
+        marrowRecipe.setIngredient('W', Material.NETHER_WART);
+        Bukkit.addRecipe(marrowRecipe);
+
+        ShapedRecipe plateRecipe = new ShapedRecipe(key("ossified_plate"), OssifiedPlate.OSSIFIED_PLATE.clone());
+        plateRecipe.shape("CMC", "MDM", "CMC");
+        plateRecipe.setIngredient('C', Material.CALCITE);
+        plateRecipe.setIngredient('M', new RecipeChoice.ExactChoice(BoneMarrow.BONE_MARROW.clone()));
+        plateRecipe.setIngredient('D', Material.DIAMOND);
+        Bukkit.addRecipe(plateRecipe);
+
+        BlastingRecipe moltenMarrow = new BlastingRecipe(key("molten_marrow_blast"), MoltenMarrow.MOLTEN_MARROW.clone(),
+                new RecipeChoice.ExactChoice(OssifiedPlate.OSSIFIED_PLATE.clone()), 0.5f, 100);
+        Bukkit.addRecipe(moltenMarrow);
+    }
+
+    // Marrow Aegis (high tier)
     private static void registerMarrowAegis() {
         ShapedRecipe recipe = new ShapedRecipe(key("marrow_aegis"), MarrowAegis.MARROW_AEGIS.clone());
-        recipe.shape("DBD", "BRB", "DND");
+        recipe.shape("DPD", "PMP", "DPD");
         recipe.setIngredient('D', Material.DIAMOND_BLOCK);
-        recipe.setIngredient('B', new RecipeChoice.ExactChoice(ReinforcedBone.REINFORCED_BONE.clone()));
-        recipe.setIngredient('R', new RecipeChoice.ExactChoice(ReinforcedBoneBlock.REINFORCED_BONE_BLOCK.clone()));
-        recipe.setIngredient('N', Material.NETHERITE_INGOT);
+        recipe.setIngredient('P', new RecipeChoice.ExactChoice(OssifiedPlate.OSSIFIED_PLATE.clone()));
+        recipe.setIngredient('M', new RecipeChoice.ExactChoice(MoltenMarrow.MOLTEN_MARROW.clone()));
         Bukkit.addRecipe(recipe);
     }
 

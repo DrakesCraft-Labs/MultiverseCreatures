@@ -116,8 +116,12 @@ Additional `/msc attack` targets for **mechanics & phase transitions**: `triangl
 | Target's attribute | Mahoraga gains |
 |---|---|
 | Diamond/Netherite armor + Protection levels | scaled **Attack Damage** bonus |
+| Slimefun / Tinker armor (`mahoraga.slimefun-adaptation`, soft-dependency) | **Attack Damage** bonus by material tier (0.3 soft → 3.0 Singularities/Infinity) |
+| Full Infinity Singularity Mail Links set (`mahoraga.instakill-infinity-armor`) | **Instant kill** — pierces the "Infinite Defence" trait (damage = 1) |
+| Tinker **Diamond** modification on the held weapon (`mahoraga.ignore-diamond-mod`) | **Always ignored** — the reflect-and-cancel of each hit never applies |
+| Tinker sword with **Infinity Singularity** material (`mahoraga.infinity-weapon-adaptation`) | Mahoraga only takes **1 damage** per hit |
 | Total Protection > 5 (Diamond/Netherite) | **Strength** amplifier = total/5 |
-| Max Sharpness on any weapon ≥ 5 | **Resistance** amplifier (max 3) = floor(Sharp/5 − 1) |
+| Max Sharpness **or Smite** total on any weapon (5 levels per rank) | **Resistance** level (max 4) = floor((Sharpness + Smite)/5) |
 | Knockback enchantments | **Knockback Resistance** = totalKnockback × 0.3 |
 | Target > 4 blocks away | **Speed I** for 30 ticks |
 | Target close | Speed removed |

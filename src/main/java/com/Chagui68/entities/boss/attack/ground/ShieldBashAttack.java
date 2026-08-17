@@ -4,6 +4,7 @@ import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -74,7 +75,7 @@ public class ShieldBashAttack extends BossAttackBase {
                     world.playSound(loc, Sound.ITEM_SHIELD_BLOCK, 1.0f, 1.5f);
                     for (Player p : boss.getValidPlayers(world)) {
                         if (p.getLocation().distanceSquared(loc) < 16) {
-                            p.damage(12.0);
+                            MscEntityUtils.damageBy(stand, p, 12.0);
                             p.setVelocity(fDir.clone().multiply(2.0).setY(0.5));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 3));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1));

@@ -2,6 +2,7 @@ package com.Chagui68.commands;
 
 import com.Chagui68.items.armor.EightHandledWheel;
 import com.Chagui68.items.armor.ObsidianBastion;
+import com.Chagui68.items.components.BoneMarrow;
 import com.Chagui68.items.components.ChaosCore;
 import com.Chagui68.items.components.ChaosFragment;
 import com.Chagui68.items.components.ChaosOrb;
@@ -12,11 +13,13 @@ import com.Chagui68.items.components.EnderFragment;
 import com.Chagui68.items.components.FrostHeart;
 import com.Chagui68.items.components.HeadSlimeHeart;
 import com.Chagui68.items.components.MagmaCore;
+import com.Chagui68.items.components.MoltenMarrow;
 import com.Chagui68.items.components.MoltenNetherite;
 import com.Chagui68.items.components.MoltenWheelCore;
 import com.Chagui68.items.components.MultiversalCore;
 import com.Chagui68.items.components.MilitaryComponent;
 import com.Chagui68.items.components.ObsidianShard;
+import com.Chagui68.items.components.OssifiedPlate;
 import com.Chagui68.items.components.ReaperCore;
 import com.Chagui68.items.components.ReaperEssence;
 import com.Chagui68.items.components.RefinedNetherite;
@@ -95,7 +98,8 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             "armorstand", "merchant", "dio", "creeperjr", "headslime", "zombietrap", "tank",
             "duelist", "lancer", "camel", "sniper", "mahoraga", "shadowrogue", "flameelemental",
             "frostgolem", "voidcrawler", "stormcaller", "boneshield", "venomwitch",
-            "obsidianguard", "soulreaper", "chaosmage", "enderknight", "kinger", "disctrader"
+            "obsidianguard", "soulreaper", "chaosmage", "enderknight", "kinger", "disctrader",
+            "warlord"
     );
 
     public MSCCommand(MultiverseCreatures plugin, MobHandler mobHandler) {
@@ -141,6 +145,9 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 break;
             case "cleanstands":
                 handleCleanStands(sender);
+                break;
+            case "reload":
+                handleReload(sender);
                 break;
             default:
                 sender.sendMessage(RED + "Unknown command. Use /msc for help.");
@@ -317,6 +324,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 if (success) sender.sendMessage(GREEN + "Spawned Chaos Mage!");
                 else sender.sendMessage(RED + "Failed to spawn Chaos Mage.");
             }
+            case "warlord" -> {
+                boolean success = plugin.getWarlord().trySpawn(p.getLocation());
+                if (success) sender.sendMessage(GREEN + "Spawned Warlord!");
+                else sender.sendMessage(RED + "Failed to spawn Warlord.");
+            }
             case "enderknight", "ender" -> {
                 boolean success = plugin.getEnderKnight().trySpawn(p.getLocation());
                 if (success) sender.sendMessage(GREEN + "Spawned Ender Knight!");
@@ -337,17 +349,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleGive(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(RED + "Only players can receive items.");
-            return;
-        }
-
         if (args.length < 2) {
             sendGiveHelp(sender, 1);
             return;
         }
 
-        Player target = (Player) sender;
         String itemName = args[1].toLowerCase();
         int amount = 1;
 
@@ -418,6 +424,9 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             case "reaperessence", "reaper" -> ReaperEssence.REAPER_ESSENCE.clone();
             case "reinforcedbone", "bone" -> ReinforcedBone.REINFORCED_BONE.clone();
             case "reinforcedboneblock" -> ReinforcedBoneBlock.REINFORCED_BONE_BLOCK.clone();
+            case "bonemarrow", "marrow" -> BoneMarrow.BONE_MARROW.clone();
+            case "ossifiedplate", "plate" -> OssifiedPlate.OSSIFIED_PLATE.clone();
+            case "moltenmarrow" -> MoltenMarrow.MOLTEN_MARROW.clone();
             case "endercore" -> EnderCore.ENDER_CORE.clone();
             case "shadowcloak", "cloak" -> ShadowCloak.SHADOW_CLOAK.clone();
             case "stormcrystal", "storm" -> StormCrystal.STORM_CRYSTAL.clone();
@@ -442,9 +451,56 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        List<Player> targets = resolveGiveTargets(sender, args.length >= 4 ? args[3] : null);
+        if (targets.isEmpty()) return;
+
         item.setAmount(amount);
-        target.getInventory().addItem(item);
-        sender.sendMessage(GREEN + "Gave " + amount + "x " + item.getItemMeta().getDisplayName() + GREEN + "!");
+        String display = item.getItemMeta().getDisplayName();
+        for (Player target : targets) {
+            target.getInventory().addItem(item.clone());
+        }
+        if (targets.size() == 1) {
+            sender.sendMessage(GREEN + "Gave " + amount + "x " + display + GREEN + " to " + targets.get(0).getName() + "!");
+        } else {
+            sender.sendMessage(GREEN + "Gave " + amount + "x " + display + GREEN + " to " + targets.size() + " players!");
+        }
+    }
+
+    private List<Player> resolveGiveTargets(CommandSender sender, String targetArg) {
+        if (targetArg == null) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage(RED + "Only players can use this without a target. Specify a player or selector.");
+                return List.of();
+            }
+            return List.of(player);
+        }
+        if (targetArg.startsWith("@")) {
+            if (targetArg.equalsIgnoreCase("@e")) {
+                sender.sendMessage(RED + "@e is not supported. Use @a to target players.");
+                return List.of();
+            }
+            List<Entity> entities;
+            try {
+                entities = Bukkit.selectEntities(sender, targetArg);
+            } catch (IllegalArgumentException e) {
+                sender.sendMessage(RED + "Cannot use " + targetArg + ": " + e.getMessage());
+                return List.of();
+            }
+            List<Player> players = new ArrayList<>();
+            for (Entity entity : entities) {
+                if (entity instanceof Player player) players.add(player);
+            }
+            if (players.isEmpty()) {
+                sender.sendMessage(RED + "No players matched " + targetArg + ".");
+            }
+            return players;
+        }
+        Player target = Bukkit.getPlayerExact(targetArg);
+        if (target == null) {
+            sender.sendMessage(RED + "Player " + targetArg + " not found or offline.");
+            return List.of();
+        }
+        return List.of(target);
     }
 
     private void handleMusic(CommandSender sender, String[] args) {
@@ -542,6 +598,17 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         } else {
             sender.sendMessage(RED + "Cannot use " + attackName + " in the boss's current state.");
         }
+    }
+
+    private void handleReload(CommandSender sender) {
+        plugin.reloadConfig();
+        mobHandler.reloadConfig();
+        plugin.getMahoraga().reloadConfig();
+        plugin.getDioBoss().reloadConfig();
+        plugin.getArmorStandBoss().reloadConfig();
+        plugin.getHeadSlime().reloadConfig();
+        plugin.getWarlord().reloadConfig();
+        sender.sendMessage(GREEN + "Configuration reloaded. All changes have been applied.");
     }
 
     private void handleCleanStands(CommandSender sender) {
@@ -1456,7 +1523,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 "wheelessence", "wheelcore", "reapercore", "refinednetherite", "swordmold",
                 "reinforcedboneblock", "endercore", "sentinelcore", "multiversalcore", "compressedgoldblock",
                 "moltenwheelcore", "moltennetherite", "refinedwheelcore")));
-        sendPaginatedMenu(sender, "MSC GIVE", "/msc give <item> [amount]", lines, page, "give");
+        sendPaginatedMenu(sender, "MSC GIVE", "/msc give <item> [amount] [player|@a|@p|@r|@s]", lines, page, "give");
     }
 
     private void sendSealHelp(CommandSender sender, int page) {
@@ -1536,13 +1603,14 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     private void sendHelp(CommandSender sender) {
         sendMenuHeader(sender, "MULTIVERSE CREATURES");
         sendCommandEntry(sender, "/msc spawn <type>", "Spawn custom mobs. Use /msc spawn alone to list them.");
-        sendCommandEntry(sender, "/msc give <item> [amount]", "Give custom items. Use /msc give alone to list them.");
+        sendCommandEntry(sender, "/msc give <item> [amount] [player|@a|@p|@r|@s]", "Give custom items. Use /msc give alone to list them.");
         sendCommandEntry(sender, "/msc seal <pattern> [plane]", "Spawn particle seals & battle effects.");
         sendCommandEntry(sender, "/msc attack <attack> [range]", "Trigger a registered boss attack on the nearest boss.");
         sendCommandEntry(sender, "/msc dummy", "Spawn and pose a test armor stand.");
         sendCommandEntry(sender, "/msc music <play|stop|list|disc> [name] [loop]", "Play .nbs music files or get a jukebox disc.");
         sendCommandEntry(sender, "/msc dimtp <world>", "Teleport between dimensions.");
         sendCommandEntry(sender, "/msc cleanstands", "Remove all custom plugin armor stands.");
+        sendCommandEntry(sender, "/msc reload", "Reload config.yml and apply all changes.");
         sendLine(sender, "");
         sendLine(sender, " &7&oTip: &e/msc <spawn|give|seal|attack|dummy> help [page]");
         sendMenuFooter(sender);
@@ -1557,7 +1625,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            List<String> subCommands = Arrays.asList("spawn", "give", "attack", "music", "cleanstands", "seal", "dummy", "dimtp");
+            List<String> subCommands = Arrays.asList("spawn", "give", "attack", "music", "cleanstands", "reload", "seal", "dummy", "dimtp");
             completions.addAll(subCommands.stream()
                     .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList()));
@@ -1583,6 +1651,16 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 completions.addAll(items.stream()
                         .filter(i -> i.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList()));
+            } else if (subCmd.equals("give") && args.length == 4) {
+                List<String> selectors = Arrays.asList("@a", "@p", "@r", "@s");
+                completions.addAll(selectors.stream()
+                        .filter(t -> t.startsWith(args[3].toLowerCase()))
+                        .collect(Collectors.toList()));
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (p.getName().toLowerCase().startsWith(args[3].toLowerCase())) {
+                        completions.add(p.getName());
+                    }
+                }
             } else if (subCmd.equals("seal")) {
                 List<String> seals = Arrays.asList("pentagram", "triangle", "celestial", "circle", "ring", "star", "floating", "wings", "wings2", "vortex", "quake", "divine", "storm");
                 completions.addAll(seals.stream()

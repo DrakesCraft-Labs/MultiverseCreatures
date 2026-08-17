@@ -1,15 +1,20 @@
 package com.Chagui68.utils;
 
+import com.Chagui68.MultiverseCreatures;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.damage.DamageSource;
+import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
@@ -17,6 +22,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.World;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
 /**
@@ -95,5 +101,31 @@ public final class MscEntityUtils {
             }
         }
         event.setDroppedExp(droppedExp);
+    }
+
+    /**
+     * Overrides a player's death message with a random one from the config list
+     * when the killer is a tagged MSC mob. Returns true if the message was applied.
+     */
+    public static boolean applyDeathMessage(MultiverseCreatures plugin, PlayerDeathEvent event, String tag, String configKey) {
+        Entity killer = event.getDamageSource().getCausingEntity();
+        if (killer == null || !killer.getScoreboardTags().contains(tag)) return false;
+        List<String> messages = plugin.getConfig().getStringList(configKey);
+        if (messages.isEmpty()) return false;
+        String raw = messages.get(ThreadLocalRandom.current().nextInt(messages.size()));
+        event.setDeathMessage(ChatColor.translateAlternateColorCodes('&', raw.replace("%player%", event.getEntity().getName())));
+        return true;
+    }
+
+    /**
+     * Damages the victim with the attacker as causing entity (GENERIC source: no
+     * difficulty scaling, no knockback, armor applies exactly like plain damage()).
+     * Lets PlayerDeathEvent attribute the kill to the attacking mob.
+     */
+    public static void damageBy(LivingEntity attacker, LivingEntity victim, double amount) {
+        victim.damage(amount, DamageSource.builder(DamageType.GENERIC)
+                .withDirectEntity(attacker)
+                .withCausingEntity(attacker)
+                .build());
     }
 }

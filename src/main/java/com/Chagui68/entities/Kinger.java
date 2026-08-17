@@ -645,7 +645,11 @@ public class Kinger implements Listener {
             }
         }
         if (damagerMsc && damagedMsc) {
-            event.setCancelled(true);
+            boolean involvesFrostGolem = damager.getScoreboardTags().contains("MSC_FrostGolem")
+                    || damaged.getScoreboardTags().contains("MSC_FrostGolem");
+            if (!involvesFrostGolem) {
+                event.setCancelled(true);
+            }
         }
     }
 

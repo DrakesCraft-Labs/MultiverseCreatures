@@ -4,6 +4,7 @@ import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -73,7 +74,7 @@ public class LightningStormAttack extends BossAttackBase {
                         double dmg = sealDamage * 0.6;
                         for (Player p : boss.getValidPlayers(world)) {
                             if (p.getLocation().distanceSquared(strikeLoc) < 16) {
-                                p.damage(dmg);
+                                MscEntityUtils.damageBy(stand, p, dmg);
                                 boss.launchPlayer(p, 0.4);
                                 p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2));
                             }

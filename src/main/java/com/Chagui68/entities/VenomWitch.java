@@ -12,6 +12,7 @@ import org.bukkit.entity.Witch;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -61,18 +62,28 @@ public class VenomWitch implements Listener {
     public boolean trySpawn(Location location) {
         Witch witch = (Witch) location.getWorld().spawnEntity(location, EntityType.WITCH);
         if (witch == null) return false;
+        witch.setPersistent(true);
+        witch.setRemoveWhenFarAway(false);
+        customize(witch);
+        return true;
+    }
+
+    public boolean convertExisting(Witch witch) {
+        if (witch == null || witch.isDead() || !witch.isValid()) return false;
+        customize(witch);
+        return true;
+    }
+
+    private void customize(Witch witch) {
         witch.addScoreboardTag(TAG);
         witch.setCustomName(ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Venom Witch");
         witch.setCustomNameVisible(true);
-        witch.setPersistent(true);
-        witch.setRemoveWhenFarAway(false);
         MscEntityUtils.setAttribute(witch, Attribute.MAX_HEALTH, 50.0);
         witch.setHealth(50.0);
         MscEntityUtils.setAttribute(witch, Attribute.MOVEMENT_SPEED, 0.25);
         witch.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 0, false, false));
         witch.setAI(true);
         active.put(witch.getUniqueId(), new VenomWitchInstance(witch));
-        return true;
     }
 
     private void tickVenom(VenomWitchInstance inst) {
@@ -117,11 +128,16 @@ public class VenomWitch implements Listener {
             target.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 100, 1));
             target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 1));
             target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0));
-            target.damage(4.0);
+            MscEntityUtils.damageBy(witch, target, 4.0);
             tLoc.getWorld().spawnParticle(Particle.WITCH, tLoc.add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0);
             wLoc.getWorld().playSound(tLoc, Sound.ENTITY_WITCH_THROW, 1.0f, 1.2f);
             inst.debuffCooldown = 0;
         }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        MscEntityUtils.applyDeathMessage(plugin, event, TAG, "venom-witch.death-messages");
     }
 
     @EventHandler

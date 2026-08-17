@@ -5,6 +5,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -81,7 +82,7 @@ public class DoomBeamAttack extends BossAttackBase {
                         }
                         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.5f);
                         double dmg = sealDamage * 1.5;
-                        target.damage(dmg);
+                        MscEntityUtils.damageBy(stand, target, dmg);
                         target.setVelocity(dir.multiply(1.5).setY(0.5));
                         target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 100, 1));
                         target.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 100, 0));

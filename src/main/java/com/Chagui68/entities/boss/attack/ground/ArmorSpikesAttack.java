@@ -4,6 +4,7 @@ import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -71,7 +72,7 @@ public class ArmorSpikesAttack extends BossAttackBase {
                         double dmg = sealDamage * 0.25;
                         for (Player p : boss.getValidPlayers(world)) {
                             if (p.getLocation().distanceSquared(center) < 49) {
-                                p.damage(dmg);
+                                MscEntityUtils.damageBy(stand, p, dmg);
                                 Vector away = p.getLocation().toVector().subtract(center.toVector());
                                 if (away.lengthSquared() > 0) p.setVelocity(away.normalize().multiply(0.8).setY(0.3));
                             }

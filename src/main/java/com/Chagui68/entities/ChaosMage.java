@@ -9,6 +9,7 @@ import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -65,18 +66,28 @@ public class ChaosMage implements Listener {
     public boolean trySpawn(Location location) {
         Evoker evoker = (Evoker) location.getWorld().spawnEntity(location, EntityType.EVOKER);
         if (evoker == null) return false;
+        evoker.setPersistent(true);
+        evoker.setRemoveWhenFarAway(false);
+        customize(evoker);
+        return true;
+    }
+
+    public boolean convertExisting(Evoker evoker) {
+        if (evoker == null || evoker.isDead() || !evoker.isValid()) return false;
+        customize(evoker);
+        return true;
+    }
+
+    private void customize(Evoker evoker) {
         evoker.addScoreboardTag(TAG);
         evoker.setCustomName(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Chaos Mage");
         evoker.setCustomNameVisible(true);
-        evoker.setPersistent(true);
-        evoker.setRemoveWhenFarAway(false);
         MscEntityUtils.setAttribute(evoker, Attribute.MAX_HEALTH, 70.0);
         evoker.setHealth(70.0);
         MscEntityUtils.setAttribute(evoker, Attribute.MOVEMENT_SPEED, 0.25);
         evoker.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 0, false, false));
         evoker.setAI(true);
         active.put(evoker.getUniqueId(), new ChaosMageInstance(evoker));
-        return true;
     }
 
     private void tickChaos(ChaosMageInstance inst) {
@@ -95,16 +106,17 @@ public class ChaosMage implements Listener {
             int effect = random.nextInt(6);
             switch (effect) {
                 case 0 -> {
-                    if (!evoker.getPassengers().isEmpty()) return;
-                    Vex vex = (Vex) eLoc.getWorld().spawnEntity(eLoc.clone().add(0, 2, 0), EntityType.VEX);
-                    if (vex != null) {
-                        vex.setCustomName(ChatColor.LIGHT_PURPLE + "Chaos Vex");
-                        vex.setCustomNameVisible(true);
-                        vex.setPersistent(true);
-                        vex.setRemoveWhenFarAway(false);
-                        vex.addScoreboardTag("MSC_ChaosVex");
-                        vex.setTarget(target);
-                        evoker.addPassenger(vex);
+                    if (evoker.getPassengers().isEmpty()) {
+                        Vex vex = (Vex) eLoc.getWorld().spawnEntity(eLoc.clone().add(0, 2, 0), EntityType.VEX);
+                        if (vex != null) {
+                            vex.setCustomName(ChatColor.LIGHT_PURPLE + "Chaos Vex");
+                            vex.setCustomNameVisible(true);
+                            vex.setPersistent(true);
+                            vex.setRemoveWhenFarAway(false);
+                            vex.addScoreboardTag("MSC_ChaosVex");
+                            vex.setTarget(target);
+                            evoker.addPassenger(vex);
+                        }
                     }
                 }
                 case 1 -> {
@@ -117,7 +129,7 @@ public class ChaosMage implements Listener {
                                 new Particle.DustOptions(Color.fromRGB(0xFF4400), 2.0f));
                     }
                     target.setFireTicks(80);
-                    target.damage(8.0);
+                    MscEntityUtils.damageBy(evoker, target, 8.0);
                 }
                 case 2 -> {
                     for (int i = 0; i < 3; i++) {
@@ -130,7 +142,7 @@ public class ChaosMage implements Listener {
                 case 3 -> {
                     PotionEffectType debuff = DEBUFFS.get(random.nextInt(DEBUFFS.size()));
                     target.addPotionEffect(new PotionEffect(debuff, 120, 2));
-                    target.damage(5.0);
+                    MscEntityUtils.damageBy(evoker, target, 5.0);
                     target.getWorld().spawnParticle(Particle.WITCH, target.getLocation().add(0, 1, 0), 15, 0.5, 0.5, 0.5, 0);
                 }
                 case 4 -> {
@@ -172,6 +184,13 @@ public class ChaosMage implements Listener {
         event.setDroppedExp(50);
         evoker.getWorld().spawnParticle(Particle.EXPLOSION, evoker.getLocation(), 15, 3, 2, 3, 0);
         evoker.getWorld().playSound(evoker.getLocation(), Sound.ENTITY_EVOKER_DEATH, 1.5f, 0.5f);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (!MscEntityUtils.applyDeathMessage(plugin, event, TAG, "chaos-mage.death-messages")) {
+            MscEntityUtils.applyDeathMessage(plugin, event, "MSC_ChaosVex", "chaos-mage.death-messages");
+        }
     }
 
     private static class ChaosMageInstance {

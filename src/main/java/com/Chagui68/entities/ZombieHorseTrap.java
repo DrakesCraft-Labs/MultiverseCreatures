@@ -2,6 +2,7 @@ package com.Chagui68.entities;
 
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.MilitaryComponent;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -27,6 +28,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
@@ -164,6 +166,16 @@ public class ZombieHorseTrap implements Listener {
 
         player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 100, 0, false, true));
         player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 0, false, true));
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        String[] tags = {ARMY_TAG, TANK_TAG, DUELIST_TAG, LANCER_TAG, SNIPER_TAG, CAMEL_ZOMBIE_TAG, CAMEL_SKELETON_TAG};
+        for (String tag : tags) {
+            if (MscEntityUtils.applyDeathMessage(plugin, event, tag, "zombie-horse-trap.death-messages")) {
+                return;
+            }
+        }
     }
 
     @EventHandler
