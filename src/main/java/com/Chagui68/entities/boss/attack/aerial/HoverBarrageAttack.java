@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.aerial;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.ArmorStandBoss;
@@ -34,7 +35,7 @@ public class HoverBarrageAttack extends BossAttackBase {
             instance.hoverBarrageTask = null;
         }
 
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         Location startLoc = stand.getLocation();
         boolean fromAir = instance.isFlying;
         double targetY = startLoc.getY() + (fromAir ? 0 : 15);

@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.defensive;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
@@ -36,7 +37,7 @@ public class ShieldSealAttack extends BossAttackBase {
     }
 
     public void startShieldSeal(BossInstance instance, boolean telegraph) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (instance.shieldSealActive || instance.isFlying) return;
 
         World world = stand.getLocation().getWorld();

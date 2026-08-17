@@ -1,5 +1,6 @@
 package com.Chagui68.entities;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import org.bukkit.Location;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.ArmorStand;
@@ -21,7 +22,14 @@ public class BossInstance {
 
     public enum DefenseState {NONE, STONE_SKIN, REFLECT_BARRIER, ABSORB_SHIELD}
 
-    public final ArmorStand stand;
+    /**
+     * El cuerpo del jefe.
+     *
+     * Es un BossPuppet y no un ArmorStand para que un jefe pueda ser tambien una criatura viva.
+     * El nombre del campo se conserva porque lo usan los 42 ataques y media clase; lo que cambia
+     * es que las poses ahora saben si hay a quien ponerselas.
+     */
+    public final com.Chagui68.entities.boss.BossPuppet stand;
     public BossBar bossBar;
     public int currentPhase = 0;
     public int noPlayerTicks = 0;
@@ -66,7 +74,19 @@ public class BossInstance {
     public double absorbShieldHealth = 0;
     public BukkitRunnable defenseTask;
 
+    /** Un jefe con cuerpo de ArmorStand, que es el caso del Centinela de Obsidiana. */
     public BossInstance(ArmorStand stand) {
-        this.stand = stand;
+        this.stand = new com.Chagui68.entities.boss.BossPuppet(stand);
+    }
+
+    /**
+     * Un jefe con cuerpo de criatura viva.
+     *
+     * Es lo que permite que un Blaze, un Enderman o un Gigante usen los mismos ataques. Las poses
+     * se ignoran solas -- una criatura no tiene brazos que doblar -- y todo lo demas del ataque,
+     * que es la mayor parte, funciona igual.
+     */
+    public BossInstance(org.bukkit.entity.LivingEntity entidad) {
+        this.stand = new com.Chagui68.entities.boss.BossPuppet(entidad);
     }
 }

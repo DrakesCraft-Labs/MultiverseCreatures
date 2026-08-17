@@ -60,7 +60,7 @@ public interface BossHost {
     }
 
     /** Si la entidad del jefe esta pisando suelo. */
-    default boolean isOnGround(ArmorStand stand) {
+    default boolean isOnGround(BossPuppet stand) {
         return BossArena.isOnGround(stand);
     }
 
@@ -75,7 +75,7 @@ public interface BossHost {
     }
 
     /** El objetivo del jefe segun su alcance de agresion, o null. */
-    Player detectTarget(ArmorStand stand);
+    Player detectTarget(BossPuppet stand);
 
     /** Onda expansiva desde un punto. La comparten varios ataques de suelo. */
     void spawnShockwaveWave(World world, Location center, double maxRadius);

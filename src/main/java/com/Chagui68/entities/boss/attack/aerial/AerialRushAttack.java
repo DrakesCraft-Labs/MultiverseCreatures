@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.aerial;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
@@ -34,7 +35,7 @@ public class AerialRushAttack extends BossAttackBase {
     @Override
     public void execute(BossInstance instance) {
         if (!instance.isFlying) return;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         World world = stand.getWorld();
         Location center = stand.getLocation();
 
@@ -78,7 +79,7 @@ public class AerialRushAttack extends BossAttackBase {
                 phaseTick = 0;
             }
 
-            private void doHoverPhase(ArmorStand stand, World world, Location center) {
+            private void doHoverPhase(BossPuppet stand, World world, Location center) {
                 if (phaseTick == 0) {
                     stand.setRightArmPose(new EulerAngle(Math.toRadians(-160), Math.toRadians(20), Math.toRadians(10)));
                     stand.setLeftArmPose(new EulerAngle(Math.toRadians(-160), Math.toRadians(-20), Math.toRadians(-10)));
@@ -101,7 +102,7 @@ public class AerialRushAttack extends BossAttackBase {
                 if (phaseTick >= 25) nextPhase(1);
             }
 
-            private void doSelectPhase(ArmorStand stand, World world, Location center) {
+            private void doSelectPhase(BossPuppet stand, World world, Location center) {
                 List<Player> targets = boss.getValidPlayersNear(center, 10000);
                 if (targets.isEmpty()) {
                     boss.resetBossPose(instance);
@@ -127,7 +128,7 @@ public class AerialRushAttack extends BossAttackBase {
                 }
             }
 
-            private void doRushPhase(ArmorStand stand, World world) {
+            private void doRushPhase(BossPuppet stand, World world) {
                 if (target == null || target.isDead() || !target.isOnline()) {
                     nextPhase(5);
                     return;
@@ -170,7 +171,7 @@ public class AerialRushAttack extends BossAttackBase {
                 p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 30, 0));
             }
 
-            private void doImpactPhase(ArmorStand stand, World world) {
+            private void doImpactPhase(BossPuppet stand, World world) {
                 if (phaseTick == 0) {
                     world.spawnParticle(Particle.EXPLOSION, impactLoc, 12, 2, 1, 2, 0);
                     world.playSound(impactLoc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.8f);
@@ -180,7 +181,7 @@ public class AerialRushAttack extends BossAttackBase {
                 if (phaseTick >= 10) nextPhase(4);
             }
 
-            private void doRisePhase(ArmorStand stand, World world) {
+            private void doRisePhase(BossPuppet stand, World world) {
                 if (phaseTick == 0) {
                     stand.setHeadPose(new EulerAngle(Math.toRadians(-30), 0, 0));
                     stand.setBodyPose(new EulerAngle(Math.toRadians(-15), 0, 0));
@@ -210,7 +211,7 @@ public class AerialRushAttack extends BossAttackBase {
                 if (phaseTick > 30) nextPhase(5);
             }
 
-            private void doSlamPhase(ArmorStand stand, World world) {
+            private void doSlamPhase(BossPuppet stand, World world) {
                 if (phaseTick == 0) {
                     world.playSound(stand.getLocation(), Sound.ENTITY_WITHER_SPAWN, 2.0f, 0.6f);
                 }

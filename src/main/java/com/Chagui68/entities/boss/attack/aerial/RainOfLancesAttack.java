@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.aerial;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.ArmorStandBoss;
@@ -33,7 +34,7 @@ public class RainOfLancesAttack extends BossAttackBase {
 
     public void execute(BossInstance instance, boolean telegraph) {
         if (!instance.isFlying) return;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         World world = stand.getWorld();
 
         List<Player> targets = boss.getValidPlayersNear(stand.getLocation(), 10000);

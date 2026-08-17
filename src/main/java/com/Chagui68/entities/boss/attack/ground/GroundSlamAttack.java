@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.ground;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.ArmorStandBoss;
 import com.Chagui68.entities.boss.BossHost;
@@ -32,7 +33,7 @@ public class GroundSlamAttack extends BossAttackBase {
     public void execute(BossInstance instance) {
         if (instance.isFlying) return;
         if (instance.groundSlamTask != null) return;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (instance.shieldState != BossInstance.ShieldState.NORMAL) return;
 
         World world = stand.getWorld();
@@ -99,7 +100,7 @@ public class GroundSlamAttack extends BossAttackBase {
     }
 
     private void plantShield(BossInstance instance, Location center, World world) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         instance.shieldState = BossInstance.ShieldState.PLANTED;
         instance.shieldTimer = 0;
 
@@ -158,7 +159,7 @@ public class GroundSlamAttack extends BossAttackBase {
     }
 
     private void doSlam(BossInstance instance, Location center, World world) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
 
         world.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.5f);
         world.playSound(center, Sound.ENTITY_ENDER_DRAGON_GROWL, 1.5f, 0.3f);
@@ -205,7 +206,7 @@ public class GroundSlamAttack extends BossAttackBase {
     }
 
     private void retrieveShield(BossInstance instance, Location center, World world) {
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
 
         if (instance.floatingShieldTask != null) {
             instance.floatingShieldTask.cancel();
@@ -240,7 +241,7 @@ public class GroundSlamAttack extends BossAttackBase {
         );
     }
 
-    private void equipShield(ArmorStand stand) {
+    private void equipShield(BossPuppet stand) {
         ItemStack shield = new ItemStack(Material.SHIELD);
         ItemMeta shieldMeta = shield.getItemMeta();
         if (shieldMeta != null) {

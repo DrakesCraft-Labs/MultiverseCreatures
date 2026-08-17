@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.defensive;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
@@ -32,7 +33,7 @@ public class TriangleCallAttack extends BossAttackBase {
         if (instance.triangleCallActive) return;
         instance.triangleCallActive = true;
 
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         World world = stand.getWorld();
         Location center = stand.getLocation();
         boolean airMode = !boss.isOnGround(stand);
@@ -62,7 +63,7 @@ public class TriangleCallAttack extends BossAttackBase {
         instance.triangleCallTask.runTaskTimer(plugin, 0L, 1L);
     }
 
-    private void spawnAirCall(ArmorStand stand, World world, Location center, int extraSets) {
+    private void spawnAirCall(BossPuppet stand, World world, Location center, int extraSets) {
         Vector dir = stand.getLocation().getDirection();
         Vector right = dir.clone().crossProduct(new Vector(0, 1, 0)).normalize();
         if (right.lengthSquared() < 0.01) right = new Vector(1, 0, 0);
@@ -137,7 +138,7 @@ public class TriangleCallAttack extends BossAttackBase {
         }
     }
 
-    private void spawnGroundCall(ArmorStand stand, World world, Location center, int extraSets) {
+    private void spawnGroundCall(BossPuppet stand, World world, Location center, int extraSets) {
         Vector dir = stand.getLocation().getDirection();
         Vector right = dir.clone().crossProduct(new Vector(0, 1, 0)).normalize();
         if (right.lengthSquared() < 0.01) right = new Vector(1, 0, 0);

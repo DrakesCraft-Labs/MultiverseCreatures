@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.aerial;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
@@ -27,7 +28,7 @@ public class AirSlamAttack extends BossAttackBase {
 
     public void execute(BossInstance instance, boolean telegraph) {
         if (!instance.isFlying) return;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
         World world = stand.getWorld();
 

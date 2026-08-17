@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.ground;
 
+import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
@@ -24,11 +25,13 @@ public class ShieldBashAttack extends BossAttackBase {
     @Override
     public void execute(BossInstance instance) {
         if (instance.isFlying) return;
-        ArmorStand stand = instance.stand;
+        BossPuppet stand = instance.stand;
         World world = stand.getWorld();
         Location center = stand.getLocation();
         if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnRunicTriangleSeal(stand, 60);
+            if (stand.armorStand() != null) {
+            plugin.getMagicSealListener().spawnRunicTriangleSeal(stand.armorStand(), 60);
+        }
         }
         Vector dir = center.getDirection();
         if (dir.lengthSquared() < 0.01) dir = new Vector(0, 0, 1);
