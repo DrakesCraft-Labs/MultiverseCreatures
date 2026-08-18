@@ -84,6 +84,10 @@ public class Mahoraga implements Listener {
     private void tickAdapter(Zombie zombie) {
         if (!(zombie.getTarget() instanceof Player target)) return;
         if (target.isDead() || !target.isOnline()) return;
+        if (!zombie.getWorld().equals(target.getWorld())) {
+            zombie.setTarget(null);
+            return;
+        }
         if (target.getGameMode() == org.bukkit.GameMode.CREATIVE || target.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
             zombie.setTarget(null);
             return;
@@ -150,7 +154,7 @@ public class Mahoraga implements Listener {
             zombie.getAttribute(Attribute.KNOCKBACK_RESISTANCE).setBaseValue(knockbackResistance);
         }
 
-        if (zombie.getLocation().distanceSquared(target.getLocation()) > 16) {
+        if (zombie.getWorld().equals(target.getWorld()) && zombie.getLocation().distanceSquared(target.getLocation()) > 16) {
             zombie.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 30, 0, false, false));
         } else {
             zombie.removePotionEffect(PotionEffectType.SPEED);
