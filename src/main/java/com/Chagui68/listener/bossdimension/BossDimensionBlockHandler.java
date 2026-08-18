@@ -36,8 +36,10 @@ public class BossDimensionBlockHandler implements Listener {
             return;
         }
 
+        com.Chagui68.ritual.BossDimensionManager dimensionManager = plugin.getBossDimensionManager();
+        if (dimensionManager == null || dimensionManager.getBossWorld() == null) return;
         com.Chagui68.entities.boss.ArmorStandBoss boss = plugin.getArmorStandBoss();
-        if (boss == null || !boss.isBossActive()) {
+        if (boss == null || !boss.isBossActiveInWorld(dimensionManager.getBossWorld())) {
             return;
         }
 
@@ -57,8 +59,10 @@ public class BossDimensionBlockHandler implements Listener {
             return;
         }
 
+        com.Chagui68.ritual.BossDimensionManager dimensionManager = plugin.getBossDimensionManager();
+        if (dimensionManager == null || dimensionManager.getBossWorld() == null) return;
         com.Chagui68.entities.boss.ArmorStandBoss boss = plugin.getArmorStandBoss();
-        if (boss == null || !boss.isBossActive()) {
+        if (boss == null || !boss.isBossActiveInWorld(dimensionManager.getBossWorld())) {
             return;
         }
 

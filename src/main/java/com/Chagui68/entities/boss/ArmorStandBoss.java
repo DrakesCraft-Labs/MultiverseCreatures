@@ -1694,6 +1694,14 @@ public class ArmorStandBoss implements Listener, BossHost {
         return !activeBosses.isEmpty();
     }
 
+    public boolean isBossActiveInWorld(World world) {
+        for (BossInstance instance : activeBosses.values()) {
+            if (instance.stand.isDead() || !instance.stand.isValid()) continue;
+            if (instance.stand.getWorld().equals(world)) return true;
+        }
+        return false;
+    }
+
     public boolean triggerAttack(UUID bossId, String attackName) {
         BossInstance instance = activeBosses.get(bossId);
         if (instance == null) return false;
