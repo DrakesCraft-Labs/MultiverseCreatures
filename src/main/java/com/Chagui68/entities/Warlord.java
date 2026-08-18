@@ -32,6 +32,7 @@ public class Warlord implements Listener {
     private final Random random = new Random();
     private static final String TAG = "MSC_Warlord";
     private static final double TRUE_DAMAGE = 4.0;
+    private boolean applyingTrueDamage;
     private boolean debug;
 
     public Warlord(MultiverseCreatures plugin) {
@@ -110,11 +111,26 @@ public class Warlord implements Listener {
         }
         if (warlord == null) return;
 
-        event.setCancelled(true);
-        player.damage(TRUE_DAMAGE, DamageSource.builder(DamageType.OUT_OF_WORLD)
-                .withDirectEntity(warlord)
-                .withCausingEntity(warlord)
-                .build());
+        if (applyingTrueDamage) {
+            // El evento re-disparado por player.damage() vuelve a pasar por SlimeTinker
+            // (prioridad NORMAL), que lo capea a 1. Al venir de nosotros (HIGHEST) lo
+            // restauramos como daño real para atravesar el trait Infinity.
+            applyingTrueDamage = false;
+            event.setCancelled(false);
+            event.setDamage(Math.max(event.getDamage(), TRUE_DAMAGE));
+            return;
+        }
+
+        applyingTrueDamage = true;
+        try {
+            event.setCancelled(true);
+            player.damage(TRUE_DAMAGE, DamageSource.builder(DamageType.OUT_OF_WORLD)
+                    .withDirectEntity(warlord)
+                    .withCausingEntity(warlord)
+                    .build());
+        } finally {
+            applyingTrueDamage = false;
+        }
     }
 
     @EventHandler

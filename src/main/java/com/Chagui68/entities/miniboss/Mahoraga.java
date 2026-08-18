@@ -12,6 +12,8 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.damage.DamageSource;
+import org.bukkit.damage.DamageType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
@@ -49,6 +51,7 @@ public class Mahoraga implements Listener {
     private boolean slimefunAdaptation;
     private boolean ignoreDiamondMod;
     private boolean infinityWeaponAdaptation;
+    private boolean infinityTrueDamage;
     private long armorAdaptationCooldownMillis;
     private static final String TAG = "MSC_Mahoraga";
     private static final double IGNORE_DIAMOND_CHANCE = 1.0;
@@ -357,11 +360,32 @@ public class Mahoraga implements Listener {
         if (advanced && previous != null) stage = Math.min(4, stage + 1);
         byPlayer.put(player.getUniqueId(), new AdaptationState(stage, advanced ? now : previous.lastAdvanceMillis()));
 
-        // SlimeTinker puede cancelar el golpe antes de llegar aquí. Lo reabrimos, pero sin forzar
-        // daño letal: los modificadores propios de la armadura todavía pueden mitigarlo.
-        event.setCancelled(false);
-        event.setDamage(Math.max(event.getDamage(), 4.0D + stage * 2.0D));
+        double adaptedDamage = 4.0D + stage * 2.0D;
+
+        if (infinityTrueDamage) {
+            // El evento re-disparado por player.damage() vuelve a pasar por SlimeTinker
+            // (prioridad NORMAL), que lo capea a 1. Al venir de nosotros (HIGHEST) lo
+            // restauramos como daño real para atravesar el trait Infinity.
+            infinityTrueDamage = false;
+            event.setCancelled(false);
+            event.setDamage(Math.max(event.getDamage(), adaptedDamage));
+            return;
+        }
+
+        // El trait de la armadura Infinity capa el golpe; lo re-disparamos como daño real
+        // para que Mahoraga lo atraviese. No se llama a setHealth en ningún momento.
         player.setAbsorptionAmount(0.0D);
+        event.setCancelled(true);
+        infinityTrueDamage = true;
+        try {
+            player.damage(adaptedDamage, DamageSource.builder(DamageType.OUT_OF_WORLD)
+                    .withDirectEntity(zombie)
+                    .withCausingEntity(zombie)
+                    .build());
+        } finally {
+            infinityTrueDamage = false;
+        }
+
         player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40 + stage * 12, Math.min(2, stage - 1), true, true, true));
         if (stage >= 2) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30 + stage * 10, 0, true, true, true));
