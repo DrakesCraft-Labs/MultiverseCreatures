@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/banner.svg" alt="MultiverseCreatures" width="100%">
+<img src="https://raw.githubusercontent.com/DrakesCraft-Labs/MultiverseCreatures/main/banner.svg" alt="MultiverseCreatures" width="100%">
 
 # ✦ MultiverseCreatures ✦
 
