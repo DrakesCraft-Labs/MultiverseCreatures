@@ -144,7 +144,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 handleMusic(sender, args);
                 break;
             case "cleanstands":
-                handleCleanStands(sender);
+                handleCleanStands(sender, args);
                 break;
             case "reload":
                 handleReload(sender);
@@ -615,9 +615,23 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(GREEN + "Configuration reloaded. All changes have been applied.");
     }
 
-    private void handleCleanStands(CommandSender sender) {
+    private void handleCleanStands(CommandSender sender, String[] args) {
+        if (args.length >= 2 && args[1].equalsIgnoreCase("help")) {
+            sendCleanStandsHelp(sender);
+            return;
+        }
+
+        World targetWorld = null;
+        if (args.length >= 2) {
+            targetWorld = Bukkit.getWorld(args[1]);
+            if (targetWorld == null) {
+                sender.sendMessage(RED + "World '" + args[1] + "' not found.");
+                return;
+            }
+        }
+
         int count = 0;
-        for (World world : Bukkit.getWorlds()) {
+        for (World world : (targetWorld != null ? List.of(targetWorld) : Bukkit.getWorlds())) {
             for (Entity entity : world.getEntities()) {
                 if (!(entity instanceof ArmorStand stand)) continue;
                 for (String tag : stand.getScoreboardTags()) {
@@ -629,7 +643,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 }
             }
         }
-        sender.sendMessage(GREEN + "Removed " + count + " custom armor stands.");
+        if (targetWorld != null) {
+            sender.sendMessage(GREEN + "Removed " + count + " custom armor stands in " + targetWorld.getName() + ".");
+        } else {
+            sender.sendMessage(GREEN + "Removed " + count + " custom armor stands.");
+        }
     }
 
     private void handleSeal(CommandSender sender, String[] args) {
@@ -1604,6 +1622,23 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         sendMenuFooter(player);
     }
 
+    private void sendCleanStandsHelp(CommandSender sender) {
+        sendMenuHeader(sender, "MSC CLEANSTANDS");
+        sendLine(sender, " &7Usage: &e/msc cleanstands [world]");
+        sendLine(sender, "");
+        sendLine(sender, " &6&lInfo&8:");
+        sendLine(sender, "   &e• &f[world]");
+        sendLine(sender, "      &7Remove all custom plugin armor stands only in that dimension.");
+        sendLine(sender, "      &7Without a world, removes them from every loaded dimension.");
+        StringBuilder worlds = new StringBuilder();
+        for (World w : Bukkit.getWorlds()) {
+            if (worlds.length() > 0) worlds.append("&8, &f");
+            worlds.append(w.getName());
+        }
+        sendLine(sender, "      &7Worlds: &f" + worlds);
+        sendMenuFooter(sender);
+    }
+
     private void sendHelp(CommandSender sender) {
         sendMenuHeader(sender, "MULTIVERSE CREATURES");
         sendCommandEntry(sender, "/msc spawn <type>", "Spawn custom mobs. Use /msc spawn alone to list them.");
@@ -1613,7 +1648,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         sendCommandEntry(sender, "/msc dummy", "Spawn and pose a test armor stand.");
         sendCommandEntry(sender, "/msc music <play|stop|list|disc> [name] [loop]", "Play .nbs music files or get a jukebox disc.");
         sendCommandEntry(sender, "/msc dimtp <world>", "Teleport between dimensions.");
-        sendCommandEntry(sender, "/msc cleanstands", "Remove all custom plugin armor stands.");
+        sendCommandEntry(sender, "/msc cleanstands [world]", "Remove all custom plugin armor stands (optionally in a dimension).");
         sendCommandEntry(sender, "/msc reload", "Reload config.yml and apply all changes.");
         sendLine(sender, "");
         sendLine(sender, " &7&oTip: &e/msc <spawn|give|seal|attack|dummy> help [page]");
@@ -1691,6 +1726,14 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                         .filter(a -> a.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList()));
             } else if (subCmd.equals("dimtp")) {
+                List<String> worlds = new ArrayList<>();
+                for (World w : Bukkit.getWorlds()) {
+                    worlds.add(w.getName());
+                }
+                completions.addAll(worlds.stream()
+                        .filter(w -> w.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList()));
+            } else if (subCmd.equals("cleanstands")) {
                 List<String> worlds = new ArrayList<>();
                 for (World w : Bukkit.getWorlds()) {
                     worlds.add(w.getName());
