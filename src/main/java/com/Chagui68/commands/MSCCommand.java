@@ -102,6 +102,41 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             "warlord"
     );
 
+    private static final Map<String, List<String>> KILL_TYPES = Map.ofEntries(
+            Map.entry("all", List.of("MSC_")),
+            Map.entry("merchant", List.of("MSC_MultiverseMerchant")),
+            Map.entry("dio", List.of("MSC_DioBoss", "MSC_DioStand")),
+            Map.entry("creeperjr", List.of("MSC_CreeperJr")),
+            Map.entry("headslime", List.of("MSC_HeadSlime")),
+            Map.entry("zombietrap", List.of("MSC_ZombieHorseTrap", "MSC_ZombieArmy", "MSC_ZombieTank",
+                    "MSC_Duelist", "MSC_Lancer", "MSC_CamelZombie", "MSC_CamelSkeleton", "MSC_Sniper",
+                    "MSC_LancerHorse", "MSC_ArmyCamel")),
+            Map.entry("tank", List.of("MSC_ZombieTank")),
+            Map.entry("duelist", List.of("MSC_Duelist")),
+            Map.entry("lancer", List.of("MSC_Lancer")),
+            Map.entry("camel", List.of("MSC_CamelZombie", "MSC_CamelSkeleton", "MSC_ArmyCamel")),
+            Map.entry("sniper", List.of("MSC_Sniper")),
+            Map.entry("mahoraga", List.of("MSC_Mahoraga")),
+            Map.entry("armorstand", List.of("MSC_ArmorStandBoss", "MSC_ArmorBossSummoned",
+                    "MSC_ShieldHolder", "MSC_BossMirror", "MSC_ShieldSealOrbit", "MSC_TriangleSeal")),
+            Map.entry("shadowrogue", List.of("MSC_ShadowRogue")),
+            Map.entry("flameelemental", List.of("MSC_FlameElemental")),
+            Map.entry("frostgolem", List.of("MSC_FrostGolem")),
+            Map.entry("voidcrawler", List.of("MSC_VoidCrawler")),
+            Map.entry("stormcaller", List.of("MSC_StormCaller")),
+            Map.entry("boneshield", List.of("MSC_BoneShield")),
+            Map.entry("venomwitch", List.of("MSC_VenomWitch")),
+            Map.entry("obsidianguard", List.of("MSC_ObsidianGuard")),
+            Map.entry("soulreaper", List.of("MSC_SoulReaper")),
+            Map.entry("chaosmage", List.of("MSC_ChaosMage", "MSC_ChaosVex")),
+            Map.entry("enderknight", List.of("MSC_EnderKnight")),
+            Map.entry("kinger", List.of("MSC_Kinger", "MSC_KingerPart", "MSC_KingerBullet")),
+            Map.entry("disctrader", List.of("MSC_DiscTrader")),
+            Map.entry("warlord", List.of("MSC_Warlord"))
+    );
+
+    private static final List<String> KILLABLE_ENTITIES = new ArrayList<>(KILL_TYPES.keySet());
+
     public MSCCommand(MultiverseCreatures plugin, MobHandler mobHandler) {
         this.plugin = plugin;
         this.mobHandler = mobHandler;
@@ -145,6 +180,9 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 break;
             case "cleanstands":
                 handleCleanStands(sender, args);
+                break;
+            case "kill":
+                handleKill(sender, args);
                 break;
             case "reload":
                 handleReload(sender);
@@ -648,6 +686,69 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         } else {
             sender.sendMessage(GREEN + "Removed " + count + " custom armor stands.");
         }
+    }
+
+    private void handleKill(CommandSender sender, String[] args) {
+        String type = args.length >= 2 ? args[1].toLowerCase() : "all";
+        if (type.equals("help")) {
+            sendKillHelp(sender);
+            return;
+        }
+        switch (type) {
+            case "rogue" -> type = "shadowrogue";
+            case "reaper" -> type = "soulreaper";
+            case "chaos" -> type = "chaosmage";
+            case "bone" -> type = "boneshield";
+            case "venom" -> type = "venomwitch";
+            case "obsidian" -> type = "obsidianguard";
+            case "ender" -> type = "enderknight";
+            case "army" -> type = "zombietrap";
+            case "armorstandboss" -> type = "armorstand";
+        }
+
+        List<String> tags = KILL_TYPES.get(type);
+        if (tags == null) {
+            sender.sendMessage(RED + "Unknown entity type '" + args[1] + "'. Use /msc kill help to list them.");
+            return;
+        }
+
+        boolean killAll = tags.size() == 1 && tags.get(0).equals("MSC_");
+        int count = 0;
+        for (World world : Bukkit.getWorlds()) {
+            for (Entity entity : world.getEntities()) {
+                if (entity instanceof Player) continue;
+                boolean match = false;
+                for (String tag : entity.getScoreboardTags()) {
+                    if (killAll ? tag.startsWith("MSC_") : tags.contains(tag)) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (!match) continue;
+                entity.remove();
+                count++;
+            }
+        }
+
+        if (killAll) {
+            sender.sendMessage(GREEN + "Killed " + count + " plugin entit" + (count == 1 ? "y" : "ies") + ".");
+        } else {
+            sender.sendMessage(GREEN + "Killed " + count + " " + type + " entit" + (count == 1 ? "y" : "ies") + ".");
+        }
+    }
+
+    private void sendKillHelp(CommandSender sender) {
+        sendMenuHeader(sender, "MSC KILL");
+        sendLine(sender, " &7Usage: &e/msc kill [type]");
+        sendLine(sender, "");
+        sendLine(sender, " &6&lInfo&8:");
+        sendLine(sender, "   &e• &f[type]");
+        sendLine(sender, "      &7Kill every entity of that type in all worlds.");
+        sendLine(sender, "      &7Without a type (or with 'all'), kills every plugin entity.");
+        sendLine(sender, "");
+        sendLine(sender, " &6&lTypes&8:");
+        sendLine(sender, "   &f" + String.join("&8, &f", KILLABLE_ENTITIES));
+        sendMenuFooter(sender);
     }
 
     private void handleSeal(CommandSender sender, String[] args) {
@@ -1649,6 +1750,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         sendCommandEntry(sender, "/msc music <play|stop|list|disc> [name] [loop]", "Play .nbs music files or get a jukebox disc.");
         sendCommandEntry(sender, "/msc dimtp <world>", "Teleport between dimensions.");
         sendCommandEntry(sender, "/msc cleanstands [world]", "Remove all custom plugin armor stands (optionally in a dimension).");
+        sendCommandEntry(sender, "/msc kill [type]", "Kill plugin entities. Use /msc kill help to list types.");
         sendCommandEntry(sender, "/msc reload", "Reload config.yml and apply all changes.");
         sendLine(sender, "");
         sendLine(sender, " &7&oTip: &e/msc <spawn|give|seal|attack|dummy> help [page]");
@@ -1664,7 +1766,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            List<String> subCommands = Arrays.asList("spawn", "give", "attack", "music", "cleanstands", "reload", "seal", "dummy", "dimtp");
+            List<String> subCommands = Arrays.asList("spawn", "give", "attack", "music", "cleanstands", "reload", "seal", "dummy", "dimtp", "kill");
             completions.addAll(subCommands.stream()
                     .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList()));
@@ -1740,6 +1842,10 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 }
                 completions.addAll(worlds.stream()
                         .filter(w -> w.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList()));
+            } else if (subCmd.equals("kill")) {
+                completions.addAll(KILLABLE_ENTITIES.stream()
+                        .filter(t -> t.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList()));
             }
         } else if (args.length == 3) {

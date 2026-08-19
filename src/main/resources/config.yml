@@ -297,7 +297,7 @@ entities:
   ### Creeper Jr.
   creeper-jr:
     enabled: true
-    spawn-chance: 0.15
+    spawn-chance: 0.04
     scale: 0.6
     speed: 0.5
     explosion-radius: 2
