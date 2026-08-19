@@ -146,6 +146,9 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             case "cleanstands":
                 handleCleanStands(sender, args);
                 break;
+            case "kill":
+                handleKill(sender, args);
+                break;
             case "reload":
                 handleReload(sender);
                 break;
@@ -624,38 +627,115 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleCleanStands(CommandSender sender, String[] args) {
-        if (args.length >= 2 && args[1].equalsIgnoreCase("help")) {
+        if (args.length > 1 && args[1].equalsIgnoreCase("help")) {
             sendCleanStandsHelp(sender);
             return;
         }
 
         World targetWorld = null;
-        if (args.length >= 2) {
-            targetWorld = Bukkit.getWorld(args[1]);
+        if (args.length > 1) {
+            String worldName = args[1];
+            targetWorld = Bukkit.getWorld(worldName);
             if (targetWorld == null) {
-                sender.sendMessage(RED + "World '" + args[1] + "' not found.");
+                sender.sendMessage(RED + "World '" + worldName + "' not found.");
                 return;
             }
         }
 
-        int count = 0;
-        for (World world : (targetWorld != null ? List.of(targetWorld) : Bukkit.getWorlds())) {
+        int removed = 0;
+        List<World> worldsToScan = targetWorld != null ? List.of(targetWorld) : Bukkit.getWorlds();
+        for (World world : worldsToScan) {
             for (Entity entity : world.getEntities()) {
-                if (!(entity instanceof ArmorStand stand)) continue;
-                for (String tag : stand.getScoreboardTags()) {
-                    if (tag.startsWith("MSC_")) {
+                if (entity instanceof ArmorStand stand) {
+                    if (stand.getScoreboardTags().stream().anyMatch(tag -> tag.startsWith("MSC_"))) {
                         stand.remove();
-                        count++;
-                        break;
+                        removed++;
                     }
                 }
             }
         }
+
         if (targetWorld != null) {
-            sender.sendMessage(GREEN + "Removed " + count + " custom armor stands in " + targetWorld.getName() + ".");
+            sender.sendMessage(GREEN + "Removed " + YELLOW + removed + GREEN + " MSC armor stands from world " + targetWorld.getName() + ".");
         } else {
-            sender.sendMessage(GREEN + "Removed " + count + " custom armor stands.");
+            sender.sendMessage(GREEN + "Removed " + YELLOW + removed + GREEN + " MSC armor stands from all loaded dimensions.");
         }
+    }
+
+    private void handleKill(CommandSender sender, String[] args) {
+        if (args.length > 1 && args[1].equalsIgnoreCase("help")) {
+            sender.sendMessage(GOLD + "Usage: " + YELLOW + "/msc kill [all|<mob_type>] [radius]");
+            sender.sendMessage(GRAY + "Examples:");
+            sender.sendMessage(GRAY + "  /msc kill               - Elimina todos los mobs MSC cercanos/mundo");
+            sender.sendMessage(GRAY + "  /msc kill mahoraga      - Elimina solo los Mahoraga");
+            sender.sendMessage(GRAY + "  /msc kill all 50        - Elimina todos los mobs MSC en 50 bloques");
+            sender.sendMessage(GRAY + "  /msc kill garou 100     - Elimina Garou en 100 bloques");
+            return;
+        }
+
+        String targetType = "all";
+        Integer radius = null;
+
+        if (args.length == 2) {
+            if (args[1].matches("\\d+")) {
+                radius = Integer.parseInt(args[1]);
+            } else {
+                targetType = args[1].toLowerCase();
+            }
+        } else if (args.length > 2) {
+            targetType = args[1].toLowerCase();
+            try {
+                radius = Integer.parseInt(args[2]);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        World world = (sender instanceof Player p) ? p.getWorld() : Bukkit.getWorlds().get(0);
+        Location center = (sender instanceof Player p) ? p.getLocation() : null;
+
+        int killed = 0;
+        List<Entity> toRemove = new ArrayList<>();
+
+        for (World w : (center != null && radius != null ? List.of(world) : Bukkit.getWorlds())) {
+            for (Entity entity : w.getEntities()) {
+                if (center != null && radius != null) {
+                    if (entity.getWorld() != center.getWorld() || center.distanceSquared(entity.getLocation()) > radius * radius) {
+                        continue;
+                    }
+                }
+
+                boolean isMsc = entity.getScoreboardTags().stream().anyMatch(t -> t.startsWith("MSC_"))
+                        || (entity.getCustomName() != null && (entity.getCustomName().contains("Mahoraga")
+                        || entity.getCustomName().contains("Dio")
+                        || entity.getCustomName().contains("Garou")
+                        || entity.getCustomName().contains("Bone Shield")
+                        || entity.getCustomName().contains("Void Crawler")
+                        || entity.getCustomName().contains("Shadow Rogue")
+                        || entity.getCustomName().contains("Flame Elemental")
+                        || entity.getCustomName().contains("Chaos Mage")
+                        || entity.getCustomName().contains("Warlord")));
+
+                if (!isMsc) continue;
+
+                if (targetType.equals("all")) {
+                    toRemove.add(entity);
+                } else {
+                    String cleanType = targetType.replace("-", "").replace("_", "");
+                    boolean match = entity.getScoreboardTags().stream().anyMatch(t -> t.toLowerCase().contains(cleanType))
+                            || (entity.getCustomName() != null && entity.getCustomName().toLowerCase().contains(targetType));
+                    if (match) {
+                        toRemove.add(entity);
+                    }
+                }
+            }
+        }
+
+        for (Entity e : toRemove) {
+            e.remove();
+            killed++;
+        }
+
+        sender.sendMessage(GREEN + "Eliminadas " + YELLOW + killed + GREEN + " criaturas MSC (" + targetType + ")"
+                + (radius != null ? " en radio de " + radius + " bloques." : " en el servidor."));
     }
 
     private void handleSeal(CommandSender sender, String[] args) {
@@ -1657,9 +1737,10 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         sendCommandEntry(sender, "/msc music <play|stop|list|disc> [name] [loop]", "Play .nbs music files or get a jukebox disc.");
         sendCommandEntry(sender, "/msc dimtp <world>", "Teleport between dimensions.");
         sendCommandEntry(sender, "/msc cleanstands [world]", "Remove all custom plugin armor stands (optionally in a dimension).");
+        sendCommandEntry(sender, "/msc kill [type|all] [radius]", "Kill/purge custom creatures (optionally by type or radius).");
         sendCommandEntry(sender, "/msc reload", "Reload config.yml and apply all changes.");
         sendLine(sender, "");
-        sendLine(sender, " &7&oTip: &e/msc <spawn|give|seal|attack|dummy> help [page]");
+        sendLine(sender, " &7&oTip: &e/msc <spawn|give|seal|attack|dummy|kill> help [page]");
         sendMenuFooter(sender);
     }
 
@@ -1672,7 +1753,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            List<String> subCommands = Arrays.asList("spawn", "give", "attack", "music", "cleanstands", "reload", "seal", "dummy", "dimtp");
+            List<String> subCommands = Arrays.asList("spawn", "give", "attack", "music", "cleanstands", "kill", "reload", "seal", "dummy", "dimtp");
             completions.addAll(subCommands.stream()
                     .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList()));
@@ -1681,7 +1762,14 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             if (args[1].toLowerCase().startsWith("help")) {
                 completions.add("help");
             }
-            if (subCmd.equals("spawn")) {
+            if (subCmd.equals("kill")) {
+                List<String> killTargets = new ArrayList<>();
+                killTargets.add("all");
+                killTargets.addAll(SPAWNABLE_ENTITIES);
+                completions.addAll(killTargets.stream()
+                        .filter(e -> e.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList()));
+            } else if (subCmd.equals("spawn")) {
                 List<String> entities = SPAWNABLE_ENTITIES;
                 completions.addAll(entities.stream()
                         .filter(e -> e.startsWith(args[1].toLowerCase()))
@@ -1752,7 +1840,12 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             }
         } else if (args.length == 3) {
             String subCmd = args[0].toLowerCase();
-            if (subCmd.equals("music") && (args[1].equalsIgnoreCase("play") || args[1].equalsIgnoreCase("disc"))) {
+            if (subCmd.equals("kill")) {
+                List<String> radii = Arrays.asList("10", "25", "50", "100", "200");
+                completions.addAll(radii.stream()
+                        .filter(r -> r.startsWith(args[2].toLowerCase()))
+                        .collect(Collectors.toList()));
+            } else if (subCmd.equals("music") && (args[1].equalsIgnoreCase("play") || args[1].equalsIgnoreCase("disc"))) {
                 var songs = plugin.getMusicManager().getSongNames();
                 completions.addAll(songs.stream()
                         .filter(s -> s.startsWith(args[2].toLowerCase()))
