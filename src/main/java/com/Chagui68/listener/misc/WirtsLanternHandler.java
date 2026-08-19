@@ -34,11 +34,15 @@ public class WirtsLanternHandler implements Listener {
     private final Plugin plugin;
     private final Random random = new Random();
     private final Set<UUID> activeRepel = ConcurrentHashMap.newKeySet();
-    private static final double REPEL_RADIUS = 12.0;
-    private static final int REPEL_INTERVAL_TICKS = 20;
+    private double repelRadius;
+    private int repelIntervalTicks;
+    private double repelParticleChance;
 
     public WirtsLanternHandler(Plugin plugin) {
         this.plugin = plugin;
+        repelRadius = plugin.getConfig().getDouble("items.wirts-lantern.mob-repel.radius", 12.0);
+        repelIntervalTicks = plugin.getConfig().getInt("items.wirts-lantern.mob-repel.interval-ticks", 20);
+        repelParticleChance = plugin.getConfig().getDouble("items.wirts-lantern.mob-repel.particle-chance", 0.3);
         startRepelTask();
     }
 
@@ -56,7 +60,7 @@ public class WirtsLanternHandler implements Listener {
                     repelNearbyEntities(p);
                 }
             }
-        }.runTaskTimer(plugin, 0L, REPEL_INTERVAL_TICKS);
+        }.runTaskTimer(plugin, 0L, repelIntervalTicks);
     }
 
     private boolean hasLantern(Player p) {
@@ -70,7 +74,7 @@ public class WirtsLanternHandler implements Listener {
 
     private void repelNearbyEntities(Player p) {
         Location center = p.getLocation();
-        for (Entity entity : p.getWorld().getNearbyEntities(center, REPEL_RADIUS, REPEL_RADIUS, REPEL_RADIUS)) {
+        for (Entity entity : p.getWorld().getNearbyEntities(center, repelRadius, repelRadius, repelRadius)) {
             if (entity.equals(p)) continue;
             if (entity instanceof Player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
@@ -86,7 +90,7 @@ public class WirtsLanternHandler implements Listener {
                 mob.setTarget(null);
             }
 
-            if (random.nextDouble() < 0.3) {
+            if (random.nextDouble() < repelParticleChance) {
                 p.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, living.getLocation().add(0, 1, 0), 3, 0.3, 0.3, 0.3, 0.01);
             }
         }

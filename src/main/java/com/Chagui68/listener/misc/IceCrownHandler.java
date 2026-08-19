@@ -43,12 +43,15 @@ public class IceCrownHandler implements Listener {
     private final Set<UUID> activeBlizzards = ConcurrentHashMap.newKeySet();
     private final Map<UUID, SelectedBlock> selectedBlocks = new ConcurrentHashMap<>();
 
-    private static final long SNOW_BLOCK_COOLDOWN_MS = 10000;
     private static final long SELECT_TIMEOUT_MS = 10000;
-    private static final long BLIZZARD_COOLDOWN_MS = 60000;
-    private static final double PROJECTILE_SPEED = 2.0;
-    private static final int PROJECTILE_MAX_TICKS = 100;
     private static final double GRAVITY = 0.08;
+
+    private long snowBlockCooldownMs;
+    private long blizzardCooldownMs;
+    private double projectileSpeed;
+    private int projectileMaxTicks;
+    private double blizzardDamagePerTick;
+    private double icePathFreezeChance;
 
     private static class SelectedBlock {
         final Location location;
@@ -70,6 +73,12 @@ public class IceCrownHandler implements Listener {
 
     public IceCrownHandler(Plugin plugin) {
         this.plugin = plugin;
+        snowBlockCooldownMs = plugin.getConfig().getLong("items.ice-crown.snow-block-launch.cooldown-ms", 10000);
+        blizzardCooldownMs = plugin.getConfig().getLong("items.ice-crown.blizzard.cooldown-ms", 60000);
+        projectileSpeed = plugin.getConfig().getDouble("items.ice-crown.snow-block-launch.projectile-speed", 2.0);
+        projectileMaxTicks = plugin.getConfig().getInt("items.ice-crown.snow-block-launch.max-ticks", 100);
+        blizzardDamagePerTick = plugin.getConfig().getDouble("items.ice-crown.blizzard.damage-per-tick", 3.5);
+        icePathFreezeChance = plugin.getConfig().getDouble("items.ice-crown.ice-path.adjacent-freeze-chance", 0.3);
     }
 
     private boolean hasCrown(Player p) {
@@ -113,8 +122,8 @@ public class IceCrownHandler implements Listener {
     private void performSnowBlockLaunch(Player p) {
         UUID id = p.getUniqueId();
         Long last = snowBlockCooldowns.get(id);
-        if (last != null && System.currentTimeMillis() - last < SNOW_BLOCK_COOLDOWN_MS) {
-            long remaining = (SNOW_BLOCK_COOLDOWN_MS - (System.currentTimeMillis() - last)) / 1000;
+        if (last != null && System.currentTimeMillis() - last < snowBlockCooldownMs) {
+            long remaining = (snowBlockCooldownMs - (System.currentTimeMillis() - last)) / 1000;
             p.sendMessage(ChatColor.RED + "Snow Block Launch on cooldown (" + remaining + "s)");
             return;
         }
@@ -164,10 +173,9 @@ public class IceCrownHandler implements Listener {
         if (distance > 0) {
             Vector direction = toTarget.normalize();
             double horizontalDistance = Math.sqrt(direction.getX() * direction.getX() + direction.getZ() * direction.getZ());
-            double timeToTarget = horizontalDistance / PROJECTILE_SPEED;
+double timeToTarget = horizontalDistance / projectileSpeed;
             double requiredYVelocity = (toTarget.getY() + 0.5 * GRAVITY * timeToTarget * timeToTarget) / timeToTarget;
-
-            Vector velocity = direction.multiply(PROJECTILE_SPEED).setY(requiredYVelocity);
+            Vector velocity = direction.multiply(projectileSpeed).setY(requiredYVelocity);
             fb.setVelocity(velocity);
         }
 
@@ -185,7 +193,7 @@ public class IceCrownHandler implements Listener {
             @Override
             public void run() {
                 ticks++;
-                if (ticks > PROJECTILE_MAX_TICKS || fb.isDead() || !fb.isValid()) {
+                if (ticks > projectileMaxTicks || fb.isDead() || !fb.isValid()) {
                     if (fb.isValid()) fb.remove();
                     cancel();
                     return;
@@ -284,8 +292,8 @@ public class IceCrownHandler implements Listener {
     private void performBlizzard(Player p) {
         UUID id = p.getUniqueId();
         Long last = blizzardCooldowns.get(id);
-        if (last != null && System.currentTimeMillis() - last < BLIZZARD_COOLDOWN_MS) {
-            long remaining = (BLIZZARD_COOLDOWN_MS - (System.currentTimeMillis() - last)) / 1000;
+        if (last != null && System.currentTimeMillis() - last < blizzardCooldownMs) {
+            long remaining = (blizzardCooldownMs - (System.currentTimeMillis() - last)) / 1000;
             p.sendMessage(ChatColor.RED + "Blizzard on cooldown (" + remaining + "s)");
             return;
         }
@@ -340,7 +348,7 @@ public class IceCrownHandler implements Listener {
                 for (Entity entity : p.getWorld().getNearbyEntities(center, expandingRadius, 4, expandingRadius)) {
                     if (entity instanceof LivingEntity && entity != p) {
                         LivingEntity le = (LivingEntity) entity;
-                        le.damage(3.0, p);
+                        le.damage(blizzardDamagePerTick, p);
                         le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2));
                         le.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 40, 2));
                         Vector pushDir = le.getLocation().toVector().subtract(center.toVector());
@@ -385,7 +393,7 @@ public class IceCrownHandler implements Listener {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 Block adj = to.clone().add(dx, -1, dz).getBlock();
-                if (adj.getType() == Material.WATER && random.nextDouble() < 0.3) {
+                if (adj.getType() == Material.WATER && random.nextDouble() < icePathFreezeChance) {
                     adj.setType(Material.FROSTED_ICE);
                 }
             }

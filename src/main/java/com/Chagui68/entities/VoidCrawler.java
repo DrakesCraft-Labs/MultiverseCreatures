@@ -25,9 +25,13 @@ public class VoidCrawler implements Listener {
     private final Random random = new Random();
     private final Map<UUID, VoidCrawlerInstance> active = new HashMap<>();
     private static final String TAG = "MSC_VoidCrawler";
+    private double phaseTeleportChance;
+    private double dropChance;
 
     public VoidCrawler(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        phaseTeleportChance = plugin.getConfig().getDouble("entities.void-crawler.phase-teleport-chance", 0.1);
+        dropChance = plugin.getConfig().getDouble("entities.void-crawler.drop-chance", 0.5);
         if (!plugin.isEnabled("entities.void-crawler")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -107,7 +111,7 @@ public class VoidCrawler implements Listener {
                     sLoc.getWorld().playSound(free, Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 0.6f);
                     inst.phaseCooldown = 0;
                 }
-            } else if (random.nextDouble() < 0.1) {
+            } else if (random.nextDouble() < phaseTeleportChance) {
                 List<Location> blocks = new ArrayList<>();
                 for (int x = -2; x <= 2; x++) {
                     for (int y = -1; y <= 1; y++) {
@@ -174,7 +178,7 @@ public class VoidCrawler implements Listener {
         if (!spider.getScoreboardTags().contains(TAG)) return;
         active.remove(spider.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.5) {
+        if (Math.random() < dropChance) {
             spider.getWorld().dropItemNaturally(spider.getLocation(), VoidEssence.VOID_ESSENCE.clone());
         }
         event.setDroppedExp(35);

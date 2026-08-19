@@ -26,9 +26,11 @@ public class FlameElemental implements Listener {
     private final Random random = new Random();
     private final Map<UUID, FlameElementalInstance> active = new HashMap<>();
     private static final String TAG = "MSC_FlameElemental";
+    private double dropChance;
 
     public FlameElemental(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        dropChance = plugin.getConfig().getDouble("entities.flame-elemental.drop-chance", 0.6);
         if (!plugin.isEnabled("entities.flame-elemental")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -182,7 +184,7 @@ public class FlameElemental implements Listener {
         if (!blaze.getScoreboardTags().contains(TAG)) return;
         active.remove(blaze.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.6) {
+        if (Math.random() < dropChance) {
             blaze.getWorld().dropItemNaturally(blaze.getLocation(), MagmaCore.MAGMA_CORE.clone());
         }
         event.setDroppedExp(40);

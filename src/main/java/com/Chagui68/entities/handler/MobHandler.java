@@ -1,6 +1,7 @@
 package com.Chagui68.entities.handler;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.entities.miniboss.DioBoss;
 import com.Chagui68.items.misc.IceCrown;
 import com.Chagui68.items.weapons.melee.Excalibur;
 import com.Chagui68.items.food.ScoobyCookie;
@@ -34,12 +35,12 @@ import static com.Chagui68.items.food.ScoobyCookie.SCOOBY_COOKIE;
 
 public class MobHandler implements Listener {
 
-    private static final double SHAGGY_CHANCE = 0.3;
-
     private final Random random = new Random();
     private final MultiverseCreatures plugin;
 
     private double spawnRateMultiplier;
+    private double merchantChance;
+    private double zombieHorseTrapChance;
     private double dioBossChance;
     private double mahoragaChance;
     private double obsidianGuardChance;
@@ -71,23 +72,25 @@ public class MobHandler implements Listener {
     public void reloadConfig() {
         var config = plugin.getConfig();
         spawnRateMultiplier = config.getDouble("general.spawn-rate-multiplier", 0.5);
+        merchantChance = config.getDouble("entities.merchant.spawn-chance", 0.6) * spawnRateMultiplier;
+        zombieHorseTrapChance = config.getDouble("entities.zombie-horse-trap.spawn-chance", 0.1) * spawnRateMultiplier;
         dioBossChance = config.getDouble("entities.dio-boss.spawn-chance", 0.005) * spawnRateMultiplier;
         mahoragaChance = config.getDouble("entities.mahoraga.spawn-chance", 0.02) * spawnRateMultiplier;
-        obsidianGuardChance = config.getDouble("entities.obsidian-guard.spawn-chance", 0.02) * spawnRateMultiplier;
-        headSlimeChance = config.getDouble("entities.head-slime.spawn-chance", 0.1) * spawnRateMultiplier;
-        creeperJrChance = config.getDouble("entities.creeper-jr.spawn-chance", 0.15) * spawnRateMultiplier;
-        shadowRogueChance = config.getDouble("entities.shadow-rogue.spawn-chance", 0.05) * spawnRateMultiplier;
-        boneShieldChance = config.getDouble("entities.bone-shield.spawn-chance", 0.06) * spawnRateMultiplier;
+        obsidianGuardChance = config.getDouble("entities.obsidian-guard.spawn-chance", 0.1) * spawnRateMultiplier;
+        headSlimeChance = config.getDouble("entities.head-slime.spawn-chance", 0.3) * spawnRateMultiplier;
+        creeperJrChance = config.getDouble("entities.creeper-jr.spawn-chance", 0.02) * spawnRateMultiplier;
+        shadowRogueChance = config.getDouble("entities.shadow-rogue.spawn-chance", 0.02) * spawnRateMultiplier;
+        boneShieldChance = config.getDouble("entities.bone-shield.spawn-chance", 0.1) * spawnRateMultiplier;
         flameElementalChance = config.getDouble("entities.flame-elemental.spawn-chance", 0.1) * spawnRateMultiplier;
-        frostGolemBuildChance = config.getDouble("entities.frost-golem.build-spawn-chance", 0.2) * spawnRateMultiplier;
-        voidCrawlerChance = config.getDouble("entities.void-crawler.spawn-chance", 0.07) * spawnRateMultiplier;
-        stormCallerChance = config.getDouble("entities.storm-caller.spawn-chance", 0.04) * spawnRateMultiplier;
-        venomWitchChance = config.getDouble("entities.venom-witch.spawn-chance", 0.05) * spawnRateMultiplier;
-        soulReaperChance = config.getDouble("entities.soul-reaper.spawn-chance", 0.05) * spawnRateMultiplier;
-        chaosMageChance = config.getDouble("entities.chaos-mage.spawn-chance", 0.06) * spawnRateMultiplier;
-        enderKnightChance = config.getDouble("entities.ender-knight.spawn-chance", 0.04) * spawnRateMultiplier;
-        discTraderChance = config.getDouble("entities.disc-trader.spawn-chance", 0.05) * spawnRateMultiplier;
-        warlordChance = config.getDouble("entities.warlord.spawn-chance", 0.1) * spawnRateMultiplier;
+        frostGolemBuildChance = config.getDouble("entities.frost-golem.build-spawn-chance", 0.4) * spawnRateMultiplier;
+        voidCrawlerChance = config.getDouble("entities.void-crawler.spawn-chance", 0.08) * spawnRateMultiplier;
+        stormCallerChance = config.getDouble("entities.storm-caller.spawn-chance", 0.1) * spawnRateMultiplier;
+        venomWitchChance = config.getDouble("entities.venom-witch.spawn-chance", 0.1) * spawnRateMultiplier;
+        soulReaperChance = config.getDouble("entities.soul-reaper.spawn-chance", 0.02) * spawnRateMultiplier;
+        chaosMageChance = config.getDouble("entities.chaos-mage.spawn-chance", 0.6) * spawnRateMultiplier;
+        enderKnightChance = config.getDouble("entities.ender-knight.spawn-chance", 0.1) * spawnRateMultiplier;
+        discTraderChance = config.getDouble("entities.disc-trader.spawn-chance", 0.5) * spawnRateMultiplier;
+        warlordChance = config.getDouble("entities.warlord.spawn-chance", 0.3) * spawnRateMultiplier;
         warlordRaidChance = config.getDouble("entities.warlord.raid-spawn-chance", 0.5) * spawnRateMultiplier;
         stormCallerRaidChance = config.getDouble("entities.storm-caller.raid-spawn-chance", 0.5) * spawnRateMultiplier;
         venomWitchRaidChance = config.getDouble("entities.venom-witch.raid-spawn-chance", 0.5) * spawnRateMultiplier;
@@ -104,19 +107,14 @@ public class MobHandler implements Listener {
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER_EGG
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.REINFORCEMENTS
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.BREEDING
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.VILLAGE_INVASION
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.PATROL
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.BUILD_IRONGOLEM) {
-            return;
-        }
+        if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.RAID) return;
 
         Location loc = event.getLocation();
         EntityType type = event.getEntityType();
+
+        if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER && random.nextDouble() >= 0.05) {
+            return;
+        }
 
         switch (type) {
             case ZOMBIE -> handleZombieSpawn(event, loc);
@@ -156,14 +154,16 @@ public class MobHandler implements Listener {
 
     private void handleRaidWitchSpawn(CreatureSpawnEvent event) {
         if (random.nextDouble() < stormCallerRaidChance) {
-            if (debug) plugin.getLogger().info("[MobHandler] Converting witch to Storm Caller at " + event.getLocation());
+            if (debug)
+                plugin.getLogger().info("[MobHandler] Converting witch to Storm Caller at " + event.getLocation());
             if (!plugin.isEnabled("entities.storm-caller")) return;
             Witch witch = (Witch) event.getEntity();
             scheduleRaidConversion(() -> plugin.getStormCaller().convertExisting(witch));
             return;
         }
         if (random.nextDouble() < venomWitchRaidChance) {
-            if (debug) plugin.getLogger().info("[MobHandler] Converting witch to Venom Witch at " + event.getLocation());
+            if (debug)
+                plugin.getLogger().info("[MobHandler] Converting witch to Venom Witch at " + event.getLocation());
             if (!plugin.isEnabled("entities.venom-witch")) return;
             Witch witch = (Witch) event.getEntity();
             scheduleRaidConversion(() -> plugin.getVenomWitch().convertExisting(witch));
@@ -172,7 +172,8 @@ public class MobHandler implements Listener {
 
     private void handleRaidEvokerSpawn(CreatureSpawnEvent event) {
         if (random.nextDouble() < chaosMageRaidChance) {
-            if (debug) plugin.getLogger().info("[MobHandler] Converting evoker to Chaos Mage at " + event.getLocation());
+            if (debug)
+                plugin.getLogger().info("[MobHandler] Converting evoker to Chaos Mage at " + event.getLocation());
             if (!plugin.isEnabled("entities.chaos-mage")) return;
             Evoker evoker = (Evoker) event.getEntity();
             scheduleRaidConversion(() -> plugin.getChaosMage().convertExisting(evoker));
@@ -199,13 +200,13 @@ public class MobHandler implements Listener {
         World world = loc.getWorld();
 
         if (random.nextDouble() < dioBossChance) {
-            if (!plugin.isEnabled("entities.dio-boss")) return;
+            if (!DioBoss.isFeatureEnabled() || !plugin.isEnabled("entities.dio-boss")) return;
             event.setCancelled(true);
             plugin.getDioBoss().trySpawnDio(loc);
             return;
         }
 
-        if (world.getMoonPhase() == MoonPhase.FULL_MOON && random.nextDouble() < 0.001) {
+        if (world.getMoonPhase() == MoonPhase.FULL_MOON && random.nextDouble() < zombieHorseTrapChance) {
             if (!plugin.isEnabled("entities.zombie-horse-trap")) return;
             event.setCancelled(true);
             plugin.getZombieHorseTrap().trySpawn(loc);
@@ -339,7 +340,7 @@ public class MobHandler implements Listener {
     }
 
     private void handleTraderSpawn(CreatureSpawnEvent event) {
-        if (random.nextDouble() < SHAGGY_CHANCE) {
+        if (random.nextDouble() < merchantChance) {
             if (!plugin.isEnabled("entities.merchant")) return;
             equipWanderingVillager((WanderingTrader) event.getEntity());
         }

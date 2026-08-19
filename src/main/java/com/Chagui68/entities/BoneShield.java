@@ -27,9 +27,13 @@ public class BoneShield implements Listener {
     private final Random random = new Random();
     private final Map<UUID, BoneShieldInstance> active = new HashMap<>();
     private static final String TAG = "MSC_BoneShield";
+    private double shieldEquipChance;
+    private double dropChance;
 
     public BoneShield(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        shieldEquipChance = plugin.getConfig().getDouble("entities.bone-shield.shield-equip-chance", 0.05);
+        dropChance = plugin.getConfig().getDouble("entities.bone-shield.drop-chance", 0.8);
         if (!plugin.isEnabled("entities.bone-shield")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -138,7 +142,7 @@ public class BoneShield implements Listener {
             }
         }
 
-        if (random.nextDouble() < 0.05 && inst.boneShieldHealth > 0) {
+        if (random.nextDouble() < shieldEquipChance && inst.boneShieldHealth > 0) {
             EntityEquipment eq = sk.getEquipment();
             if (eq != null && eq.getItemInOffHand().getType() == Material.AIR) {
                 ItemStack shield = new ItemStack(Material.SHIELD);
@@ -183,7 +187,7 @@ public class BoneShield implements Listener {
         if (!sk.getScoreboardTags().contains(TAG)) return;
         active.remove(sk.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.8) {
+        if (Math.random() < dropChance) {
             sk.getWorld().dropItemNaturally(sk.getLocation(), ReinforcedBone.REINFORCED_BONE.clone());
         }
         event.setDroppedExp(40);

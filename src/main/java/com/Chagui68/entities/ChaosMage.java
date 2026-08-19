@@ -23,6 +23,7 @@ public class ChaosMage implements Listener {
     private final Random random = new Random();
     private final Map<UUID, ChaosMageInstance> active = new HashMap<>();
     private static final String TAG = "MSC_ChaosMage";
+    private double dropChance;
 
     private static final List<PotionEffectType> DEBUFFS = List.of(
             PotionEffectType.POISON, PotionEffectType.WITHER, PotionEffectType.SLOWNESS,
@@ -32,6 +33,7 @@ public class ChaosMage implements Listener {
 
     public ChaosMage(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        dropChance = plugin.getConfig().getDouble("entities.chaos-mage.drop-chance", 0.3);
         if (!plugin.isEnabled("entities.chaos-mage")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -181,7 +183,7 @@ public class ChaosMage implements Listener {
         if (!evoker.getScoreboardTags().contains(TAG)) return;
         active.remove(evoker.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.6) {
+        if (Math.random() < dropChance) {
             evoker.getWorld().dropItemNaturally(evoker.getLocation(), ChaosOrb.CHAOS_ORB.clone());
         }
         event.setDroppedExp(50);

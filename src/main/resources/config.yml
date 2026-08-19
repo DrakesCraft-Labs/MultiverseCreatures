@@ -142,6 +142,11 @@ items:
     target-protection:
       enabled: true
 
+  ### Nullshear Edge
+  nullshear-edge:
+    enabled: true
+    darkness-chance: 0.1
+
   ### Dio Stand Head
   dio-stand:
     enabled: true
@@ -189,7 +194,7 @@ entities:
   ### Multiverse Merchant (Wandering Trader)
   merchant:
     enabled: true
-    spawn-chance: 0.3
+    spawn-chance: 0.6
     custom-name: "&6Multiverse Merchant"
     name-visible: true
     trades:
@@ -260,6 +265,8 @@ entities:
   mahoraga:
     enabled: true
     spawn-chance: 0.02
+    drop-chance: 0.75
+    ignore-diamond-chance: 1.0
     slimefun-adaptation: true
     # Retirado: Mahoraga ya no puede matar de un golpe atravesando Infinity Singularity.
     adaptation-cooldown-seconds: 6
@@ -274,7 +281,7 @@ entities:
   ### Head Slime
   head-slime:
     enabled: true
-    spawn-chance: 0.1
+    spawn-chance: 0.3
     size: 1
     speed: 0.5
     leap-range: 5.0
@@ -297,7 +304,7 @@ entities:
   ### Creeper Jr.
   creeper-jr:
     enabled: true
-    spawn-chance: 0.04
+    spawn-chance: 0.02
     scale: 0.6
     speed: 0.5
     explosion-radius: 2
@@ -311,6 +318,7 @@ entities:
   ### Zombie Horse Trap (Military)
   zombie-horse-trap:
     enabled: true
+    spawn-chance: 0.1
     military-component-drop-chance: 0.3
     death-messages:
       - "&a%player% was overrun by the zombie cavalry"
@@ -320,17 +328,20 @@ entities:
   ### Bone Shield
   bone-shield:
     enabled: true
-    spawn-chance: 0.06
+    spawn-chance: 0.1
+    shield-equip-chance: 0.05
+    drop-chance: 0.8
     death-messages:
       - "&7%player% broke their bones against the Bone Shield"
       - "&7%player% was boned by the Bone Shield"
       - "&7%player% shattered against the bone wall"
 
-  ### Chaos Mage
+### Chaos Mage
   chaos-mage:
     enabled: true
-    spawn-chance: 0.4
+    spawn-chance: 0.6
     raid-spawn-chance: 0.5
+    drop-chance: 0.3
     death-messages:
       - "&5%player% was consumed by chaos magic"
       - "&5%player% could not escape the Chaos Mage's spells"
@@ -339,7 +350,8 @@ entities:
   ### Ender Knight
   ender-knight:
     enabled: true
-    spawn-chance: 0.04
+    spawn-chance: 0.1
+    drop-chance: 0.55
     death-messages:
       - "&5%player% was pulled into the void by the Ender Knight"
       - "&5%player% was overwhelmed by the Ender Knight"
@@ -348,12 +360,13 @@ entities:
   ### Disc Trader
   disc-trader:
     enabled: true
-    spawn-chance: 0.05
+    spawn-chance: 0.5
 
   ### Flame Elemental
   flame-elemental:
     enabled: true
     spawn-chance: 0.1
+    drop-chance: 0.6
     death-messages:
       - "&c%player% was burned to ashes by a Flame Elemental"
       - "&c%player% got too close to the fire"
@@ -363,7 +376,8 @@ entities:
   frost-golem:
     enabled: true
     # Chance of a player-built iron golem becoming a Frost Golem
-    build-spawn-chance: 0.2
+    build-spawn-chance: 0.4
+    drop-chance: 0.75
     death-messages:
       - "&b%player% was frozen solid by the Frost Golem"
       - "&b%player% was crushed by the Frost Golem's ice"
@@ -372,7 +386,8 @@ entities:
   ### Obsidian Guard
   obsidian-guard:
     enabled: true
-    spawn-chance: 0.02
+    spawn-chance: 0.1
+    drop-chance: 0.85
     death-messages:
       - "&8%player% was smashed by the Obsidian Guard"
       - "&8%player% was shattered by obsidian"
@@ -381,7 +396,8 @@ entities:
   ### Shadow Rogue
   shadow-rogue:
     enabled: true
-    spawn-chance: 0.05
+    spawn-chance: 0.02
+    drop-chance: 0.5
     death-messages:
       - "&8%player% was backstabbed by a Shadow Rogue"
       - "&8%player% was eliminated from the shadows"
@@ -390,7 +406,8 @@ entities:
   ### Soul Reaper
   soul-reaper:
     enabled: true
-    spawn-chance: 0.05
+    spawn-chance: 0.02
+    drop-chance: 0.6
     death-messages:
       - "&5%player%'s soul was harvested by the Soul Reaper"
       - "&5%player% was drained of life"
@@ -399,8 +416,9 @@ entities:
   ### Storm Caller
   storm-caller:
     enabled: true
-    spawn-chance: 0.04
+    spawn-chance: 0.1
     raid-spawn-chance: 0.5
+    drop-chance: 0.6
     death-messages:
       - "&e%player% was struck down by the Storm Caller"
       - "&e%player% was caught in the storm"
@@ -409,8 +427,9 @@ entities:
   ### Venom Witch
   venom-witch:
     enabled: true
-    spawn-chance: 0.05
+    spawn-chance: 0.1
     raid-spawn-chance: 0.5
+    drop-chance: 0.6
     death-messages:
       - "&a%player% was poisoned by the Venom Witch"
       - "&a%player% fell to the Venom Witch's brew"
@@ -419,7 +438,9 @@ entities:
   ### Void Crawler
   void-crawler:
     enabled: true
-    spawn-chance: 0.07
+    spawn-chance: 0.08
+    phase-teleport-chance: 0.1
+    drop-chance: 0.5
     death-messages:
       - "&5%player% was dragged into the void by a Void Crawler"
       - "&5%player% was consumed by darkness"
@@ -428,7 +449,7 @@ entities:
   ### Warlord
   warlord:
     enabled: true
-    spawn-chance: 0.1
+    spawn-chance: 0.3
     raid-spawn-chance: 0.5
     debug: true
     death-messages:
@@ -466,6 +487,19 @@ entities:
     seal-damage: 15.0
     hover-barrage-damage: 12.0
     sentinel-core-drop-chance: 100.0
+    medium-range-attack-chance: 15.0
+    far-range-attack-chance: 85.0
+    attack-weight-healing-circle: 25
+    attack-weight-fly-up: 15
+    attack-weight-shield-seal: 35
+    attack-weight-ground: 55
+    defense-activation-chance: 30
+    defense-weight-stone-skin: 35
+    defense-weight-reflect-barrier: 65
+    defense-cooldown-base-ticks: 300
+    defense-cooldown-variance-ticks: 300
+    shield-plant-interval-base-ticks: 300
+    shield-plant-interval-variance-ticks: 100
     death-messages:
       - "&c%player% was sealed by the Obsidian Sentinel"
       - "&c%player% was judged by the Obsidian Sentinel"

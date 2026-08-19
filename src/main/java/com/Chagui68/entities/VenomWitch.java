@@ -25,9 +25,11 @@ public class VenomWitch implements Listener {
     private final Random random = new Random();
     private final Map<UUID, VenomWitchInstance> active = new HashMap<>();
     private static final String TAG = "MSC_VenomWitch";
+    private double dropChance;
 
     public VenomWitch(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        dropChance = plugin.getConfig().getDouble("entities.venom-witch.drop-chance", 0.6);
         if (!plugin.isEnabled("entities.venom-witch")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -149,7 +151,7 @@ public class VenomWitch implements Listener {
         if (!witch.getScoreboardTags().contains(TAG)) return;
         active.remove(witch.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.6) {
+        if (Math.random() < dropChance) {
             witch.getWorld().dropItemNaturally(witch.getLocation(), VenomGland.VENOM_GLAND.clone());
         }
         event.setDroppedExp(30);

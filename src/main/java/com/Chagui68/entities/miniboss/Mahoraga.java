@@ -53,8 +53,9 @@ public class Mahoraga implements Listener {
     private boolean infinityWeaponAdaptation;
     private boolean infinityTrueDamage;
     private long armorAdaptationCooldownMillis;
+    private double dropChance;
+    private double ignoreDiamondChance;
     private static final String TAG = "MSC_Mahoraga";
-    private static final double IGNORE_DIAMOND_CHANCE = 1.0;
     private static final double INFINITY_WEAPON_DAMAGE = 1.0;
     private static final double ARROW_REDUCTION_PER_STEP = 0.2;
     private static final double ARROW_MAX_REDUCTION = 0.8;
@@ -76,6 +77,8 @@ public class Mahoraga implements Listener {
         ignoreDiamondMod = plugin.getConfig().getBoolean("entities.mahoraga.ignore-diamond-mod", true);
         infinityWeaponAdaptation = plugin.getConfig().getBoolean("entities.mahoraga.infinity-weapon-adaptation", true);
         armorAdaptationCooldownMillis = plugin.getConfig().getLong("entities.mahoraga.adaptation-cooldown-seconds", 6L) * 1_000L;
+        dropChance = plugin.getConfig().getDouble("entities.mahoraga.drop-chance", 0.75);
+        ignoreDiamondChance = plugin.getConfig().getDouble("entities.mahoraga.ignore-diamond-chance", 1.0);
     }
 
     private void reloadExisting() {
@@ -306,7 +309,7 @@ public class Mahoraga implements Listener {
         if (!zombie.getScoreboardTags().contains(TAG)) return;
         armorAdaptations.remove(zombie.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.75) {
+        if (Math.random() < dropChance) {
             zombie.getWorld().dropItemNaturally(zombie.getLocation(), WheelEssence.WHEEL_ESSENCE.clone());
         }
         event.setDroppedExp(150);
@@ -335,7 +338,7 @@ public class Mahoraga implements Listener {
 
         if (ignoreDiamondMod && event.isCancelled() && !player.isDead()
                 && SlimefunArmorAdaptation.hasDiamondMod(player.getInventory().getItemInMainHand())
-                && random.nextDouble() < IGNORE_DIAMOND_CHANCE) {
+                && random.nextDouble() < ignoreDiamondChance) {
             // 30% chance to ignore the Tinker Diamond modification, which
             // reflects the hit back at Mahoraga and cancels it. Un-cancel so
             // the blow lands (the reflected damage was already dealt and is

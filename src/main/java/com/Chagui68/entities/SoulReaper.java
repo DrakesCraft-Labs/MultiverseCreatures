@@ -31,9 +31,11 @@ public class SoulReaper implements Listener {
     private final Random random = new Random();
     private final Map<UUID, SoulReaperInstance> active = new HashMap<>();
     private static final String TAG = "MSC_SoulReaper";
+    private double dropChance;
 
     public SoulReaper(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        dropChance = plugin.getConfig().getDouble("entities.soul-reaper.drop-chance", 0.6);
         if (!plugin.isEnabled("entities.soul-reaper")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -180,7 +182,7 @@ public class SoulReaper implements Listener {
         if (!ws.getScoreboardTags().contains(TAG)) return;
         active.remove(ws.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.6) {
+        if (Math.random() < dropChance) {
             ws.getWorld().dropItemNaturally(ws.getLocation(), ReaperEssence.REAPER_ESSENCE.clone());
         }
         event.setDroppedExp(60);

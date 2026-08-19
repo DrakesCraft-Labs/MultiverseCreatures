@@ -34,9 +34,11 @@ public class FrostGolem implements Listener {
     private final Random random = new Random();
     private final Map<UUID, FrostGolemInstance> active = new HashMap<>();
     private static final String TAG = "MSC_FrostGolem";
+    private double dropChance;
 
     public FrostGolem(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        dropChance = plugin.getConfig().getDouble("entities.frost-golem.drop-chance", 0.75);
         if (!plugin.isEnabled("entities.frost-golem")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -212,7 +214,7 @@ public class FrostGolem implements Listener {
         if (!golem.getScoreboardTags().contains(TAG)) return;
         active.remove(golem.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.75) {
+        if (Math.random() < dropChance) {
             golem.getWorld().dropItemNaturally(golem.getLocation(), FrostHeart.FROST_HEART.clone());
         }
         event.setDroppedExp(80);

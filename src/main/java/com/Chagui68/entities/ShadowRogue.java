@@ -29,9 +29,11 @@ public class ShadowRogue implements Listener {
     private final Random random = new Random();
     private final Map<UUID, ShadowRogueInstance> activeRogues = new HashMap<>();
     private static final String TAG = "MSC_ShadowRogue";
+    private double dropChance;
 
     public ShadowRogue(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        dropChance = plugin.getConfig().getDouble("entities.shadow-rogue.drop-chance", 0.5);
         if (!plugin.isEnabled("entities.shadow-rogue")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -152,7 +154,7 @@ public class ShadowRogue implements Listener {
         if (!sk.getScoreboardTags().contains(TAG)) return;
         activeRogues.remove(sk.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.5) {
+        if (Math.random() < dropChance) {
             sk.getWorld().dropItemNaturally(sk.getLocation(), ShadowCloak.SHADOW_CLOAK.clone());
         }
         event.setDroppedExp(30);

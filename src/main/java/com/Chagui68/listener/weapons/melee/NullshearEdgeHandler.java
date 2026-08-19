@@ -29,9 +29,11 @@ public class NullshearEdgeHandler implements Listener {
     private final Plugin plugin;
     private final Map<UUID, Long> blinkCooldowns = new ConcurrentHashMap<>();
     private final Set<UUID> inVoidDamage = ConcurrentHashMap.newKeySet();
+    private double darknessChance;
 
     public NullshearEdgeHandler(Plugin plugin) {
         this.plugin = plugin;
+        darknessChance = plugin.getConfig().getDouble("items.nullshear-edge.darkness-chance", 0.1);
     }
 
     private boolean isNullshear(ItemStack item) {
@@ -93,7 +95,7 @@ public class NullshearEdgeHandler implements Listener {
         }
 
         // Darkness chance
-        if (p.getWorld().hasStorm() || Math.random() < NullshearEdge.DARKNESS_CHANCE) {
+        if (p.getWorld().hasStorm() || Math.random() < darknessChance) {
             target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, NullshearEdge.DARKNESS_DURATION_TICKS, 0, false, false));
         }
     }

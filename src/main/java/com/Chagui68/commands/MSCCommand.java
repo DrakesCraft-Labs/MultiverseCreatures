@@ -56,6 +56,7 @@ import com.Chagui68.items.weapons.melee.SoulreapScythe;
 import com.Chagui68.items.weapons.melee.Venomfang;
 import com.Chagui68.items.weapons.ranged.AetherPullshot;
 import com.Chagui68.music.MusicDisc;
+import com.Chagui68.entities.miniboss.DioBoss;
 import com.Chagui68.entities.miniboss.Mahoraga;
 import com.Chagui68.entities.boss.MagicSealListener;
 import org.bukkit.*;
@@ -225,7 +226,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(GREEN + "Spawned Multiverse Merchant!");
             }
             case "dio" -> {
-                if (!plugin.isEnabled("entities.dio-boss")) {
+                if (!DioBoss.isFeatureEnabled() || !plugin.isEnabled("entities.dio-boss")) {
                     sender.sendMessage(RED + "Dio Boss is disabled due to excessive resource consumption.");
                     return;
                 }
