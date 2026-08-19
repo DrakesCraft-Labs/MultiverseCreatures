@@ -70,11 +70,33 @@ public class DioBoss implements Listener {
         if (!plugin.isEnabled("entities.dio-boss")) {
             plugin.getLogger().warning("[DioBoss] Disabled in config due to excessive resource consumption. "
                     + "Natural spawns and /msc spawn dio are disabled.");
+            removeExistingBosses();
             return;
         }
         Bukkit.getPluginManager().registerEvents(this, plugin);
         reloadConfig();
         reloadExistingBosses();
+    }
+
+    private void removeExistingBosses() {
+        int removed = 0;
+        for (World world : Bukkit.getWorlds()) {
+            for (Zombie zombie : world.getEntitiesByClass(Zombie.class)) {
+                if (!zombie.getScoreboardTags().contains("MSC_DioBoss")) continue;
+                for (Entity entity : zombie.getNearbyEntities(50, 20, 50)) {
+                    if (entity instanceof ArmorStand stand && stand.getScoreboardTags().contains("MSC_DioStand")) {
+                        stand.remove();
+                        break;
+                    }
+                }
+                activeBosses.remove(zombie.getUniqueId());
+                zombie.remove();
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            plugin.getLogger().info("[DioBoss] Removed " + removed + " leftover Dio boss(es) because the feature is disabled.");
+        }
     }
 
     public void reloadConfig() {
@@ -92,6 +114,7 @@ public class DioBoss implements Listener {
     }
 
     private void reloadExistingBosses() {
+        if (!plugin.isEnabled("entities.dio-boss")) return;
         for (World world : Bukkit.getWorlds()) {
             for (Zombie zombie : world.getEntitiesByClass(Zombie.class)) {
                 if (!zombie.getScoreboardTags().contains("MSC_DioBoss")) continue;
@@ -230,6 +253,14 @@ public class DioBoss implements Listener {
             public void run() {
                 Zombie zombie = instance.zombie;
                 ArmorStand stand = instance.stand;
+
+                if (!plugin.isEnabled("entities.dio-boss")) {
+                    if (stand != null && stand.isValid()) stand.remove();
+                    activeBosses.remove(zombie.getUniqueId());
+                    zombie.remove();
+                    cancel();
+                    return;
+                }
 
                 if (zombie.isDead() || !zombie.isValid()) {
                     if (stand != null && stand.isValid()) stand.remove();
@@ -572,6 +603,7 @@ public class DioBoss implements Listener {
 
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
+        if (!plugin.isEnabled("entities.dio-boss")) return;
         for (Entity entity : event.getChunk().getEntities()) {
             if (!(entity instanceof Zombie zombie)) continue;
             if (!zombie.getScoreboardTags().contains("MSC_DioBoss")) continue;
