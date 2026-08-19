@@ -259,7 +259,7 @@ entities:
   ### Mahoraga (miniboss)
   mahoraga:
     enabled: true
-    spawn-chance: 0.02
+    spawn-chance: 0.002
     slimefun-adaptation: true
     # Retirado: Mahoraga ya no puede matar de un golpe atravesando Infinity Singularity.
     adaptation-cooldown-seconds: 6
@@ -270,6 +270,18 @@ entities:
       - "&f%player% could not adapt to Mahoraga"
       - "&f%player% was obliterated by Mahoraga"
       - "&f%player% stood no chance against Mahoraga"
+
+  ### Garou (Miniboss / Cazador de Héroes)
+  garou:
+    enabled: true
+    spawn-chance: 0.0015
+    health: 1800.0
+    speed: 0.38
+    attack-damage: 28.0
+    death-messages:
+      - "&5%player% fue destrozado por el Puño de Agua Rompedor de Rocas de Garou"
+      - "&5%player% fue superado por la evolución marcial de Garou"
+      - "&5%player% sintió el terror del Cazador de Héroes"
 
   ### Head Slime
   head-slime:

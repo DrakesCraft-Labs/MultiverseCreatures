@@ -58,6 +58,7 @@ public class MobHandler implements Listener {
     private double discTraderChance;
     private double warlordChance;
     private double warlordRaidChance;
+    private double garouChance;
     private double stormCallerRaidChance;
     private double venomWitchRaidChance;
     private double chaosMageRaidChance;
@@ -72,7 +73,8 @@ public class MobHandler implements Listener {
         var config = plugin.getConfig();
         spawnRateMultiplier = config.getDouble("general.spawn-rate-multiplier", 0.5);
         dioBossChance = config.getDouble("entities.dio-boss.spawn-chance", 0.005) * spawnRateMultiplier;
-        mahoragaChance = config.getDouble("entities.mahoraga.spawn-chance", 0.02) * spawnRateMultiplier;
+        mahoragaChance = config.getDouble("entities.mahoraga.spawn-chance", 0.002) * spawnRateMultiplier;
+        garouChance = config.getDouble("entities.garou.spawn-chance", 0.0015) * spawnRateMultiplier;
         obsidianGuardChance = config.getDouble("entities.obsidian-guard.spawn-chance", 0.02) * spawnRateMultiplier;
         headSlimeChance = config.getDouble("entities.head-slime.spawn-chance", 0.1) * spawnRateMultiplier;
         creeperJrChance = config.getDouble("entities.creeper-jr.spawn-chance", 0.15) * spawnRateMultiplier;
@@ -104,12 +106,17 @@ public class MobHandler implements Listener {
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
+        // Bloquear terminantemente generadores de mobs (spawners y trial spawners)
+        if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER
+                || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER_EGG
+                || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.TRIAL_SPAWNER
+                || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.BREEDING) {
+            return;
+        }
+
         if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER_EGG
                 && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.REINFORCEMENTS
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.BREEDING
                 && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.VILLAGE_INVASION
-                && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER
                 && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.PATROL
                 && event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.BUILD_IRONGOLEM) {
             return;
@@ -197,9 +204,12 @@ public class MobHandler implements Listener {
         if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER_EGG) return;
 
         World world = loc.getWorld();
+        if (world == null) return;
 
         if (random.nextDouble() < dioBossChance) {
             if (!plugin.isEnabled("entities.dio-boss")) return;
+            boolean hasDio = !world.getNearbyEntities(loc, 64, 32, 64, e -> e.getScoreboardTags().contains("MSC_DioBoss")).isEmpty();
+            if (hasDio) return;
             event.setCancelled(true);
             plugin.getDioBoss().trySpawnDio(loc);
             return;
@@ -214,6 +224,8 @@ public class MobHandler implements Listener {
 
         if (random.nextDouble() < mahoragaChance) {
             if (!plugin.isEnabled("entities.mahoraga")) return;
+            boolean hasMahoraga = !world.getNearbyEntities(loc, 64, 32, 64, e -> e.getScoreboardTags().contains("MSC_Mahoraga")).isEmpty();
+            if (hasMahoraga) return;
             event.setCancelled(true);
             plugin.getMahoraga().trySpawn(loc);
             return;
@@ -299,6 +311,16 @@ public class MobHandler implements Listener {
     }
 
     private void handleWitherSkeletonSpawn(CreatureSpawnEvent event, Location loc) {
+        if (random.nextDouble() < garouChance) {
+            if (!plugin.isEnabled("entities.garou")) return;
+            if (loc.getWorld() != null) {
+                boolean hasGarou = !loc.getWorld().getNearbyEntities(loc, 64, 32, 64, e -> e.getScoreboardTags().contains("MSC_Garou")).isEmpty();
+                if (hasGarou) return;
+            }
+            event.setCancelled(true);
+            plugin.getGarouBoss().trySpawn(loc);
+            return;
+        }
         if (random.nextDouble() < soulReaperChance) {
             if (!plugin.isEnabled("entities.soul-reaper")) return;
             event.setCancelled(true);

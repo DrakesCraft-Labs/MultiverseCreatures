@@ -96,7 +96,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SPAWNABLE_ENTITIES = Arrays.asList(
             "armorstand", "merchant", "dio", "creeperjr", "headslime", "zombietrap", "tank",
-            "duelist", "lancer", "camel", "sniper", "mahoraga", "shadowrogue", "flameelemental",
+            "duelist", "lancer", "camel", "sniper", "mahoraga", "garou", "shadowrogue", "flameelemental",
             "frostgolem", "voidcrawler", "stormcaller", "boneshield", "venomwitch",
             "obsidianguard", "soulreaper", "chaosmage", "enderknight", "kinger", "disctrader",
             "warlord"
@@ -268,6 +268,14 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(GREEN + "Spawned Mahoraga!");
                 } else {
                     sender.sendMessage(RED + "Failed to spawn Mahoraga.");
+                }
+            }
+            case "garou" -> {
+                boolean success = plugin.getGarouBoss().trySpawn(p.getLocation());
+                if (success) {
+                    sender.sendMessage(GREEN + "Spawned Garou [Cazador de Héroes]!");
+                } else {
+                    sender.sendMessage(RED + "Failed to spawn Garou.");
                 }
             }
             case "armorstand", "armorstandboss" -> {

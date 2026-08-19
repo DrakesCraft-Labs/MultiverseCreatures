@@ -68,6 +68,7 @@ public class MultiverseCreatures extends JavaPlugin {
     private HeadSlime headSlime;
     private ZombieHorseTrap zombieHorseTrap;
     private Mahoraga mahoraga;
+    private com.Chagui68.entities.miniboss.GarouBoss garouBoss;
     private ArmorStandBoss armorStandBoss;
     private MagicSealListener magicSealListener;
     private MusicManager musicManager;
@@ -117,6 +118,7 @@ public class MultiverseCreatures extends JavaPlugin {
         headSlime = new HeadSlime(this);
         zombieHorseTrap = new ZombieHorseTrap(this);
         mahoraga = new Mahoraga(this);
+        garouBoss = new com.Chagui68.entities.miniboss.GarouBoss(this);
         armorStandBoss = new ArmorStandBoss(this);
         magicSealListener = new MagicSealListener(this);
         musicManager = new MusicManager(this);
@@ -224,6 +226,10 @@ public class MultiverseCreatures extends JavaPlugin {
 
     public Mahoraga getMahoraga() {
         return mahoraga;
+    }
+
+    public com.Chagui68.entities.miniboss.GarouBoss getGarouBoss() {
+        return garouBoss;
     }
 
     public ArmorStandBoss getArmorStandBoss() {
