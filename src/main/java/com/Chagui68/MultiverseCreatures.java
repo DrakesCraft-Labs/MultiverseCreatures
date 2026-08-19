@@ -99,8 +99,32 @@ public class MultiverseCreatures extends JavaPlugin {
         return getConfig().getBoolean(section + ".enabled", true);
     }
 
+    /** Crea un respaldo preventivo de config.yml antes de cualquier operación. */
+    private void backupConfigFile() {
+        try {
+            java.io.File dataFolder = getDataFolder();
+            if (!dataFolder.exists()) {
+                dataFolder.mkdirs();
+            }
+            java.io.File target = new java.io.File(dataFolder, "config.yml");
+            if (target.exists() && target.length() > 0) {
+                java.io.File backupsDir = new java.io.File(dataFolder, "backups");
+                if (!backupsDir.exists()) {
+                    backupsDir.mkdirs();
+                }
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss");
+                String timestamp = sdf.format(new java.util.Date());
+                java.io.File backupFile = new java.io.File(backupsDir, "config_backup_" + timestamp + ".yml");
+                java.nio.file.Files.copy(target.toPath(), backupFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (Exception e) {
+            getLogger().warning("[Backup] No se pudo crear backup de config.yml: " + e.getMessage());
+        }
+    }
+
     @Override
     public void onEnable() {
+        backupConfigFile();
         saveDefaultConfig();
 
         if (getConfig().getBoolean("recipes.enabled", true)) {
