@@ -22,9 +22,9 @@
 
 > ### 🏰 ¡Únete a la Comunidad Oficial de DrakesCraft!
 > 
-> * 🎮 **IP del Servidor**: `play.drakescraft.net` *(Java 1.21.11 & Bedrock)*
+> * 🎮 **IP del Servidor**: `play.drakescraft.cl` *(Java 1.21.11 & Bedrock)*
 > * 💬 **Discord Oficial**: [discord.gg/drakescraft](https://discord.gg/rR7FbfCt9Y)
-> * 🌐 **Web & Guía**: [drakescraft.net](https://drakescraft.net) — 🛒 **Tienda**: [tienda.drakescraft.net](https://tienda.drakescraft.net)
+> * 🌐 **Web & Guía**: [drakescraft.cl](https://drakescraft.cl) — 🛒 **Tienda**: [tienda.drakescraft.cl](https://tienda.drakescraft.cl)
 > 
 > *¡Juega con este addon y más de 80 expansiones optimizadas en vivo en nuestra network de supervivencia técnica!*
 
@@ -40,6 +40,7 @@ MultiverseCreatures is a content plugin for **Minecraft 1.21+** that turns a ser
 
 - **🛡️ One Final Boss** — *THE OBSIDIAN SENTINEL*, a fully animated 5-phase ArmorStand boss with **33 unique attacks** (13 aerial · 11 ground · 12 ranged), boss bar, megalovania music, magic seals, summoned reinforcements, and defensive states.
 - **🧠 Adaptive Bosses** — *Mahoraga* reads your **full inventory every tick** and evolves its stats in real time (Sharpness → Resistance, Protection → Strength, Knockback → knockback immunity, distance → Speed).
+- **🥋 Primordial Martial Bosses** — *Garou [Hero Hunter]* with Water Stream Rock Smashing Fist, cosmic approach blink, counter-attacks, and the *Cosmic Core* relic drop.
 - **🌌 Themed Minibosses** — *Dio Brando* (JoJo) with an invulnerable Stand ArmorStand that casts **THE WORLD: FREEZING**, freezing every nearby player and locking their movement.
 - **⚔️ Legendary Weapons** — *Excalibur*, *Cinder Greatsword*, *Nullshear Edge*, *Soulreap Scythe*, *Aether Pullshot*, *Skyfire Talisman* — each with passive + active abilities, cooldowns, and themed lore.
 - **🔮 Themed Relics** — *Ice King's Crown* (ice projectile + blizzard + ice-path), *Mantis Claws* (wall-cling + wall-jump via packet interception), *Wirt's Lantern* (mob repel + Night Vision + immunity), *Dio's Stand Head* (summoned Stand with time-freeze attack).
