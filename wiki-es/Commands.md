@@ -24,7 +24,6 @@ Invoca una sola entidad (o una formación táctica) en la ubicación del ejecuto
 | Tipo | Entidad |
 |---|---|
 | `merchant` | Comerciante Multiversal ("Shaggy" Comerciante Errante) |
-| `dio` | Boss Dio Brando |
 | `mahoraga` | Minijefe Mahoraga |
 | `kinger` | Minijefe Kinger |
 | `armorstand` (`armorstandboss`) | EL CENTINELA DE OBSIDIANA, jefe final |
@@ -89,7 +88,6 @@ La cantidad por defecto es 1 y puede ser de 1 a 64.
 | `icecrown` | `crown` |
 | `mantisclaws` | `claws` |
 | `wirtslantern` | `lantern` |
-| `diostand` | `dio` |
 | `militarymine` | `mine` |
 | `scoobycookie` | `cookie` |
 | `headslimegelatin` | `gelatin` |
@@ -220,7 +218,7 @@ Teletransporta al ejecutor entre mundos/dimensiones. Se usa para probar el andam
 
 ## /msc cleanstands
 
-Itera todos los mundos y elimina cada ArmorStand cuya etiqueta de scoreboard empiece por `MSC_`. Útil para limpiar después de una pelea de jefe o un crash durante una batalla. **Limpia los compañeros Stand del jefe, los ItemDisplays invocados, las plantillas de jefe aéreo muertas u obsoletas y los Stands de Dio de los jugadores.**
+Itera todos los mundos y elimina cada ArmorStand cuya etiqueta de scoreboard empiece por `MSC_`. Útil para limpiar después de una pelea de jefe o un crash durante una batalla. **Limpia los compañeros Stand del jefe, los ItemDisplays invocados y las plantillas de jefe aéreo muertas u obsoletas.**
 
 ---
 

@@ -40,7 +40,6 @@ public class MobHandler implements Listener {
     private final MultiverseCreatures plugin;
 
     private double spawnRateMultiplier;
-    private double dioBossChance;
     private double mahoragaChance;
     private double obsidianGuardChance;
     private double headSlimeChance;
@@ -73,7 +72,6 @@ public class MobHandler implements Listener {
     public void reloadConfig() {
         var config = plugin.getConfig();
         spawnRateMultiplier = config.getDouble("general.spawn-rate-multiplier", 0.5);
-        dioBossChance = config.getDouble("entities.dio-boss.spawn-chance", 0.005) * spawnRateMultiplier;
         mahoragaChance = config.getDouble("entities.mahoraga.spawn-chance", 0.002) * spawnRateMultiplier;
         garouChance = config.getDouble("entities.garou.spawn-chance", 0.0015) * spawnRateMultiplier;
         obsidianGuardChance = config.getDouble("entities.obsidian-guard.spawn-chance", 0.02) * spawnRateMultiplier;
@@ -207,15 +205,6 @@ public class MobHandler implements Listener {
 
         World world = loc.getWorld();
         if (world == null) return;
-
-        if (random.nextDouble() < dioBossChance) {
-            if (!plugin.isEnabled("entities.dio-boss")) return;
-            boolean hasDio = !world.getNearbyEntities(loc, 64, 32, 64, e -> e.getScoreboardTags().contains("MSC_DioBoss")).isEmpty();
-            if (hasDio) return;
-            event.setCancelled(true);
-            plugin.getDioBoss().trySpawnDio(loc);
-            return;
-        }
 
         if (world.getMoonPhase() == MoonPhase.FULL_MOON && random.nextDouble() < zombieHorseTrapChance) {
             if (!plugin.isEnabled("entities.zombie-horse-trap")) return;

@@ -1,6 +1,6 @@
 # 🐉 Bosses
 
-MultiverseCreatures includes **one final boss** and **three minibosses**. All bosses are spawned via `/msc spawn <type>` (OP-only) and have configurable health/damage/cooldowns in `config.yml`.
+MultiverseCreatures includes **one final boss** and **two minibosses**. All bosses are spawned via `/msc spawn <type>` (OP-only) and have configurable health/damage/cooldowns in `config.yml`.
 
 ---
 
@@ -74,30 +74,6 @@ Additional `/msc attack` targets for **mechanics & phase transitions**: `triangl
 ### Drops
 
 1000 XP on death, plus the "THE OBSIDIAN SENTINEL / Has been defeated!" title broadcast. Lightning + wither-death sound on death.
-
----
-
-## 🌟 Dio Brando — Miniboss (JoJo's Bizarre Adventure)
-
-| Stat | Default |
-|---|---|
-| Health | `dio-boss.health` (300) |
-| Attack Damage | `dio-boss.damage` (10) |
-| Cooldown | `dio-boss.cooldown-ms` (120 s) |
-| Spawn | `/msc spawn dio` |
-| Natural spawn | `dio-boss.spawn-chance` (0.5%) — replaces Zombies (not from spawners) |
-
-**Appearance:** Zombie with a custom Dio player-head helmet (base64 skin texture), gold armor with Netherite/Emerald trims (Vex/Silence/Ward patterns). `MaximumNoDamageTicks = 0` (no i-frames).
-
-**The Stand:** An invulnerable ArmorStand (`MSC_DioStand`) hovers behind Dio, wearing Dio Stand Head + gold armor.
-
-### Abilities
-
-- **THE WORLD: FREEZING** — if no fleeing player is in range, freezes all players within `freeze-radius` (50) for `freeze-duration-ticks` (100) using `FreezeAbility`. Players are locked via Slowness 255 + Jump Boost 128 (position-locked, head-rotation allowed). Title `"THE WORLD: FREEZING · Time has stopped!"`. After the duration, deals `freeze-damage` (10) to all players within `freeze-damage-radius` (30). A 24-sword ItemDisplay animation (glowing IRON_SWORDs) surrounds each frozen player and flies through them over ~15 ticks.
-- **THE WORLD: TELEPORT** — targets the furthest player outside `teleport-inner-radius` (25), teleports Dio 2 blocks behind them, applies Darkness I + Slowness I (100 ticks), boosts attack speed to 100, and triggers a **Stand Punch**: 3-tick alternating arm pose animation on the Stand ArmorStand with CRIT particles + strong-attack sound at the target location.
-- **On every melee hit** Dio also triggers a Stand Punch animation at the damaged player.
-
-**Drops:** `dio-boss.drop-chance` (10%) to drop **Dio Stand Head**. 500 XP. Lightning + wither-death sound on death; Stand ArmorStand is removed.
 
 ---
 

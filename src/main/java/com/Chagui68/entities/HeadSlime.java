@@ -71,7 +71,7 @@ public class HeadSlime implements Listener {
             "MSC_EnderKnight", "MSC_VenomWitch"
     );
     private static final Set<String> MSC_BLACKLIST = Set.of(
-            TAG, "MSC_DioBoss", "MSC_Mahoraga", "MSC_ArmorBossSummoned"
+            TAG, "MSC_Mahoraga", "MSC_ArmorBossSummoned"
     );
 
     private String getMscEntityTag(Set<String> tags) {
@@ -306,11 +306,6 @@ public class HeadSlime implements Listener {
     }
 
     private void tickAttachedMob(HeadSlimeInstance inst, Mob mob) {
-        if (mob.getScoreboardTags().contains("MSC_DioBoss")) {
-            detach(inst, mob);
-            return;
-        }
-
         if (inst.damageTicks % buffIntervalTicks == 0) {
             mob.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, buffIntervalTicks + 20, 1, false, true));
             mob.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, buffIntervalTicks + 20, 1, false, true));
@@ -496,7 +491,7 @@ public class HeadSlime implements Listener {
 
             if (!isTarget && targetEntities && entity instanceof Monster) {
                 Set<String> tags = entity.getScoreboardTags();
-                isTarget = !tags.contains(TAG) && !tags.contains("MSC_DioBoss")
+                isTarget = !tags.contains(TAG)
                         && !tags.contains("MSC_Mahoraga") && getMscEntityTag(tags) != null;
             }
 

@@ -1,6 +1,6 @@
 # 🎒 Objetos
 
-Esta página cubre los objetos varios distintivos (Corona del Rey Helado, Garras de Mantis, Linterna de Wirt, Cabeza del Stand de Dio), objetos de utilidad (Mina Militar) y alimentos (Galleta de Scooby, Gelatina de Head Slime).
+Esta página cubre los objetos varios distintivos (Corona del Rey Helado, Garras de Mantis, Linterna de Wirt), objetos de utilidad (Mina Militar) y alimentos (Galleta de Scooby, Gelatina de Head Slime).
 
 Todos los objetos usan `ItemBuilder` y etiquetas PDC `msc_<objeto>` únicas. Usa **`/msc give <objeto>`** para obtenerlos (solo OP).
 
@@ -77,45 +77,6 @@ Una linterna que guarda un alma perdida.
 - **Give:** `/msc give wirtslantern` (alias `lantern`)
 - **Intercambio:** del Comerciante Multiversal por 32 Arena de Almas + 16 Tierra de Almas
 - **Tema:** Khand (linterna protectora estilo Diablo Tristram)
-
----
-
-## 🌟 Cabeza del Stand de Dio (JoJo's Bizarre Adventure)
-
-> "Za Warudo! Toki wo tomare!"
-
-La manifestación del poder de The World.
-
-| Estadística | Valor |
-|---|---|
-| Material | PLAYER_HEAD (skin Base64 personalizada del Stand de Dio, nombre de perfil `"Dio_Stand"` con UUID aleatorio) |
-| Modelo personalizado | 1001 |
-| No se puede colocar ni usar como casco | Sí (eventos de colocación + ranura 39 cancelados) |
-
-### Habilidades
-
-| Disparador | Habilidad |
-|---|---|
-| **Pasiva (objeto en cualquier parte del inventario)** | Se invoca un ArmorStand "Stand" invulnerable (`MSC_PlayerDioStand`) detrás del jugador con armadura dorada + la Cabeza del Stand de Dio. Sigue al jugador cada tick. Se elimina al salir/soltar. |
-| **Click derecho (mientras se sostiene)** | **THE WORLD: CONGELACIÓN** — llama a `FreezeAbility.freezeInArea(player, freeze-radius, freeze-duration)` para congelar a todos los jugadores cercanos. Omite a los jugadores que sostienen su propia Cabeza del Stand de Dio. Título + sonido. |
-| **Ataque (click izquierdo con la cabeza en la mano)** | Cancela el daño normal, aplica `dio-stand.stand-damage` (por defecto 4.0) directamente vía `setHealth` (puñetazo THE WORLD). Activa una animación de Puñetazo del Stand — alterna poses de brazo izquierdo/derecho cada `stand-interval-ticks` (3 t) durante `stand-duration-ticks` (100 t) + partículas CRIT + sonido ENTITY_PLAYER_ATTACK_STRONG. |
-
-### Config
-
-| Clave | Valor por defecto |
-|---|---|
-| `dio-stand.cooldown-ms` | 120000 (2 min) |
-| `dio-stand.freeze-radius` | 50 |
-| `dio-stand.freeze-duration-ticks` | 100 |
-| `dio-stand.stand-duration-ticks` | 100 |
-| `dio-stand.stand-interval-ticks` | 3 |
-| `dio-stand.stand-damage` | 4.0 |
-| Cooldown interno del puñetazo | 15 s |
-
-Probabilidad de drop del DioBoss: `dio-boss.drop-chance` (10%).
-
-- **Give:** `/msc give diostand` (alias `dio`)
-- **Tema:** JoJo's Bizarre Adventure (DIO + The World)
 
 ---
 

@@ -109,6 +109,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     private double hoverBarrageDamage;
     private double aggroRange;
     private double maxDamagePerHit;
+    private double maxDamageDealtPerHit;
     private boolean penetratingDamageEnabled;
     private boolean penetratingBossDamage;
     private int mediumRangeAttackChance;
@@ -215,6 +216,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         this.shieldPlantIntervalBaseTicks = plugin.getConfig().getInt("entities.armor-stand-boss.shield-plant-interval-base-ticks", 300);
         this.shieldPlantIntervalVarianceTicks = plugin.getConfig().getInt("entities.armor-stand-boss.shield-plant-interval-variance-ticks", 100);
         this.penetratingDamageEnabled = plugin.getConfig().getBoolean("entities.armor-stand-boss.penetrating-damage", true);
+        this.maxDamageDealtPerHit = plugin.getConfig().getDouble("entities.armor-stand-boss.max-damage-dealt", 15.0);
         this.hoverBarrageCooldownBaseTicks = plugin.getConfig().getInt("entities.armor-stand-boss.hover-barrage-cooldown-base-ticks", 240);
         this.hoverBarrageCooldownVarianceTicks = plugin.getConfig().getInt("entities.armor-stand-boss.hover-barrage-cooldown-variance-ticks", 120);
         this.groundAttackCooldownBaseTicks = plugin.getConfig().getInt("entities.armor-stand-boss.ground-attack-cooldown-base-ticks", 40);
@@ -1930,7 +1932,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         if (!(event.getDamager() instanceof ArmorStand stand) || !stand.getScoreboardTags().contains(TAG)) return;
         if (!(event.getEntity() instanceof Player player)) return;
         if (!penetratingDamageEnabled || event.isCancelled() || player.isDead()) return;
-        double raw = event.getDamage();
+        double raw = Math.min(event.getDamage(), maxDamageDealtPerHit);
         if (raw <= 0) return;
         event.setCancelled(true);
         penetratingBossDamage = true;

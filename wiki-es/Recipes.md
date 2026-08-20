@@ -529,6 +529,5 @@ Estos objetos intencionadamente **no tienen receta de crafteo**. Provienen de dr
 | **Linterna de Wirt** | Intercambio: 32 Arena de Almas + 16 Tierra de Almas |
 | **Garras de Mantis** | Intercambio: 16 Lingotes de Hierro + 8 Cuerdas |
 | **Galleta de Scooby** (×5) | Intercambio: 20 Diamantes |
-| **Cabeza del Stand de Dio** | Drop del **Dio Boss** (minijefe) |
 
 Ver [Componentes](./Components.md) para las fuentes de drop y [Armas](./Weapons.md) / [Armaduras y Reliquias](./Armor-and-Relics.md) para los detalles de los objetos.

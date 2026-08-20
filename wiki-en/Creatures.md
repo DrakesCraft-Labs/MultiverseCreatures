@@ -14,7 +14,7 @@ A parasitic slime that leaps onto its target and **attaches as a passenger** to 
 | **MSC mob** (buff mode) | Every `buff-interval-ticks` (40 t): Strength II + Speed II + Resistance I + Fire Resistance. Re-targets the mob to nearest player. Per-mob interactions: doubles creeper explosion radius, makes skeletons fire 3 crit arrows, gives Shadow Rogue invisibility, gives Obsidian Guard absorption, etc. |
 | **Creeper with attached Head Slime** | Explosion deals **24.0 true damage** scaled by distance to players (instead of the creeper's normal damage). |
 
-Will not attach to DioBoss, Mahoraga, or a creature already wearing one.
+Will not attach to Mahoraga or a creature already wearing one.
 
 **Immunity system:** players holding Head Slime Gelatin get pushed into `immunePlayers` for 10s; witch particle ring renders around immune players and the slime auto-detaches.
 
@@ -331,7 +331,6 @@ A Wandering Trader replacement — 30% (`SHAGGY_CHANCE`) of trader spawns become
 
 | Vanilla mob | MSC replacement | Default chance |
 |---|---|---|
-| Zombie | Dio Brando | 0.5% |
 | Zombie (Full Moon) | ZombieHorseTrap (army) | 0.1% |
 | Zombie | Mahoraga | 2% |
 | Zombie | Obsidian Guard | 2% |

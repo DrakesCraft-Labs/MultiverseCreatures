@@ -65,7 +65,7 @@ public class EightHandledWheelHandler implements Listener {
         if (!(event.getEntity() instanceof Player p)) return;
         ItemStack helm = p.getInventory().getHelmet();
         if (!isWheel(helm)) return;
-        // Ignore zeroed events (e.g. Dio's melee zeroes the original attack and
+        // Ignore zeroed events (e.g. a boss melee zeroes the original attack and
         // deals the real damage through a second event) so a charge is only
         // consumed once per actual hit.
         if (event.getDamage() <= 0) return;

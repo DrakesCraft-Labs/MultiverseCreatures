@@ -1,6 +1,5 @@
 package com.Chagui68;
 
-import com.Chagui68.ability.FreezeAbility;
 import com.Chagui68.entities.miniboss.Mahoraga;
 import com.Chagui68.entities.boss.ArmorStandBoss;
 import com.Chagui68.entities.boss.MagicSealListener;
@@ -10,7 +9,6 @@ import com.Chagui68.entities.BoneShield;
 import com.Chagui68.entities.ChaosMage;
 import com.Chagui68.entities.CreeperJr;
 import com.Chagui68.entities.DiscTrader;
-import com.Chagui68.entities.miniboss.DioBoss;
 import com.Chagui68.entities.EnderKnight;
 import com.Chagui68.entities.FlameElemental;
 import com.Chagui68.entities.FrostGolem;
@@ -32,7 +30,6 @@ import com.Chagui68.listener.bossdimension.BossInvocationManager;
 import com.Chagui68.listener.combat.ItemCombatHandler;
 import com.Chagui68.listener.CustomItemPlaceHandler;
 import com.Chagui68.listener.ComponentEventGuard;
-import com.Chagui68.listener.dio.DioStandHandler;
 import com.Chagui68.listener.entities.EntitiesIAHandler;
 import com.Chagui68.listener.food.ItemFoodHandler;
 import com.Chagui68.listener.misc.DiscJukeboxHandler;
@@ -61,9 +58,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class MultiverseCreatures extends JavaPlugin {
 
-    private FreezeAbility freezeAbility;
-    private DioBoss dioBoss;
-    private DioStandHandler dioStandHandler;
     private CreeperJr creeperJr;
     private HeadSlime headSlime;
     private ZombieHorseTrap zombieHorseTrap;
@@ -135,9 +129,6 @@ public class MultiverseCreatures extends JavaPlugin {
             }
         }
 
-        freezeAbility = new FreezeAbility(this);
-        dioBoss = new DioBoss(this);
-        dioStandHandler = new DioStandHandler(this);
         creeperJr = new CreeperJr(this);
         headSlime = new HeadSlime(this);
         zombieHorseTrap = new ZombieHorseTrap(this);
@@ -222,18 +213,6 @@ public class MultiverseCreatures extends JavaPlugin {
         if (bossDimensionManager != null) {
             bossDimensionManager.unloadBossDimension();
         }
-    }
-
-    public FreezeAbility getFreezeAbility() {
-        return freezeAbility;
-    }
-
-    public DioBoss getDioBoss() {
-        return dioBoss;
-    }
-
-    public DioStandHandler getDioStandHandler() {
-        return dioStandHandler;
     }
 
     public CreeperJr getCreeperJr() {

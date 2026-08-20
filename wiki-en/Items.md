@@ -1,6 +1,6 @@
 # 🎒 Items
 
-This page covers signature misc items (Ice King's Crown, Mantis Claws, Wirt's Lantern, Dio's Stand Head), utility items (Military Mine), and food (Scooby Cookie, Head Slime Gelatin).
+This page covers signature misc items (Ice King's Crown, Mantis Claws, Wirt's Lantern), utility items (Military Mine), and food (Scooby Cookie, Head Slime Gelatin).
 
 All items use `ItemBuilder` and unique `msc_<item>` PDC tags. Use **`/msc give <item>`** to obtain (OP-only).
 
@@ -77,45 +77,6 @@ A lantern that holds a lost soul.
 - **Give:** `/msc give wirtslantern` (alias `lantern`)
 - **Trade:** from the Multiverse Merchant for 32 Soul Sand + 16 Soul Soil
 - **Theme:** Khand (Diablo Tristram-style protective lantern)
-
----
-
-## 🌟 Dio's Stand Head (JoJo's Bizarre Adventure)
-
-> "Za Warudo! Toki wo tomare!"
-
-The manifestation of The World's power.
-
-| Stat | Value |
-|---|---|
-| Material | PLAYER_HEAD (custom Base64 Dio Stand skin, profile name `"Dio_Stand"` with random UUID) |
-| Custom model data | 1001 |
-| Cannot be placed or worn as helmet | Yes (place + slot 39 events cancelled) |
-
-### Abilities
-
-| Trigger | Ability |
-|---|---|
-| **Passive (item anywhere in inventory)** | An invulnerable ArmorStand "Stand" (`MSC_PlayerDioStand`) is spawned behind the player wearing gold armor + the Dio Stand Head. Follows player each tick. Removed on quit/drop. |
-| **Right-Click (while held)** | **THE WORLD: FREEZING** — calls `FreezeAbility.freezeInArea(player, freeze-radius, freeze-duration)` to freeze all nearby players. Skips players who hold their own Dio Stand Head. Title + sound. |
-| **Attack (left-click with head in hand)** | Cancels normal damage, applies `dio-stand.stand-damage` (default 4.0) directly via `setHealth` bypass (THE WORLD punch). Triggers a Stand Punch animation — alternates left/right arm poses every `stand-interval-ticks` (3 t) for `stand-duration-ticks` (100 t) + CRIT particles + ENTITY_PLAYER_ATTACK_STRONG sound. |
-
-### Config
-
-| Key | Default |
-|---|---|
-| `dio-stand.cooldown-ms` | 120000 (2 min) |
-| `dio-stand.freeze-radius` | 50 |
-| `dio-stand.freeze-duration-ticks` | 100 |
-| `dio-stand.stand-duration-ticks` | 100 |
-| `dio-stand.stand-interval-ticks` | 3 |
-| `dio-stand.stand-damage` | 4.0 |
-| Punch internal cooldown | 15 s |
-
- DíBoss drop chance: `dio-boss.drop-chance` (10%).
-
-- **Give:** `/msc give diostand` (alias `dio`)
-- **Theme:** JoJo's Bizarre Adventure (DIO + The World)
 
 ---
 

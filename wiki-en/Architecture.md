@@ -11,7 +11,6 @@ This page is for developers who want to extend MultiverseCreatures. It explains 
 ```
 src/main/java/com/Chagui68/
 ├── MultiverseCreatures.java          Plugin entrypoint: onEnable/onDisable, recipe + listener registration
-├── ability/                           Player abilities (FreezeAbility)
 ├── commands/                          /msc command executor + tab completer
 │   └── MSCCommand.java
 ├── entities/
@@ -25,7 +24,7 @@ src/main/java/com/Chagui68/
 │   │       ├── aerial/                      13 air attacks (starfall, airslam, ...)
 │   │       ├── ground/                      11 ground attacks (shieldbash, groundslam, ...)
 │   │       └── ranged/                      12 ranged attacks (meteorstorm, spiritbeam, ...)
-│   ├── miniboss/                      DioBoss.java, Mahoraga.java
+│   ├── miniboss/                      Mahoraga.java
 │   ├── Kinger.java                    ♟️ chess-piece miniboss (ArmorStand + ItemDisplay suit)
 │   ├── DiscTrader.java                Librarian villager selling music discs
 │   └── handler/
@@ -33,7 +32,6 @@ src/main/java/com/Chagui68/
 ├── items/
 │   ├── armor/                         EightHandledWheel, ObsidianBastion
 │   ├── components/                    16 crafting ingredients (VoidEssence, MagmaCore, ...)
-│   ├── dio/                           DioStandHead
 │   ├── food/                          HeadSlimeGelatin, ScoobyCookie
 │   ├── misc/
 │   │   ├── IceCrown, MantisClaws, MilitaryMine, WirtsLantern
@@ -110,7 +108,7 @@ This pattern means you **don't need per-player modifier maps** — the attribute
 
 ### 5. MSC tagging & friendly-fire
 
-All custom entities receive an `MSC_<name>` scoreboard tag (e.g. `MSC_ObsidianGuard`, `MSC_DioStand`, `MSC_ArmorBossSummoned`). Mahoraga's MSC-friendly-fire rule and the boss's summon protections both rely on these tags: any damage event between two `MSC_*`-tagged entities is cancelled.
+All custom entities receive an `MSC_<name>` scoreboard tag (e.g. `MSC_ObsidianGuard`, `MSC_ArmorBossSummoned`). Mahoraga's MSC-friendly-fire rule and the boss's summon protections both rely on these tags: any damage event between two `MSC_*`-tagged entities is cancelled.
 
 ### 6. Packet handlers
 
@@ -165,7 +163,6 @@ Dependencies (all `provided` by Paper/Purpur at runtime):
 | Item + handler | `items/weapons/melee/Excalibur.java` + `listener/ItemCombatHandler.java` |
 | Armor set bonus | `items/armor/ObsidianBastion.java` + `listener/ObsidianBastionHandler.java` |
 | Mob spawn routing | `entities/handler/MobHandler.java` |
-| Player ability | `ability/FreezeAbility.java` |
 | Packet interception | `listener/MantisClawsHandler.java` |
 | Music engine | `music/NBSSong.java`, `music/MusicManager.java`, `music/MusicDisc.java` |
 | Jukebox discs | `listener/misc/DiscJukeboxHandler.java`, `entities/DiscTrader.java` |

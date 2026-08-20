@@ -38,8 +38,6 @@ Todos los ajustes del plugin viven en `plugins/MultiverseCreatures/config.yml`. 
 Cada reemplazo de spawn natural tiene su propia clave de probabilidad:
 
 ```yaml
-dio-boss:
-  spawn-chance: 0.005         # 0.5% de los spawns de zombie
 mahoraga:
   spawn-chance: 0.02          # 2%
 obsidian-guard:
@@ -80,20 +78,6 @@ armor-stand-boss:
   aggro-range: 50
   seal-damage: 15.0
   hover-barrage-damage: 12.0
-
-dio-boss:
-  health: 300.0
-  damage: 10.0
-  cooldown-ms: 120000
-  spawn-chance: 0.005
-  drop-chance: 0.10
-  freeze-radius: 50
-  freeze-duration-ticks: 100
-  freeze-damage: 10.0
-  freeze-damage-radius: 30
-  teleport-inner-radius: 25
-  teleport-darkness-duration: 100
-  teleport-slowness-duration: 100
 ```
 
 ### Cooldowns y amplificadores de objetos
@@ -107,14 +91,6 @@ excalibur:
 ice-king-crown:
   launch-cooldown-ms: 10000
   blizzard-cooldown-ms: 60000
-
-dio-stand:
-  cooldown-ms: 120000
-  freeze-radius: 50
-  freeze-duration-ticks: 100
-  stand-duration-ticks: 100
-  stand-interval-ticks: 3
-  stand-damage: 4.0
 ```
 
 ### Mensajes de muerte

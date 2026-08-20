@@ -51,8 +51,8 @@ public class SoulreapScytheHandler implements Listener {
         if (!isScythe(main)) return;
         if (!(event.getEntity() instanceof LivingEntity target)) return;
         // Only the scythe's own melee hits apply its mechanics. Re-dealt or
-        // secondary damage (e.g. Dio's stand re-deals its hits as THORNS with
-        // the player as the direct entity, which fires this same event type)
+        // secondary damage (e.g. thorns-style re-deals with the player as the
+        // direct entity, which fires this same event type)
         // must not trigger the drain again.
         if (event.getCause() != EntityDamageEvent.DamageCause.ENTITY_ATTACK) return;
 

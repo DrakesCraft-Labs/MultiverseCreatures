@@ -11,7 +11,6 @@ Esta página es para desarrolladores que quieran extender MultiverseCreatures. E
 ```
 src/main/java/com/Chagui68/
 ├── MultiverseCreatures.java          Punto de entrada del plugin: onEnable/onDisable, registro de recetas + listeners
-├── ability/                           Habilidades de jugador (FreezeAbility)
 ├── commands/                          Ejecutor del comando /msc + tab completer
 │   └── MSCCommand.java
 ├── entities/
@@ -25,7 +24,7 @@ src/main/java/com/Chagui68/
 │   │       ├── aerial/                      13 ataques aéreos (starfall, airslam, ...)
 │   │       ├── ground/                      11 ataques de suelo (shieldbash, groundslam, ...)
 │   │       └── ranged/                      12 ataques a distancia (meteorstorm, spiritbeam, ...)
-│   ├── miniboss/                      DioBoss.java, Mahoraga.java
+│   ├── miniboss/                      Mahoraga.java
 │   ├── Kinger.java                    ♟️ minijefe pieza de ajedrez (traje de ArmorStand + ItemDisplay)
 │   ├── DiscTrader.java                Aldeano bibliotecario que vende discos de música
 │   └── handler/
@@ -33,7 +32,6 @@ src/main/java/com/Chagui68/
 ├── items/
 │   ├── armor/                         EightHandledWheel, ObsidianBastion
 │   ├── components/                    16 ingredientes de crafteo (VoidEssence, MagmaCore, ...)
-│   ├── dio/                           DioStandHead
 │   ├── food/                          HeadSlimeGelatin, ScoobyCookie
 │   ├── misc/
 │   │   ├── IceCrown, MantisClaws, MilitaryMine, WirtsLantern
@@ -110,7 +108,7 @@ Este patrón significa que **no necesitas mapas de modificadores por jugador** �
 
 ### 5. Etiquetado MSC & fuego amigo
 
-Todas las entidades personalizadas reciben una etiqueta de scoreboard `MSC_<nombre>` (p. ej. `MSC_ObsidianGuard`, `MSC_DioStand`, `MSC_ArmorBossSummoned`). La regla de fuego amigo MSC de Mahoraga y las protecciones de invocación del jefe dependen de estas etiquetas: cualquier evento de daño entre dos entidades etiquetadas `MSC_*` se cancela.
+Todas las entidades personalizadas reciben una etiqueta de scoreboard `MSC_<nombre>` (p. ej. `MSC_ObsidianGuard`, `MSC_ArmorBossSummoned`). La regla de fuego amigo MSC de Mahoraga y las protecciones de invocación del jefe dependen de estas etiquetas: cualquier evento de daño entre dos entidades etiquetadas `MSC_*` se cancela.
 
 ### 6. Manejadores de paquetes
 
@@ -165,7 +163,6 @@ Dependencias (todas `provided` por Paper/Purpur en tiempo de ejecución):
 | Objeto + manejador | `items/weapons/melee/Excalibur.java` + `listener/ItemCombatHandler.java` |
 | Bono de set de armadura | `items/armor/ObsidianBastion.java` + `listener/ObsidianBastionHandler.java` |
 | Enrutado de spawn de mobs | `entities/handler/MobHandler.java` |
-| Habilidad de jugador | `ability/FreezeAbility.java` |
 | Intercepción de paquetes | `listener/MantisClawsHandler.java` |
 | Motor de música | `music/NBSSong.java`, `music/MusicManager.java`, `music/MusicDisc.java` |
 | Discos de jukebox | `listener/misc/DiscJukeboxHandler.java`, `entities/DiscTrader.java` |

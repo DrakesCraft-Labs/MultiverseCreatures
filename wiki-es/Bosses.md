@@ -1,6 +1,6 @@
 # 🐉 Jefes
 
-MultiverseCreatures incluye **un jefe final** y **tres minijefes**. Todos los jefes se invocan con `/msc spawn <tipo>` (solo OP) y tienen salud/daño/cooldowns configurables en `config.yml`.
+MultiverseCreatures incluye **un jefe final** y **dos minijefes**. Todos los jefes se invocan con `/msc spawn <tipo>` (solo OP) y tienen salud/daño/cooldowns configurables en `config.yml`.
 
 ---
 
@@ -74,30 +74,6 @@ Objetivos adicionales de `/msc attack` para **mecánicas y transiciones de fase*
 ### Drops
 
 1000 XP al morir, más el broadcast del título "THE OBSIDIAN SENTINEL / Has been defeated!". Rayo + sonido de muerte de wither al morir.
-
----
-
-## 🌟 Dio Brando — Minijefe (JoJo's Bizarre Adventure)
-
-| Estadística | Valor por defecto |
-|---|---|
-| Salud | `dio-boss.health` (300) |
-| Daño de ataque | `dio-boss.damage` (10) |
-| Cooldown | `dio-boss.cooldown-ms` (120 s) |
-| Invocación | `/msc spawn dio` |
-| Spawn natural | `dio-boss.spawn-chance` (0.5%) — reemplaza Zombies (no de spawners) |
-
-**Apariencia:** Zombie con un casco de cabeza de jugador personalizado de Dio (textura de skin base64), armadura dorada con trims de Netherita/Esmeralda (patrones Vex/Silence/Ward). `MaximumNoDamageTicks = 0` (sin i-frames).
-
-**El Stand:** Un ArmorStand invulnerable (`MSC_DioStand`) que flota detrás de Dio, con la Cabeza del Stand de Dio + armadura dorada.
-
-### Habilidades
-
-- **THE WORLD: CONGELACIÓN** — si no hay ningún jugador huyendo en rango, congela a todos los jugadores dentro de `freeze-radius` (50) durante `freeze-duration-ticks` (100) usando `FreezeAbility`. Los jugadores quedan bloqueados con Lentitud 255 + Salto Mejorado 128 (posición bloqueada, rotación de cabeza permitida). Título `"THE WORLD: FREEZING · Time has stopped!"`. Tras la duración, inflige `freeze-damage` (10) a todos los jugadores dentro de `freeze-damage-radius` (30). Una animación de 24 espadas ItemDisplay (IRON_SWORD brillantes) rodea a cada jugador congelado y lo atraviesa en ~15 ticks.
-- **THE WORLD: TELEPORT** — apunta al jugador más lejano fuera de `teleport-inner-radius` (25), teletransporta a Dio 2 bloques detrás de él, aplica Oscuridad I + Lentitud I (100 ticks), aumenta la velocidad de ataque a 100 y activa un **Puñetazo del Stand**: animación de 3 ticks alternando poses de brazos en el ArmorStand del Stand con partículas CRIT + sonido de ataque fuerte en la ubicación del objetivo.
-- **En cada golpe cuerpo a cuerpo** Dio también activa una animación de Puñetazo del Stand sobre el jugador dañado.
-
-**Drops:** `dio-boss.drop-chance` (10%) de dropear la **Cabeza del Stand de Dio**. 500 XP. Rayo + sonido de muerte de wither al morir; el ArmorStand del Stand se elimina.
 
 ---
 

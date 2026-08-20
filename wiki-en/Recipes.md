@@ -530,6 +530,5 @@ These items intentionally have **no crafting recipe**. They come from drops or t
 | **Wirt's Lantern** | Trade: 32 Soul Sand + 16 Soul Soil |
 | **Mantis Claws** | Trade: 16 Iron Ingots + 8 String |
 | **Scooby Cookie** (×5) | Trade: 20 Diamonds |
-| **Dio's Stand Head** | Drop from the **Dio Boss** (miniboss) |
 
 See [Components](./Components.md) for drop sources and [Weapons](./Weapons.md) / [Armor-and-Relics](./Armor-and-Relics.md) for item details.

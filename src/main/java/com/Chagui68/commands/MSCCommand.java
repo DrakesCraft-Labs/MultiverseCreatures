@@ -36,7 +36,6 @@ import com.Chagui68.items.components.VenomGland;
 import com.Chagui68.items.components.VoidEssence;
 import com.Chagui68.items.components.WheelCore;
 import com.Chagui68.items.components.WheelEssence;
-import com.Chagui68.items.dio.DioStandHead;
 import com.Chagui68.items.food.HeadSlimeGelatin;
 import com.Chagui68.items.food.ScoobyCookie;
 import com.Chagui68.items.misc.IceCrown;
@@ -95,7 +94,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     private final Map<UUID, BukkitRunnable> dummyWingTasks = new HashMap<>();
 
     private static final List<String> SPAWNABLE_ENTITIES = Arrays.asList(
-            "armorstand", "merchant", "dio", "creeperjr", "headslime", "zombietrap", "tank",
+            "armorstand", "merchant", "creeperjr", "headslime", "zombietrap", "tank",
             "duelist", "lancer", "camel", "sniper", "mahoraga", "garou", "shadowrogue", "flameelemental",
             "frostgolem", "voidcrawler", "stormcaller", "boneshield", "venomwitch",
             "obsidianguard", "soulreaper", "chaosmage", "enderknight", "kinger", "disctrader",
@@ -188,18 +187,6 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             case "merchant" -> {
                 mobHandler.spawnShaggy(p.getLocation());
                 sender.sendMessage(GREEN + "Spawned Multiverse Merchant!");
-            }
-            case "dio" -> {
-                if (!plugin.isEnabled("entities.dio-boss")) {
-                    sender.sendMessage(RED + "Dio Boss is disabled due to excessive resource consumption.");
-                    return;
-                }
-                boolean success = plugin.getDioBoss().trySpawnDio(p.getLocation());
-                if (success) {
-                    sender.sendMessage(GREEN + "Spawned Dio Brando!");
-                } else {
-                    sender.sendMessage(RED + "Failed to spawn Dio Brando.");
-                }
             }
             case "creeperjr" -> {
                 boolean success = plugin.getCreeperJr().trySpawn(p.getLocation());
@@ -401,7 +388,6 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             case "wirtslantern", "lantern" -> WirtsLantern.WIRTS_LANTERN.clone();
             case "starcore", "star" -> StarCore.STAR_CORE.clone();
             case "swordmold", "mold" -> SwordMold.SWORD_MOLD.clone();
-            case "diostand", "dio" -> DioStandHead.getHead();
             case "mantisclaws", "claws" -> MantisClaws.MANTIS_CLAWS_ITEM.clone();
             case "militarycomponent", "component" -> MilitaryComponent.MILITARY_COMPONENT.clone();
             case "militarymine", "mine" -> MilitaryMine.MILITARY_MINE.clone();
@@ -619,7 +605,6 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         plugin.reloadConfig();
         mobHandler.reloadConfig();
         plugin.getMahoraga().reloadConfig();
-        plugin.getDioBoss().reloadConfig();
         plugin.getArmorStandBoss().reloadConfig();
         plugin.getHeadSlime().reloadConfig();
         plugin.getWarlord().reloadConfig();
@@ -705,7 +690,6 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
 
                 boolean isMsc = entity.getScoreboardTags().stream().anyMatch(t -> t.startsWith("MSC_"))
                         || (entity.getCustomName() != null && (entity.getCustomName().contains("Mahoraga")
-                        || entity.getCustomName().contains("Dio")
                         || entity.getCustomName().contains("Garou")
                         || entity.getCustomName().contains("Bone Shield")
                         || entity.getCustomName().contains("Void Crawler")
@@ -1624,7 +1608,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 "sentinelgrimoire")));
         lines.addAll(categoryLines("Armor", Arrays.asList("eighthandledwheel", "obsidianbastionhelmet",
                 "obsidianbastionchestplate", "obsidianbastionleggings", "obsidianbastionboots")));
-        lines.addAll(categoryLines("Equipables", Arrays.asList("diostand", "icecrown", "wirtslantern", "mantisclaws",
+        lines.addAll(categoryLines("Equipables", Arrays.asList("icecrown", "wirtslantern", "mantisclaws",
                 "militarymine", "frostheartoffhand", "marrowaegis", "veilwalkermantle")));
         lines.addAll(categoryLines("Components", Arrays.asList("starcore", "militarycomponent", "headslimeheart",
                 "headslimegelatin", "chaosorb", "chaospowder", "chaosfragment", "chaoscore", "condensedchaosorb",
@@ -1776,7 +1760,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                         .collect(Collectors.toList()));
             } else if (subCmd.equals("give")) {
                 List<String> items = Arrays.asList(
-                        "scoobycookie", "excalibur", "icecrown", "wirtslantern", "starcore", "diostand", "mantisclaws", "militarycomponent", "militarymine", "headslimeheart", "headslimegelatin",
+                        "scoobycookie", "excalibur", "icecrown", "wirtslantern", "starcore", "mantisclaws", "militarycomponent", "militarymine", "headslimeheart", "headslimegelatin",
                         "aetherpullshot", "chaosforge", "cindergreatsword", "nullshearedge", "soulreapscythe", "skyfiretalisman", "sentinelgrimoire", "venomfang",
                         "eighthandledwheel", "obsidianbastionhelmet", "obsidianbastionchestplate", "obsidianbastionleggings", "obsidianbastionboots",
                         "frostheartoffhand", "marrowaegis", "veilwalkermantle",

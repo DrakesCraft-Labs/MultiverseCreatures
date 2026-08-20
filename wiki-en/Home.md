@@ -11,7 +11,7 @@ Welcome to the **MultiverseCreatures** wiki! This is the complete documentation 
 A Paper/Purpur/Spigot **1.21+** plugin that adds:
 
 - 1 final boss with 5 phases and 33 attacks
-- 3 minibosses (Dio, Mahoraga, Kinger)
+- 2 minibosses (Mahoraga, Kinger)
 - 14 themed creatures that replace natural spawns
 - 1 rare Full-Moon military army trap
 - 1 Wandering Trader replacement with custom trades
@@ -27,7 +27,6 @@ Every vanilla mob spawn has a configurable chance to be replaced by an MSC count
 
 | Universe / Theme | Contents |
 |---|---|
-| **JoJo's Bizarre Adventure** | Dio Brando boss · Dio's Stand Head item · "THE WORLD" time-freeze |
 | **Jujutsu Kaisen** | Mahoraga miniboss · Eight-Handled Wheel helmet | 
 | **Hollow Knight** | Mantis Claws (wall-cling + wall-jump) |
 | **Adventure Time** | Ice King's Crown (snow/blizzard/ice-path) |
@@ -50,12 +49,12 @@ Every vanilla mob spawn has a configurable chance to be replaced by an MSC count
 
 ## 📚 Pages
 
-- [Bosses](./Bosses.md) — The Obsidian Sentinel, Dio Brando, Mahoraga
+- [Bosses](./Bosses.md) — The Obsidian Sentinel, Mahoraga
 - [Ritual Dimension](./Ritual-Dimension.md) — The private boss world: how to enter and invoke the Sentinel
 - [Creatures](./Creatures.md) — All natural-spawn replacement mobs + ZombieHorseTrap army
 - [Weapons](./Weapons.md) — Excalibur, Cinder Greatsword, Nullshear Edge, Soulreap Scythe, Aether Pullshot, Skyfire Talisman, Chaos Forge
 - [Armor and Relics](./Armor-and-Relics.md) — Eight-Handled Wheel, Obsidian Bastion, off-hand relics
-- [Items](./Items.md) — Ice King's Crown, Mantis Claws, Wirt's Lantern, Dio's Stand Head, Military Mine, Scooby Cookie, Head Slime Gelatin
+- [Items](./Items.md) — Ice King's Crown, Mantis Claws, Wirt's Lantern, Military Mine, Scooby Cookie, Head Slime Gelatin
 - [Components](./Components.md) — All 16 crafting drops and what mob provides each
 - [Music](./Music.md) — Bundled NBS songs, jukebox discs and the Disc Trader, song credits
 - [Recipes](./Recipes.md) — Every custom crafting recipe (shapes, ingredients, tiers)

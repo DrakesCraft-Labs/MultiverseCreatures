@@ -151,17 +151,6 @@ items:
     void-blink-cooldown-ms: 20000
     void-blink-range: 30.0
 
-  ### Dio Stand Head
-  dio-stand:
-    enabled: true
-    cooldown-ms: 120000
-    freeze-radius: 50.0
-    freeze-duration-ticks: 100
-    stand-damage: 4.0
-    stand-total-damage: 20.0
-    stand-duration-ticks: 100
-    stand-interval-ticks: 3
-
   ### Sentinel Grimoire (book of spells)
   grimoire:
     enabled: true
@@ -234,36 +223,6 @@ entities:
           - material: "SOUL_SOIL"
             amount: 16
         max-uses: 1
-
-  ### Dio Boss (miniboss)
-  dio-boss:
-    # DISABLED: temporarily out of service due to excessive resource consumption
-    # (secondary/stand ticker and FreezeAbility). Re-enable only after a performance audit.
-    enabled: false
-    spawn-chance: 0.005
-    health: 300.0
-    damage: 10.0
-    stand-offset-y: 2.0
-    stand-offset-z: -1.0
-    stand-damage: 4.0
-    stand-duration-ticks: 100
-    stand-interval-ticks: 3
-    cooldown-ms: 120000
-    freeze-radius: 50.0
-    freeze-duration-ticks: 100
-    freeze-damage-radius: 30.0
-    freeze-damage: 10.0
-    debug: false
-    teleport-inner-radius: 25.0
-    teleport-radius: 50.0
-    teleport-darkness-duration: 100
-    teleport-slowness-duration: 100
-    teleport-slowness-amplifier: 0
-    drop-chance: 0.1
-    death-messages:
-      - "&c%player% was frozen in time by Dio"
-      - "&c%player% felt the power of THE WORLD"
-      - "&c%player% was erased by Dio's stand"
 
   ### Mahoraga (miniboss)
   mahoraga:
@@ -531,6 +490,7 @@ entities:
     hover-barrage-damage: 12.0
     sentinel-core-drop-chance: 100.0
     penetrating-damage: true
+    max-damage-dealt: 15.0
     hover-barrage-cooldown-base-ticks: 240
     hover-barrage-cooldown-variance-ticks: 120
     ground-attack-cooldown-base-ticks: 40

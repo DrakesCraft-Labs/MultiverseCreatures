@@ -24,7 +24,6 @@ Summons a single entity (or a tactical formation) at the executor's location. Th
 | Type | Entity |
 |---|---|
 | `merchant` | Multiverse Merchant ("Shaggy" Wandering Trader) |
-| `dio` | Dio Brando boss |
 | `mahoraga` | Mahoraga miniboss |
 | `kinger` | Kinger miniboss |
 | `armorstand` (`armorstandboss`) | THE OBSIDIAN SENTINEL final boss |
@@ -89,7 +88,6 @@ Amount defaults to 1 and can be 1–64.
 | `icecrown` | `crown` |
 | `mantisclaws` | `claws` |
 | `wirtslantern` | `lantern` |
-| `diostand` | `dio` |
 | `militarymine` | `mine` |
 | `scoobycookie` | `cookie` |
 | `headslimegelatin` | `gelatin` |
@@ -220,7 +218,7 @@ Teleports the executor across worlds/dimensions. Used for testing the boss dimen
 
 ## /msc cleanstands
 
-Iterates all worlds and removes every ArmorStand whose scoreboard tag starts with `MSC_`. Useful to clean up after a boss fight or a crash during a battle. **Cleans up the boss's Stand companions, summoned ItemDisplays, dead or stale air-boss templates, and player Dio Stands.**
+Iterates all worlds and removes every ArmorStand whose scoreboard tag starts with `MSC_`. Useful to clean up after a boss fight or a crash during a battle. **Cleans up the boss's Stand companions, summoned ItemDisplays, dead or stale air-boss templates.**
 
 ---
 

@@ -11,7 +11,7 @@ Bienvenido a la wiki de **MultiverseCreatures**! Esta es la documentación compl
 Un plugin para servidores **Paper/Purpur/Spigot 1.21+** que añade:
 
 - 1 jefe final con 5 fases y 33 ataques
-- 3 minijefes (Dio, Mahoraga, Kinger)
+- 2 minijefes (Mahoraga, Kinger)
 - 14 criaturas temáticas que reemplazan los spawns naturales
 - 1 raro evento de ejército militar en Luna Llena
 - 1 reemplazo del Comerciante Errante con intercambios personalizados
@@ -27,7 +27,7 @@ Cada spawn de mob vanilla tiene una probabilidad configurable de ser reemplazado
 
 | Universo / Tema | Contenido |
 |---|---|
-| **JoJo's Bizarre Adventure** | Boss Dio Brando · objeto Cabeza del Stand de Dio · congelación temporal "THE WORLD" |
+
 | **Jujutsu Kaisen** | Minijefe Mahoraga · casco Rueda de Ocho Manos |
 | **Hollow Knight** | Garras de Mantis (agarre de pared + salto de pared) |
 | **Hora de Aventura** | Corona del Rey Helado (nieve/ventisca/camino de hielo) |
@@ -50,12 +50,12 @@ Cada spawn de mob vanilla tiene una probabilidad configurable de ser reemplazado
 
 ## 📚 Páginas
 
-- [Jefes](./Bosses.md) — El Centinela de Obsidiana, Dio Brando, Mahoraga
+- [Jefes](./Bosses.md) — El Centinela de Obsidiana, Mahoraga
 - [Dimensión del Ritual](./Ritual-Dimension.md) — El mundo privado del jefe: cómo entrar e invocar al Centinela
 - [Criaturas](./Creatures.md) — Todos los mobs que reemplazan spawns naturales + el ejército ZombieHorseTrap
 - [Armas](./Weapons.md) — Excalibur, Gran Espada de Ascuas, Filo Nullshear, Guadaña Soulreap, Aether Pullshot, Talismán Skyfire, Forja del Caos
 - [Armaduras y Reliquias](./Armor-and-Relics.md) — Rueda de Ocho Manos, Bastión de Obsidiana, reliquias de mano secundaria
-- [Objetos](./Items.md) — Corona del Rey Helado, Garras de Mantis, Linterna de Wirt, Cabeza del Stand de Dio, Mina Militar, Galleta de Scooby, Gelatina de Head Slime
+- [Objetos](./Items.md) — Corona del Rey Helado, Garras de Mantis, Linterna de Wirt, Mina Militar, Galleta de Scooby, Gelatina de Head Slime
 - [Componentes](./Components.md) — Los 16 drops de crafteo y qué mob proporciona cada uno
 - [Música](./Music.md) — Canciones NBS incluidas, discos de jukebox y el Disc Trader, créditos de canciones
 - [Recetas](./Recipes.md) — Todas las recetas de crafteo personalizadas (formas, ingredientes, niveles)

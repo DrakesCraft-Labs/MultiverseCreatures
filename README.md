@@ -41,9 +41,8 @@ MultiverseCreatures is a content plugin for **Minecraft 1.21+** that turns a ser
 - **🛡️ One Final Boss** — *THE OBSIDIAN SENTINEL*, a fully animated 5-phase ArmorStand boss with **33 unique attacks** (13 aerial · 11 ground · 12 ranged), boss bar, megalovania music, magic seals, summoned reinforcements, and defensive states.
 - **🧠 Adaptive Bosses** — *Mahoraga* reads your **full inventory every tick** and evolves its stats in real time (Sharpness → Resistance, Protection → Strength, Knockback → knockback immunity, distance → Speed).
 - **🥋 Primordial Martial Bosses** — *Garou [Hero Hunter]* with Water Stream Rock Smashing Fist, cosmic approach blink, counter-attacks, and the *Cosmic Core* relic drop.
-- **🌌 Themed Minibosses** — *Dio Brando* (JoJo) with an invulnerable Stand ArmorStand that casts **THE WORLD: FREEZING**, freezing every nearby player and locking their movement.
 - **⚔️ Legendary Weapons** — *Excalibur*, *Cinder Greatsword*, *Nullshear Edge*, *Soulreap Scythe*, *Aether Pullshot*, *Skyfire Talisman* — each with passive + active abilities, cooldowns, and themed lore.
-- **🔮 Themed Relics** — *Ice King's Crown* (ice projectile + blizzard + ice-path), *Mantis Claws* (wall-cling + wall-jump via packet interception), *Wirt's Lantern* (mob repel + Night Vision + immunity), *Dio's Stand Head* (summoned Stand with time-freeze attack).
+- **🔮 Themed Relics** — *Ice King's Crown* (ice projectile + blizzard + ice-path), *Mantis Claws* (wall-cling + wall-jump via packet interception), *Wirt's Lantern* (mob repel + Night Vision + immunity).
 - **🪖 Armor Sets** — *Eight-Handled Wheel* (damage-cause adaptation), *Obsidian Bastion* (4-piece set bonus with +40% Health, knockback immunity, fire/lava immunity), plus off-hand relics *Marrow Aegis* (damage reflect), *Veilwalker Mantle* (stealth + backstab) and *Frost Heart* (chill aura + Frost Walker).
 - **🎒 Themed Food & Utility** — *Scooby Cookie* (Resistance VI), *Head Slime Gelatin* (Head Slime immunity), *Military Mine* (auto-camouflaged TNT).
 - **🌿 Natural-spawn replacements** for Zombies, Skeletons, Creepers, Spiders, Witches, Blazes, Iron Golems, Endermen, Wither Skeletons, Evokers, Slimes — each with its own chance, fully configurable.
@@ -64,11 +63,11 @@ The project has a complete documentation site built into the repository. It cove
 | Page | Topic |
 |------|-------|
 | [Home](wiki-en/Home.md) | Overview + featured themes |
-| [Bosses](wiki-en/Bosses.md) | THE OBSIDIAN SENTINEL · Dio Brando · Mahoraga |
+| [Bosses](wiki-en/Bosses.md) | THE OBSIDIAN SENTINEL · Mahoraga |
 | [Creatures](wiki-en/Creatures.md) | 14 natural-spawn replacement mobs + ZombieHorseTrap army |
 | [Weapons](wiki-en/Weapons.md) | Excalibur, Cinder Greatsword, Nullshear Edge, Soulreap Scythe, Aether Pullshot, Skyfire Talisman, Chaos Forge |
 | [Armor-and-Relics](wiki-en/Armor-and-Relics.md) | Eight-Handled Wheel, Obsidian Bastion set, off-hand relics (Marrow Aegis, Veilwalker Mantle, Frost Heart) |
-| [Items](wiki-en/Items.md) | Ice King's Crown, Mantis Claws, Wirt's Lantern, Dio's Stand Head, Military Mine, Scooby Cookie, Head Slime Gelatin |
+| [Items](wiki-en/Items.md) | Ice King's Crown, Mantis Claws, Wirt's Lantern, Military Mine, Scooby Cookie, Head Slime Gelatin |
 | [Components](wiki-en/Components.md) | The 16 mob-drop crafting ingredients + the loot → item chains |
 | [Commands](wiki-en/Commands.md) | Full `/msc` reference (spawn, give, seal, dummy, attack, music, dimtp, cleanstands) |
 | [Architecture](wiki-en/Architecture.md) | Code structure, conventions and how to extend the plugin |
@@ -158,7 +157,6 @@ Full breakdown (alias tables, all spawn types, giveable items, attack names, sea
 ```
 src/main/java/com/Chagui68/
 ├── MultiverseCreatures.java      
-├── ability/                     
 ├── commands/                     
 ├── entities/
 │   ├── boss/                    
@@ -167,7 +165,7 @@ src/main/java/com/Chagui68/
 │   ├── miniboss/                
 │   └── handler/               
 ├── items/
-│   ├── armor/ components/ food/ dio/
+│   ├── armor/ components/ food/
 │   ├── misc/                     
 │   │   └── offhand/              
 │   └── weapons/{melee,ranged,magic}/

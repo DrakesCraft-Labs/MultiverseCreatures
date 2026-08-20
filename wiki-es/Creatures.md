@@ -14,7 +14,7 @@ Un slime parásito que salta sobre su objetivo y **se adhiere como pasajero** a 
 | **Mob MSC** (modo buff) | Cada `buff-interval-ticks` (40t): Fuerza II + Velocidad II + Resistencia I + Resistencia al Fuego. Re-apunta el mob al jugador más cercano. Interacciones por mob: duplica el radio de explosión del creeper, hace que los esqueletos disparen 3 flechas críticas, da invisibilidad al Shadow Rogue, da absorción al Guardia de Obsidiana, etc. |
 | **Creeper con Head Slime adherido** | La explosión inflige **24.0 de daño verdadero** escalado por distancia a los jugadores (en lugar del daño normal del creeper). |
 
-No se adherirá a DioBoss, Mahoraga ni a una criatura que ya lleve uno.
+No se adherirá a Mahoraga ni a una criatura que ya lleve uno.
 
 **Sistema de inmunidad:** los jugadores que sostienen Gelatina de Head Slime son empujados a `immunePlayers` durante 10 s; un anillo de partículas de bruja se renderiza alrededor de los jugadores inmunes y el slime se desprende automáticamente.
 
@@ -331,7 +331,6 @@ Un reemplazo del Comerciante Errante — el 30% (`SHAGGY_CHANCE`) de los spawns 
 
 | Mob vanilla | Reemplazo MSC | Probabilidad por defecto |
 |---|---|---|
-| Zombie | Dio Brando | 0.5% |
 | Zombie (Luna Llena) | ZombieHorseTrap (ejército) | 0.1% |
 | Zombie | Mahoraga | 2% |
 | Zombie | Guardia de Obsidiana | 2% |
