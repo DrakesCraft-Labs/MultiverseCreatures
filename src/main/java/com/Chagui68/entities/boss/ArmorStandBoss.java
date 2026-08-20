@@ -58,6 +58,8 @@ import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarFlag;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
+import org.bukkit.damage.DamageSource;
+import org.bukkit.damage.DamageType;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -107,6 +109,27 @@ public class ArmorStandBoss implements Listener, BossHost {
     private double hoverBarrageDamage;
     private double aggroRange;
     private double maxDamagePerHit;
+    private boolean penetratingDamageEnabled;
+    private boolean penetratingBossDamage;
+    private int mediumRangeAttackChance;
+    private int farRangeAttackChance;
+    private int attackWeightHealingCircle;
+    private int attackWeightFlyUp;
+    private int attackWeightShieldSeal;
+    private int attackWeightGround;
+    private int defenseActivationChance;
+    private int defenseWeightStoneSkin;
+    private int defenseWeightReflectBarrier;
+    private int defenseCooldownBaseTicks;
+    private int defenseCooldownVarianceTicks;
+    private int shieldPlantIntervalBaseTicks;
+    private int shieldPlantIntervalVarianceTicks;
+    private int hoverBarrageCooldownBaseTicks;
+    private int hoverBarrageCooldownVarianceTicks;
+    private int groundAttackCooldownBaseTicks;
+    private int groundAttackCooldownVarianceTicks;
+    private double phaseTransitionSlamDamage;
+    private List<Integer> shieldRetrieveDelays;
 
     public ArmorStandBoss(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -178,6 +201,27 @@ public class ArmorStandBoss implements Listener, BossHost {
         this.hoverBarrageDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.hover-barrage-damage", 12.0);
         this.aggroRange = plugin.getConfig().getDouble("entities.armor-stand-boss.aggro-range", 50.0);
         this.maxDamagePerHit = plugin.getConfig().getDouble("entities.armor-stand-boss.max-damage-per-hit", 50.0);
+        this.mediumRangeAttackChance = plugin.getConfig().getInt("entities.armor-stand-boss.medium-range-attack-chance", 15);
+        this.farRangeAttackChance = plugin.getConfig().getInt("entities.armor-stand-boss.far-range-attack-chance", 85);
+        this.attackWeightHealingCircle = plugin.getConfig().getInt("entities.armor-stand-boss.attack-weight-healing-circle", 25);
+        this.attackWeightFlyUp = plugin.getConfig().getInt("entities.armor-stand-boss.attack-weight-fly-up", 15);
+        this.attackWeightShieldSeal = plugin.getConfig().getInt("entities.armor-stand-boss.attack-weight-shield-seal", 35);
+        this.attackWeightGround = plugin.getConfig().getInt("entities.armor-stand-boss.attack-weight-ground", 55);
+        this.defenseActivationChance = plugin.getConfig().getInt("entities.armor-stand-boss.defense-activation-chance", 30);
+        this.defenseWeightStoneSkin = plugin.getConfig().getInt("entities.armor-stand-boss.defense-weight-stone-skin", 35);
+        this.defenseWeightReflectBarrier = plugin.getConfig().getInt("entities.armor-stand-boss.defense-weight-reflect-barrier", 65);
+        this.defenseCooldownBaseTicks = plugin.getConfig().getInt("entities.armor-stand-boss.defense-cooldown-base-ticks", 300);
+        this.defenseCooldownVarianceTicks = plugin.getConfig().getInt("entities.armor-stand-boss.defense-cooldown-variance-ticks", 300);
+        this.shieldPlantIntervalBaseTicks = plugin.getConfig().getInt("entities.armor-stand-boss.shield-plant-interval-base-ticks", 300);
+        this.shieldPlantIntervalVarianceTicks = plugin.getConfig().getInt("entities.armor-stand-boss.shield-plant-interval-variance-ticks", 100);
+        this.penetratingDamageEnabled = plugin.getConfig().getBoolean("entities.armor-stand-boss.penetrating-damage", true);
+        this.hoverBarrageCooldownBaseTicks = plugin.getConfig().getInt("entities.armor-stand-boss.hover-barrage-cooldown-base-ticks", 240);
+        this.hoverBarrageCooldownVarianceTicks = plugin.getConfig().getInt("entities.armor-stand-boss.hover-barrage-cooldown-variance-ticks", 120);
+        this.groundAttackCooldownBaseTicks = plugin.getConfig().getInt("entities.armor-stand-boss.ground-attack-cooldown-base-ticks", 40);
+        this.groundAttackCooldownVarianceTicks = plugin.getConfig().getInt("entities.armor-stand-boss.ground-attack-cooldown-variance-ticks", 40);
+        this.phaseTransitionSlamDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.phase-transition-slam-damage", 10.0);
+        List<Integer> delays = plugin.getConfig().getIntegerList("entities.armor-stand-boss.shield-retrieve-delays");
+        this.shieldRetrieveDelays = delays.isEmpty() ? List.of(80, 90, 100, 110, 120) : delays;
     }
 
     public MultiverseCreatures getPlugin() {
@@ -230,7 +274,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         ArmorStand stand = (ArmorStand) location.getWorld().spawnEntity(location, EntityType.ARMOR_STAND);
         if (stand == null) return false;
 
-        double health = plugin.getConfig().getDouble("entities.armor-stand-boss.health", 1000.0) * 1.5;
+        double health = plugin.getConfig().getDouble("entities.armor-stand-boss.health", 3200.0);
         AttributeInstance maxHealthAttr = stand.getAttribute(Attribute.MAX_HEALTH);
         if (maxHealthAttr != null) maxHealthAttr.setBaseValue(health);
         stand.setHealth(health);
@@ -611,7 +655,7 @@ public class ArmorStandBoss implements Listener, BossHost {
                     } else if (instance.shieldState == ShieldState.NORMAL) {
                         instance.hoverBarrageCooldown++;
                         instance.groundAttackCooldown++;
-                        if (instance.hoverBarrageCooldown >= 240 + random.nextInt(120)) {
+                        if (instance.hoverBarrageCooldown >= hoverBarrageCooldownBaseTicks + random.nextInt(hoverBarrageCooldownVarianceTicks)) {
                             instance.hoverBarrageCooldown = 0;
 
                             double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
@@ -619,16 +663,16 @@ public class ArmorStandBoss implements Listener, BossHost {
                             double healthPct = stand.getHealth() / maxHealth;
                             int choice = random.nextInt(100);
 
-                            if (healthPct < 0.4 && choice < 25) {
+                            if (healthPct < 0.4 && choice < attackWeightHealingCircle) {
                                 stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
                                 attackRegistry.get("healingcircle").execute(instance);
-                            } else if (choice < 15) {
+                            } else if (choice < attackWeightFlyUp) {
                                 stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
                                 flyUp(instance);
-                            } else if (choice < 35) {
+                            } else if (choice < attackWeightShieldSeal) {
                                 stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.7f);
                                 attackRegistry.get("shieldseal").execute(instance);
-                            } else if (choice < 55) {
+                            } else if (choice < attackWeightGround) {
                                 stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
                                 executeRandomGroundAttack(instance);
                             } else {
@@ -636,24 +680,24 @@ public class ArmorStandBoss implements Listener, BossHost {
                             }
                         } else if (instance.defenseCooldown > 0) {
                             instance.defenseCooldown--;
-                        } else if (instance.groundAttackCooldown >= 40 + random.nextInt(40)) {
+                        } else if (instance.groundAttackCooldown >= groundAttackCooldownBaseTicks + random.nextInt(groundAttackCooldownVarianceTicks)) {
                             instance.groundAttackCooldown = 0;
                             double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
                                     ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : 500.0;
                             double healthPct = stand.getHealth() / maxHealth;
-                            if (instance.activeDefense == DefenseState.NONE && healthPct < 0.5 && random.nextInt(100) < 30) {
+                            if (instance.activeDefense == DefenseState.NONE && healthPct < 0.5 && random.nextInt(100) < defenseActivationChance) {
                                 int defChoice = random.nextInt(100);
-                                if (defChoice < 35) {
+                                if (defChoice < defenseWeightStoneSkin) {
                                     stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.6f);
                                     attackRegistry.get("stoneskin").execute(instance);
-                                } else if (defChoice < 65) {
+                                } else if (defChoice < defenseWeightReflectBarrier) {
                                     stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.6f);
                                     attackRegistry.get("reflectbarrier").execute(instance);
                                 } else {
                                     stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.6f);
                                     attackRegistry.get("absorbshield").execute(instance);
                                 }
-                                instance.defenseCooldown = 300 + random.nextInt(300);
+                                instance.defenseCooldown = defenseCooldownBaseTicks + random.nextInt(defenseCooldownVarianceTicks);
                             } else {
                                 stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
                                 executeRandomGroundAttack(instance);
@@ -734,7 +778,7 @@ public class ArmorStandBoss implements Listener, BossHost {
             if (dist < 30) {
                 Vector away = p.getLocation().toVector().subtract(loc.toVector()).normalize();
                 p.setVelocity(away.multiply(2.0).setY(1.0));
-                MscEntityUtils.damageBy(stand.entidad(), p, 10.0);
+                MscEntityUtils.damageBy(stand.entidad(), p, phaseTransitionSlamDamage);
                 p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 0));
             }
         }
@@ -1291,13 +1335,13 @@ public class ArmorStandBoss implements Listener, BossHost {
         if (nearestDist < DIST_CLOSE) {
             choice = closeAttacks[random.nextInt(closeAttacks.length)];
         } else if (nearestDist < DIST_MEDIUM) {
-            if (random.nextInt(100) < 15) {
+            if (random.nextInt(100) < mediumRangeAttackChance) {
                 executeRangedAttack(instance);
                 return;
             }
             choice = mediumAttacks[random.nextInt(mediumAttacks.length)];
         } else {
-            if (random.nextInt(100) < 85) {
+            if (random.nextInt(100) < farRangeAttackChance) {
                 executeRangedAttack(instance);
                 return;
             }
@@ -1538,18 +1582,12 @@ public class ArmorStandBoss implements Listener, BossHost {
 
 
     public int getShieldPlantInterval() {
-        return 300 + random.nextInt(100);
+        return shieldPlantIntervalBaseTicks + random.nextInt(shieldPlantIntervalVarianceTicks);
     }
 
     public int getShieldRetrieveDelay(int phase) {
-        return switch (phase) {
-            case 0 -> 80;
-            case 1 -> 90;
-            case 2 -> 100;
-            case 3 -> 110;
-            case 4 -> 120;
-            default -> 80;
-        };
+        int index = Math.min(phase, shieldRetrieveDelays.size() - 1);
+        return shieldRetrieveDelays.get(Math.max(0, index));
     }
 
     private void cleanupShield(BossInstance instance) {
@@ -1883,6 +1921,26 @@ public class ArmorStandBoss implements Listener, BossHost {
         if (stand.getScoreboardTags().contains(TAG)) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(ChatColor.RED + "You cannot interact with this entity!");
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBossAttacksPlayer(EntityDamageByEntityEvent event) {
+        if (penetratingBossDamage) return;
+        if (!(event.getDamager() instanceof ArmorStand stand) || !stand.getScoreboardTags().contains(TAG)) return;
+        if (!(event.getEntity() instanceof Player player)) return;
+        if (!penetratingDamageEnabled || event.isCancelled() || player.isDead()) return;
+        double raw = event.getDamage();
+        if (raw <= 0) return;
+        event.setCancelled(true);
+        penetratingBossDamage = true;
+        try {
+            player.damage(raw, DamageSource.builder(DamageType.OUT_OF_WORLD)
+                    .withDirectEntity(stand)
+                    .withCausingEntity(stand)
+                    .build());
+        } finally {
+            penetratingBossDamage = false;
         }
     }
 

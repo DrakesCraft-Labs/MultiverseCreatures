@@ -26,9 +26,13 @@ public class StormCaller implements Listener {
     private final Random random = new Random();
     private final Map<UUID, StormCallerInstance> active = new HashMap<>();
     private static final String TAG = "MSC_StormCaller";
+    private double dropChance;
+    private double health;
 
     public StormCaller(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        dropChance = plugin.getConfig().getDouble("entities.storm-caller.drop-chance", 0.6);
+        health = plugin.getConfig().getDouble("entities.storm-caller.health", 60.0);
         if (!plugin.isEnabled("entities.storm-caller")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -82,7 +86,7 @@ public class StormCaller implements Listener {
         witch.addScoreboardTag(TAG);
         witch.setCustomName(ChatColor.YELLOW + "" + ChatColor.BOLD + "Storm Caller");
         witch.setCustomNameVisible(true);
-        MscEntityUtils.setAttribute(witch, Attribute.MAX_HEALTH, 60.0);
+        MscEntityUtils.setAttribute(witch, Attribute.MAX_HEALTH, health);
         witch.setHealth(60.0);
         MscEntityUtils.setAttribute(witch, Attribute.MOVEMENT_SPEED, 0.28);
         witch.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 0, false, false));
@@ -159,7 +163,7 @@ public class StormCaller implements Listener {
         if (!witch.getScoreboardTags().contains(TAG)) return;
         active.remove(witch.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.6) {
+        if (Math.random() < dropChance) {
             witch.getWorld().dropItemNaturally(witch.getLocation(), StormCrystal.STORM_CRYSTAL.clone());
         }
         event.setDroppedExp(50);

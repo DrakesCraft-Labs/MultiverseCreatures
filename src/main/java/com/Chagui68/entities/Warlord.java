@@ -31,7 +31,7 @@ public class Warlord implements Listener {
     private final MultiverseCreatures plugin;
     private final Random random = new Random();
     private static final String TAG = "MSC_Warlord";
-    private static final double TRUE_DAMAGE = 4.0;
+    private double trueDamage;
     private boolean applyingTrueDamage;
     private boolean debug;
 
@@ -44,6 +44,7 @@ public class Warlord implements Listener {
     }
 
     public void reloadConfig() {
+        trueDamage = plugin.getConfig().getDouble("entities.warlord.true-damage", 4.0);
         debug = plugin.getConfig().getBoolean("entities.warlord.debug", false);
     }
 
@@ -117,14 +118,14 @@ public class Warlord implements Listener {
             // restauramos como daño real para atravesar el trait Infinity.
             applyingTrueDamage = false;
             event.setCancelled(false);
-            event.setDamage(Math.max(event.getDamage(), TRUE_DAMAGE));
+            event.setDamage(Math.max(event.getDamage(), trueDamage));
             return;
         }
 
         applyingTrueDamage = true;
         try {
             event.setCancelled(true);
-            player.damage(TRUE_DAMAGE, DamageSource.builder(DamageType.OUT_OF_WORLD)
+            player.damage(trueDamage, DamageSource.builder(DamageType.OUT_OF_WORLD)
                     .withDirectEntity(warlord)
                     .withCausingEntity(warlord)
                     .build());

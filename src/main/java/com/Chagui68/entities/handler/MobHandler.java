@@ -59,6 +59,7 @@ public class MobHandler implements Listener {
     private double warlordChance;
     private double warlordRaidChance;
     private double garouChance;
+    private double zombieHorseTrapChance;
     private double stormCallerRaidChance;
     private double venomWitchRaidChance;
     private double chaosMageRaidChance;
@@ -94,6 +95,7 @@ public class MobHandler implements Listener {
         stormCallerRaidChance = config.getDouble("entities.storm-caller.raid-spawn-chance", 0.5) * spawnRateMultiplier;
         venomWitchRaidChance = config.getDouble("entities.venom-witch.raid-spawn-chance", 0.5) * spawnRateMultiplier;
         chaosMageRaidChance = config.getDouble("entities.chaos-mage.raid-spawn-chance", 0.5) * spawnRateMultiplier;
+        zombieHorseTrapChance = config.getDouble("entities.zombie-horse-trap.spawn-chance", 0.001);
         debug = config.getBoolean("general.debug", false);
         if (debug) {
             plugin.getLogger().info("[MobHandler] spawnRateMultiplier=" + spawnRateMultiplier
@@ -215,7 +217,7 @@ public class MobHandler implements Listener {
             return;
         }
 
-        if (world.getMoonPhase() == MoonPhase.FULL_MOON && random.nextDouble() < 0.001) {
+        if (world.getMoonPhase() == MoonPhase.FULL_MOON && random.nextDouble() < zombieHorseTrapChance) {
             if (!plugin.isEnabled("entities.zombie-horse-trap")) return;
             event.setCancelled(true);
             plugin.getZombieHorseTrap().trySpawn(loc);

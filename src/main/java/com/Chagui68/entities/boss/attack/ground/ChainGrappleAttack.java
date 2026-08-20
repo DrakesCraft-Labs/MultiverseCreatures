@@ -17,8 +17,11 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 public class ChainGrappleAttack extends BossAttackBase {
+    private final double grappleDamage;
+
     public ChainGrappleAttack(BossHost boss) {
         super(boss);
+        grappleDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.chain-grapple-damage", 2.0);
     }
 
     @Override
@@ -58,7 +61,7 @@ public class ChainGrappleAttack extends BossAttackBase {
                             double dist = toBoss.length();
                             if (dist > 3) {
                                 target.setVelocity(toBoss.normalize().multiply(Math.min(1.5, dist * 0.05)));
-                                MscEntityUtils.damageBy(stand.entidad(), target, 2.0);
+                                MscEntityUtils.damageBy(stand.entidad(), target, grappleDamage);
                                 for (double y = 0; y < dist; y += 1) {
                                     Location chain = tLoc.clone().add(toBoss.normalize().multiply(y));
                                     chain.setY(chain.getY() + 1);

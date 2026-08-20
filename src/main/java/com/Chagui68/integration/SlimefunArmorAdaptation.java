@@ -182,6 +182,17 @@ public final class SlimefunArmorAdaptation {
         return "INFINITY_SINGULARITY".equals(pdc.get(ST_HEAD, PersistentDataType.STRING));
     }
 
+    /**
+     * True when the item is a Tinker tool with a weapon head (any material).
+     * Used to exempt Tinker swords from Mahoraga's damage cap.
+     */
+    public static boolean isTinkerWeapon(ItemStack item) {
+        if (!TINKER_ENABLED || ST_HEAD == null) return false;
+        if (item == null || !item.hasItemMeta()) return false;
+        PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
+        return pdc.has(ST_HEAD, PersistentDataType.STRING);
+    }
+
     private static boolean isArmorMaterial(org.bukkit.Material material) {
         String name = material.name();
         return name.endsWith("_HELMET") || name.endsWith("_CHESTPLATE")

@@ -19,11 +19,13 @@ import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Zombie;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.EntityEquipment;
@@ -53,11 +55,17 @@ public class Mahoraga implements Listener {
     private boolean infinityWeaponAdaptation;
     private boolean infinityTrueDamage;
     private long armorAdaptationCooldownMillis;
+    private double trueDamageBase;
+    private double trueDamagePerStage;
+    private double dropChance;
+    private double maxDamagePerHit;
+    private int speedEffectLevel;
+    private double health;
+    private double infinityWeaponDamage;
+    private double arrowReductionPerStep;
+    private double arrowMaxReduction;
+    private double adaptationBaseDamage;
     private static final String TAG = "MSC_Mahoraga";
-    private static final double IGNORE_DIAMOND_CHANCE = 1.0;
-    private static final double INFINITY_WEAPON_DAMAGE = 1.0;
-    private static final double ARROW_REDUCTION_PER_STEP = 0.2;
-    private static final double ARROW_MAX_REDUCTION = 0.8;
 
     public Mahoraga(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -76,6 +84,16 @@ public class Mahoraga implements Listener {
         ignoreDiamondMod = plugin.getConfig().getBoolean("entities.mahoraga.ignore-diamond-mod", true);
         infinityWeaponAdaptation = plugin.getConfig().getBoolean("entities.mahoraga.infinity-weapon-adaptation", true);
         armorAdaptationCooldownMillis = plugin.getConfig().getLong("entities.mahoraga.adaptation-cooldown-seconds", 6L) * 1_000L;
+        trueDamageBase = plugin.getConfig().getDouble("entities.mahoraga.true-damage-base", 4.0);
+        trueDamagePerStage = plugin.getConfig().getDouble("entities.mahoraga.true-damage-per-stage", 2.0);
+        dropChance = plugin.getConfig().getDouble("entities.mahoraga.drop-chance", 0.75);
+        maxDamagePerHit = plugin.getConfig().getDouble("entities.mahoraga.max-damage-per-hit", 100.0);
+        speedEffectLevel = plugin.getConfig().getInt("entities.mahoraga.speed-effect-level", 3);
+        health = plugin.getConfig().getDouble("entities.mahoraga.health", 350.0);
+        infinityWeaponDamage = plugin.getConfig().getDouble("entities.mahoraga.infinity-weapon-damage", 1.0);
+        arrowReductionPerStep = plugin.getConfig().getDouble("entities.mahoraga.arrow-reduction-per-step", 0.2);
+        arrowMaxReduction = plugin.getConfig().getDouble("entities.mahoraga.arrow-max-reduction", 0.8);
+        adaptationBaseDamage = plugin.getConfig().getDouble("entities.mahoraga.adaptation-base-damage", 4.0);
     }
 
     private void reloadExisting() {
@@ -167,7 +185,7 @@ public class Mahoraga implements Listener {
         }
         totalKnockback += maxKnockback;
 
-        double baseDamage = 4.0;
+        double baseDamage = adaptationBaseDamage;
         double totalDamage = baseDamage + bonus;
 
         if (totalOverLevel > 0) {
@@ -256,8 +274,12 @@ public class Mahoraga implements Listener {
         zombie.setRemoveWhenFarAway(false);
         zombie.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 0, false, false));
 
-        setAttribute(zombie, Attribute.MAX_HEALTH, 250.0);
-        zombie.setHealth(250.0);
+        setAttribute(zombie, Attribute.MAX_HEALTH, health);
+        zombie.setHealth(health);
+
+        if (speedEffectLevel > 1) {
+            zombie.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 999999, speedEffectLevel - 1, false, false));
+        }
 
         setWhiteLeatherArmor(zombie);
 
@@ -306,7 +328,7 @@ public class Mahoraga implements Listener {
         if (!zombie.getScoreboardTags().contains(TAG)) return;
         armorAdaptations.remove(zombie.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.75) {
+        if (Math.random() < dropChance) {
             zombie.getWorld().dropItemNaturally(zombie.getLocation(), WheelEssence.WHEEL_ESSENCE.clone());
         }
         event.setDroppedExp(150);
@@ -334,8 +356,7 @@ public class Mahoraga implements Listener {
         }
 
         if (ignoreDiamondMod && event.isCancelled() && !player.isDead()
-                && SlimefunArmorAdaptation.hasDiamondMod(player.getInventory().getItemInMainHand())
-                && random.nextDouble() < IGNORE_DIAMOND_CHANCE) {
+                && SlimefunArmorAdaptation.hasDiamondMod(player.getInventory().getItemInMainHand())) {
             // 30% chance to ignore the Tinker Diamond modification, which
             // reflects the hit back at Mahoraga and cancels it. Un-cancel so
             // the blow lands (the reflected damage was already dealt and is
@@ -360,7 +381,7 @@ public class Mahoraga implements Listener {
         if (advanced && previous != null) stage = Math.min(4, stage + 1);
         byPlayer.put(player.getUniqueId(), new AdaptationState(stage, advanced ? now : previous.lastAdvanceMillis()));
 
-        double adaptedDamage = 4.0D + stage * 2.0D;
+        double adaptedDamage = trueDamageBase + stage * trueDamagePerStage;
 
         if (infinityTrueDamage) {
             // El evento re-disparado por player.damage() vuelve a pasar por SlimeTinker
@@ -408,6 +429,28 @@ public class Mahoraga implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
+    public void onMahoragaAnyDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Zombie zombie) || !zombie.getScoreboardTags().contains(TAG)) return;
+        if (event.isCancelled()) return;
+        if (isTinkerWeaponHit(event)) return;
+        if (event.getDamage() > maxDamagePerHit) {
+            event.setDamage(maxDamagePerHit);
+        }
+    }
+
+    private boolean isTinkerWeaponHit(EntityDamageEvent event) {
+        if (!(event instanceof EntityDamageByEntityEvent byEntity)) return false;
+        Entity damager = byEntity.getDamager();
+        if (damager instanceof Player player) {
+            return SlimefunArmorAdaptation.isTinkerWeapon(player.getInventory().getItemInMainHand());
+        }
+        if (damager instanceof Projectile projectile && projectile.getShooter() instanceof Player player) {
+            return SlimefunArmorAdaptation.isTinkerWeapon(player.getInventory().getItemInMainHand());
+        }
+        return false;
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onDiamondModHitsMahoraga(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player player)) return;
         if (!(event.getEntity() instanceof Zombie zombie) || !zombie.getScoreboardTags().contains(TAG)) return;
@@ -417,7 +460,7 @@ public class Mahoraga implements Listener {
         if (infinityWeaponAdaptation && SlimefunArmorAdaptation.isInfinitySingularityWeapon(weapon)) {
             // Mahoraga has adapted to the Infinity Singularity sword: only a
             // fixed 1 damage gets through, no matter the raw hit.
-            event.setDamage(Math.min(event.getDamage(), INFINITY_WEAPON_DAMAGE));
+            event.setDamage(Math.min(event.getDamage(), infinityWeaponDamage));
             return;
         }
 
@@ -437,7 +480,7 @@ public class Mahoraga implements Listener {
         int power = Math.max(bowPower(main), bowPower(off));
         if (power <= 0) return;
 
-        double reduction = Math.min(ARROW_MAX_REDUCTION, (power / 5) * ARROW_REDUCTION_PER_STEP);
+        double reduction = Math.min(arrowMaxReduction, (power / 5) * arrowReductionPerStep);
         event.setDamage(event.getDamage() * (1.0 - reduction));
     }
 

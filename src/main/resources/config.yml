@@ -142,6 +142,15 @@ items:
     target-protection:
       enabled: true
 
+  ### Nullshear Edge
+  nullshear-edge:
+    enabled: true
+    darkness-chance: 0.1
+    void-fraction: 0.3
+    darkness-duration-ticks: 100
+    void-blink-cooldown-ms: 20000
+    void-blink-range: 30.0
+
   ### Dio Stand Head
   dio-stand:
     enabled: true
@@ -263,7 +272,17 @@ entities:
     slimefun-adaptation: true
     # Retirado: Mahoraga ya no puede matar de un golpe atravesando Infinity Singularity.
     adaptation-cooldown-seconds: 6
+    true-damage-base: 4.0
+    true-damage-per-stage: 2.0
+    drop-chance: 0.75
     ignore-diamond-mod: true
+    max-damage-per-hit: 100.0
+    speed-effect-level: 3
+    health: 350.0
+    infinity-weapon-damage: 1.0
+    arrow-reduction-per-step: 0.2
+    arrow-max-reduction: 0.8
+    adaptation-base-damage: 4.0
     infinity-weapon-adaptation: true
     death-messages:
       - "&f%player% was crushed by Mahoraga"
@@ -275,9 +294,13 @@ entities:
   garou:
     enabled: true
     spawn-chance: 0.0015
+    counter-chance: 0.25
     health: 1800.0
     speed: 0.38
     attack-damage: 28.0
+    skill-damage: 16.0
+    counter-damage: 14.0
+    counter-cooldown-ms: 3000
     death-messages:
       - "&5%player% fue destrozado por el Puño de Agua Rompedor de Rocas de Garou"
       - "&5%player% fue superado por la evolución marcial de Garou"
@@ -323,6 +346,10 @@ entities:
   ### Zombie Horse Trap (Military)
   zombie-horse-trap:
     enabled: true
+    spawn-chance: 0.001
+    tank-health: 350.0
+    duelist-health: 50.0
+    sniper-health: 40.0
     military-component-drop-chance: 0.3
     death-messages:
       - "&a%player% was overrun by the zombie cavalry"
@@ -333,6 +360,9 @@ entities:
   bone-shield:
     enabled: true
     spawn-chance: 0.06
+    shield-equip-chance: 0.05
+    drop-chance: 0.8
+    health: 120.0
     death-messages:
       - "&7%player% broke their bones against the Bone Shield"
       - "&7%player% was boned by the Bone Shield"
@@ -343,6 +373,8 @@ entities:
     enabled: true
     spawn-chance: 0.4
     raid-spawn-chance: 0.5
+    health: 70.0
+    drop-chance: 0.6
     death-messages:
       - "&5%player% was consumed by chaos magic"
       - "&5%player% could not escape the Chaos Mage's spells"
@@ -352,6 +384,8 @@ entities:
   ender-knight:
     enabled: true
     spawn-chance: 0.04
+    health: 120.0
+    drop-chance: 0.55
     death-messages:
       - "&5%player% was pulled into the void by the Ender Knight"
       - "&5%player% was overwhelmed by the Ender Knight"
@@ -366,6 +400,8 @@ entities:
   flame-elemental:
     enabled: true
     spawn-chance: 0.1
+    health: 80.0
+    drop-chance: 0.6
     death-messages:
       - "&c%player% was burned to ashes by a Flame Elemental"
       - "&c%player% got too close to the fire"
@@ -376,6 +412,8 @@ entities:
     enabled: true
     # Chance of a player-built iron golem becoming a Frost Golem
     build-spawn-chance: 0.2
+    health: 200.0
+    drop-chance: 0.75
     death-messages:
       - "&b%player% was frozen solid by the Frost Golem"
       - "&b%player% was crushed by the Frost Golem's ice"
@@ -385,6 +423,8 @@ entities:
   obsidian-guard:
     enabled: true
     spawn-chance: 0.02
+    health: 300.0
+    drop-chance: 0.85
     death-messages:
       - "&8%player% was smashed by the Obsidian Guard"
       - "&8%player% was shattered by obsidian"
@@ -394,6 +434,8 @@ entities:
   shadow-rogue:
     enabled: true
     spawn-chance: 0.05
+    health: 60.0
+    drop-chance: 0.5
     death-messages:
       - "&8%player% was backstabbed by a Shadow Rogue"
       - "&8%player% was eliminated from the shadows"
@@ -403,6 +445,8 @@ entities:
   soul-reaper:
     enabled: true
     spawn-chance: 0.05
+    health: 100.0
+    drop-chance: 0.6
     death-messages:
       - "&5%player%'s soul was harvested by the Soul Reaper"
       - "&5%player% was drained of life"
@@ -413,6 +457,8 @@ entities:
     enabled: true
     spawn-chance: 0.04
     raid-spawn-chance: 0.5
+    health: 60.0
+    drop-chance: 0.6
     death-messages:
       - "&e%player% was struck down by the Storm Caller"
       - "&e%player% was caught in the storm"
@@ -423,6 +469,8 @@ entities:
     enabled: true
     spawn-chance: 0.05
     raid-spawn-chance: 0.5
+    health: 50.0
+    drop-chance: 0.6
     death-messages:
       - "&a%player% was poisoned by the Venom Witch"
       - "&a%player% fell to the Venom Witch's brew"
@@ -432,6 +480,9 @@ entities:
   void-crawler:
     enabled: true
     spawn-chance: 0.07
+    health: 80.0
+    phase-teleport-chance: 0.1
+    drop-chance: 0.5
     death-messages:
       - "&5%player% was dragged into the void by a Void Crawler"
       - "&5%player% was consumed by darkness"
@@ -442,6 +493,7 @@ entities:
     enabled: true
     spawn-chance: 0.1
     raid-spawn-chance: 0.5
+    true-damage: 4.0
     debug: true
     death-messages:
       - "&f%player% was struck down by a Warlord"
@@ -472,12 +524,44 @@ entities:
   ### Armor Stand Boss (Obsidian Sentinel)
   armor-stand-boss:
     enabled: true
-    health: 1000.0
+    health: 3200.0
     max-damage-per-hit: 50.0
     aggro-range: 50.0
     seal-damage: 15.0
     hover-barrage-damage: 12.0
     sentinel-core-drop-chance: 100.0
+    penetrating-damage: true
+    hover-barrage-cooldown-base-ticks: 240
+    hover-barrage-cooldown-variance-ticks: 120
+    ground-attack-cooldown-base-ticks: 40
+    ground-attack-cooldown-variance-ticks: 40
+    phase-transition-slam-damage: 10.0
+    shield-retrieve-delays: [80, 90, 100, 110, 120]
+    executioner-sweep-damage: 16.0
+    lance-flurry-damage: 7.0
+    shield-bash-damage: 12.0
+    whirlwind-slash-damage: 9.0
+    whirlwind-slash-secondary-damage: 6.0
+    mirror-image-damage: 6.0
+    war-stomp-damage: 8.0
+    vortex-pull-tick-damage: 2.0
+    vortex-pull-final-damage: 6.0
+    gravity-well-min-damage: 3.0
+    gravity-well-max-damage: 8.0
+    chain-grapple-damage: 2.0
+    medium-range-attack-chance: 15.0
+    far-range-attack-chance: 85.0
+    attack-weight-healing-circle: 25
+    attack-weight-fly-up: 15
+    attack-weight-shield-seal: 35
+    attack-weight-ground: 55
+    defense-activation-chance: 30
+    defense-weight-stone-skin: 35
+    defense-weight-reflect-barrier: 65
+    defense-cooldown-base-ticks: 300
+    defense-cooldown-variance-ticks: 300
+    shield-plant-interval-base-ticks: 300
+    shield-plant-interval-variance-ticks: 100
     death-messages:
       - "&c%player% was sealed by the Obsidian Sentinel"
       - "&c%player% was judged by the Obsidian Sentinel"

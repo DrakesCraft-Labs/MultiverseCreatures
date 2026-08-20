@@ -31,9 +31,13 @@ public class SoulReaper implements Listener {
     private final Random random = new Random();
     private final Map<UUID, SoulReaperInstance> active = new HashMap<>();
     private static final String TAG = "MSC_SoulReaper";
+    private double dropChance;
+    private double health;
 
     public SoulReaper(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        dropChance = plugin.getConfig().getDouble("entities.soul-reaper.drop-chance", 0.6);
+        health = plugin.getConfig().getDouble("entities.soul-reaper.health", 100.0);
         if (!plugin.isEnabled("entities.soul-reaper")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -75,7 +79,7 @@ public class SoulReaper implements Listener {
         ws.setCustomNameVisible(true);
         ws.setPersistent(true);
         ws.setRemoveWhenFarAway(false);
-        MscEntityUtils.setAttribute(ws, Attribute.MAX_HEALTH, 100.0);
+        MscEntityUtils.setAttribute(ws, Attribute.MAX_HEALTH, health);
         ws.setHealth(100.0);
         MscEntityUtils.setAttribute(ws, Attribute.MOVEMENT_SPEED, 0.28);
         MscEntityUtils.setAttribute(ws, Attribute.FOLLOW_RANGE, 30.0);
@@ -180,7 +184,7 @@ public class SoulReaper implements Listener {
         if (!ws.getScoreboardTags().contains(TAG)) return;
         active.remove(ws.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.6) {
+        if (Math.random() < dropChance) {
             ws.getWorld().dropItemNaturally(ws.getLocation(), ReaperEssence.REAPER_ESSENCE.clone());
         }
         event.setDroppedExp(60);

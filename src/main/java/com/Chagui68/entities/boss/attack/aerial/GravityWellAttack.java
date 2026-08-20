@@ -19,8 +19,13 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 public class GravityWellAttack extends BossAttackBase {
+    private final double pullDamage;
+    private final double coreDamage;
+
     public GravityWellAttack(BossHost boss) {
         super(boss);
+        pullDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.gravity-well-min-damage", 3.0);
+        coreDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.gravity-well-max-damage", 8.0);
     }
 
     @Override
@@ -83,9 +88,9 @@ public class GravityWellAttack extends BossAttackBase {
                         double dist = toCenter.length();
                         if (dist < 10 && dist > 2) {
                             p.setVelocity(p.getVelocity().add(toCenter.normalize().multiply(0.2)));
-                            MscEntityUtils.damageBy(stand.entidad(), p, 3.0);
+                            MscEntityUtils.damageBy(stand.entidad(), p, pullDamage);
                         } else if (dist <= 2) {
-                            MscEntityUtils.damageBy(stand.entidad(), p, 8.0);
+                            MscEntityUtils.damageBy(stand.entidad(), p, coreDamage);
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 3));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 2));
                         }

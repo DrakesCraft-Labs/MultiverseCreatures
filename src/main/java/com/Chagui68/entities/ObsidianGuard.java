@@ -30,9 +30,13 @@ public class ObsidianGuard implements Listener {
     private final Random random = new Random();
     private final Map<UUID, ObsidianGuardInstance> active = new HashMap<>();
     private static final String TAG = "MSC_ObsidianGuard";
+    private double dropChance;
+    private double health;
 
     public ObsidianGuard(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        dropChance = plugin.getConfig().getDouble("entities.obsidian-guard.drop-chance", 0.85);
+        health = plugin.getConfig().getDouble("entities.obsidian-guard.health", 300.0);
         if (!plugin.isEnabled("entities.obsidian-guard")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -75,7 +79,7 @@ public class ObsidianGuard implements Listener {
         zombie.setCustomNameVisible(true);
         zombie.setPersistent(true);
         zombie.setRemoveWhenFarAway(false);
-        MscEntityUtils.setAttribute(zombie, Attribute.MAX_HEALTH, 300.0);
+        MscEntityUtils.setAttribute(zombie, Attribute.MAX_HEALTH, health);
         zombie.setHealth(300.0);
         MscEntityUtils.setAttribute(zombie, Attribute.ATTACK_DAMAGE, 8.0);
         MscEntityUtils.setAttribute(zombie, Attribute.MOVEMENT_SPEED, 0.15);
@@ -166,7 +170,7 @@ public class ObsidianGuard implements Listener {
         if (!zombie.getScoreboardTags().contains(TAG)) return;
         active.remove(zombie.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.85) {
+        if (Math.random() < dropChance) {
             zombie.getWorld().dropItemNaturally(zombie.getLocation(), ObsidianShard.OBSIDIAN_SHARD.clone());
         }
         event.setDroppedExp(100);

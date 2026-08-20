@@ -34,11 +34,20 @@ public class WirtsLanternHandler implements Listener {
     private final Plugin plugin;
     private final Random random = new Random();
     private final Set<UUID> activeRepel = ConcurrentHashMap.newKeySet();
-    private static final double REPEL_RADIUS = 12.0;
-    private static final int REPEL_INTERVAL_TICKS = 20;
+    private final double repelRadius;
+    private final int repelIntervalTicks;
+    private final double particleChance;
+    private final double horizontalForce;
+    private final double verticalForce;
 
     public WirtsLanternHandler(Plugin plugin) {
         this.plugin = plugin;
+        var config = plugin.getConfig();
+        repelRadius = config.getDouble("items.wirts-lantern.mob-repel.radius", 12.0);
+        repelIntervalTicks = config.getInt("items.wirts-lantern.mob-repel.interval-ticks", 20);
+        particleChance = config.getDouble("items.wirts-lantern.mob-repel.particle-chance", 0.3);
+        horizontalForce = config.getDouble("items.wirts-lantern.mob-repel.horizontal-force", 0.6);
+        verticalForce = config.getDouble("items.wirts-lantern.mob-repel.vertical-force", 0.2);
         startRepelTask();
     }
 
@@ -56,7 +65,7 @@ public class WirtsLanternHandler implements Listener {
                     repelNearbyEntities(p);
                 }
             }
-        }.runTaskTimer(plugin, 0L, REPEL_INTERVAL_TICKS);
+        }.runTaskTimer(plugin, 0L, repelIntervalTicks);
     }
 
     private boolean hasLantern(Player p) {
@@ -70,15 +79,15 @@ public class WirtsLanternHandler implements Listener {
 
     private void repelNearbyEntities(Player p) {
         Location center = p.getLocation();
-        for (Entity entity : p.getWorld().getNearbyEntities(center, REPEL_RADIUS, REPEL_RADIUS, REPEL_RADIUS)) {
+        for (Entity entity : p.getWorld().getNearbyEntities(center, repelRadius, repelRadius, repelRadius)) {
             if (entity.equals(p)) continue;
             if (entity instanceof Player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
 
             Vector direction = living.getLocation().toVector().subtract(center.toVector());
             if (direction.lengthSquared() > 0) {
-                Vector away = direction.normalize().multiply(1.2);
-                away.setY(Math.min(away.getY() + 0.3, 0.6));
+                Vector away = direction.normalize().multiply(horizontalForce);
+                away.setY(Math.min(away.getY() + verticalForce, 0.6));
                 living.setVelocity(living.getVelocity().add(away));
             }
 
@@ -86,7 +95,7 @@ public class WirtsLanternHandler implements Listener {
                 mob.setTarget(null);
             }
 
-            if (random.nextDouble() < 0.3) {
+            if (random.nextDouble() < particleChance) {
                 p.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, living.getLocation().add(0, 1, 0), 3, 0.3, 0.3, 0.3, 0.01);
             }
         }

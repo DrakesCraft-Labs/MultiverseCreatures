@@ -31,9 +31,24 @@ public class GarouBoss implements Listener {
     private final Map<UUID, Long> lastCounterTime = new HashMap<>();
     private final Map<UUID, Long> lastSkillTime = new HashMap<>();
     private final Random random = new Random();
+    private double counterChance;
+    private double health;
+    private double speed;
+    private double attackDamage;
+    private double skillDamage;
+    private double counterDamage;
+    private long counterCooldownMs;
 
     public GarouBoss(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        var config = plugin.getConfig();
+        counterChance = config.getDouble("entities.garou.counter-chance", 0.25);
+        health = config.getDouble("entities.garou.health", 1800.0);
+        speed = config.getDouble("entities.garou.speed", 0.38);
+        attackDamage = config.getDouble("entities.garou.attack-damage", 28.0);
+        skillDamage = config.getDouble("entities.garou.skill-damage", 16.0);
+        counterDamage = config.getDouble("entities.garou.counter-damage", 14.0);
+        counterCooldownMs = config.getLong("entities.garou.counter-cooldown-ms", 3000L);
         if (plugin.isEnabled("entities.garou")) {
             Bukkit.getPluginManager().registerEvents(this, plugin);
         }
@@ -58,18 +73,18 @@ public class GarouBoss implements Listener {
         // Atributos de jefe
         AttributeInstance maxHealth = garou.getAttribute(Attribute.MAX_HEALTH);
         if (maxHealth != null) {
-            maxHealth.setBaseValue(1800.0);
-            garou.setHealth(1800.0);
+            maxHealth.setBaseValue(health);
+            garou.setHealth(health);
         }
 
         AttributeInstance speed = garou.getAttribute(Attribute.MOVEMENT_SPEED);
         if (speed != null) {
-            speed.setBaseValue(0.38);
+            speed.setBaseValue(this.speed);
         }
 
         AttributeInstance attack = garou.getAttribute(Attribute.ATTACK_DAMAGE);
         if (attack != null) {
-            attack.setBaseValue(28.0);
+            attack.setBaseValue(attackDamage);
         }
 
         AttributeInstance knockbackResist = garou.getAttribute(Attribute.KNOCKBACK_RESISTANCE);
@@ -168,7 +183,7 @@ public class GarouBoss implements Listener {
 
                     for (Entity nearby : garou.getNearbyEntities(4.0, 3.0, 4.0)) {
                         if (nearby instanceof LivingEntity le && !(nearby instanceof WitherSkeleton)) {
-                            le.damage(16.0, garou);
+                            le.damage(skillDamage, garou);
                             le.setVelocity(le.getLocation().toVector().subtract(gLoc.toVector()).normalize().multiply(0.8).setY(0.3));
                         }
                     }
@@ -203,7 +218,7 @@ public class GarouBoss implements Listener {
         long now = System.currentTimeMillis();
         long lastCounter = lastCounterTime.getOrDefault(garou.getUniqueId(), 0L);
 
-        if (now - lastCounter > 3000L && random.nextDouble() < 0.25) {
+        if (now - lastCounter > counterCooldownMs && random.nextDouble() < counterChance) {
             lastCounterTime.put(garou.getUniqueId(), now);
             event.setCancelled(true);
 
@@ -215,7 +230,7 @@ public class GarouBoss implements Listener {
             }
 
             if (event.getDamager() instanceof LivingEntity damager) {
-                damager.damage(14.0, garou);
+                damager.damage(counterDamage, garou);
                 damager.sendMessage(ChatColor.DARK_PURPLE + "[Garou]" + ChatColor.GRAY + " ¡Tu golpe fue desviado por el Puño de Agua!");
                 damager.setVelocity(damager.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(0.9).setY(0.3));
             }

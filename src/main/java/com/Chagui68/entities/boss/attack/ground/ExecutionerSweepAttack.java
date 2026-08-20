@@ -21,8 +21,11 @@ import org.bukkit.util.Vector;
  * este delante del jefe. Telegrafiado, mucho daño, empuje fuerte y debilidad.
  */
 public class ExecutionerSweepAttack extends BossAttackBase {
+    private final double sweepDamage;
+
     public ExecutionerSweepAttack(BossHost boss) {
         super(boss);
+        sweepDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.executioner-sweep-damage", 16.0);
     }
 
     @Override
@@ -75,7 +78,7 @@ public class ExecutionerSweepAttack extends BossAttackBase {
                             if (toP.lengthSquared() < 0.01) continue;
                             if (toP.normalize().dot(fDir) < 0.0) continue;
 
-                            MscEntityUtils.damageBy(stand, p, 16.0);
+                            MscEntityUtils.damageBy(stand, p, sweepDamage);
                             p.setVelocity(fDir.clone().multiply(2.0).setY(0.9));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 1));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 2));

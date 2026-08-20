@@ -17,8 +17,13 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 public class VortexPullAttack extends BossAttackBase {
+    private final double tickDamage;
+    private final double finalDamage;
+
     public VortexPullAttack(BossHost boss) {
         super(boss);
+        tickDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.vortex-pull-tick-damage", 2.0);
+        finalDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.vortex-pull-final-damage", 6.0);
     }
 
     @Override
@@ -83,9 +88,9 @@ public class VortexPullAttack extends BossAttackBase {
                         double dist = toCenter.length();
                         if (dist < 8 && dist > 1) {
                             p.setVelocity(p.getVelocity().add(toCenter.normalize().multiply(0.15)));
-                            MscEntityUtils.damageBy(stand.entidad(), p, 2.0);
+                            MscEntityUtils.damageBy(stand.entidad(), p, tickDamage);
                         } else if (dist < 1) {
-                            MscEntityUtils.damageBy(stand.entidad(), p, 6.0);
+                            MscEntityUtils.damageBy(stand.entidad(), p, finalDamage);
                         }
                     }
                     world.playSound(center, Sound.BLOCK_BEACON_AMBIENT, 0.5f, 0.5f);

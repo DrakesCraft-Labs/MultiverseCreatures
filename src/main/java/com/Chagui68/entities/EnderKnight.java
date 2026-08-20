@@ -29,9 +29,13 @@ public class EnderKnight implements Listener {
     private final Random random = new Random();
     private final Map<UUID, EnderKnightInstance> active = new HashMap<>();
     private static final String TAG = "MSC_EnderKnight";
+    private double dropChance;
+    private double health;
 
     public EnderKnight(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        dropChance = plugin.getConfig().getDouble("entities.ender-knight.drop-chance", 0.55);
+        health = plugin.getConfig().getDouble("entities.ender-knight.health", 120.0);
         if (!plugin.isEnabled("entities.ender-knight")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -73,7 +77,7 @@ public class EnderKnight implements Listener {
         em.setCustomNameVisible(true);
         em.setPersistent(true);
         em.setRemoveWhenFarAway(false);
-        MscEntityUtils.setAttribute(em, Attribute.MAX_HEALTH, 120.0);
+        MscEntityUtils.setAttribute(em, Attribute.MAX_HEALTH, health);
         em.setHealth(120.0);
         MscEntityUtils.setAttribute(em, Attribute.ATTACK_DAMAGE, 14.0);
         MscEntityUtils.setAttribute(em, Attribute.MOVEMENT_SPEED, 0.3);
@@ -155,7 +159,7 @@ public class EnderKnight implements Listener {
         if (!em.getScoreboardTags().contains(TAG)) return;
         active.remove(em.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.55) {
+        if (Math.random() < dropChance) {
             em.getWorld().dropItemNaturally(em.getLocation(), EnderFragment.ENDER_FRAGMENT.clone());
         }
         event.setDroppedExp(70);

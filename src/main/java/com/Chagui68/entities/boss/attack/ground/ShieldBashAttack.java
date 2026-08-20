@@ -18,8 +18,11 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 public class ShieldBashAttack extends BossAttackBase {
+    private final double bashDamage;
+
     public ShieldBashAttack(BossHost boss) {
         super(boss);
+        bashDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.shield-bash-damage", 12.0);
     }
 
     @Override
@@ -75,7 +78,7 @@ public class ShieldBashAttack extends BossAttackBase {
                     world.playSound(loc, Sound.ITEM_SHIELD_BLOCK, 1.0f, 1.5f);
                     for (Player p : boss.getValidPlayers(world)) {
                         if (p.getLocation().distanceSquared(loc) < 16) {
-                            MscEntityUtils.damageBy(stand.entidad(), p, 12.0);
+                            MscEntityUtils.damageBy(stand.entidad(), p, bashDamage);
                             p.setVelocity(fDir.clone().multiply(2.0).setY(0.5));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 3));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1));

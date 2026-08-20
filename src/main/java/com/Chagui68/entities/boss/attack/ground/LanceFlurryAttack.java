@@ -21,8 +21,11 @@ import org.bukkit.util.Vector;
  * que estén delante del jefe. Cada golpe pega en un cono de 120 grados.
  */
 public class LanceFlurryAttack extends BossAttackBase {
+    private final double flurryDamage;
+
     public LanceFlurryAttack(BossHost boss) {
         super(boss);
+        flurryDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.lance-flurry-damage", 7.0);
     }
 
     @Override
@@ -77,7 +80,7 @@ public class LanceFlurryAttack extends BossAttackBase {
                             if (toP.lengthSquared() < 0.01) continue;
                             if (toP.normalize().dot(fDir) < 0.5) continue;
 
-                            MscEntityUtils.damageBy(stand, p, 7.0);
+                            MscEntityUtils.damageBy(stand, p, flurryDamage);
                             p.setVelocity(fDir.clone().multiply(1.4).setY(0.4));
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1));
                         }

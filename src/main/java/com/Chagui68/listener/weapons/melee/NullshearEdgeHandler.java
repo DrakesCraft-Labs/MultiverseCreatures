@@ -29,9 +29,20 @@ public class NullshearEdgeHandler implements Listener {
     private final Plugin plugin;
     private final Map<UUID, Long> blinkCooldowns = new ConcurrentHashMap<>();
     private final Set<UUID> inVoidDamage = ConcurrentHashMap.newKeySet();
+    private final double darknessChance;
+    private final double voidFraction;
+    private final int darknessDurationTicks;
+    private final long voidBlinkCooldownMs;
+    private final double voidBlinkRange;
 
     public NullshearEdgeHandler(Plugin plugin) {
         this.plugin = plugin;
+        var config = plugin.getConfig();
+        darknessChance = config.getDouble("items.nullshear-edge.darkness-chance", 0.1);
+        voidFraction = config.getDouble("items.nullshear-edge.void-fraction", 0.3);
+        darknessDurationTicks = config.getInt("items.nullshear-edge.darkness-duration-ticks", 100);
+        voidBlinkCooldownMs = config.getLong("items.nullshear-edge.void-blink-cooldown-ms", 20000L);
+        voidBlinkRange = config.getDouble("items.nullshear-edge.void-blink-range", 30.0);
     }
 
     private boolean isNullshear(ItemStack item) {
@@ -56,18 +67,18 @@ public class NullshearEdgeHandler implements Listener {
                 return;
             }
 
-            blinkCooldowns.put(p.getUniqueId(), now + NullshearEdge.VOID_BLINK_COOLDOWN_MS);
+            blinkCooldowns.put(p.getUniqueId(), now + voidBlinkCooldownMs);
             voidBlink(p);
         }
     }
 
     private void voidBlink(Player p) {
-        org.bukkit.util.RayTraceResult result = p.rayTraceBlocks(NullshearEdge.VOID_BLINK_RANGE);
+        org.bukkit.util.RayTraceResult result = p.rayTraceBlocks(voidBlinkRange);
         org.bukkit.Location dest;
         if (result != null && result.getHitBlock() != null) {
             dest = result.getHitBlock().getLocation().add(0, 1, 0).getBlock().getRelative(org.bukkit.block.BlockFace.UP).getLocation();
         } else {
-            org.bukkit.util.Vector dir = p.getEyeLocation().getDirection().normalize().multiply(NullshearEdge.VOID_BLINK_RANGE);
+            org.bukkit.util.Vector dir = p.getEyeLocation().getDirection().normalize().multiply(voidBlinkRange);
             dest = p.getEyeLocation().add(dir);
             dest.setY(dest.getWorld().getHighestBlockYAt(dest) + 1);
         }
@@ -86,15 +97,15 @@ public class NullshearEdgeHandler implements Listener {
 
         if (!inVoidDamage.add(p.getUniqueId())) return;
         try {
-            double voidDmg = event.getDamage() * NullshearEdge.VOID_FRACTION;
+            double voidDmg = event.getDamage() * voidFraction;
             target.setHealth(Math.max(0, target.getHealth() - voidDmg));
         } finally {
             inVoidDamage.remove(p.getUniqueId());
         }
 
         // Darkness chance
-        if (p.getWorld().hasStorm() || Math.random() < NullshearEdge.DARKNESS_CHANCE) {
-            target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, NullshearEdge.DARKNESS_DURATION_TICKS, 0, false, false));
+        if (p.getWorld().hasStorm() || Math.random() < darknessChance) {
+            target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, darknessDurationTicks, 0, false, false));
         }
     }
 }

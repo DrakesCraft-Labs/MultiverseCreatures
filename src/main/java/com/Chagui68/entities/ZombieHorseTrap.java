@@ -58,9 +58,16 @@ public class ZombieHorseTrap implements Listener {
     private static final String CAMEL_TAG = "MSC_ArmyCamel";
 
     private final Map<UUID, ArmyInstance> armies = new ConcurrentHashMap<>();
+    private double tankHealth;
+    private double duelistHealth;
+    private double sniperHealth;
 
     public ZombieHorseTrap(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        var config = plugin.getConfig();
+        tankHealth = config.getDouble("entities.zombie-horse-trap.tank-health", 350.0);
+        duelistHealth = config.getDouble("entities.zombie-horse-trap.duelist-health", 50.0);
+        sniperHealth = config.getDouble("entities.zombie-horse-trap.sniper-health", 40.0);
         if (!plugin.isEnabled("entities.zombie-horse-trap")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -334,7 +341,7 @@ public class ZombieHorseTrap implements Listener {
         tank.setPersistent(true);
         tank.setRemoveWhenFarAway(false);
 
-        setAttribute(tank, Attribute.MAX_HEALTH, 350.0);
+        setAttribute(tank, Attribute.MAX_HEALTH, tankHealth);
         tank.setHealth(350.0);
         setAttribute(tank, Attribute.ATTACK_DAMAGE, 10.0);
         setAttribute(tank, Attribute.SCALE, 1.5);
@@ -360,7 +367,7 @@ public class ZombieHorseTrap implements Listener {
         duelist.setPersistent(true);
         duelist.setRemoveWhenFarAway(false);
 
-        setAttribute(duelist, Attribute.MAX_HEALTH, 50.0);
+        setAttribute(duelist, Attribute.MAX_HEALTH, duelistHealth);
         duelist.setHealth(50.0);
 
         setArmor(duelist, Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE, Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS);
@@ -508,7 +515,7 @@ public class ZombieHorseTrap implements Listener {
         sniper.setPersistent(true);
         sniper.setRemoveWhenFarAway(false);
 
-        setAttribute(sniper, Attribute.MAX_HEALTH, 40.0);
+        setAttribute(sniper, Attribute.MAX_HEALTH, sniperHealth);
         sniper.setHealth(40.0);
         setAttribute(sniper, Attribute.FOLLOW_RANGE, 40.0);
         sniper.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 0, false, false));

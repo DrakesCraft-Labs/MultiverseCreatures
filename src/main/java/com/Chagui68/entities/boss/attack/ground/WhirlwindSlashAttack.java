@@ -20,8 +20,13 @@ import org.bukkit.util.Vector;
  * esten a su alrededor, arrastrandolos hacia el centro antes del segundo giro.
  */
 public class WhirlwindSlashAttack extends BossAttackBase {
+    private final double slashDamage;
+    private final double finalSlashDamage;
+
     public WhirlwindSlashAttack(BossHost boss) {
         super(boss);
+        slashDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.whirlwind-slash-damage", 9.0);
+        finalSlashDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.whirlwind-slash-secondary-damage", 6.0);
     }
 
     @Override
@@ -82,7 +87,7 @@ public class WhirlwindSlashAttack extends BossAttackBase {
                             if (distSq > 81) continue;
                             if (distSq < 0.01) continue;
 
-                            MscEntityUtils.damageBy(stand, p, 9.0);
+                            MscEntityUtils.damageBy(stand, p, slashDamage);
                             Vector pull = toP.normalize().multiply(-1.3);
                             p.setVelocity(p.getVelocity().add(pull.setY(0.25)));
                         }
@@ -91,7 +96,7 @@ public class WhirlwindSlashAttack extends BossAttackBase {
                             world.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.7f);
                             for (Player p : boss.getValidPlayers(world)) {
                                 if (p.getLocation().distanceSquared(loc) < 49) {
-                                    MscEntityUtils.damageBy(stand, p, 6.0);
+                                    MscEntityUtils.damageBy(stand, p, finalSlashDamage);
                                     Vector away = p.getLocation().toVector().subtract(loc.toVector());
                                     if (away.lengthSquared() > 0.01) {
                                         p.setVelocity(away.normalize().multiply(1.6).setY(0.6));

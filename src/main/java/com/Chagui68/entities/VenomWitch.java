@@ -25,9 +25,13 @@ public class VenomWitch implements Listener {
     private final Random random = new Random();
     private final Map<UUID, VenomWitchInstance> active = new HashMap<>();
     private static final String TAG = "MSC_VenomWitch";
+    private double dropChance;
+    private double health;
 
     public VenomWitch(MultiverseCreatures plugin) {
         this.plugin = plugin;
+        dropChance = plugin.getConfig().getDouble("entities.venom-witch.drop-chance", 0.6);
+        health = plugin.getConfig().getDouble("entities.venom-witch.health", 50.0);
         if (!plugin.isEnabled("entities.venom-witch")) return;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -81,7 +85,7 @@ public class VenomWitch implements Listener {
         witch.addScoreboardTag(TAG);
         witch.setCustomName(ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Venom Witch");
         witch.setCustomNameVisible(true);
-        MscEntityUtils.setAttribute(witch, Attribute.MAX_HEALTH, 50.0);
+        MscEntityUtils.setAttribute(witch, Attribute.MAX_HEALTH, health);
         witch.setHealth(50.0);
         MscEntityUtils.setAttribute(witch, Attribute.MOVEMENT_SPEED, 0.25);
         witch.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 0, false, false));
@@ -149,7 +153,7 @@ public class VenomWitch implements Listener {
         if (!witch.getScoreboardTags().contains(TAG)) return;
         active.remove(witch.getUniqueId());
         event.getDrops().clear();
-        if (Math.random() < 0.6) {
+        if (Math.random() < dropChance) {
             witch.getWorld().dropItemNaturally(witch.getLocation(), VenomGland.VENOM_GLAND.clone());
         }
         event.setDroppedExp(30);

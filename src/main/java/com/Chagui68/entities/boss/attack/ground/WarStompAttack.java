@@ -19,8 +19,11 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 public class WarStompAttack extends BossAttackBase {
+    private final double stompDamage;
+
     public WarStompAttack(BossHost boss) {
         super(boss);
+        stompDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.war-stomp-damage", 8.0);
     }
 
     @Override
@@ -75,7 +78,7 @@ public class WarStompAttack extends BossAttackBase {
                                     }
                                     for (Player p : boss.getValidPlayers(world)) {
                                         if (p.getLocation().distance(center) < radius + 1) {
-                                            MscEntityUtils.damageBy(stand.entidad(), p, 8.0 * (1 - r * 0.1));
+                                            MscEntityUtils.damageBy(stand.entidad(), p, stompDamage * (1 - r * 0.1));
                                             boss.launchPlayer(p, 0.5);
                                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1));
                                         }
