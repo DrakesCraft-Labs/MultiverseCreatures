@@ -134,6 +134,16 @@ public class Mahoraga implements Listener {
             resetAdaptation(zombie);
             return;
         }
+
+        // Un objetivo en otro mundo hace que distanceSquared lance IllegalArgumentException
+        // ("Cannot measure distance between worlds"), y eso mata el tick del jefe. Pasa cuando
+        // el jugador cambia de modalidad mientras Mahoraga lo tiene fijado. Se suelta el
+        // objetivo y se reinicia la adaptacion, igual que cuando el jugador muere o se va.
+        if (!zombie.getWorld().equals(target.getWorld())) {
+            zombie.setTarget(null);
+            resetAdaptation(zombie);
+            return;
+        }
         if (target.getGameMode() == org.bukkit.GameMode.CREATIVE || target.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
             zombie.setTarget(null);
             resetAdaptation(zombie);
@@ -207,7 +217,7 @@ public class Mahoraga implements Listener {
             zombie.getAttribute(Attribute.KNOCKBACK_RESISTANCE).setBaseValue(knockbackResistance);
         }
 
-        if (zombie.getLocation().distanceSquared(target.getLocation()) > 16) {
+        if (zombie.getWorld().equals(target.getWorld()) && zombie.getLocation().distanceSquared(target.getLocation()) > 16) {
             zombie.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 30, 0, false, false));
         } else {
             zombie.removePotionEffect(PotionEffectType.SPEED);
