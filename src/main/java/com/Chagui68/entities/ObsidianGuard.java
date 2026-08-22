@@ -77,8 +77,7 @@ public class ObsidianGuard implements Listener {
         zombie.addScoreboardTag(TAG);
         zombie.setCustomName(ChatColor.DARK_GRAY + "" + ChatColor.BOLD + "Obsidian Guard");
         zombie.setCustomNameVisible(true);
-        zombie.setPersistent(true);
-        zombie.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, zombie);
         MscEntityUtils.setAttribute(zombie, Attribute.MAX_HEALTH, health);
         zombie.setHealth(300.0);
         MscEntityUtils.setAttribute(zombie, Attribute.ATTACK_DAMAGE, 8.0);

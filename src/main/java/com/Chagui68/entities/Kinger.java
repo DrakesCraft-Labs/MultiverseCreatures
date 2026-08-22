@@ -1,5 +1,6 @@
 package com.Chagui68.entities;
 
+import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.MultiverseCreatures;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -546,8 +547,7 @@ public class Kinger implements Listener {
         stand.setCanPickupItems(false);
         stand.setSilent(true);
         stand.setAI(false);
-        stand.setRemoveWhenFarAway(false);
-        stand.setPersistent(true);
+        MscEntityUtils.applyAmbientPersistence(plugin, stand);
         stand.setMaximumNoDamageTicks(0);
         stand.addScoreboardTag(TAG);
 

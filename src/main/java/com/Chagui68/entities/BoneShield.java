@@ -75,8 +75,7 @@ public class BoneShield implements Listener {
         sk.addScoreboardTag(TAG);
         sk.setCustomName(ChatColor.WHITE + "" + ChatColor.BOLD + "Bone Shield");
         sk.setCustomNameVisible(true);
-        sk.setPersistent(true);
-        sk.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, sk);
         MscEntityUtils.setAttribute(sk, Attribute.MAX_HEALTH, health);
         sk.setHealth(120.0);
         MscEntityUtils.setAttribute(sk, Attribute.MOVEMENT_SPEED, 0.2);

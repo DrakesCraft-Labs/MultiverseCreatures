@@ -75,8 +75,7 @@ public class ShadowRogue implements Listener {
         sk.addScoreboardTag(TAG);
         sk.setCustomName(ChatColor.DARK_GRAY + "" + ChatColor.BOLD + "Shadow Rogue");
         sk.setCustomNameVisible(true);
-        sk.setPersistent(true);
-        sk.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, sk);
         MscEntityUtils.setAttribute(sk, Attribute.MAX_HEALTH, health);
         sk.setHealth(60.0);
         MscEntityUtils.setAttribute(sk, Attribute.MOVEMENT_SPEED, 0.35);

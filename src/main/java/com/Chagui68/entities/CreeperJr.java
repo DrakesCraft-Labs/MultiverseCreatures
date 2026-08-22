@@ -1,5 +1,6 @@
 package com.Chagui68.entities;
 
+import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.MultiverseCreatures;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -58,8 +59,7 @@ public class CreeperJr implements Listener {
             applyAttributes(creeper);
             creeper.setCustomName(ChatColor.GREEN + "" + ChatColor.BOLD + "Creeper Jr.");
             creeper.setCustomNameVisible(true);
-            creeper.setRemoveWhenFarAway(false);
-            creeper.setPersistent(true);
+            MscEntityUtils.applyAmbientPersistence(plugin, creeper);
             creeper.setCollidable(true);
             creeper.setAI(true);
             creeper.setCanPickupItems(false);

@@ -14,6 +14,17 @@ general:
   # Global multiplier applied to every entity spawn-chance (0.5 = half the spawns)
   spawn-rate-multiplier: 0.5
 
+  # Hard ceiling of live MSC creatures per world. Once a world reaches it, no
+  # more natural spawns are converted and the vanilla mob is left alone.
+  # 0 or negative disables the cap. The count is cached for a few seconds.
+  max-alive-per-world: 500
+
+  # Whether creatures born from a NATURAL spawn survive the vanilla despawn.
+  # Keep it false: setting it to true is what let 7316 entities pile up by
+  # 2026-08-22, since nothing ever removed them again. Bosses and creatures
+  # summoned by command stay persistent regardless of this setting.
+  natural-spawn-persistent: false
+
 # ---------- Command settings ----------
 commands:
   permission: "msc.admin"

@@ -69,8 +69,7 @@ public class StormCaller implements Listener {
         if (!plugin.isEnabled("entities.storm-caller")) return false;
         Witch witch = (Witch) location.getWorld().spawnEntity(location, EntityType.WITCH);
         if (witch == null) return false;
-        witch.setPersistent(true);
-        witch.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, witch);
         customize(witch);
         return true;
     }

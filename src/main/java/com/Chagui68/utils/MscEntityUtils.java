@@ -128,4 +128,42 @@ public final class MscEntityUtils {
                 .withCausingEntity(attacker)
                 .build());
     }
+
+    /**
+     * Aplica a una criatura ambiental la persistencia que le corresponde.
+     *
+     * Ambiental = la que nace convirtiendo un spawn natural. Por defecto se
+     * comporta como un mob vanilla y desaparece cuando el jugador se aleja.
+     *
+     * Marcarlas como persistentes fue la causa de que el servidor acumulara
+     * miles de entidades: al desactivar el despawn de vanilla, nada volvia a
+     * retirarlas nunca y cada spawn natural convertido se quedaba para siempre.
+     * El 2026-08-22 un `msc kill all` retiro 7.316 de golpe.
+     *
+     * Los jefes y las invocaciones manuales NO deben usar este metodo: esos si
+     * tienen que sobrevivir a que nadie los mire.
+     */
+    public static void applyAmbientPersistence(MultiverseCreatures plugin, LivingEntity entity) {
+        if (entity == null) return;
+        boolean persistente = plugin.getConfig()
+                .getBoolean("general.natural-spawn-persistent", false);
+        entity.setPersistent(persistente);
+        entity.setRemoveWhenFarAway(!persistente);
+    }
+
+    /** Cuenta las criaturas de este plugin vivas en un mundo (tag `MSC_*`). */
+    public static int countAlive(World world) {
+        if (world == null) return 0;
+        int n = 0;
+        for (Entity e : world.getEntities()) {
+            for (String tag : e.getScoreboardTags()) {
+                if (tag.startsWith("MSC_")) {
+                    n++;
+                    break;
+                }
+            }
+        }
+        return n;
+    }
+
 }

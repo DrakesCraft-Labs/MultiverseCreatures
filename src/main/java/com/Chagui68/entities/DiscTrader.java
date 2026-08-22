@@ -1,5 +1,6 @@
 package com.Chagui68.entities;
 
+import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.music.MusicDisc;
 import org.bukkit.Bukkit;
@@ -44,8 +45,7 @@ public class DiscTrader {
         villager.setAI(true);
         villager.setCollidable(false);
         villager.setInvulnerable(true);
-        villager.setRemoveWhenFarAway(false);
-        villager.setPersistent(true);
+        MscEntityUtils.applyAmbientPersistence(plugin, villager);
         villager.addScoreboardTag("MSC_DiscTrader");
 
         assignTrades(villager);

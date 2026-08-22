@@ -75,8 +75,7 @@ public class EnderKnight implements Listener {
         em.addScoreboardTag(TAG);
         em.setCustomName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Ender Knight");
         em.setCustomNameVisible(true);
-        em.setPersistent(true);
-        em.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, em);
         MscEntityUtils.setAttribute(em, Attribute.MAX_HEALTH, health);
         em.setHealth(120.0);
         MscEntityUtils.setAttribute(em, Attribute.ATTACK_DAMAGE, 14.0);

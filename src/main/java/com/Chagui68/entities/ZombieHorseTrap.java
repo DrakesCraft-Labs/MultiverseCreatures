@@ -97,8 +97,7 @@ public class ZombieHorseTrap implements Listener {
         horse.addScoreboardTag(TRAP_TAG);
         horse.setCustomName(ChatColor.WHITE + "" + ChatColor.BOLD + "Military Zombie Horse");
         horse.setCustomNameVisible(true);
-        horse.setPersistent(true);
-        horse.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, horse);
         horse.setTamed(true);
         horse.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 0, false, false));
         return true;
@@ -338,8 +337,7 @@ public class ZombieHorseTrap implements Listener {
         tank.addScoreboardTag(TANK_TAG);
         tank.setCustomName(ChatColor.GREEN + "" + ChatColor.BOLD + "Zombie Tank");
         tank.setCustomNameVisible(true);
-        tank.setPersistent(true);
-        tank.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, tank);
 
         setAttribute(tank, Attribute.MAX_HEALTH, tankHealth);
         tank.setHealth(350.0);
@@ -364,8 +362,7 @@ public class ZombieHorseTrap implements Listener {
         duelist.addScoreboardTag(DUELIST_TAG);
         duelist.setCustomName(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Military Skeleton Duelist");
         duelist.setCustomNameVisible(true);
-        duelist.setPersistent(true);
-        duelist.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, duelist);
 
         setAttribute(duelist, Attribute.MAX_HEALTH, duelistHealth);
         duelist.setHealth(50.0);
@@ -392,8 +389,7 @@ public class ZombieHorseTrap implements Listener {
         lancer.addScoreboardTag(LANCER_TAG);
         lancer.setCustomName(ChatColor.GRAY + "" + ChatColor.BOLD + "Zombie Lancer");
         lancer.setCustomNameVisible(true);
-        lancer.setPersistent(true);
-        lancer.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, lancer);
 
         setArmor(lancer, Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS);
         setLeatherHelmetColor(lancer, Color.GRAY);
@@ -411,8 +407,7 @@ public class ZombieHorseTrap implements Listener {
             horse.addScoreboardTag(LANCER_HORSE_TAG);
             horse.setCustomName(ChatColor.WHITE + "" + ChatColor.BOLD + "Military Zombie Horse");
             horse.setCustomNameVisible(false);
-            horse.setPersistent(true);
-            horse.setRemoveWhenFarAway(false);
+            MscEntityUtils.applyAmbientPersistence(plugin, horse);
             horse.setTamed(true);
 
             horse.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 999999, 0, false, false));
@@ -434,8 +429,7 @@ public class ZombieHorseTrap implements Listener {
 
         camel.addScoreboardTag(CAMEL_TAG);
         camel.setCustomNameVisible(false);
-        camel.setPersistent(true);
-        camel.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, camel);
 
         camel.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 999999, 1, false, false));
         camel.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 999999, 1, false, false));
@@ -447,8 +441,7 @@ public class ZombieHorseTrap implements Listener {
             zombie.addScoreboardTag(CAMEL_ZOMBIE_TAG);
             zombie.setCustomName(ChatColor.GOLD + "" + ChatColor.BOLD + "Camel Zombie Rider");
             zombie.setCustomNameVisible(true);
-            zombie.setPersistent(true);
-            zombie.setRemoveWhenFarAway(false);
+            MscEntityUtils.applyAmbientPersistence(plugin, zombie);
 
             setLeatherHelmetColor(zombie, Color.ORANGE);
             setArmor(zombie, null, Material.COPPER_CHESTPLATE, Material.COPPER_LEGGINGS, Material.COPPER_BOOTS);
@@ -469,8 +462,7 @@ public class ZombieHorseTrap implements Listener {
             skeleton.addScoreboardTag(CAMEL_SKELETON_TAG);
             skeleton.setCustomName(ChatColor.GOLD + "" + ChatColor.BOLD + "Camel Skeleton Rider");
             skeleton.setCustomNameVisible(true);
-            skeleton.setPersistent(true);
-            skeleton.setRemoveWhenFarAway(false);
+            MscEntityUtils.applyAmbientPersistence(plugin, skeleton);
 
             setLeatherHelmetColor(skeleton, Color.ORANGE);
             setArmor(skeleton, null, Material.COPPER_CHESTPLATE, Material.COPPER_LEGGINGS, Material.COPPER_BOOTS);
@@ -512,8 +504,7 @@ public class ZombieHorseTrap implements Listener {
         sniper.addScoreboardTag(SNIPER_TAG);
         sniper.setCustomName(ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Sniper Skeleton");
         sniper.setCustomNameVisible(true);
-        sniper.setPersistent(true);
-        sniper.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, sniper);
 
         setAttribute(sniper, Attribute.MAX_HEALTH, sniperHealth);
         sniper.setHealth(40.0);

@@ -73,8 +73,7 @@ public class VoidCrawler implements Listener {
         spider.addScoreboardTag(TAG);
         spider.setCustomName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Void Crawler");
         spider.setCustomNameVisible(true);
-        spider.setPersistent(true);
-        spider.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, spider);
         MscEntityUtils.setAttribute(spider, Attribute.MAX_HEALTH, health);
         spider.setHealth(80.0);
         MscEntityUtils.setAttribute(spider, Attribute.MOVEMENT_SPEED, 0.35);

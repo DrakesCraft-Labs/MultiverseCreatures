@@ -72,8 +72,7 @@ public class FlameElemental implements Listener {
         blaze.addScoreboardTag(TAG);
         blaze.setCustomName(ChatColor.GOLD + "" + ChatColor.BOLD + "Flame Elemental");
         blaze.setCustomNameVisible(true);
-        blaze.setPersistent(true);
-        blaze.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, blaze);
         MscEntityUtils.setAttribute(blaze, Attribute.MAX_HEALTH, health);
         blaze.setHealth(80.0);
         MscEntityUtils.setAttribute(blaze, Attribute.MOVEMENT_SPEED, 0.25);

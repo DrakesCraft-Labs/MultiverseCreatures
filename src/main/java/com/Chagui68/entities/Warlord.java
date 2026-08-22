@@ -1,5 +1,6 @@
 package com.Chagui68.entities;
 
+import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.MultiverseCreatures;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -79,8 +80,7 @@ public class Warlord implements Listener {
         pillager.addScoreboardTag(TAG);
         pillager.setCustomName(ChatColor.DARK_RED + "" + ChatColor.BOLD + "Warlord");
         pillager.setCustomNameVisible(true);
-        pillager.setPersistent(true);
-        pillager.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, pillager);
         if (pillager.getAttribute(Attribute.MAX_HEALTH) != null) {
             pillager.getAttribute(Attribute.MAX_HEALTH).setBaseValue(50.0);
         }

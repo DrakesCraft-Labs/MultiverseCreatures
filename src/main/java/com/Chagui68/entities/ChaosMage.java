@@ -72,8 +72,7 @@ public class ChaosMage implements Listener {
         if (!plugin.isEnabled("entities.chaos-mage")) return false;
         Evoker evoker = (Evoker) location.getWorld().spawnEntity(location, EntityType.EVOKER);
         if (evoker == null) return false;
-        evoker.setPersistent(true);
-        evoker.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, evoker);
         customize(evoker);
         return true;
     }
@@ -118,8 +117,7 @@ public class ChaosMage implements Listener {
                         if (vex != null) {
                             vex.setCustomName(ChatColor.LIGHT_PURPLE + "Chaos Vex");
                             vex.setCustomNameVisible(true);
-                            vex.setPersistent(true);
-                            vex.setRemoveWhenFarAway(false);
+                            MscEntityUtils.applyAmbientPersistence(plugin, vex);
                             vex.addScoreboardTag("MSC_ChaosVex");
                             vex.setTarget(target);
                             evoker.addPassenger(vex);

@@ -174,8 +174,7 @@ public class HeadSlime implements Listener {
         setupSlime(slime);
         slime.setCustomName(ChatColor.GREEN + "" + ChatColor.BOLD + "Head Slime");
         slime.setCustomNameVisible(true);
-        slime.setRemoveWhenFarAway(false);
-        slime.setPersistent(true);
+        MscEntityUtils.applyAmbientPersistence(plugin, slime);
         slime.setCollidable(true);
         slime.setCanPickupItems(false);
 

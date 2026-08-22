@@ -1,5 +1,6 @@
 package com.Chagui68.entities.handler;
 
+import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.misc.IceCrown;
 import com.Chagui68.items.weapons.melee.Excalibur;
@@ -27,6 +28,7 @@ import org.bukkit.inventory.MerchantRecipe;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -68,6 +70,12 @@ public class MobHandler implements Listener {
     private double chaosMageRaidChance;
     private boolean debug;
 
+    /** Tope de criaturas MSC vivas por mundo. 0 o negativo lo desactiva. */
+    private int maxAlivePerWorld;
+    /** Cada cuanto se vuelve a contar. Contar recorre todas las entidades del mundo. */
+    private static final long RECUENTO_MS = 5000L;
+    private final Map<String, long[]> recuento = new HashMap<>();
+
     public MobHandler(MultiverseCreatures plugin) {
         this.plugin = plugin;
         reloadConfig();
@@ -76,6 +84,7 @@ public class MobHandler implements Listener {
     public void reloadConfig() {
         var config = plugin.getConfig();
         spawnRateMultiplier = config.getDouble("general.spawn-rate-multiplier", 0.5);
+        maxAlivePerWorld = config.getInt("general.max-alive-per-world", 500);
         mahoragaChance = config.getDouble("entities.mahoraga.spawn-chance", 0.002) * spawnRateMultiplier;
         garouChance = config.getDouble("entities.garou.spawn-chance", 0.0015) * spawnRateMultiplier;
         obsidianGuardChance = config.getDouble("entities.obsidian-guard.spawn-chance", 0.02) * spawnRateMultiplier;
@@ -127,6 +136,12 @@ public class MobHandler implements Listener {
         }
 
         Location loc = event.getLocation();
+
+        // Si el mundo ya esta en su tope de criaturas MSC, no se convierte nada
+        // mas y el mob vanilla sigue su curso. Sin esto, cada spawn natural que
+        // acertaba la tirada anadia poblacion sin techo.
+        if (alTope(loc.getWorld())) return;
+
         EntityType type = event.getEntityType();
 
         try {
@@ -173,6 +188,33 @@ public class MobHandler implements Listener {
                         + ", z=" + event.getLocation().getBlockZ() + ")",
                 exception
         );
+    }
+
+    /**
+     * Indica si un mundo llego al tope de criaturas de este plugin.
+     *
+     * El recuento recorre todas las entidades del mundo, asi que se cachea unos
+     * segundos: `CreatureSpawnEvent` se dispara constantemente y contar en cada
+     * uno costaria mas que los propios mobs.
+     */
+    private boolean alTope(World world) {
+        if (world == null || maxAlivePerWorld <= 0) return false;
+
+        long ahora = System.currentTimeMillis();
+        long[] cache = recuento.get(world.getName());
+        if (cache == null || ahora - cache[1] > RECUENTO_MS) {
+            cache = new long[]{MscEntityUtils.countAlive(world), ahora};
+            recuento.put(world.getName(), cache);
+            if (debug && cache[0] >= maxAlivePerWorld) {
+                plugin.getLogger().info("[MSC] " + world.getName() + " en el tope: "
+                        + cache[0] + "/" + maxAlivePerWorld + ", no se convierten mas spawns.");
+            }
+        }
+        if (cache[0] < maxAlivePerWorld) {
+            cache[0]++;          // se cuenta el que esta a punto de nacer
+            return false;
+        }
+        return true;
     }
 
     @EventHandler(priority = EventPriority.HIGH)

@@ -112,8 +112,7 @@ public class FrostGolem implements Listener {
         golem.addScoreboardTag(TAG);
         golem.setCustomName(ChatColor.AQUA + "" + ChatColor.BOLD + "Frost Golem");
         golem.setCustomNameVisible(true);
-        golem.setPersistent(true);
-        golem.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, golem);
         MscEntityUtils.setAttribute(golem, Attribute.MAX_HEALTH, health);
         golem.setHealth(200.0);
         MscEntityUtils.setAttribute(golem, Attribute.ATTACK_DAMAGE, 12.0);

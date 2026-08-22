@@ -77,8 +77,7 @@ public class SoulReaper implements Listener {
         ws.addScoreboardTag(TAG);
         ws.setCustomName(ChatColor.BLACK + "" + ChatColor.BOLD + "Soul Reaper");
         ws.setCustomNameVisible(true);
-        ws.setPersistent(true);
-        ws.setRemoveWhenFarAway(false);
+        MscEntityUtils.applyAmbientPersistence(plugin, ws);
         MscEntityUtils.setAttribute(ws, Attribute.MAX_HEALTH, health);
         ws.setHealth(100.0);
         MscEntityUtils.setAttribute(ws, Attribute.MOVEMENT_SPEED, 0.28);
