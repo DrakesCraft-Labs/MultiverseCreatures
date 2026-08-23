@@ -26,8 +26,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantRecipe;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
 
 import static com.Chagui68.items.weapons.melee.Excalibur.EXCALIBUR_SWORD;
 import static com.Chagui68.items.food.ScoobyCookie.SCOOBY_COOKIE;
@@ -38,6 +41,7 @@ public class MobHandler implements Listener {
 
     private final Random random = new Random();
     private final MultiverseCreatures plugin;
+    private final Map<EntityType, Long> lastSpawnFailureLog = new EnumMap<>(EntityType.class);
 
     private double spawnRateMultiplier;
     private double mahoragaChance;
@@ -125,22 +129,50 @@ public class MobHandler implements Listener {
         Location loc = event.getLocation();
         EntityType type = event.getEntityType();
 
-        switch (type) {
-            case ZOMBIE -> handleZombieSpawn(event, loc);
-            case SLIME -> handleSlimeSpawn(event, loc);
-            case CREEPER -> handleCreeperSpawn(event, loc);
-            case WANDERING_TRADER -> handleTraderSpawn(event);
-            case SKELETON -> handleSkeletonSpawn(event, loc);
-            case BLAZE -> handleBlazeSpawn(event, loc);
-            case IRON_GOLEM -> handleGolemSpawn(event, loc);
-            case SPIDER -> handleSpiderSpawn(event, loc);
-            case WITCH -> handleWitchSpawn(event, loc);
-            case WITHER_SKELETON -> handleWitherSkeletonSpawn(event, loc);
-            case EVOKER -> handleEvokerSpawn(event, loc);
-            case PILLAGER -> handlePillagerSpawn(event, loc);
-            case ENDERMAN -> handleEndermanSpawn(event, loc);
-            case VILLAGER -> handleVillagerSpawn(event, loc);
+        try {
+            switch (type) {
+                case ZOMBIE -> handleZombieSpawn(event, loc);
+                case SLIME -> handleSlimeSpawn(event, loc);
+                case CREEPER -> handleCreeperSpawn(event, loc);
+                case WANDERING_TRADER -> handleTraderSpawn(event);
+                case SKELETON -> handleSkeletonSpawn(event, loc);
+                case BLAZE -> handleBlazeSpawn(event, loc);
+                case IRON_GOLEM -> handleGolemSpawn(event, loc);
+                case SPIDER -> handleSpiderSpawn(event, loc);
+                case WITCH -> handleWitchSpawn(event, loc);
+                case WITHER_SKELETON -> handleWitherSkeletonSpawn(event, loc);
+                case EVOKER -> handleEvokerSpawn(event, loc);
+                case PILLAGER -> handlePillagerSpawn(event, loc);
+                case ENDERMAN -> handleEndermanSpawn(event, loc);
+                case VILLAGER -> handleVillagerSpawn(event, loc);
+            }
+        } catch (RuntimeException exception) {
+            logSpawnFailure(type, event, exception);
         }
+    }
+
+    /**
+     * Keeps a broken optional conversion from failing Minecraft's spawn event and
+     * flooding production logs. One complete diagnostic is retained per mob type
+     * and minute so the actual conversion can be repaired without hiding it.
+     */
+    private void logSpawnFailure(EntityType type, CreatureSpawnEvent event, RuntimeException exception) {
+        long now = System.currentTimeMillis();
+        long lastLog = lastSpawnFailureLog.getOrDefault(type, 0L);
+        if (now - lastLog < 60_000L) {
+            return;
+        }
+
+        lastSpawnFailureLog.put(type, now);
+        plugin.getLogger().log(
+                Level.SEVERE,
+                "Failed optional conversion for " + type + " (reason=" + event.getSpawnReason()
+                        + ", world=" + event.getLocation().getWorld().getName()
+                        + ", x=" + event.getLocation().getBlockX()
+                        + ", y=" + event.getLocation().getBlockY()
+                        + ", z=" + event.getLocation().getBlockZ() + ")",
+                exception
+        );
     }
 
     @EventHandler(priority = EventPriority.HIGH)
