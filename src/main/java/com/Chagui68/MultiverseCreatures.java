@@ -162,6 +162,9 @@ public class MultiverseCreatures extends JavaPlugin {
 
         MobHandler mobHandler = new MobHandler(this);
         getServer().getPluginManager().registerEvents(mobHandler, this);
+        // El tope de poblacion se calcula aqui, fuera de CreatureSpawnEvent: contar
+        // entidades dentro del evento rompe el iterador del mundo. Cada 5 s basta.
+        getServer().getScheduler().runTaskTimer(this, mobHandler::refrescarRecuento, 100L, 100L);
         getServer().getPluginManager().registerEvents(new ItemFoodHandler(this), this);
         getServer().getPluginManager().registerEvents(new EntitiesIAHandler(), this);
         getServer().getPluginManager().registerEvents(new ItemCombatHandler(this), this);

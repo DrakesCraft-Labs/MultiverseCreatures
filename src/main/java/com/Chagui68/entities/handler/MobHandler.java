@@ -199,22 +199,42 @@ public class MobHandler implements Listener {
      */
     private boolean alTope(World world) {
         if (world == null || maxAlivePerWorld <= 0) return false;
-
-        long ahora = System.currentTimeMillis();
         long[] cache = recuento.get(world.getName());
-        if (cache == null || ahora - cache[1] > RECUENTO_MS) {
-            cache = new long[]{MscEntityUtils.countAlive(world), ahora};
-            recuento.put(world.getName(), cache);
-            if (debug && cache[0] >= maxAlivePerWorld) {
-                plugin.getLogger().info("[MSC] " + world.getName() + " en el tope: "
-                        + cache[0] + "/" + maxAlivePerWorld + ", no se convierten mas spawns.");
-            }
-        }
+        // Sin dato todavia se deja pasar: mas vale un mob de mas que bloquear
+        // los spawns del mundo entero por no haber contado aun.
+        if (cache == null) return false;
         if (cache[0] < maxAlivePerWorld) {
             cache[0]++;          // se cuenta el que esta a punto de nacer
             return false;
         }
         return true;
+    }
+
+    /**
+     * Recuenta las criaturas MSC vivas de cada mundo. Lo llama una tarea periodica.
+     *
+     * <p>NUNCA debe llamarse desde dentro de {@code CreatureSpawnEvent}. Recorrer
+     * {@code world.getEntities()} mientras el servidor esta creando una entidad
+     * revienta el iterador de fastutil con
+     *
+     *     NullPointerException: ... because "this.wrapped" is null
+     *
+     * Asi se desplego el 2026-08-22 y genero 449 excepciones en una tarde, dejando
+     * de hecho al plugin sin convertir un solo spawn.
+     */
+    public void refrescarRecuento() {
+        if (maxAlivePerWorld <= 0) return;
+        long ahora = System.currentTimeMillis();
+        for (World world : Bukkit.getWorlds()) {
+            try {
+                recuento.put(world.getName(),
+                        new long[]{MscEntityUtils.countAlive(world), ahora});
+            } catch (RuntimeException e) {
+                // Un mundo que falla no debe tumbar el recuento de los demas.
+                plugin.getLogger().warning("[MSC] no se pudo contar en "
+                        + world.getName() + ": " + e.getClass().getSimpleName());
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
