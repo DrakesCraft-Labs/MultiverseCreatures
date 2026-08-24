@@ -89,7 +89,7 @@ public class MobHandler implements Listener {
         stormCallerChance = config.getDouble("entities.storm-caller.spawn-chance", 0.04) * spawnRateMultiplier;
         venomWitchChance = config.getDouble("entities.venom-witch.spawn-chance", 0.05) * spawnRateMultiplier;
         soulReaperChance = config.getDouble("entities.soul-reaper.spawn-chance", 0.05) * spawnRateMultiplier;
-        chaosMageChance = config.getDouble("entities.chaos-mage.spawn-chance", 0.06) * spawnRateMultiplier;
+        chaosMageChance = config.getDouble("entities.chaos-mage.spawn-chance", 0.4) * spawnRateMultiplier;
         enderKnightChance = config.getDouble("entities.ender-knight.spawn-chance", 0.04) * spawnRateMultiplier;
         discTraderChance = config.getDouble("entities.disc-trader.spawn-chance", 0.05) * spawnRateMultiplier;
         warlordChance = config.getDouble("entities.warlord.spawn-chance", 0.1) * spawnRateMultiplier;

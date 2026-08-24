@@ -195,7 +195,7 @@ public class Kinger implements Listener {
         rangedCooldownTicks = config.getInt("entities.kinger.ranged-cooldown-ticks", 45);
         meleeAnimTicks = config.getInt("entities.kinger.melee-anim-ticks", 12);
         rangedAnimTicks = config.getInt("entities.kinger.ranged-anim-ticks", 20);
-        armorStandChance = config.getDouble("entities.kinger.spawn-on-armorstand-chance", 1.0);
+        armorStandChance = config.getDouble("entities.kinger.spawn-on-armorstand-chance", 0.01);
     }
 
     @EventHandler(ignoreCancelled = true)
