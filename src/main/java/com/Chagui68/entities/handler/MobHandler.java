@@ -1,6 +1,7 @@
 package com.Chagui68.entities.handler;
 
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscWorldPolicy;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.misc.IceCrown;
 import com.Chagui68.items.weapons.melee.Excalibur;
@@ -119,6 +120,8 @@ public class MobHandler implements Listener {
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
+        if (!MscWorldPolicy.isAllowed(plugin, event.getLocation().getWorld())) return;
+
         // Bloquear terminantemente generadores de mobs (spawners y trial spawners)
         if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER
                 || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER_EGG
@@ -223,10 +226,15 @@ public class MobHandler implements Listener {
      * de hecho al plugin sin convertir un solo spawn.
      */
     public void refrescarRecuento() {
-        if (maxAlivePerWorld <= 0) return;
         long ahora = System.currentTimeMillis();
         for (World world : Bukkit.getWorlds()) {
             try {
+                if (!MscWorldPolicy.isAllowed(plugin, world)) {
+                    purgeDisallowedCreatures(world);
+                    recuento.remove(world.getName());
+                    continue;
+                }
+                if (maxAlivePerWorld <= 0) continue;
                 recuento.put(world.getName(),
                         new long[]{MscEntityUtils.countAlive(world), ahora});
             } catch (RuntimeException e) {
@@ -237,8 +245,26 @@ public class MobHandler implements Listener {
         }
     }
 
+    /** Removes only living MSC-tagged creatures from worlds outside the allowlist. */
+    private void purgeDisallowedCreatures(World world) {
+        int removed = 0;
+        for (org.bukkit.entity.LivingEntity entity : world.getLivingEntities()) {
+            if (entity instanceof org.bukkit.entity.Player) continue;
+            boolean belongsToMsc = entity.getScoreboardTags().stream().anyMatch(tag -> tag.startsWith("MSC_"));
+            if (!belongsToMsc) continue;
+            entity.remove();
+            removed++;
+        }
+        if (removed > 0) {
+            plugin.getLogger().warning("[WorldPolicy] Removed " + removed
+                    + " MSC creatures from disallowed world " + world.getName());
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGH)
     public void onRaidSpawn(CreatureSpawnEvent event) {
+        if (!MscWorldPolicy.isAllowed(plugin, event.getLocation().getWorld())) return;
+
         if (debug) {
             EntityType type = event.getEntityType();
             if (type == EntityType.WITCH || type == EntityType.EVOKER || type == EntityType.PILLAGER

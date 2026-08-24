@@ -25,6 +25,15 @@ general:
   # summoned by command stay persistent regardless of this setting.
   natural-spawn-persistent: false
 
+  # MSC creatures may only spawn or remain in these exact worlds. Keep game
+  # modalities such as clasico, laboratorio, oneblock and skyblock out.
+  allowed-creature-worlds:
+    - world
+    - world_nether
+    - world_the_end
+    - boss_dimension
+    - drakes_bosses
+
 # ---------- Command settings ----------
 commands:
   permission: "msc.admin"

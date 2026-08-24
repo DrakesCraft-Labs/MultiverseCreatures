@@ -82,6 +82,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.Chagui68.entities.handler.MobHandler;
+import com.Chagui68.utils.MscWorldPolicy;
 import com.Chagui68.MultiverseCreatures;
 
 import static org.bukkit.ChatColor.*;
@@ -172,6 +173,10 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         }
 
         Player p = (Player) sender;
+        if (!MscWorldPolicy.isAllowed(plugin, p.getWorld())) {
+            sender.sendMessage(RED + "MultiverseCreatures cannot spawn mobs in this modality.");
+            return;
+        }
         String type = args[1].toLowerCase();
 
         if (type.equals("help")) {
