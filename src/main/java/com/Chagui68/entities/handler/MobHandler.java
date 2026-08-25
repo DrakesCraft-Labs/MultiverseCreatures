@@ -263,13 +263,29 @@ public class MobHandler implements Listener {
 
     /** Removes only living MSC-tagged creatures from worlds outside the allowlist. */
     private void purgeDisallowedCreatures(World world) {
+        if (world == null) return;
         int removed = 0;
-        for (org.bukkit.entity.LivingEntity entity : world.getLivingEntities()) {
-            if (entity instanceof org.bukkit.entity.Player) continue;
-            boolean belongsToMsc = entity.getScoreboardTags().stream().anyMatch(tag -> tag.startsWith("MSC_"));
-            if (!belongsToMsc) continue;
-            entity.remove();
-            removed++;
+        try {
+            for (org.bukkit.entity.LivingEntity entity : world.getLivingEntities()) {
+                if (entity == null || entity instanceof org.bukkit.entity.Player) continue;
+                try {
+                    java.util.Set<String> tags = entity.getScoreboardTags();
+                    if (tags == null) continue;
+                    boolean belongsToMsc = false;
+                    for (String tag : tags) {
+                        if (tag != null && tag.startsWith("MSC_")) {
+                            belongsToMsc = true;
+                            break;
+                        }
+                    }
+                    if (belongsToMsc) {
+                        entity.remove();
+                        removed++;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception ignored) {
         }
         if (removed > 0) {
             plugin.getLogger().warning("[WorldPolicy] Removed " + removed

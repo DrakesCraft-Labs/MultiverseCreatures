@@ -63,8 +63,13 @@ public final class BossArena {
             return result;
         }
         for (Player p : center.getWorld().getPlayers()) {
-            if (esObjetivoValido(p) && p.getLocation().distanceSquared(center) <= radiusSq) {
-                result.add(p);
+            if (p != null && p.getWorld().equals(center.getWorld()) && esObjetivoValido(p)) {
+                try {
+                    if (p.getLocation().distanceSquared(center) <= radiusSq) {
+                        result.add(p);
+                    }
+                } catch (IllegalArgumentException ignored) {
+                }
             }
         }
         return result;
@@ -78,12 +83,20 @@ public final class BossArena {
     /** El jugador valido mas cercano dentro del alcance, o null si no hay ninguno. */
     public static Player findNearestPlayer(Location center, double range) {
         Player nearest = null;
+        if (center == null || center.getWorld() == null) {
+            return null;
+        }
         double nearestDistSq = range * range;
         for (Player p : getValidPlayers(center.getWorld())) {
-            double distSq = p.getLocation().distanceSquared(center);
-            if (distSq < nearestDistSq) {
-                nearestDistSq = distSq;
-                nearest = p;
+            if (p != null && p.getWorld().equals(center.getWorld())) {
+                try {
+                    double distSq = p.getLocation().distanceSquared(center);
+                    if (distSq < nearestDistSq) {
+                        nearestDistSq = distSq;
+                        nearest = p;
+                    }
+                } catch (IllegalArgumentException ignored) {
+                }
             }
         }
         return nearest;
@@ -92,7 +105,15 @@ public final class BossArena {
     /** Distancia al jugador valido mas cercano, o Double.MAX_VALUE si no hay ninguno. */
     public static double getNearestPlayerDistance(Location loc) {
         Player nearest = findNearestPlayer(loc, Double.MAX_VALUE);
-        return nearest == null ? Double.MAX_VALUE : nearest.getLocation().distance(loc);
+        if (nearest == null || nearest.getWorld() == null || loc == null || loc.getWorld() == null
+                || !nearest.getWorld().equals(loc.getWorld())) {
+            return Double.MAX_VALUE;
+        }
+        try {
+            return nearest.getLocation().distance(loc);
+        } catch (IllegalArgumentException e) {
+            return Double.MAX_VALUE;
+        }
     }
 
     /**

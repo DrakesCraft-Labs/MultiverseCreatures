@@ -155,13 +155,22 @@ public final class MscEntityUtils {
     public static int countAlive(World world) {
         if (world == null) return 0;
         int n = 0;
-        for (Entity e : world.getEntities()) {
-            for (String tag : e.getScoreboardTags()) {
-                if (tag.startsWith("MSC_")) {
-                    n++;
-                    break;
+        try {
+            for (Entity e : world.getEntities()) {
+                if (e == null || !e.isValid()) continue;
+                try {
+                    java.util.Set<String> tags = e.getScoreboardTags();
+                    if (tags == null) continue;
+                    for (String tag : tags) {
+                        if (tag != null && tag.startsWith("MSC_")) {
+                            n++;
+                            break;
+                        }
+                    }
+                } catch (Exception ignored) {
                 }
             }
+        } catch (Exception ignored) {
         }
         return n;
     }
