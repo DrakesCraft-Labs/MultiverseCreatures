@@ -75,7 +75,11 @@ public class MobHandler implements Listener {
     private int maxAlivePerWorld;
     /** Cada cuanto se vuelve a contar. Contar recorre todas las entidades del mundo. */
     private static final long RECUENTO_MS = 5000L;
+    /** Pausa local tras un iterador de mundo inestable para no inundar el log ni reintentarlo. */
+    private static final long REINTENTO_RECUENTO_TRAS_FALLO_MS = 60000L;
     private final Map<String, long[]> recuento = new HashMap<>();
+    /** Momento a partir del cual se puede volver a recorrer cada mundo que fallo. */
+    private final Map<String, Long> proximoReintentoRecuento = new HashMap<>();
 
     public MobHandler(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -235,14 +239,26 @@ public class MobHandler implements Listener {
                     continue;
                 }
                 if (maxAlivePerWorld <= 0) continue;
+                if (!puedeRecontar(proximoReintentoRecuento, world.getName(), ahora)) continue;
                 recuento.put(world.getName(),
                         new long[]{MscEntityUtils.countAlive(world), ahora});
+                proximoReintentoRecuento.remove(world.getName());
             } catch (RuntimeException e) {
-                // Un mundo que falla no debe tumbar el recuento de los demas.
+                // Un iterador nativo puede ser inestable mientras otro plugin modifica
+                // entidades. Conservar la cache evita abrir el tope y el enfriamiento
+                // impide repetir esa iteracion riesgosa cada cinco segundos.
+                proximoReintentoRecuento.put(world.getName(), ahora + REINTENTO_RECUENTO_TRAS_FALLO_MS);
                 plugin.getLogger().warning("[MSC] no se pudo contar en "
-                        + world.getName() + ": " + e.getClass().getSimpleName());
+                        + world.getName() + ": " + e.getClass().getSimpleName()
+                        + "; se reintentara en 60 s");
             }
         }
+    }
+
+    /** Devuelve si el mundo supero el enfriamiento posterior a un fallo de iteracion. */
+    static boolean puedeRecontar(Map<String, Long> proximoReintento, String worldName, long ahora) {
+        Long proximoIntento = proximoReintento.get(worldName);
+        return proximoIntento == null || ahora >= proximoIntento;
     }
 
     /** Removes only living MSC-tagged creatures from worlds outside the allowlist. */
