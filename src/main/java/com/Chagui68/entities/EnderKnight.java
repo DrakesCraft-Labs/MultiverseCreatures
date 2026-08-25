@@ -110,6 +110,14 @@ public class EnderKnight implements Listener {
 
         Location eLoc = em.getLocation();
         Location tLoc = target.getLocation();
+        World enderWorld = eLoc.getWorld();
+        World targetWorld = tLoc.getWorld();
+        if (!sharesWorld(enderWorld == null ? null : enderWorld.getUID(),
+                targetWorld == null ? null : targetWorld.getUID())) {
+            // A stale Bukkit target can survive a cross-world transfer; never compare locations across worlds.
+            em.setTarget(null);
+            return;
+        }
         double dist = eLoc.distance(tLoc);
         inst.enderPullCooldown++;
         inst.enderRushCooldown++;
@@ -141,6 +149,11 @@ public class EnderKnight implements Listener {
         if (dist < 4) {
             target.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 0));
         }
+    }
+
+    /** Returns whether two world identities can safely participate in a location-distance calculation. */
+    static boolean sharesWorld(UUID firstWorld, UUID secondWorld) {
+        return firstWorld != null && firstWorld.equals(secondWorld);
     }
 
     @EventHandler
