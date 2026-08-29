@@ -17,8 +17,8 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 /**
- * Ráfaga de lanza: tres estocadas rápidas consecutivas contra los jugadores
- * que estén delante del jefe. Cada golpe pega en un cono de 120 grados.
+ * Lance Flurry: three rapid consecutive thrusts against players in front of
+ * the boss. Each hit lands in a 120-degree cone.
  */
 public class LanceFlurryAttack extends BossAttackBase {
     private final double flurryDamage;

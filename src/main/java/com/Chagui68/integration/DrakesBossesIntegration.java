@@ -7,11 +7,11 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- * Contrato opcional con DrakesBosses/Odysseia sin enlazado binario entre plugins.
+ * Optional contract with DrakesBosses/Odysseia without hard plugin dependency.
  *
- * La integración sólo usa Bukkit: funciona aunque DrakesBosses no esté instalado y evita que el
- * miniboss invada `boss_arena`. UltraGod publica la invulnerabilidad nativa del jugador, que es
- * suficiente para que Mahoraga nunca fuerce un daño administrativo.
+ * Integration uses only Bukkit: it works even if DrakesBosses is not installed and prevents
+ * the miniboss from invading `boss_arena`. UltraGod exposes native player invulnerability,
+ * which is enough for Mahoraga to never force administrative damage.
  */
 public final class DrakesBossesIntegration {
 

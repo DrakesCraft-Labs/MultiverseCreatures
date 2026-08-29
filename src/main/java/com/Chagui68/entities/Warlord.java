@@ -113,9 +113,9 @@ public class Warlord implements Listener {
         if (warlord == null) return;
 
         if (applyingTrueDamage) {
-            // El evento re-disparado por player.damage() vuelve a pasar por SlimeTinker
-            // (prioridad NORMAL), que lo capea a 1. Al venir de nosotros (HIGHEST) lo
-            // restauramos como daño real para atravesar el trait Infinity.
+            // The re-fired event from player.damage() passes again through SlimeTinker
+            // (NORMAL priority) which caps it to 1. Coming from us (HIGHEST) we restore
+            // it as real damage to pierce the Infinity trait.
             applyingTrueDamage = false;
             event.setCancelled(false);
             event.setDamage(Math.max(event.getDamage(), trueDamage));

@@ -11,80 +11,79 @@ import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.entities.BossInstance;
 
 /**
- * Lo que un ataque necesita de su jefe.
+ * What an attack needs from its boss.
  *
- * POR QUE EXISTE
+ * WHY IT EXISTS
  *
- * Los 42 ataques del plugin estaban escritos contra ArmorStandBoss, la clase concreta del
- * Centinela de Obsidiana. Funcionan perfectamente, pero al depender del tipo concreto no los
- * puede usar ningun otro jefe: para reaprovechar un ataque habia que copiarlo y cambiarle el
- * tipo, que es como acaban divergiendo dos copias del mismo codigo.
+ * The 42 plugin attacks were written against ArmorStandBoss, the concrete Obsidian Sentinel
+ * class. They work perfectly, but depending on the concrete type prevents any other boss
+ * from reusing them: to reuse an attack you had to copy it and change the type, which is
+ * how two copies of the same code diverge.
  *
- * Con esta interfaz en medio, cualquier jefe que la implemente reutiliza los 42 tal cual. Ese es
- * el objetivo: que todos los jefes del servidor compartan la misma logica de ataque y solo se
- * diferencien en sus valores y su puesta en escena.
+ * With this interface in the middle, any boss implementing it reuses the 42 attacks as-is.
+ * The goal is for all server bosses to share the same attack logic and only differ in
+ * values and presentation.
  *
- * QUE ENTRA Y QUE NO
+ * WHAT BELONGS HERE AND WHAT DOES NOT
  *
- * Aqui esta solo lo generico: quien hay cerca, donde esta el suelo, como se empuja a un jugador,
- * como se resetea la pose. Lo propio del Centinela -- el pentagrama del cielo, la lanza de
- * netherita, los tiempos de su escudo -- se queda en ArmorStandBoss, porque un jefe distinto no
- * tiene por que tener nada de eso.
+ * Only generic concerns live here: who is nearby, where the ground is, how to push a player,
+ * how to reset the pose. Sentinel-specific concerns — sky pentagram, netherite spear,
+ * shield timings — stay in ArmorStandBoss, because a different boss may not need them.
  */
 public interface BossHost {
 
-    /** El plugin, para programar tareas y leer configuracion. */
+    /** The plugin, for scheduling tasks and reading config. */
     MultiverseCreatures getPlugin();
 
-    /** Devuelve al jefe a su pose de reposo despues de un ataque. */
+    /** Resets the boss to its idle pose after an attack. */
     void resetBossPose(BossInstance instance);
 
-    /** Los jugadores del mundo a los que este jefe puede atacar. */
+    /** Players in the world this boss can attack. */
     default List<Player> getValidPlayers(World world) {
         return BossArena.getValidPlayers(world);
     }
 
-    /** Los jugadores validos dentro de un radio, dado al cuadrado. */
+    /** Valid players within a radius (squared). */
     default List<Player> getValidPlayersNear(Location center, double radiusSq) {
         return BossArena.getValidPlayersNear(center, radiusSq);
     }
 
-    /** Empuja a un jugador hacia arriba. */
+    /** Launches a player upward. */
     default void launchPlayer(Player p, double y) {
         BossArena.launchPlayer(p, y);
     }
 
-    /** La altura del suelo bajo una ubicacion. */
+    /** Ground height under a location. */
     default double getGroundY(Location loc, double maxScan) {
         return BossArena.getGroundY(loc, maxScan);
     }
 
-    /** Si la entidad del jefe esta pisando suelo. */
+    /** Whether the boss entity is on ground. */
     default boolean isOnGround(BossPuppet stand) {
         return BossArena.isOnGround(stand);
     }
 
-    /** Cuantos jugadores validos hay en el radio. */
+    /** How many valid players are in range. */
     default int countPlayersInRange(Location center, double radius) {
         return BossArena.countPlayersInRange(center, radius);
     }
 
-    /** El jugador valido mas cercano, o null. */
+    /** Nearest valid player, or null. */
     default Player findNearestPlayer(Location center, double range) {
         return BossArena.findNearestPlayer(center, range);
     }
 
-    /** El objetivo del jefe segun su alcance de agresion, o null. */
+    /** Boss target based on aggro range, or null. */
     Player detectTarget(BossPuppet stand);
 
-    /** Onda expansiva desde un punto. La comparten varios ataques de suelo. */
+    /** Shockwave from a point. Shared by several ground attacks. */
     void spawnShockwaveWave(World world, Location center, double maxRadius);
 
     /**
-     * Daño de los sellos y del bombardeo aereo.
+     * Seal and aerial barrage damage.
      *
-     * Llevan valor por defecto porque un jefe nuevo no tiene por que usar ninguno de los dos
-     * ataques que los consultan; el Centinela los sobrescribe con lo que diga su configuracion.
+     * Defaults are provided because a new boss may not use either of the attacks
+     * that query them; the Sentinel overrides them with its config values.
      */
     default double getSealDamage() {
         return 6.0;

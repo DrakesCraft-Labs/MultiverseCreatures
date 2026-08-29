@@ -72,7 +72,7 @@ public class Mahoraga implements Listener {
         reloadConfig();
         if (!plugin.isEnabled("entities.mahoraga")) return;
         if (DrakesBossesIntegration.isAvailable()) {
-            plugin.getLogger().info("[Mahoraga] Integración DrakesBosses activa: respeta UltraGod y boss_arena.");
+            plugin.getLogger().info("[Mahoraga] DrakesBosses integration active: respects UltraGod and boss_arena.");
         }
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startTicker();
@@ -376,9 +376,9 @@ public class Mahoraga implements Listener {
     }
 
     /**
-     * El conjunto Infinity no es una sentencia de muerte: Mahoraga aprende por jugador y escala
-     * su presión cada pocos segundos. Respeta la invulnerabilidad nativa usada por UltraGod y no
-     * llama nunca a {@code setHealth}, evitando instakills y cruces con tumbas o Soulbound.
+     * The Infinity set is not a death sentence: Mahoraga learns per player and scales
+     * pressure every few seconds. It respects the native invulnerability used by UltraGod
+     * and never calls {@code setHealth}, avoiding instakills and conflicts with graves or Soulbound.
      */
     private void applyInfinityArmorAdaptation(Zombie zombie, Player player, EntityDamageByEntityEvent event) {
         if (DrakesBossesIntegration.isUltraGod(player)) return;
@@ -394,17 +394,17 @@ public class Mahoraga implements Listener {
         double adaptedDamage = trueDamageBase + stage * trueDamagePerStage;
 
         if (infinityTrueDamage) {
-            // El evento re-disparado por player.damage() vuelve a pasar por SlimeTinker
-            // (prioridad NORMAL), que lo capea a 1. Al venir de nosotros (HIGHEST) lo
-            // restauramos como daño real para atravesar el trait Infinity.
+            // The re-fired event from player.damage() passes again through SlimeTinker
+            // (NORMAL priority) which caps it to 1. Coming from us (HIGHEST) we restore
+            // it as real damage to pierce the Infinity trait.
             infinityTrueDamage = false;
             event.setCancelled(false);
             event.setDamage(Math.max(event.getDamage(), adaptedDamage));
             return;
         }
 
-        // El trait de la armadura Infinity capa el golpe; lo re-disparamos como daño real
-        // para que Mahoraga lo atraviese. No se llama a setHealth en ningún momento.
+        // The Infinity armor trait caps the hit; we re-fire it as real damage
+        // so Mahoraga can pierce it. setHealth is never called.
         player.setAbsorptionAmount(0.0D);
         event.setCancelled(true);
         infinityTrueDamage = true;
@@ -428,7 +428,7 @@ public class Mahoraga implements Listener {
         zombie.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 60, Math.min(3, stage - 1), false, false));
         zombie.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, Math.min(2, stage - 1), false, false));
         if (advanced) {
-            player.sendActionBar(ChatColor.DARK_PURPLE + "Mahoraga adapta su rueda a tu Infinity "
+            player.sendActionBar(ChatColor.DARK_PURPLE + "Mahoraga adapts its wheel to your Infinity "
                     + ChatColor.LIGHT_PURPLE + "(" + stage + "/4)");
             player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.BLOCK_RESPAWN_ANCHOR_CHARGE,
                     0.9F, 0.65F + stage * 0.08F);

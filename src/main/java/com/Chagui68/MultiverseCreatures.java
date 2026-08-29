@@ -93,7 +93,7 @@ public class MultiverseCreatures extends JavaPlugin {
         return getConfig().getBoolean(section + ".enabled", true);
     }
 
-    /** Crea un respaldo preventivo de config.yml antes de cualquier operación. */
+    /** Creates a preventive backup of config.yml before any operation. */
     private void backupConfigFile() {
         try {
             java.io.File dataFolder = getDataFolder();

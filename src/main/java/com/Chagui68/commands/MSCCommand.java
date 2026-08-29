@@ -268,7 +268,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             case "garou" -> {
                 boolean success = plugin.getGarouBoss().trySpawn(p.getLocation());
                 if (success) {
-                    sender.sendMessage(GREEN + "Spawned Garou [Cazador de Héroes]!");
+                    sender.sendMessage(GREEN + "Spawned Garou [Hero Hunter]!");
                 } else {
                     sender.sendMessage(RED + "Failed to spawn Garou.");
                 }
@@ -656,10 +656,10 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         if (args.length > 1 && args[1].equalsIgnoreCase("help")) {
             sender.sendMessage(GOLD + "Usage: " + YELLOW + "/msc kill [all|<mob_type>] [radius]");
             sender.sendMessage(GRAY + "Examples:");
-            sender.sendMessage(GRAY + "  /msc kill               - Elimina todos los mobs MSC cercanos/mundo");
-            sender.sendMessage(GRAY + "  /msc kill mahoraga      - Elimina solo los Mahoraga");
-            sender.sendMessage(GRAY + "  /msc kill all 50        - Elimina todos los mobs MSC en 50 bloques");
-            sender.sendMessage(GRAY + "  /msc kill garou 100     - Elimina Garou en 100 bloques");
+            sender.sendMessage(GRAY + "  /msc kill               - Remove all nearby/world MSC mobs");
+            sender.sendMessage(GRAY + "  /msc kill mahoraga      - Remove only Mahoraga");
+            sender.sendMessage(GRAY + "  /msc kill all 50        - Remove all MSC mobs within 50 blocks");
+            sender.sendMessage(GRAY + "  /msc kill garou 100     - Remove Garou within 100 blocks");
             return;
         }
 
@@ -723,8 +723,8 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             killed++;
         }
 
-        sender.sendMessage(GREEN + "Eliminadas " + YELLOW + killed + GREEN + " criaturas MSC (" + targetType + ")"
-                + (radius != null ? " en radio de " + radius + " bloques." : " en el servidor."));
+        sender.sendMessage(GREEN + "Removed " + YELLOW + killed + GREEN + " MSC creatures (" + targetType + ")"
+                + (radius != null ? " within " + radius + " blocks." : " on the server."));
     }
 
     private void handleSeal(CommandSender sender, String[] args) {

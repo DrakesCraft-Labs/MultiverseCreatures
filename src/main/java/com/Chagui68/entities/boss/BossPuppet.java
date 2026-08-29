@@ -13,28 +13,28 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.util.EulerAngle;
 
 /**
- * El cuerpo de un jefe, sea un ArmorStand o una criatura normal.
+ * The body of a boss, whether an ArmorStand or a normal creature.
  *
- * POR QUE EXISTE
+ * WHY IT EXISTS
  *
- * Los 42 ataques del plugin animan al jefe moviendole la cabeza, el cuerpo y los brazos. Son unas
- * 285 llamadas a poses repartidas por todas las clases, y las poses solo existen en un ArmorStand.
- * Eso ataba los ataques a ese tipo de jefe: los de DrakesCraft son criaturas vivas -- Blaze,
- * Enderman, Evoker, Gigante -- y un zombi no tiene pose de brazo izquierdo.
+ * The 42 plugin attacks animate the boss by moving head, body and arms. There are ~285
+ * pose calls spread across all classes, and poses only exist on an ArmorStand.
+ * That tied attacks to that boss type: DrakesCraft bosses are living creatures — Blaze,
+ * Enderman, Evoker, Giant — and a zombie has no left-arm pose.
  *
- * La alternativa era partir cada ataque en dos mitades, efecto y coreografia, tocando 42 ficheros.
- * Esto hace lo mismo sin tocar ninguno: el ataque sigue pidiendo la pose, y aqui se decide si hay
- * a quien ponersela.
+ * The alternative was splitting each attack into two halves, effect and choreography,
+ * touching 42 files. This achieves the same without touching any: the attack still
+ * asks for the pose, and here we decide whether there is someone to apply it to.
  *
- * QUE PASA CON UNA CRIATURA
+ * WHAT HAPPENS WITH A CREATURE
  *
- * Las poses se ignoran en silencio, que es la unica respuesta honesta: no hay forma de doblarle el
- * brazo a un zombi. Todo lo demas -- posicion, vida, atributos, equipo, teletransporte -- funciona
- * igual, y con ello el efecto entero del ataque: el daño, las particulas, los proyectiles y los
- * empujones. Un jefe criatura reutiliza el ataque completo salvo su coreografia.
+ * Poses are silently ignored, which is the only honest response: there is no way to
+ * bend a zombie's arm. Everything else — position, health, attributes, equipment,
+ * teleport — works the same, and so does the whole attack effect: damage, particles,
+ * projectiles and knockback. A creature boss reuses the full attack except choreography.
  *
- * La rotacion de la cabeza sí se aproxima girando la entidad, porque en una criatura eso sí se ve
- * y varios ataques la usan para telegrafiar hacia donde apuntan.
+ * Head rotation is approximated by rotating the entity, because on a creature that is
+ * visible and several attacks use it to telegraph where they aim.
  */
 public final class BossPuppet {
 
@@ -46,22 +46,22 @@ public final class BossPuppet {
         this.stand = entidad instanceof ArmorStand ? (ArmorStand) entidad : null;
     }
 
-    /** La entidad real, para lo que necesite el tipo concreto. */
+    /** The real entity, for code that needs the concrete type. */
     public LivingEntity entidad() {
         return entidad;
     }
 
-    /** El ArmorStand, o null si este jefe es una criatura. */
+    /** The ArmorStand, or null if this boss is a creature. */
     public ArmorStand armorStand() {
         return stand;
     }
 
-    /** Si este jefe se puede posar. Los ataques no necesitan preguntarlo; es para diagnostico. */
+    /** Whether this boss supports poses. Attacks don't need to check; for diagnostics. */
     public boolean tienePoses() {
         return stand != null;
     }
 
-    // --- Lo que funciona en cualquier entidad ---------------------------------------------
+    // --- Works on any entity --------------------------------------------------------
 
     public Location getLocation() {
         return entidad.getLocation();
@@ -159,14 +159,14 @@ public final class BossPuppet {
         entidad.damage(cantidad, origen);
     }
 
-    // --- Poses: reales en un ArmorStand, ignoradas en una criatura -------------------------
+    // --- Poses: real on ArmorStand, ignored on creature ----------------------------
 
     /**
-     * Las poses actuales.
+     * Current poses.
      *
-     * En una criatura devuelven el angulo cero en vez de fallar: varios ataques leen la pose para
-     * interpolar desde ella, y devolver cero deja la animacion en su sitio de partida en lugar de
-     * romper el ataque entero.
+     * On a creature they return zero angle instead of failing: several attacks read the pose
+     * to interpolate from it, and returning zero keeps the animation at its starting point
+     * instead of breaking the whole attack.
      */
     public EulerAngle getHeadPose() {
         return stand != null ? stand.getHeadPose() : EulerAngle.ZERO;
@@ -190,8 +190,8 @@ public final class BossPuppet {
             stand.setHeadPose(a);
             return;
         }
-        // En una criatura no hay pose de cabeza, pero girarla sí se ve y varios ataques la usan
-        // para telegrafiar hacia donde apuntan. Se aproxima con la rotacion de la entidad.
+        // On a creature there is no head pose, but rotating it is visible and several attacks
+        // use it to telegraph aim. Approximated via entity rotation.
         Location l = entidad.getLocation();
         l.setYaw((float) Math.toDegrees(a.getY()));
         l.setPitch((float) Math.toDegrees(a.getX()));

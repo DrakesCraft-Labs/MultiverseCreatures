@@ -17,8 +17,8 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 /**
- * Barrido del verdugo: golpe devastador de arco amplio que barre todo lo que
- * este delante del jefe. Telegrafiado, mucho daño, empuje fuerte y debilidad.
+ * Executioner Sweep: devastating wide-arc strike that sweeps everything in
+ * front of the boss. Telegraphs, high damage, strong knockback and weakness.
  */
 public class ExecutionerSweepAttack extends BossAttackBase {
     private final double sweepDamage;

@@ -60,13 +60,14 @@ public class CrystalBarrageAttack extends BossAttackBase {
                 }
                 Iterator<Location> it = crystals.iterator();
                 Iterator<Vector> itd = directions.iterator();
-                while (it.hasNext()) {
+                while (it.hasNext() && itd.hasNext()) {
                     Location p = it.next();
                     Vector d = itd.next();
                     p.add(d.clone().multiply(1.4));
                     world.spawnParticle(Particle.END_ROD, p, 3, 0.05, 0.05, 0.05, 0);
                     world.spawnParticle(Particle.DUST, p, 2, 0, 0, 0, 0,
                             new Particle.DustOptions(Color.fromRGB(0xAA66FF), 1.5f));
+                    boolean removed = false;
                     for (Player pl : boss.getValidPlayers(world)) {
                         if (pl.getLocation().distanceSquared(p) < 9) {
                             MscEntityUtils.damageBy(stand.entidad(), pl, sealDamage * 0.55);
@@ -75,9 +76,11 @@ public class CrystalBarrageAttack extends BossAttackBase {
                             world.playSound(p, Sound.BLOCK_GLASS_BREAK, 1.5f, 0.7f);
                             it.remove();
                             itd.remove();
+                            removed = true;
                             break;
                         }
                     }
+                    if (removed) continue;
                     if (p.distanceSquared(center) > 1600) {
                         it.remove();
                         itd.remove();

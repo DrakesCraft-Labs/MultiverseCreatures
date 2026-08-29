@@ -22,8 +22,8 @@ import org.bukkit.util.Vector;
 import java.util.*;
 
 /**
- * Garou - Cazador de Héroes y Guerrero Cósmico.
- * Miniboss de alta agilidad, artes marciales y contraataques rápidos.
+ * Garou - Hero Hunter and Cosmic Warrior.
+ * High-agility miniboss focused on martial arts and fast counters.
  */
 public class GarouBoss implements Listener {
 
@@ -58,19 +58,19 @@ public class GarouBoss implements Listener {
         if (!plugin.isEnabled("entities.garou")) return false;
         if (loc == null || loc.getWorld() == null) return false;
 
-        // Comprobar densidad de Garou en un radio de 64 bloques
-        boolean hasNearby = !loc.getWorld().getNearbyEntities(loc, 64, 32, 64, 
+        // Check Garou density within a 64-block radius
+        boolean hasNearby = !loc.getWorld().getNearbyEntities(loc, 64, 32, 64,
                 e -> e.getScoreboardTags().contains("MSC_Garou")).isEmpty();
         if (hasNearby) return false;
 
         WitherSkeleton garou = (WitherSkeleton) loc.getWorld().spawnEntity(loc, EntityType.WITHER_SKELETON);
         garou.addScoreboardTag("MSC_Garou");
-        garou.setCustomName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Garou " + ChatColor.LIGHT_PURPLE + "[Cazador de Héroes]");
+        garou.setCustomName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Garou " + ChatColor.LIGHT_PURPLE + "[Hero Hunter]");
         garou.setCustomNameVisible(true);
         garou.setRemoveWhenFarAway(true);
         garou.setCanPickupItems(false);
 
-        // Atributos de jefe
+        // Boss attributes
         AttributeInstance maxHealth = garou.getAttribute(Attribute.MAX_HEALTH);
         if (maxHealth != null) {
             maxHealth.setBaseValue(health);
@@ -92,13 +92,13 @@ public class GarouBoss implements Listener {
             knockbackResist.setBaseValue(0.9);
         }
 
-        // Equipamiento visual distintivo (Túnica oscura de artes marciales)
+        // Distinctive visual gear (dark martial arts robe)
         EntityEquipment eq = garou.getEquipment();
         if (eq != null) {
             ItemStack chest = new ItemStack(Material.LEATHER_CHESTPLATE);
             LeatherArmorMeta cm = (LeatherArmorMeta) chest.getItemMeta();
             if (cm != null) {
-                cm.setColor(Color.fromRGB(30, 20, 45)); // Púrpura oscuro cósmico
+                cm.setColor(Color.fromRGB(30, 20, 45)); // dark cosmic purple
                 chest.setItemMeta(cm);
             }
             eq.setChestplate(chest);
@@ -143,7 +143,7 @@ public class GarouBoss implements Listener {
                 World w = gLoc.getWorld();
                 if (w == null) return;
 
-                // Efecto de aura cósmica constante
+                // Constant cosmic aura effect
                 w.spawnParticle(Particle.PORTAL, gLoc.clone().add(0, 1.0, 0), 6, 0.3, 0.6, 0.3, 0.05);
 
                 LivingEntity target = garou.getTarget();
@@ -159,7 +159,7 @@ public class GarouBoss implements Listener {
                 long now = System.currentTimeMillis();
                 long lastSkill = lastSkillTime.getOrDefault(garou.getUniqueId(), 0L);
 
-                // Habilidad 1: Ráfaga de Acercamiento / Teletransporte Rápido si el objetivo huye
+                // Skill 1: Gap closer / fast teleport if target flees
                 if (distanceSq > 64.0 && now - lastSkill > 7000L) {
                     lastSkillTime.put(garou.getUniqueId(), now);
                     Location tLoc = target.getLocation();
@@ -174,7 +174,7 @@ public class GarouBoss implements Listener {
                     return;
                 }
 
-                // Habilidad 2: Corriente de Puño de Agua Rompedor de Rocas (Water Stream Rock Smashing Fist)
+                // Skill 2: Water Stream Rock Smashing Fist
                 if (distanceSq <= 25.0 && now - lastSkill > 5000L) {
                     lastSkillTime.put(garou.getUniqueId(), now);
                     w.playSound(gLoc, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, 1.4f);
@@ -214,7 +214,7 @@ public class GarouBoss implements Listener {
         if (!(event.getEntity() instanceof WitherSkeleton garou)) return;
         if (!garou.getScoreboardTags().contains("MSC_Garou")) return;
 
-        // Contraataque Marcial (Martial Counter): 25% de probabilidad de desviar y contraatacar
+        // Martial Counter: 25% chance to deflect and counterattack
         long now = System.currentTimeMillis();
         long lastCounter = lastCounterTime.getOrDefault(garou.getUniqueId(), 0L);
 
@@ -231,7 +231,7 @@ public class GarouBoss implements Listener {
 
             if (event.getDamager() instanceof LivingEntity damager) {
                 damager.damage(counterDamage, garou);
-                damager.sendMessage(ChatColor.DARK_PURPLE + "[Garou]" + ChatColor.GRAY + " ¡Tu golpe fue desviado por el Puño de Agua!");
+                damager.sendMessage(ChatColor.DARK_PURPLE + "[Garou]" + ChatColor.GRAY + " Your strike was deflected by the Water Stream Fist!");
                 damager.setVelocity(damager.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(0.9).setY(0.3));
             }
         }
@@ -251,24 +251,24 @@ public class GarouBoss implements Listener {
             w.spawnParticle(Particle.TOTEM_OF_UNDYING, loc.clone().add(0, 1, 0), 80, 0.8, 0.8, 0.8, 0.4);
             w.playSound(loc, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.5f, 0.8f);
 
-            // Recompensa: Núcleo Cósmico de Garou / Esencia Marcial
+            // Reward: Garou Cosmic Core / Martial Essence
             ItemStack core = new ItemStack(Material.NETHER_STAR);
             var meta = core.getItemMeta();
             if (meta != null) {
-                meta.setDisplayName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "✦ Núcleo Cósmico de Garou");
+                meta.setDisplayName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Garou Cosmic Core");
                 meta.setLore(List.of(
-                        ChatColor.GRAY + "Fragmento de poder primordial de las artes marciales.",
-                        ChatColor.LIGHT_PURPLE + "Reliquia de los Dioses de DrakesCraft."
+                        ChatColor.GRAY + "Fragment of primordial martial arts power.",
+                        ChatColor.LIGHT_PURPLE + "Relic of the DrakesCraft Gods."
                 ));
                 core.setItemMeta(meta);
             }
             w.dropItemNaturally(loc, core);
         }
 
-        // Anuncio a jugadores cercanos
+        // Announce to nearby players
         for (Entity e : garou.getNearbyEntities(40, 20, 40)) {
             if (e instanceof Player p) {
-                p.sendMessage(ChatColor.GOLD + "✦ " + ChatColor.DARK_PURPLE + "¡Garou ha sido derrotado!");
+                p.sendMessage(ChatColor.GOLD + "" + ChatColor.DARK_PURPLE + "Garou has been defeated!");
             }
         }
     }
