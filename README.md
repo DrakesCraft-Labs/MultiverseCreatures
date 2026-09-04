@@ -22,8 +22,8 @@
 
 > ### 🏰 ¡Únete a la Comunidad Oficial de DrakesCraft!
 > 
-> * 🎮 **IP del Servidor**: `play.drakescraft.cl` *(Java 1.21.11 & Bedrock)*
-> * 💬 **Discord Oficial**: [discord.gg/drakescraft](https://discord.gg/rR7FbfCt9Y)
+> * 🎮 **IP del Servidor**: `mc.drakescraft.cl` *(Java 1.21.11 & Bedrock)*
+> * 💬 **Discord Oficial**: [discord.gg/drakescraft](https://discord.gg/rv3vtXZTk7)
 > * 🌐 **Web & Guía**: [drakescraft.cl](https://drakescraft.cl) — 🛒 **Tienda**: [tienda.drakescraft.cl](https://tienda.drakescraft.cl)
 > 
 > *¡Juega con este addon y más de 80 expansiones optimizadas en vivo en nuestra network de supervivencia técnica!*
@@ -211,6 +211,6 @@ If you enjoy the plugin, leave a ⭐ on GitHub and a ❤ on [Modrinth](https://m
 - **Port & Maintenance**: DrakesCraft Labs team (Compatibility for Paper / Purpur 1.21.11).
 - **License**: GPL-3.0 / MIT.
 - **Source Code**: [GitHub Repository](https://github.com/DrakesCraft-Labs/MultiverseCreatures)
-- **Support & Issues**: [GitHub Issues](https://github.com/DrakesCraft-Labs/MultiverseCreatures/issues) | [Discord](https://discord.gg/rR7FbfCt9Y)
+- **Support & Issues**: [GitHub Issues](https://github.com/DrakesCraft-Labs/MultiverseCreatures/issues) | [Discord](https://discord.gg/rv3vtXZTk7)
 
 *This project is an open-source derivative work maintained by DrakesCraft Labs under the terms of its original license. All original assets and concepts belong to their respective creators.*
