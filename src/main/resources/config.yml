@@ -187,6 +187,27 @@ entities:
       - "&d%player% was outplayed by the chess piece"
 
   # -------------------------------------------------------------------------
+  # NIX - El Verdugo (The Executioner)
+  # -------------------------------------------------------------------------
+  nix-executioner:
+    enabled: true
+    health: 450.0
+    aggro-range: 28.0
+    move-speed: 0.30
+    melee-range: 3.5
+    melee-damage: 14.0
+    cleave-damage: 22.0
+    chain-range: 24.0
+    melee-cooldown-ticks: 20
+    chain-cooldown-ticks: 80
+    cleave-anim-ticks: 14
+    death-messages:
+      - "&4%player% was executed by NIX - El Verdugo"
+      - "&4%player%'s sentence was carried out by NIX - El Verdugo"
+      - "&4%player% fell under the guillotine of NIX"
+      - "&4%player% could not escape the executioner's judgment"
+
+  # -------------------------------------------------------------------------
   # Head Slime
   # -------------------------------------------------------------------------
   head-slime:

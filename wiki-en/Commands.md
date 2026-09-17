@@ -26,6 +26,7 @@ Summons a single entity (or a tactical formation) at the executor's location. Th
 | `merchant` | Multiverse Merchant ("Shaggy" Wandering Trader) |
 | `mahoraga` | Mahoraga miniboss |
 | `kinger` | Kinger miniboss |
+| `nix` (`executioner`, `nixelverdugo`) | NIX - El Verdugo (custom 27-part model boss) |
 | `armorstand` (`armorstandboss`) | THE OBSIDIAN SENTINEL final boss |
 | `creeperjr` | Creeper Jr. (×3 — spawns in trio) |
 | `headslime` | Head Slime |

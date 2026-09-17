@@ -99,7 +99,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             "duelist", "lancer", "camel", "sniper", "mahoraga", "garou", "shadowrogue", "flameelemental",
             "frostgolem", "voidcrawler", "stormcaller", "boneshield", "venomwitch",
             "obsidianguard", "soulreaper", "chaosmage", "enderknight", "kinger", "disctrader",
-            "warlord"
+            "warlord", "nix"
     );
 
     public MSCCommand(MultiverseCreatures plugin, MobHandler mobHandler) {
@@ -350,6 +350,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 boolean success = plugin.getDiscTrader().trySpawn(p.getLocation());
                 if (success) sender.sendMessage(GREEN + "Spawned Disc Trader!");
                 else sender.sendMessage(RED + "Failed to spawn Disc Trader.");
+            }
+            case "nix", "executioner", "nixelverdugo" -> {
+                boolean success = plugin.getNixBoss().trySpawn(p.getLocation());
+                if (success) sender.sendMessage(GREEN + "Spawned NIX - El Verdugo!");
+                else sender.sendMessage(RED + "Failed to spawn NIX - El Verdugo.");
             }
             default -> sendSpawnHelp(sender, 1);
         }

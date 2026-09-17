@@ -1,6 +1,6 @@
 # 🐉 Jefes
 
-MultiverseCreatures incluye **un jefe final** y **dos minijefes**. Todos los jefes se invocan con `/msc spawn <tipo>` (solo OP) y tienen salud/daño/cooldowns configurables en `config.yml`.
+MultiverseCreatures incluye **un jefe final** y múltiples y formidables **minijefes y jefes con modelos personalizados**. Todos los jefes se invocan con `/msc spawn <tipo>` (solo OP) y tienen salud/daño/cooldowns configurables en `config.yml`.
 
 ---
 
@@ -137,3 +137,36 @@ Un rey de ajedrez viviente: un ArmorStand invisible de escala 2.0 vestido con un
 **Persistencia:** etiquetado `MSC_Kinger`, por lo que sobrevive a recargas del plugin y se retoma al iniciar.
 
 **Muerte:** elimina todos los displays del traje y transmite uno de los `kinger.death-messages` temáticos de ajedrez ("checked by the King", "knocked off the board", "lost the game"...).
+
+---
+
+## 🪓 NIX - El Verdugo
+
+Un verdugo colosal e implacable construido a partir de un **modelo personalizado de 27 piezas ItemDisplay** utilizando cabezas de jugador con texturas y transformaciones matriciales. NIX posee IA avanzada, movimiento fluido de extremidades mediante animaciones procedurales con cuaterniones JOML y brutales mecánicas de ejecución.
+
+| Estadística | Valor por defecto |
+|---|---|
+| Salud | `nix-executioner.health` (450.0) |
+| Rango de agresión | `nix-executioner.aggro-range` (28.0 bloques) |
+| Velocidad de movimiento | `nix-executioner.move-speed` (0.30) |
+| Rango cuerpo a cuerpo / Daño de tajo | `nix-executioner.melee-range` (3.5) · `nix-executioner.cleave-damage` (22.0) |
+| Rango de atracción con cadenas | `nix-executioner.chain-range` (24.0 bloques) |
+| Cooldowns | cuerpo a cuerpo 20 ticks · cadenas 80 ticks |
+| Comando de invocación | `/msc spawn nix` (alias: `executioner`, `nixelverdugo`) |
+
+### Habilidades y Mecánicas
+
+- **Tajo de Guillotina (Cuerpo a cuerpo en área):**
+  Al estar a distancia de golpe, Nix levanta ambos brazos y descarga un tajo descendente aplastante. Inflige `cleave-damage` (22) en un radio frontal de 3.2 bloques, empuja a los jugadores y les aplica **Wither II (Sangrado)** y **Lentitud II**.
+- **Cadenas del Juicio (Atracción a distancia):**
+  Cuando un objetivo intenta huir (a entre 5 y 24 bloques de distancia), Nix lanza cadenas de hierro espectrales (`Sound.BLOCK_CHAIN_PLACE`) que aprisionan a la víctima, atrayéndola con violencia hacia él e infligiéndole **Oscuridad** y **Lentitud III**.
+- **Frenesí de Ejecución (Pasiva):**
+  Cuando la salud del jugador objetivo cae por debajo del **25%**, Nix entra en frenesí de ejecución: su velocidad de movimiento aumenta un +30%, sus ojos emiten partículas de polvo carmesí y el compás de sus zancadas se acelera.
+- **Animaciones Procedurales del Modelo:**
+  Las 27 piezas (Cabeza, Torso Superior, Pelvis, Brazo Derecho de 6 piezas, Brazo Izquierdo de 6 piezas, Pierna Derecha de 6 piezas, Pierna Izquierda de 6 piezas) cuentan con contra-rotaciones de marcha sincronizadas, preparación de ataques y seguimiento del cabeceo de la mirada del jugador.
+
+**Barra de jefe:** Barra segmentada de color rojo oscuro que muestra `NIX - El Verdugo` con niebla y cielo oscurecido.
+
+**Persistencia:** Etiquetado `MSC_NixBoss` y `MSC_NixPart` — se restaura o limpia automáticamente en reinicios o recargas del servidor.
+
+**Muerte:** Desencadena truenos, sonido de muerte de wither, una explosión de partículas carmesí, suelta 450 XP y muestra un título de condena finalizada a los jugadores cercanos.

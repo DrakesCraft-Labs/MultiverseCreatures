@@ -26,6 +26,7 @@ Invoca una sola entidad (o una formación táctica) en la ubicación del ejecuto
 | `merchant` | Comerciante Multiversal ("Shaggy" Comerciante Errante) |
 | `mahoraga` | Minijefe Mahoraga |
 | `kinger` | Minijefe Kinger |
+| `nix` (`executioner`, `nixelverdugo`) | NIX - El Verdugo (jefe con modelo custom de 27 piezas) |
 | `armorstand` (`armorstandboss`) | EL CENTINELA DE OBSIDIANA, jefe final |
 | `creeperjr` | Creeper Jr. (×3 — aparece en trío) |
 | `headslime` | Head Slime |

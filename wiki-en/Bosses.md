@@ -1,6 +1,6 @@
 # 🐉 Bosses
 
-MultiverseCreatures includes **one final boss** and **two minibosses**. All bosses are spawned via `/msc spawn <type>` (OP-only) and have configurable health/damage/cooldowns in `config.yml`.
+MultiverseCreatures includes **one final boss** and multiple formidable **minibosses and custom-modeled bosses**. All bosses are spawned via `/msc spawn <type>` (OP-only) and have configurable health/damage/cooldowns in `config.yml`.
 
 ---
 
@@ -137,3 +137,37 @@ A living chess king: an invisible 2.0-scale ArmorStand dressed in a 15-piece Ite
 **Persistence:** tagged `MSC_Kinger`, so it survives plugin reloads and is picked up again on startup.
 
 **Death:** removes all suit displays and broadcasts one of the chess-themed `kinger.death-messages` ("checked by the King", "knocked off the board", "lost the game"...).
+
+---
+
+## 🪓 NIX - El Verdugo (The Executioner)
+
+A towering, ruthless executioner constructed from a custom **27-piece ItemDisplay model** using specialized player skins and matrix transformations. NIX possesses advanced AI, smooth limb movement via procedural JOML quaternion animations, and deadly execution mechanics.
+
+| Stat | Default |
+|---|---|
+| Health | `nix-executioner.health` (450.0) |
+| Aggro range | `nix-executioner.aggro-range` (28.0 blocks) |
+| Move speed | `nix-executioner.move-speed` (0.30) |
+| Melee range / Cleave damage | `nix-executioner.melee-range` (3.5) · `nix-executioner.cleave-damage` (22.0) |
+| Chain pull range | `nix-executioner.chain-range` (24.0 blocks) |
+| Cooldowns | melee 20 ticks · chain pull 80 ticks |
+| Spawn Command | `/msc spawn nix` (aliases: `executioner`, `nixelverdugo`) |
+
+### Abilities & Mechanics
+
+- **Guillotine Cleave (Melee AOE):**
+  When within melee reach, Nix winds up both arms and delivers a crushing downward cleave. Deals `cleave-damage` (22) in a 3.2-block frontal radius, knocks players back, and inflicts **Wither II (Bleed)** and **Slowness II**.
+- **Chains of Judgment (Ranged Pull):**
+  When a target tries to flee (between 5 and 24 blocks away), Nix casts spectral iron chains (`Sound.BLOCK_CHAIN_PLACE`) that bind the victim, pulling them violently toward Nix while inflicting **Darkness** and **Slowness III**.
+- **Execution Frenzy (Passive):**
+  When target player health drops below **25%**, Nix enters an execution frenzy: movement speed increases by +30%, eyes emit crimson dust particles, and walking stride tempo accelerates.
+- **Procedural Model Animations:**
+  All 27 pieces (Head, Upper Torso, Lower Pelvis, 6-part Right Arm, 6-part Left Arm, 6-part Right Leg, 6-part Left Leg) feature synchronized walking counter-rotations, attack windups, and player-tracking head pitch.
+
+**Boss bar:** Dark Red segmented bar displaying `NIX - El Verdugo` with fog and darkened skies.
+
+**Persistence:** Tagged `MSC_NixBoss` and `MSC_NixPart` — automatically restored or cleaned up on server restart / reload.
+
+**Death:** Triggers lightning thunder, wither death sounds, a bloody particle explosion, drops 450 XP, and announces an execution end title to nearby players.
+

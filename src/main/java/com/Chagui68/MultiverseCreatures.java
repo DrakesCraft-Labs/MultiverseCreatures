@@ -3,6 +3,7 @@ package com.Chagui68;
 import com.Chagui68.entities.miniboss.Mahoraga;
 import com.Chagui68.entities.boss.ArmorStandBoss;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.NixBoss;
 import com.Chagui68.entities.handler.MobHandler;
 import com.Chagui68.entities.Kinger;
 import com.Chagui68.entities.BoneShield;
@@ -80,6 +81,7 @@ public class MultiverseCreatures extends JavaPlugin {
     private ChaosMage chaosMage;
     private EnderKnight enderKnight;
     private Kinger kinger;
+    private NixBoss nixBoss;
     private DiscTrader discTrader;
     private Warlord warlord;
     private DiscJukeboxHandler discJukeboxHandler;
@@ -149,6 +151,7 @@ public class MultiverseCreatures extends JavaPlugin {
         chaosMage = new ChaosMage(this);
         enderKnight = new EnderKnight(this);
         kinger = new Kinger(this);
+        nixBoss = new NixBoss(this);
         discTrader = new DiscTrader(this);
         warlord = new Warlord(this);
 
@@ -308,6 +311,10 @@ public class MultiverseCreatures extends JavaPlugin {
 
     public Kinger getKinger() {
         return kinger;
+    }
+
+    public NixBoss getNixBoss() {
+        return nixBoss;
     }
 
     public DiscTrader getDiscTrader() {
