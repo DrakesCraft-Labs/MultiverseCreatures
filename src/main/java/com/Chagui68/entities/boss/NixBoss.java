@@ -55,8 +55,8 @@ import java.util.UUID;
 
 /**
  * NIX - El Verdugo (The Executioner)
- * Custom boss constructed from 27 ItemDisplay player head parts with procedural animations,
- * brutal execution cleaves, chain pulls, and adaptive aggro AI.
+ * Custom boss constructed from 27 ItemDisplay player head parts with hierarchical
+ * joint-pivot procedural animations, brutal execution cleaves, chain pulls, and adaptive AI.
  */
 public class NixBoss implements Listener {
 
@@ -156,7 +156,7 @@ public class NixBoss implements Listener {
 
         ARM_R_2("Th3m1s",
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4OTMzNjI3MDM1NSwKICAicHJvZmlsZUlkIiA6ICI2NDU4Mjc0MjEyNDg0MDY0YTRkMDBlNDdjZWM4ZjcyZSIsCiAgInByb2ZpbGVOYW1lIiA6ICJUaDNtMXMiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTQyNWE4YmY5Yjg0MTdkMDY5ZjdjNzdmYzJkNzhjNTUyZDVlM2YxZGIyZTE5NGU1NWZiMmQzMTk0MmViODYxNSIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9",
-                new float[]{0.4685f, 0f, 0f, 0.4189128125f, 0f, 0.23425f, 0f, 1.0536328125f, 0f, 0f, 0.4685f,-0.016734375f, 0f, 0f, 0f, 1f},
+                new float[]{0.4685f, 0f, 0f, 0.4189128125f, 0f, 0.23425f, 0f, 1.0536328125f, 0f, 0f, 0.4685f, -0.016734375f, 0f, 0f, 0f, 1f},
                 LimbGroup.ARM_RIGHT),
 
         ARM_R_3("AlexisMadd",
@@ -259,6 +259,14 @@ public class NixBoss implements Listener {
     public static final String PART_TAG = "MSC_NixPart";
     public static final String BAR_TITLE = ChatColor.DARK_RED + "" + ChatColor.BOLD + "NIX - El Verdugo";
 
+    // Joint pivots relative to centered model
+    private static final Vector3f PIVOT_SHOULDER_RIGHT = new Vector3f(0.3514f, 1.405f, 0.0f);
+    private static final Vector3f PIVOT_SHOULDER_LEFT  = new Vector3f(-0.3514f, 1.405f, 0.0f);
+    private static final Vector3f PIVOT_HIP_RIGHT       = new Vector3f(-0.1171f, 0.702f, 0.0f);
+    private static final Vector3f PIVOT_HIP_LEFT        = new Vector3f(0.1171f, 0.702f, 0.0f);
+    private static final Vector3f PIVOT_NECK            = new Vector3f(0.0f, 1.650f, 0.0f);
+    private static final Vector3f PIVOT_TORSO           = new Vector3f(0.0f, 1.171f, 0.0f);
+
     private final MultiverseCreatures plugin;
     private final Random random = new Random();
     private final Map<UUID, NixInstance> activeInstances = new java.util.HashMap<>();
@@ -272,7 +280,8 @@ public class NixBoss implements Listener {
     private double chainRange;
     private int meleeCooldownTicks;
     private int chainCooldownTicks;
-    private int cleaveAnimTicks = 14;
+    private int cleaveAnimTicks = 16;
+    private int chainAnimTicks = 12;
 
     public NixBoss(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -292,9 +301,9 @@ public class NixBoss implements Listener {
         meleeDamage = config.getDouble("entities.nix-executioner.melee-damage", 14.0);
         cleaveDamage = config.getDouble("entities.nix-executioner.cleave-damage", 22.0);
         chainRange = config.getDouble("entities.nix-executioner.chain-range", 24.0);
-        meleeCooldownTicks = config.getInt("entities.nix-executioner.melee-cooldown-ticks", 20);
+        meleeCooldownTicks = config.getInt("entities.nix-executioner.melee-cooldown-ticks", 24);
         chainCooldownTicks = config.getInt("entities.nix-executioner.chain-cooldown-ticks", 80);
-        cleaveAnimTicks = config.getInt("entities.nix-executioner.cleave-anim-ticks", 14);
+        cleaveAnimTicks = config.getInt("entities.nix-executioner.cleave-anim-ticks", 16);
     }
 
     private void reloadExisting() {
@@ -308,7 +317,7 @@ public class NixBoss implements Listener {
             for (ItemDisplay display : world.getEntitiesByClass(ItemDisplay.class)) {
                 if (!display.getScoreboardTags().contains(PART_TAG)) continue;
                 boolean nearStand = false;
-                for (Entity e : display.getNearbyEntities(3, 3, 3)) {
+                for (Entity e : display.getNearbyEntities(4, 4, 4)) {
                     if (e instanceof ArmorStand stand && stand.getScoreboardTags().contains(TAG)) {
                         nearStand = true;
                         break;
@@ -342,8 +351,12 @@ public class NixBoss implements Listener {
         Player target = findTarget(stand);
         inst.targetId = (target != null) ? target.getUniqueId() : null;
 
+        Location loc = stand.getLocation();
+
         if (target != null) {
-            double dist = stand.getLocation().distance(target.getLocation());
+            Vector toTarget = target.getLocation().toVector().subtract(loc.toVector());
+            toTarget.setY(0);
+            double dist = toTarget.length();
             inst.moving = dist > 2.0;
 
             // Check if target is executing threshold (< 25% health)
@@ -351,44 +364,64 @@ public class NixBoss implements Listener {
                     ? target.getAttribute(Attribute.MAX_HEALTH).getValue() : 20.0);
             inst.bloodlust = targetHpPercent <= 0.25;
 
-            double currentSpeed = inst.bloodlust ? (moveSpeed * 1.3) : moveSpeed;
-            if (inst.moving && dist <= aggroRange) {
-                moveTowards(stand, target.getLocation(), currentSpeed);
-            }
-            faceTarget(stand, target);
+            double currentSpeed = inst.bloodlust ? (moveSpeed * 1.35) : moveSpeed;
 
-            // Combat logic
-            if (dist <= meleeRange && inst.meleeCooldown <= 0) {
-                executeGuillotineCleave(stand, target);
+            // Smooth face toward target
+            if (dist > 0.05) {
+                loc.setDirection(toTarget);
+            }
+
+            // Move toward target
+            if (inst.moving && dist <= aggroRange && inst.cleaveAnim <= 4) {
+                Vector dir = toTarget.clone().normalize();
+                double step = Math.min(currentSpeed, dist);
+                loc.add(dir.multiply(step));
+            }
+
+            // Combat triggers
+            if (dist <= meleeRange && inst.meleeCooldown <= 0 && inst.cleaveAnim <= 0) {
+                // Initiate Cleave windup
                 inst.cleaveAnim = cleaveAnimTicks;
                 inst.meleeCooldown = meleeCooldownTicks;
-            } else if (dist > 5.0 && dist <= chainRange && inst.chainCooldown <= 0) {
-                castExecutionChains(stand, target);
+                stand.getWorld().playSound(loc, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.3f, 0.6f);
+            } else if (dist > 5.0 && dist <= chainRange && inst.chainCooldown <= 0 && inst.cleaveAnim <= 0) {
+                inst.chainAnim = chainAnimTicks;
                 inst.chainCooldown = chainCooldownTicks;
+                castExecutionChains(stand, target);
             }
         } else {
             inst.moving = false;
             inst.bloodlust = false;
         }
 
-        snapToGround(stand);
+        // Single ground snap & teleport for the anchor stand
+        snapToGround(loc);
+        stand.teleport(loc);
 
-        // Animation update
-        float speedMultiplier = inst.bloodlust ? 0.45f : 0.32f;
+        // Impact moment of the cleave: hit at tick 9 (arms slam down)
+        if (inst.cleaveAnim == 9 && target != null) {
+            executeGuillotineCleaveImpact(stand, target);
+        }
+
+        // Timers & stride progression
+        float speedMultiplier = inst.bloodlust ? 0.40f : 0.28f;
         if (inst.moving) inst.animTicks += speedMultiplier;
         if (inst.cleaveAnim > 0) inst.cleaveAnim--;
+        if (inst.chainAnim > 0) inst.chainAnim--;
         if (inst.meleeCooldown > 0) inst.meleeCooldown--;
         if (inst.chainCooldown > 0) inst.chainCooldown--;
 
-        // Bloodlust aura
+        // Bloodlust eye particle aura
         if (inst.bloodlust) {
-            Location eye = stand.getEyeLocation();
-            stand.getWorld().spawnParticle(Particle.DUST, eye.clone().add(0, 0.4, 0), 3, 0.25, 0.2, 0.25, 0,
-                    new Particle.DustOptions(Color.fromRGB(0x880000), 1.3f));
+            Location eye = stand.getEyeLocation().clone().add(stand.getLocation().getDirection().multiply(0.2));
+            stand.getWorld().spawnParticle(Particle.DUST, eye, 2, 0.2, 0.15, 0.2, 0,
+                    new Particle.DustOptions(Color.fromRGB(0xAA0000), 1.2f));
         }
 
+        // Synchronize all 27 display entities locked to stand location
         syncDisplays(inst);
 
+        // Update BossBar progress
         if (inst.bossBar != null) {
             double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
                     ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : health;
@@ -396,75 +429,51 @@ public class NixBoss implements Listener {
         }
     }
 
-    private void moveTowards(ArmorStand stand, Location target, double speed) {
-        Location loc = stand.getLocation();
-        Vector dir = target.toVector().subtract(loc.toVector());
-        dir.setY(0);
-        double dist = dir.length();
-        if (dist < 0.01) return;
-        dir.normalize();
-        double step = Math.min(speed, dist);
-        loc.add(dir.multiply(step));
-        loc.setPitch(0);
-        stand.teleport(loc);
-    }
-
-    private void faceTarget(ArmorStand stand, Player target) {
-        Location loc = stand.getLocation();
-        loc.setDirection(target.getLocation().toVector().subtract(loc.toVector()).setY(0));
-        stand.teleport(loc);
-    }
-
-    private void snapToGround(ArmorStand stand) {
-        Location loc = stand.getLocation();
-        World world = stand.getWorld();
+    private void snapToGround(Location loc) {
+        World world = loc.getWorld();
         int x = loc.getBlockX();
         int z = loc.getBlockZ();
         int y = loc.getBlockY();
         for (int i = y; i > y - 8; i--) {
             if (world.getBlockAt(x, i, z).getType().isSolid()) {
-                double groundY = i + 1.0;
-                if (Math.abs(groundY - loc.getY()) > 0.001) {
-                    loc.setY(groundY);
-                    stand.teleport(loc);
-                }
+                loc.setY(i + 1.0);
                 return;
             }
         }
     }
 
-    private void executeGuillotineCleave(ArmorStand stand, Player primaryTarget) {
+    private void executeGuillotineCleaveImpact(ArmorStand stand, Player primaryTarget) {
         World world = stand.getWorld();
-        Location front = stand.getLocation().clone().add(stand.getLocation().getDirection().multiply(1.5));
-        front.add(0, 1.2, 0);
+        Location front = stand.getLocation().clone().add(stand.getLocation().getDirection().multiply(1.8));
+        front.add(0, 0.8, 0);
 
-        // Sound and blood explosion
-        world.playSound(front, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.5f, 0.6f);
-        world.playSound(front, Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 1.0f, 0.5f);
+        // Heavy impact sound and blood explosion
+        world.playSound(front, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.8f, 0.5f);
+        world.playSound(front, Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 1.2f, 0.6f);
+        world.playSound(front, Sound.ITEM_MACE_SMASH_GROUND, 1.2f, 0.8f);
         world.spawnParticle(Particle.SWEEP_ATTACK, front, 3, 0.5, 0.3, 0.5, 0);
-        world.spawnParticle(Particle.DUST, front, 35, 1.2, 0.8, 1.2, 0,
-                new Particle.DustOptions(Color.fromRGB(0xAA0000), 1.8f));
-        world.spawnParticle(Particle.BLOCK, front, 25, 0.8, 0.8, 0.8, 0.1, Material.REDSTONE_BLOCK.createBlockData());
+        world.spawnParticle(Particle.DUST, front, 45, 1.2, 0.8, 1.2, 0,
+                new Particle.DustOptions(Color.fromRGB(0x880000), 2.2f));
+        world.spawnParticle(Particle.BLOCK, front, 30, 0.8, 0.8, 0.8, 0.1, Material.REDSTONE_BLOCK.createBlockData());
 
         for (Entity e : world.getNearbyEntities(front, 3.2, 2.5, 3.2)) {
             if (!(e instanceof Player p)) continue;
             if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) continue;
 
-            double damage = cleaveDamage;
-            p.damage(damage, stand);
+            p.damage(cleaveDamage, stand);
             p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 80, 1, false, true));
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1, false, true));
 
             Vector knock = p.getLocation().toVector().subtract(stand.getLocation().toVector());
             if (knock.lengthSquared() < 0.01) knock = new Vector(0, 0, -1);
             knock.normalize();
-            p.setVelocity(knock.multiply(0.8).setY(0.25));
+            p.setVelocity(knock.multiply(0.85).setY(0.3));
         }
     }
 
     private void castExecutionChains(ArmorStand stand, Player target) {
         World world = stand.getWorld();
-        Location hand = partWorldLocation(stand, NixPart.ARM_R_5);
+        Location hand = stand.getLocation().clone().add(0, 1.4, 0);
         Location targetLoc = target.getEyeLocation();
 
         world.playSound(hand, Sound.BLOCK_CHAIN_PLACE, 1.4f, 0.8f);
@@ -482,8 +491,8 @@ public class NixBoss implements Listener {
         }
 
         // Pull player toward Nix
-        Vector pull = stand.getLocation().toVector().subtract(target.getLocation().toVector()).normalize().multiply(1.45);
-        pull.setY(0.38);
+        Vector pull = stand.getLocation().toVector().subtract(target.getLocation().toVector()).normalize().multiply(1.35);
+        pull.setY(0.35);
         target.setVelocity(pull);
         target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 50, 0, false, false));
         target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2, false, true));
@@ -506,40 +515,33 @@ public class NixBoss implements Listener {
 
     private void syncDisplays(NixInstance inst) {
         ArmorStand stand = inst.stand;
+        Location root = stand.getLocation().clone();
+        root.setYaw(stand.getLocation().getYaw() + 180);
+        root.setPitch(0);
+
         for (NixPart part : NixPart.values()) {
             UUID id = inst.partDisplays.get(part);
             Entity e = (id != null) ? Bukkit.getEntity(id) : null;
             if (e instanceof ItemDisplay display && display.isValid()) {
-                display.teleport(partWorldLocation(stand, part));
+                display.teleport(root);
                 display.setTransformation(buildTransformation(part, inst));
             } else {
-                ItemDisplay display = spawnPart(stand, part);
+                ItemDisplay display = spawnPart(root, part);
                 inst.partDisplays.put(part, display.getUniqueId());
             }
         }
     }
 
-    private Location partWorldLocation(ArmorStand stand, NixPart part) {
-        Location base = stand.getLocation().clone();
-        base.setYaw(stand.getLocation().getYaw() + 180);
-        base.setPitch(0);
-        double yawRad = Math.toRadians(base.getYaw());
-        double cos = Math.cos(yawRad);
-        double sin = Math.sin(yawRad);
-        Vector3f off = centered(part.offset);
-        base.add(off.x * cos - off.z * sin, off.y, off.x * sin + off.z * cos);
-        return base;
-    }
-
-    private ItemDisplay spawnPart(ArmorStand stand, NixPart part) {
+    private ItemDisplay spawnPart(Location root, NixPart part) {
         ItemStack head = createHead(part.profileName, part.texture);
-        ItemDisplay display = (ItemDisplay) stand.getWorld().spawnEntity(stand.getLocation(), EntityType.ITEM_DISPLAY);
+        ItemDisplay display = (ItemDisplay) root.getWorld().spawnEntity(root, EntityType.ITEM_DISPLAY);
         display.setItemStack(head);
         display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
         display.setBillboard(Display.Billboard.FIXED);
-        display.setTransformation(toTransformation(part));
-        display.setTeleportDuration(2);
+        display.setTransformation(buildTransformation(part, null));
+        display.setTeleportDuration(1);
         display.setInterpolationDuration(2);
+        display.setInterpolationDelay(0);
         display.setBrightness(new Display.Brightness(15, 15));
         display.setInvulnerable(false);
         display.setGravity(false);
@@ -570,74 +572,141 @@ public class NixBoss implements Listener {
         return head;
     }
 
-    private Transformation toTransformation(NixPart part) {
-        return new Transformation(new Vector3f(), part.rotation, part.scale, new Quaternionf());
-    }
-
+    /**
+     * Builds the transformation for a part using rigid-body rotation around its limb's anatomical joint pivot.
+     */
     private Transformation buildTransformation(NixPart part, NixInstance inst) {
-        Quaternionf anim = computeAnimQuat(part, inst);
-        if (anim.x == 0 && anim.y == 0 && anim.z == 0 && anim.w == 1) {
-            return new Transformation(new Vector3f(), part.rotation, part.scale, new Quaternionf());
-        }
-        Quaternionf left = new Quaternionf(anim).mul(part.rotation);
-        return new Transformation(new Vector3f(), left, part.scale, new Quaternionf());
+        Quaternionf limbRot = (inst != null) ? computeLimbQuat(part.group, inst) : new Quaternionf();
+
+        Vector3f pivot = getPivot(part.group);
+        Vector3f localBase = new Vector3f(
+                part.offset.x - NixPart.CENTER.x,
+                part.offset.y,
+                part.offset.z - NixPart.CENTER.z
+        );
+
+        Vector3f relToPivot = new Vector3f(localBase).sub(pivot);
+        Vector3f rotatedRel = new Vector3f(relToPivot);
+        limbRot.transform(rotatedRel);
+
+        Vector3f finalTranslation = new Vector3f(pivot).add(rotatedRel);
+        Quaternionf finalRotation = new Quaternionf(limbRot).mul(part.rotation);
+
+        return new Transformation(finalTranslation, finalRotation, part.scale, new Quaternionf());
     }
 
-    private Vector3f centered(Vector3f offset) {
-        return new Vector3f(offset.x - NixPart.CENTER.x, offset.y, offset.z - NixPart.CENTER.z);
+    private Vector3f getPivot(LimbGroup group) {
+        return switch (group) {
+            case ARM_RIGHT -> PIVOT_SHOULDER_RIGHT;
+            case ARM_LEFT -> PIVOT_SHOULDER_LEFT;
+            case LEG_RIGHT -> PIVOT_HIP_RIGHT;
+            case LEG_LEFT -> PIVOT_HIP_LEFT;
+            case HEAD -> PIVOT_NECK;
+            case TORSO_UPPER, TORSO_LOWER -> PIVOT_TORSO;
+        };
     }
 
-    private Quaternionf computeAnimQuat(NixPart part, NixInstance inst) {
+    /**
+     * Computes clean, realistic, solid rotations for each limb group.
+     */
+    private Quaternionf computeLimbQuat(LimbGroup group, NixInstance inst) {
         Quaternionf q = new Quaternionf();
         float s = inst.animTicks;
         boolean walking = inst.moving;
 
-        switch (part.group) {
-            case LEG_RIGHT:
-                if (walking) q.rotateX((float) (Math.sin(s) * 0.35));
-                break;
-            case LEG_LEFT:
-                if (walking) q.rotateX((float) (Math.sin(s) * -0.35));
-                break;
-            case ARM_RIGHT:
+        switch (group) {
+            case LEG_RIGHT -> {
+                if (walking) {
+                    float angle = (float) (Math.sin(s) * 0.32); // natural ~18 deg stride
+                    q.rotateX(angle);
+                }
+            }
+            case LEG_LEFT -> {
+                if (walking) {
+                    float angle = (float) (Math.sin(s) * -0.32);
+                    q.rotateX(angle);
+                }
+            }
+            case ARM_RIGHT -> {
                 if (inst.cleaveAnim > 0) {
                     float prog = 1f - (float) inst.cleaveAnim / cleaveAnimTicks;
-                    q.rotateX((float) (Math.sin(prog * Math.PI) * -3.2));
+                    float angle;
+                    if (prog < 0.4f) {
+                        // Wind up: raise arms high up
+                        float p = prog / 0.4f;
+                        angle = (float) (-1.1 * Math.sin(p * Math.PI / 2));
+                    } else if (prog < 0.7f) {
+                        // Brutal guillotine chop down forward!
+                        float p = (prog - 0.4f) / 0.3f;
+                        angle = (float) (-1.1 + (1.1 + 0.75) * Math.sin(p * Math.PI / 2));
+                    } else {
+                        // Smooth recovery back to neutral
+                        float p = (prog - 0.7f) / 0.3f;
+                        angle = (float) (0.75 * (1.0 - Math.sin(p * Math.PI / 2)));
+                    }
+                    q.rotateX(angle);
+                } else if (inst.chainAnim > 0) {
+                    float p = 1f - (float) inst.chainAnim / chainAnimTicks;
+                    float angle = (float) (Math.sin(p * Math.PI) * 1.0);
+                    q.rotateX(angle);
                 } else if (walking) {
-                    q.rotateX((float) (Math.sin(s) * -0.32));
+                    float angle = (float) (Math.sin(s) * -0.25);
+                    q.rotateX(angle);
                 }
-                break;
-            case ARM_LEFT:
+            }
+            case ARM_LEFT -> {
                 if (inst.cleaveAnim > 0) {
                     float prog = 1f - (float) inst.cleaveAnim / cleaveAnimTicks;
-                    q.rotateX((float) (Math.sin(prog * Math.PI) * -2.5));
+                    float angle;
+                    if (prog < 0.4f) {
+                        float p = prog / 0.4f;
+                        angle = (float) (-1.0 * Math.sin(p * Math.PI / 2));
+                    } else if (prog < 0.7f) {
+                        float p = (prog - 0.4f) / 0.3f;
+                        angle = (float) (-1.0 + (1.0 + 0.70) * Math.sin(p * Math.PI / 2));
+                    } else {
+                        float p = (prog - 0.7f) / 0.3f;
+                        angle = (float) (0.70 * (1.0 - Math.sin(p * Math.PI / 2)));
+                    }
+                    q.rotateX(angle);
                 } else if (walking) {
-                    q.rotateX((float) (Math.sin(s) * 0.32));
+                    float angle = (float) (Math.sin(s) * 0.25);
+                    q.rotateX(angle);
                 }
-                break;
-            case TORSO_UPPER:
-            case TORSO_LOWER:
+            }
+            case TORSO_UPPER, TORSO_LOWER -> {
                 if (inst.cleaveAnim > 0) {
                     float prog = 1f - (float) inst.cleaveAnim / cleaveAnimTicks;
-                    q.rotateX((float) (Math.sin(prog * Math.PI) * -0.6));
+                    float angle;
+                    if (prog < 0.4f) {
+                        float p = prog / 0.4f;
+                        angle = (float) (-0.12 * Math.sin(p * Math.PI / 2));
+                    } else if (prog < 0.7f) {
+                        float p = (prog - 0.4f) / 0.3f;
+                        angle = (float) (-0.12 + 0.32 * Math.sin(p * Math.PI / 2));
+                    } else {
+                        float p = (prog - 0.7f) / 0.3f;
+                        angle = (float) (0.20 * (1.0 - Math.sin(p * Math.PI / 2)));
+                    }
+                    q.rotateX(angle);
                 } else if (walking) {
-                    q.rotateX((float) (Math.sin(s) * 0.04));
+                    q.rotateZ((float) (Math.sin(s * 0.5) * 0.025));
                 }
-                break;
-            case HEAD:
+            }
+            case HEAD -> {
                 Player target = inst.targetId != null ? Bukkit.getPlayer(inst.targetId) : null;
                 if (inst.cleaveAnim > 0) {
-                    q.rotateX((float) Math.toRadians(-20));
+                    q.rotateX((float) Math.toRadians(-12));
                 } else if (target != null && target.isOnline()) {
                     Vector to = target.getEyeLocation().toVector().subtract(inst.stand.getLocation().toVector());
                     double horiz = Math.sqrt(to.getX() * to.getX() + to.getZ() * to.getZ());
                     if (horiz > 0.5) {
                         float pitch = (float) Math.toDegrees(Math.atan2(-to.getY(), horiz));
-                        pitch = Math.max(-35, Math.min(35, pitch));
+                        pitch = Math.max(-25, Math.min(25, pitch));
                         q.rotateX((float) Math.toRadians(pitch));
                     }
                 }
-                break;
+            }
         }
         return q;
     }
@@ -673,8 +742,12 @@ public class NixBoss implements Listener {
         activeInstances.put(stand.getUniqueId(), inst);
         setupBossBar(inst);
 
+        Location root = stand.getLocation().clone();
+        root.setYaw(stand.getLocation().getYaw() + 180);
+        root.setPitch(0);
+
         for (NixPart part : NixPart.values()) {
-            ItemDisplay display = spawnPart(stand, part);
+            ItemDisplay display = spawnPart(root, part);
             inst.partDisplays.put(part, display.getUniqueId());
         }
 
@@ -839,6 +912,7 @@ public class NixBoss implements Listener {
         public int meleeCooldown;
         public int chainCooldown;
         public int cleaveAnim;
+        public int chainAnim;
         public boolean moving;
         public boolean bloodlust;
         public float animTicks;
