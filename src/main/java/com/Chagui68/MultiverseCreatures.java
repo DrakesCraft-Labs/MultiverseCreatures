@@ -28,6 +28,7 @@ import com.Chagui68.listener.armor.ObsidianBastionHandler;
 import com.Chagui68.listener.bossdimension.BossDimensionBlockHandler;
 import com.Chagui68.listener.bossdimension.BossDimensionCommandHandler;
 import com.Chagui68.listener.bossdimension.BossInvocationManager;
+import com.Chagui68.listener.bossdimension.NixInvocationManager;
 import com.Chagui68.listener.combat.ItemCombatHandler;
 import com.Chagui68.listener.CustomItemPlaceHandler;
 import com.Chagui68.listener.ComponentEventGuard;
@@ -180,6 +181,7 @@ public class MultiverseCreatures extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BossDimensionBlockHandler(this), this);
         getServer().getPluginManager().registerEvents(new RitualCandleListener(this), this);
         getServer().getPluginManager().registerEvents(new BossInvocationManager(this), this);
+        getServer().getPluginManager().registerEvents(new NixInvocationManager(this), this);
 
         getServer().getPluginManager().registerEvents(new CinderGreatswordHandler(this), this);
         getServer().getPluginManager().registerEvents(new VeilwalkerMantleHandler(this), this);

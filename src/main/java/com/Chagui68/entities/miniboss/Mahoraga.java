@@ -48,6 +48,7 @@ public class Mahoraga implements Listener {
     private final MultiverseCreatures plugin;
     private final Random random = new Random();
     private final Set<UUID> adapters = new HashSet<>();
+    private final Map<UUID, UUID> adapterWorlds = new HashMap<>();
     private final Set<UUID> removeQueue = new HashSet<>();
     private final Map<UUID, Map<UUID, AdaptationState>> armorAdaptations = new HashMap<>();
     private boolean slimefunAdaptation;
@@ -101,6 +102,7 @@ public class Mahoraga implements Listener {
             for (Zombie zombie : world.getEntitiesByClass(Zombie.class)) {
                 if (zombie.getScoreboardTags().contains(TAG)) {
                     adapters.add(zombie.getUniqueId());
+                    adapterWorlds.put(zombie.getUniqueId(), world.getUID());
                 }
             }
         }
@@ -112,17 +114,23 @@ public class Mahoraga implements Listener {
             public void run() {
                 for (UUID id : Set.copyOf(adapters)) {
                     if (removeQueue.contains(id)) continue;
-                    Entity e = Bukkit.getEntity(id);
+                    UUID worldUid = adapterWorlds.get(id);
+                    World w = (worldUid != null) ? Bukkit.getWorld(worldUid) : null;
+                    Entity e = (w != null) ? w.getEntity(id) : Bukkit.getEntity(id);
                     if (e == null || e.isDead() || !e.isValid()) {
                         removeQueue.add(id);
                         continue;
                     }
                     if (!(e instanceof Zombie zombie)) continue;
+                    if (worldUid == null) {
+                        adapterWorlds.put(id, zombie.getWorld().getUID());
+                    }
                     if (!zombie.getWorld().isChunkLoaded(zombie.getLocation().getChunk())) continue;
                     tickAdapter(zombie);
                 }
                 for (UUID id : removeQueue) {
                     adapters.remove(id);
+                    adapterWorlds.remove(id);
                 }
                 removeQueue.clear();
             }
@@ -294,6 +302,7 @@ public class Mahoraga implements Listener {
         setWhiteLeatherArmor(zombie);
 
         adapters.add(zombie.getUniqueId());
+        adapterWorlds.put(zombie.getUniqueId(), zombie.getWorld().getUID());
         return true;
     }
 

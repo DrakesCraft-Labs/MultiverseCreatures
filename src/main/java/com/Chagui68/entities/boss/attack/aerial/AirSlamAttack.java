@@ -143,14 +143,16 @@ public class AirSlamAttack extends BossAttackBase {
                     world.spawnParticle(Particle.FLAME, loc, 60, 3.0, 0.8, 3.0, 0.08);
 
                     final double ATTACK_RADIUS = 30.0;
+                    final double ATTACK_RADIUS_SQ = ATTACK_RADIUS * ATTACK_RADIUS;
                     final double impactX = loc.getX();
                     final double impactY = loc.getY();
                     final double impactZ = loc.getZ();
 
                     double damage = sealDamage;
                     for (Player p : boss.getValidPlayers(world)) {
-                        double dist = p.getLocation().distance(loc);
-                        if (dist <= ATTACK_RADIUS) {
+                        double distSq = p.getLocation().distanceSquared(loc);
+                        if (distSq <= ATTACK_RADIUS_SQ) {
+                            double dist = Math.sqrt(distSq);
                             MscEntityUtils.damageBy(stand.entidad(), p, damage * (1 - dist / ATTACK_RADIUS * 0.5));
                             boss.launchPlayer(p, 0.8 + (1 - dist / ATTACK_RADIUS) * 0.5);
                         }

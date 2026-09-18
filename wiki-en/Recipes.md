@@ -217,6 +217,20 @@ N S N
 
 ![Multiversal Core recipe](images/recipes/multiversal-core.png)
 
+### Executioner's Warrant
+**Result:** `§4§lExecutioner Warrant` (PAPER) — boss invocation catalyst decree for NIX - El Verdugo.
+
+```
+C P C
+I W I
+C P C
+```
+
+- `C` = Chain (`chain` / `iron_chain`)
+- `P` = Paper (`paper`)
+- `W` = Wither Skeleton Skull (`wither_skeleton_skull`)
+- `I` = Iron Ingot (`iron_ingot`)
+
 ---
 
 ## 🗡️ Weapons

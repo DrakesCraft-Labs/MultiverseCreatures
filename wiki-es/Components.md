@@ -30,6 +30,7 @@ Fuentes de drop — para cada componente, el mob y la probabilidad:
 | **Núcleo de Rueda Refinado** `§6§lRefined Wheel Core` (MUSIC_DISC_OTHERSIDE) | crafteado de **Núcleo de Rueda Fundido** + **Netherita Fundida** | — | Multiverso (JJK) |
 | **Núcleo de Segador** `§0§lReaper Core` (WITHER_ROSE) | crafteado de **Esencia de Segador** + Arena de Almas + Estrella del Nether | — | Multiverso |
 | **Netherita Refinada** `§8§lRefined Netherite` (NETHERITE_INGOT) | crafteada de **4 Núcleo Estelar** (esquinas) + **4 Fragmento de Netherita** (lados) + **Bloque de Oro Comprimido** (centro, 9 Bloques de Oro) | — | Multiverso |
+| **Sentencia de Muerte** `§4§lExecutioner Warrant` (PAPER) | crafteada de Cadenas + Papel + Calavera de Wither Skeleton + Lingote de Hierro | — | Multiverso (NIX) |
 
 Cada componente es solo un ingrediente etiquetado `msc_<nombre>` — **no hace nada por sí solo**, pero es necesario para craftear el objeto legendario correspondiente.
 

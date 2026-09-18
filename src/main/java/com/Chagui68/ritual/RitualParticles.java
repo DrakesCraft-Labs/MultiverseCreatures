@@ -161,15 +161,14 @@ public class RitualParticles {
                 && bossManager.getBossWorld() != null
                 && world.equals(bossManager.getBossWorld());
 
+        double radiusSq = radius * radius;
         new BukkitRunnable() {
             @Override
             public void run() {
                 boolean teleported = false;
                 for (Player player : world.getPlayers()) {
                     Location playerLoc = player.getLocation();
-                    double distance = playerLoc.distance(center);
-
-                    if (distance <= radius) {
+                    if (playerLoc.distanceSquared(center) <= radiusSq) {
                         if (inBossDimension) {
                             teleportPlayerToOverworld(player);
                         } else {

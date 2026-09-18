@@ -152,7 +152,7 @@ A towering, ruthless executioner constructed from a custom **27-piece ItemDispla
 | Melee range / Cleave damage | `nix-executioner.melee-range` (3.5) · `nix-executioner.cleave-damage` (22.0) |
 | Chain pull range | `nix-executioner.chain-range` (24.0 blocks) |
 | Cooldowns | melee 20 ticks · chain pull 80 ticks |
-| Spawn Command | `/msc spawn nix` (aliases: `executioner`, `nixelverdugo`) |
+| Summon Ritual | **The Executioner's Scaffold** in Boss Dimension (sacrificing `Executioner's Warrant`) · `/msc spawn nix` (OP) |
 
 ### Abilities & Mechanics
 

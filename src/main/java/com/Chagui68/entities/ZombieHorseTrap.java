@@ -287,6 +287,7 @@ public class ZombieHorseTrap implements Listener {
         double fz = Math.cos(yaw);
 
         ArmyInstance army = new ArmyInstance();
+        army.world = world;
 
         Location tankLoc = loc.clone();
         army.tank = spawnTank(tankLoc);
@@ -536,8 +537,9 @@ public class ZombieHorseTrap implements Listener {
         if (army.cleanup) return;
 
         boolean anyAlive = false;
+        World world = army.world != null ? army.world : (army.tank != null ? army.tank.getWorld() : null);
         for (UUID id : army.entities) {
-            Entity e = Bukkit.getEntity(id);
+            Entity e = (world != null) ? world.getEntity(id) : Bukkit.getEntity(id);
             if (e != null && !e.isDead()) {
                 anyAlive = true;
                 break;
@@ -579,11 +581,11 @@ public class ZombieHorseTrap implements Listener {
 
         duelist.setTarget(nearest);
 
-        double dist = duelist.getLocation().distance(nearest.getLocation());
+        double distSq = duelist.getLocation().distanceSquared(nearest.getLocation());
         EntityEquipment eq = duelist.getEquipment();
         if (eq == null) return;
 
-        if (dist <= 6) {
+        if (distSq <= 36.0) {
             ItemStack hand = eq.getItemInMainHand();
             if (hand == null || hand.getType() != Material.IRON_SWORD) {
                 eq.setItemInMainHand(createDuelistSword());
@@ -804,6 +806,7 @@ public class ZombieHorseTrap implements Listener {
     private static class ArmyInstance {
         final UUID id = UUID.randomUUID();
         final java.util.Set<UUID> entities = new java.util.HashSet<>();
+        World world;
         boolean cleanup;
         boolean tankDead;
         boolean lancerHorseDead;

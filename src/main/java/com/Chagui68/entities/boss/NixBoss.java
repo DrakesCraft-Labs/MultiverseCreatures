@@ -418,8 +418,13 @@ public class NixBoss implements Listener {
                     new Particle.DustOptions(Color.fromRGB(0xAA0000), 1.2f));
         }
 
-        // Synchronize all 27 display entities locked to stand location
-        syncDisplays(inst);
+        inst.tickCount++;
+
+        // Synchronize all 27 display entities locked to stand location (throttled when stationary)
+        boolean isIdle = !inst.moving && inst.cleaveAnim == 0 && inst.chainAnim == 0;
+        if (!isIdle || inst.tickCount % 3 == 0) {
+            syncDisplays(inst);
+        }
 
         // Update BossBar progress
         if (inst.bossBar != null) {
@@ -521,7 +526,7 @@ public class NixBoss implements Listener {
 
         for (NixPart part : NixPart.values()) {
             UUID id = inst.partDisplays.get(part);
-            Entity e = (id != null) ? Bukkit.getEntity(id) : null;
+            Entity e = (id != null) ? root.getWorld().getEntity(id) : null;
             if (e instanceof ItemDisplay display && display.isValid()) {
                 display.teleport(root);
                 display.setTransformation(buildTransformation(part, inst));
@@ -758,8 +763,9 @@ public class NixBoss implements Listener {
     }
 
     private void cleanup(NixInstance inst) {
+        World world = (inst.stand != null) ? inst.stand.getWorld() : null;
         for (UUID id : inst.partDisplays.values()) {
-            Entity e = Bukkit.getEntity(id);
+            Entity e = (world != null) ? world.getEntity(id) : Bukkit.getEntity(id);
             if (e != null) e.remove();
         }
         inst.partDisplays.clear();
@@ -777,6 +783,20 @@ public class NixBoss implements Listener {
             bar.addPlayer(p);
         }
         inst.bossBar = bar;
+    }
+
+    public boolean isBossActive() {
+        return !activeInstances.isEmpty();
+    }
+
+    public boolean isBossActiveIn(World world) {
+        if (world == null) return false;
+        for (NixInstance inst : activeInstances.values()) {
+            if (inst.stand != null && inst.stand.isValid() && world.equals(inst.stand.getWorld())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @EventHandler
@@ -916,6 +936,7 @@ public class NixBoss implements Listener {
         public boolean moving;
         public boolean bloodlust;
         public float animTicks;
+        public int tickCount;
 
         public NixInstance(ArmorStand stand) {
             this.stand = stand;

@@ -74,8 +74,9 @@ public class NovaBurstAttack extends BossAttackBase {
                     world.spawnParticle(Particle.CLOUD, boomLoc, 60, 5, 2, 5, 0.15);
                     double dmg = sealDamage;
                     for (Player p : boss.getValidPlayers(world)) {
-                        double dist = p.getLocation().distance(boomLoc);
-                        if (dist < 20) {
+                        double distSq = p.getLocation().distanceSquared(boomLoc);
+                        if (distSq < 400.0) {
+                            double dist = Math.sqrt(distSq);
                             MscEntityUtils.damageBy(stand.entidad(), p, dmg * (1 - dist / 20 * 0.6));
                             boss.launchPlayer(p, 1.0 + (1 - dist / 20) * 0.5);
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));

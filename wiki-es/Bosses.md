@@ -152,7 +152,7 @@ Un verdugo colosal e implacable construido a partir de un **modelo personalizado
 | Rango cuerpo a cuerpo / Daño de tajo | `nix-executioner.melee-range` (3.5) · `nix-executioner.cleave-damage` (22.0) |
 | Rango de atracción con cadenas | `nix-executioner.chain-range` (24.0 bloques) |
 | Cooldowns | cuerpo a cuerpo 20 ticks · cadenas 80 ticks |
-| Comando de invocación | `/msc spawn nix` (alias: `executioner`, `nixelverdugo`) |
+| Ritual de Invocación | **El Cadalso del Verdugo** en la Boss Dimension (sacrificando `Sentencia de Muerte`) · `/msc spawn nix` (OP) |
 
 ### Habilidades y Mecánicas
 

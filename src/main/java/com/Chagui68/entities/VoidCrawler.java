@@ -98,11 +98,11 @@ public class VoidCrawler implements Listener {
             spider.setTarget(null);
             return;
         }
-        double dist = sLoc.distance(tLoc);
+        double distSq = sLoc.distanceSquared(tLoc);
         inst.phaseCooldown++;
         inst.poisonBurstCooldown++;
 
-        if (dist > 4 && inst.phaseCooldown > 50) {
+        if (distSq > 16 && inst.phaseCooldown > 50) {
             if (sLoc.getBlock().getType().isSolid()) {
                 Location free = findFreeSpace(spider);
                 if (free != null) {
@@ -127,14 +127,14 @@ public class VoidCrawler implements Listener {
                 if (!blocks.isEmpty()) {
                     Location newLoc = blocks.get(random.nextInt(blocks.size()));
                     spider.teleport(newLoc);
-                    sLoc.getWorld().spawnParticle(Particle.PORTAL, sLoc, 15, 0.3, 0.3, 0.3, 0.03);
-                    sLoc.getWorld().spawnParticle(Particle.PORTAL, newLoc, 15, 0.3, 0.3, 0.3, 0.03);
+                    sLoc.getWorld().spawnParticle(Particle.PORTAL, sLoc, 15, 0.3, 0.3, 0.03);
+                    sLoc.getWorld().spawnParticle(Particle.PORTAL, newLoc, 15, 0.3, 0.3, 0.03);
                     inst.phaseCooldown = 0;
                 }
             }
         }
 
-        if (dist < 6 && inst.poisonBurstCooldown > 60) {
+        if (distSq < 36 && inst.poisonBurstCooldown > 60) {
             for (int a = 0; a < 12; a++) {
                 double angle = (2 * Math.PI * a / 12);
                 double r = 3.0;

@@ -97,9 +97,11 @@ public class CreeperJr implements Listener {
             for (Player player : explosionLoc.getWorld().getPlayers()) {
                 if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) continue;
 
-                double distance = player.getLocation().distance(explosionLoc);
-                if (distance > maxRadius) continue;
+                double maxRadiusSq = maxRadius * maxRadius;
+                double distSq = player.getLocation().distanceSquared(explosionLoc);
+                if (distSq > maxRadiusSq) continue;
 
+                double distance = Math.sqrt(distSq);
                 double multiplier = 1.0 - (distance / maxRadius);
                 double damage = maxDamage * multiplier;
                 if (damage < 1) damage = 1;

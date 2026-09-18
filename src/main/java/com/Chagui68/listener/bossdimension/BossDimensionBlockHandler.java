@@ -28,16 +28,17 @@ public class BossDimensionBlockHandler implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
 
-        if (player.hasPermission("msc.admin.bypass")) {
-            return;
-        }
-
         if (!isInBossWorld(player)) {
             return;
         }
 
-        com.Chagui68.entities.boss.ArmorStandBoss boss = plugin.getArmorStandBoss();
-        if (boss == null || !boss.isBossActive()) {
+        if (player.hasPermission("msc.admin.bypass")) {
+            return;
+        }
+
+        boolean bossActive = (plugin.getArmorStandBoss() != null && plugin.getArmorStandBoss().isBossActive())
+                || (plugin.getNixBoss() != null && plugin.getNixBoss().isBossActiveIn(player.getWorld()));
+        if (!bossActive) {
             return;
         }
 
@@ -49,16 +50,17 @@ public class BossDimensionBlockHandler implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
 
-        if (player.hasPermission("msc.admin.bypass")) {
-            return;
-        }
-
         if (!isInBossWorld(player)) {
             return;
         }
 
-        com.Chagui68.entities.boss.ArmorStandBoss boss = plugin.getArmorStandBoss();
-        if (boss == null || !boss.isBossActive()) {
+        if (player.hasPermission("msc.admin.bypass")) {
+            return;
+        }
+
+        boolean bossActiveBreak = (plugin.getArmorStandBoss() != null && plugin.getArmorStandBoss().isBossActive())
+                || (plugin.getNixBoss() != null && plugin.getNixBoss().isBossActiveIn(player.getWorld()));
+        if (!bossActiveBreak) {
             return;
         }
 

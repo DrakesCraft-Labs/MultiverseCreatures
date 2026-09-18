@@ -68,6 +68,47 @@ _ R R R _
 
 ---
 
+## 🪓 Invoking NIX: The Executioner's Scaffold
+
+**NIX - El Verdugo** can strictly only be summoned inside the **Boss Dimension**. Players must build **The Executioner's Scaffold** upon the crying obsidian floor and make a blood sacrifice.
+
+### Layout (5×5 footprint)
+
+```
+P . . . P        P = Corner Gallows (Y=0: Polished Blackstone / Deepslate Bricks, Y=1: Chain, Y=2: Skeleton Skull)
+. . c . .        c = Red Candle (placed directly around anvil, lit with flint & steel)
+. c A c .        A = Central Anvil (The Executioner's Block)
+. . c . .
+P . . . P
+```
+
+### Required Materials
+- **1 Central Anvil** (`anvil`, `chipped_anvil`, or `damaged_anvil`) at `(2, 0, 2)`.
+- **4 Red Candles** (`red_candle`) on ground level placed North, South, West, and East of the anvil: `(2, 0, 1)`, `(2, 0, 3)`, `(1, 0, 2)`, `(3, 0, 2)`.
+- **4 Corner Gallows**:
+  - `(0, 0)`, `(4, 0)`, `(0, 4)`, and `(4, 4)`.
+  - Base (`Y=0`): Polished Blackstone Bricks, Polished Deepslate, or Deepslate Bricks.
+  - Middle (`Y=1`): Chain (`chain`).
+  - Top (`Y=2`): Skeleton Skull (`skeleton_skull` or `wither_skeleton_skull`).
+
+### Invocation Procedure
+1. Build the structure on the floor of `boss_dimension`.
+2. Light all **4 red candles** with flint & steel or fire charge.
+3. **Active Invocation Effect**:
+   - Blood-red particle lines (`#8B0000`) connect the 4 skull gallows to the central anvil.
+   - Ominous chain rattling sounds echo periodically while dark smoke rises from the anvil.
+4. **The Sacrificial Offering**:
+   - Drop an **`Executioner's Warrant`** (`/msc give warrant` or crafted via recipe) directly onto the central anvil.
+   - *(Alternative offerings accepted: `Netherite Axe` or `Wither Skeleton Skull`)*.
+5. **Awakening**:
+   - The sacrifice is consumed.
+   - Red lightning strikes the anvil with a heavy guillotine impact sound (`Sound.BLOCK_ANVIL_LAND`).
+   - The candles extinguish and **NIX - El Verdugo** materializes above the anvil in combat stance!
+
+> While NIX is active inside the Boss Dimension, block placing, block breaking, and combat-evading commands are locked for all non-admin players.
+
+---
+
 ## 🚪 Leaving
 
 There is no teleport command available inside the dimension — the only way out is the **same ritual used to enter**:

@@ -3,14 +3,17 @@
 All commands use the **`/msc`** root. **Permission:** `msc.admin` (server OP by default).
 
 ```
-/msc spawn <type>              Summon a mob, boss, merchant, etc.
-/msc give <item> [amount]      Give yourself an item (1–64)
+/msc                           Show structured, categorized help menu
+/msc spawn <type>              Summon a mob, boss, military strike, etc. (/msc spawn help [1-3])
+/msc give <item> [amount]      Give legendary weapons, armor or components (/msc give help [1-4])
 /msc seal <pattern> [plane]    Render a particle seal pattern
 /msc dummy ...                 Spawn / pose / animate ArmorStand dummies
-/msc attack <name> [range]     Trigger an ArmorStandBoss attack/mechanic
+/msc attack <name> [range]     Trigger an ArmorStandBoss attack/mechanic (/msc attack help [1-4])
 /msc music <play|stop|list|disc>  Play / stop NBS songs, get a jukebox disc
 /msc dimtp <world>             Teleport across worlds
-/msc cleanstands               Remove all MSC-related armor stands
+/msc cleanstands [world]       Remove all MSC-related armor stands (optionally by world)
+/msc kill [type|all] [radius]  Safely kill/purge MSC custom creatures
+/msc reload                    Reload config.yml and sync entities and bosses
 ```
 
 Each command is detailed below.
@@ -116,6 +119,7 @@ Amount defaults to 1 and can be 1–64.
 | `venomgland` | `venom` |
 | `voidessence` | `void` |
 | `wheelessence` | `whelessence` |
+| `warrant` | `executionerwarrant`, `deathwarrant` |
 
 > Note: some aliases overlap (`bone` = Reinforced Bone component, but `bone` is **also** the spawn alias for Bone Shield). Context (spawn vs give) disambiguates.
 

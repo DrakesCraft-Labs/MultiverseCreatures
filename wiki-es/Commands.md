@@ -3,14 +3,17 @@
 Todos los comandos usan la raíz **`/msc`**. **Permiso:** `msc.admin` (OP del servidor por defecto).
 
 ```
-/msc spawn <tipo>              Invoca un mob, jefe, comerciante, etc.
-/msc give <objeto> [cantidad]  Date un objeto (1–64)
+/msc                           Muestra el menú de ayuda estructurado y categorizado
+/msc spawn <tipo>              Invoca un mob, jefe, strike force militar, etc. (/msc spawn help [1-3])
+/msc give <objeto> [cantidad]  Entrega armas legendarias, armaduras o componentes (/msc give help [1-4])
 /msc seal <patrón> [plano]     Renderiza un patrón de sello de partículas
 /msc dummy ...                 Invoca / posa / anima ArmorStands de prueba
-/msc attack <nombre> [rango]   Dispara un ataque/mecánica del ArmorStandBoss
+/msc attack <nombre> [rango]   Dispara un ataque o mecánica del ArmorStandBoss (/msc attack help [1-4])
 /msc music <play|stop|list|disc>  Reproduce / detiene canciones NBS, obtén un disco de jukebox
 /msc dimtp <mundo>             Teletransporta entre mundos
-/msc cleanstands               Elimina todos los armor stands relacionados con MSC
+/msc cleanstands [mundo]       Elimina todos los armor stands relacionados con MSC
+/msc kill [tipo|all] [radio]   Purga criaturas de MSC de forma segura
+/msc reload                    Recarga config.yml y sincroniza entidades y jefes
 ```
 
 Cada comando se detalla abajo.
@@ -116,6 +119,7 @@ La cantidad por defecto es 1 y puede ser de 1 a 64.
 | `venomgland` | `venom` |
 | `voidessence` | `void` |
 | `wheelessence` | `whelessence` |
+| `warrant` | `executionerwarrant`, `deathwarrant` |
 
 > Nota: algunos alias se solapan (`bone` = componente Hueso Reforzado, pero `bone` **también** es el alias de spawn de Bone Shield). El contexto (spawn vs give) los desambigua.
 

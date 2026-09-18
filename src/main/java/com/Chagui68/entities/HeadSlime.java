@@ -217,13 +217,13 @@ public class HeadSlime implements Listener {
         Entity target = null;
 
         if (inst.targetId != null) {
-            target = Bukkit.getEntity(inst.targetId);
+            target = (slime != null) ? slime.getWorld().getEntity(inst.targetId) : Bukkit.getEntity(inst.targetId);
         }
 
         if (target == null || target.isDead() || !target.isValid()) {
             inst.targetId = findNearestTarget(slime);
             if (inst.targetId == null) return;
-            target = Bukkit.getEntity(inst.targetId);
+            target = (slime != null) ? slime.getWorld().getEntity(inst.targetId) : Bukkit.getEntity(inst.targetId);
             if (target == null) return;
             if (debug) plugin.getLogger().info("[HeadSlime] Tracking target: " + target.getName());
         }
@@ -567,10 +567,13 @@ public class HeadSlime implements Listener {
             }
         }
         if (!hasSlime) return;
+        double expRadius = creeper.getExplosionRadius();
+        double expRadiusSq = expRadius * expRadius;
         for (Player player : event.getLocation().getWorld().getPlayers()) {
-            double dist = player.getLocation().distance(event.getLocation());
-            if (dist > creeper.getExplosionRadius()) continue;
-            double multiplier = 1.0 - (dist / creeper.getExplosionRadius());
+            double distSq = player.getLocation().distanceSquared(event.getLocation());
+            if (distSq > expRadiusSq) continue;
+            double dist = Math.sqrt(distSq);
+            double multiplier = 1.0 - (dist / expRadius);
             double damage = 24.0 * multiplier;
             if (damage < 1) damage = 1;
             for (Entity p : creeper.getPassengers()) {

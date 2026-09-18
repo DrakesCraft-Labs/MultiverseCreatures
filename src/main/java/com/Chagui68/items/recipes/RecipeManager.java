@@ -11,6 +11,7 @@ import com.Chagui68.items.components.CompressedGoldBlock;
 import com.Chagui68.items.components.CondensedChaosOrb;
 import com.Chagui68.items.components.EnderCore;
 import com.Chagui68.items.components.EnderFragment;
+import com.Chagui68.items.components.ExecutionerWarrant;
 import com.Chagui68.items.components.FrostHeart;
 import com.Chagui68.items.components.HeadSlimeHeart;
 import com.Chagui68.items.components.MagmaCore;
@@ -87,6 +88,7 @@ public class RecipeManager {
         registerCompressedGoldBlock();
         registerMultiversalCore();
         registerSentinelGrimoire();
+        registerExecutionerWarrant();
     }
 
     private static NamespacedKey key(String name) {
@@ -409,6 +411,17 @@ public class RecipeManager {
         recipe.setIngredient('B', Material.BOOK);
         recipe.setIngredient('M', new RecipeChoice.ExactChoice(MultiversalCore.MULTIVERSAL_CORE.clone()));
         recipe.setIngredient('S', new RecipeChoice.ExactChoice(SentinelCore.SENTINEL_CORE.clone()));
+        Bukkit.addRecipe(recipe);
+    }
+
+    // Executioner's Warrant (NIX boss invocation catalyst): Chains, Paper, Wither Skeleton Skull, Iron Ingot
+    private static void registerExecutionerWarrant() {
+        ShapedRecipe recipe = new ShapedRecipe(key("executioner_warrant"), ExecutionerWarrant.EXECUTIONER_WARRANT.clone());
+        recipe.shape("CPC", "IWI", "CPC");
+        recipe.setIngredient('C', Material.IRON_CHAIN);
+        recipe.setIngredient('P', Material.PAPER);
+        recipe.setIngredient('W', Material.WITHER_SKELETON_SKULL);
+        recipe.setIngredient('I', Material.IRON_INGOT);
         Bukkit.addRecipe(recipe);
     }
 }

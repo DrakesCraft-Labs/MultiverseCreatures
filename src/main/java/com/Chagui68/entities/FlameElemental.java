@@ -93,10 +93,10 @@ public class FlameElemental implements Listener {
 
         Location bLoc = blaze.getLocation();
         Location tLoc = target.getLocation();
-        double dist = bLoc.distance(tLoc);
+        double distSq = bLoc.distanceSquared(tLoc);
         inst.meteorCooldown++;
 
-        if (dist > 3 && dist < 20 && inst.meteorCooldown > 60) {
+        if (distSq > 9 && distSq < 400 && inst.meteorCooldown > 60) {
             inst.activeMeteor = new MeteorProjectile(bLoc.clone().add(0, 1.5, 0), target);
             inst.meteorCooldown = 0;
         }
@@ -161,7 +161,7 @@ public class FlameElemental implements Listener {
             }
         }
 
-        if (dist < 5 && blaze.getFireTicks() > 0) {
+        if (distSq < 25 && blaze.getFireTicks() > 0) {
             target.setFireTicks(target.getFireTicks() + 20);
             MscEntityUtils.damageBy(blaze, target, 3.0);
             tLoc.getWorld().spawnParticle(Particle.FLAME, tLoc.add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0.03);

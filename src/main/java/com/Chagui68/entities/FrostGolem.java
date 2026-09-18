@@ -147,11 +147,11 @@ public class FrostGolem implements Listener {
 
         Location gLoc = golem.getLocation();
         Location tLoc = target.getLocation();
-        double dist = gLoc.distance(tLoc);
+        double distSq = gLoc.distanceSquared(tLoc);
         inst.iceAuraCooldown++;
         inst.freezeBeamCooldown++;
 
-        if (dist < 8 && inst.iceAuraCooldown > 40) {
+        if (distSq < 64 && inst.iceAuraCooldown > 40) {
             for (int a = 0; a < 16; a++) {
                 double angle = (2 * Math.PI * a / 16);
                 double r = 4.0;
@@ -169,7 +169,8 @@ public class FrostGolem implements Listener {
             inst.iceAuraCooldown = 0;
         }
 
-        if (dist > 5 && dist < 20 && inst.freezeBeamCooldown > 80) {
+        if (distSq > 25 && distSq < 400 && inst.freezeBeamCooldown > 80) {
+            double dist = Math.sqrt(distSq);
             Vector dir = tLoc.toVector().subtract(gLoc.toVector()).normalize();
             for (double d = 0; d < dist; d += 0.5) {
                 Location pl = gLoc.clone().add(dir.clone().multiply(d));

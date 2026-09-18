@@ -123,10 +123,10 @@ public class SoulReaper implements Listener {
         }
 
         Location wLoc = ws.getLocation();
-        double dist = wLoc.distance(target.getLocation());
+        double distSq = wLoc.distanceSquared(target.getLocation());
         inst.soulDrainCooldown++;
 
-        if (dist < 8 && inst.soulDrainCooldown > 60) {
+        if (distSq < 64 && inst.soulDrainCooldown > 60) {
             double dmg = 10.0;
             MscEntityUtils.damageBy(ws, target, dmg);
             double heal = dmg * 0.5;

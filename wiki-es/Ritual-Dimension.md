@@ -68,6 +68,47 @@ _ R R R _
 
 ---
 
+## 🪓 Invocación de NIX: El Cadalso del Verdugo
+
+**NIX - El Verdugo** solo puede ser invocado de forma exclusiva dentro de la **Dimensión del Jefe** (`boss_dimension`). Los jugadores deben erigir **El Cadalso del Verdugo** sobre el suelo de obsidiana llorosa y ofrecer un sacrificio de sangre.
+
+### Distribución (Huella 5×5)
+
+```
+P . . . P        P = Poste de Cadalso (Y=0: Ladrillos de Piedra Negra / Pizarra, Y=1: Cadena, Y=2: Calavera)
+. . c . .        c = Vela Roja (adyacente al yunque, encendida con mechero)
+. c Y c .        Y = Yunque Central (El Tajo de Decapitación)
+. . c . .
+P . . . P
+```
+
+### Materiales Requeridos
+- **1 Yunque Central** (`anvil`, `chipped_anvil` o `damaged_anvil`) en `(2, 0, 2)`.
+- **4 Velas Rojas** (`red_candle`) a nivel del suelo colocadas al Norte, Sur, Oeste y Este del yunque: `(2, 0, 1)`, `(2, 0, 3)`, `(1, 0, 2)`, `(3, 0, 2)`.
+- **4 Postes de Cadalso en las Esquinas**:
+  - `(0, 0)`, `(4, 0)`, `(0, 4)` y `(4, 4)`.
+  - Base (`Y=0`): Ladrillos de piedra negra pulida, pizarra pulida o ladrillos de pizarra profunda.
+  - Centro (`Y=1`): Cadena (`chain`).
+  - Cúspide (`Y=2`): Calavera de esqueleto (`skeleton_skull` o `wither_skeleton_skull`).
+
+### Procedimiento de Invocación
+1. Construye el cadalso en la superficie de la `boss_dimension`.
+2. Enciende las **4 velas rojas** con un mechero o carga ígnea.
+3. **Efecto de Invocación Activa**:
+   - Rayos y partículas de sangre carmesí (`#8B0000`) se conectan desde las 4 calaveras de los postes hacia el yunque central.
+   - Suenan cadenas pesadas estremeciéndose a intervalos mientras una densa humareda oscura brota del yunque.
+4. **La Ofrenda de Sangre**:
+   - Suelta una **`Sentencia de Muerte`** (`Executioner's Warrant`, obtenible con `/msc give warrant` o crafteable en mesa de trabajo) sobre el yunque central.
+   - *(También se aceptan como ofrendas alternativas un `Hacha de Netherita` o una `Calavera de Wither Skeleton`)*.
+5. **Aparición**:
+   - El sacrificio es consumido al instante.
+   - Un rayo carmesí azota el yunque con un impacto ensordecedor de guillotina (`Sound.BLOCK_ANVIL_LAND`).
+   - Las velas se apagan y **NIX - El Verdugo** se materializa sobre el yunque desatando el combate.
+
+> Mientras NIX esté activo dentro de la Dimensión del Jefe, la colocación y rotura de bloques, así como los comandos de escape, permanecen bloqueados.
+
+---
+
 ## 🚪 Salir
 
 Con el jefe inactivo puedes salir directamente con **`/msc dimtp`** (los comandos solo se bloquean durante la pelea). Si quieres salir por medios del juego, o si el jefe sigue activo, la única salida es **el mismo ritual usado para entrar**:

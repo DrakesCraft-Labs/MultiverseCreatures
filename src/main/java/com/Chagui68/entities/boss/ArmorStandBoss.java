@@ -776,8 +776,8 @@ public class ArmorStandBoss implements Listener, BossHost {
         stand.setHeadPose(new EulerAngle(Math.toRadians(-30), 0, 0));
 
         for (Player p : getValidPlayers(world)) {
-            double dist = p.getLocation().distance(loc);
-            if (dist < 30) {
+            double distSq = p.getLocation().distanceSquared(loc);
+            if (distSq < 900.0) {
                 Vector away = p.getLocation().toVector().subtract(loc.toVector()).normalize();
                 p.setVelocity(away.multiply(2.0).setY(1.0));
                 MscEntityUtils.damageBy(stand.entidad(), p, phaseTransitionSlamDamage);
@@ -867,8 +867,9 @@ public class ArmorStandBoss implements Listener, BossHost {
 
         double dmg = sealDamage;
         for (Player p : getValidPlayers(world)) {
-            double dist = p.getLocation().distance(loc);
-            if (dist < 25) {
+            double distSq = p.getLocation().distanceSquared(loc);
+            if (distSq < 625.0) {
+                double dist = Math.sqrt(distSq);
                 MscEntityUtils.damageBy(stand.entidad(), p, dmg * 0.5 * (1 - dist / 25));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1));
@@ -911,8 +912,9 @@ public class ArmorStandBoss implements Listener, BossHost {
 
         double dmg = sealDamage * 1.5;
         for (Player p : getValidPlayers(world)) {
-            double dist = p.getLocation().distance(loc);
-            if (dist < 35) {
+            double distSq = p.getLocation().distanceSquared(loc);
+            if (distSq < 1225.0) {
+                double dist = Math.sqrt(distSq);
                 MscEntityUtils.damageBy(stand.entidad(), p, dmg * (1 - dist / 35));
                 p.setVelocity(new Vector(0, 1.5, 0));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 100, 1));
@@ -1398,6 +1400,11 @@ public class ArmorStandBoss implements Listener, BossHost {
                 public void run() {
                     if (radius <= 0.5) return;
                     int samples = (int) Math.max(16, radius * 4);
+                    Vector knockbackStrength = new Vector(0, 0.7 - radius / maxRadius * 0.3, 0);
+                    double damageMultiplier = 1.0 - radius / maxRadius * 0.6;
+                    List<Player> validPlayers = getValidPlayers(world);
+                    Set<UUID> hitInThisRing = new HashSet<>();
+
                     for (int a = 0; a < samples; a++) {
                         double angle = (2 * Math.PI * a / samples);
                         double x = impactLoc.getX() + Math.cos(angle) * radius;
@@ -1414,14 +1421,13 @@ public class ArmorStandBoss implements Listener, BossHost {
                             spawnRisingBlock(world, pl.clone());
                         }
 
-                        Vector knockbackStrength = new Vector(0, 0.7 - radius / maxRadius * 0.3, 0);
-                        double damageMultiplier = 1.0 - radius / maxRadius * 0.6;
-
-                        for (Player p : getValidPlayers(world)) {
-                            double dist = p.getLocation().distance(pl);
-                            if (dist < 2.0 && p.getLocation().getY() <= pl.getY() + 2) {
-                            if (stand != null) MscEntityUtils.damageBy(stand, p, damageMultiplier * 5.0);
-                                p.setVelocity(p.getVelocity().add(knockbackStrength.clone()));
+                        for (Player p : validPlayers) {
+                            if (hitInThisRing.contains(p.getUniqueId())) continue;
+                            Location pLoc = p.getLocation();
+                            if (pLoc.getY() <= pl.getY() + 2 && pLoc.distanceSquared(pl) < 4.0) {
+                                hitInThisRing.add(p.getUniqueId());
+                                if (stand != null) MscEntityUtils.damageBy(stand, p, damageMultiplier * 5.0);
+                                p.setVelocity(p.getVelocity().add(knockbackStrength));
                             }
                         }
                     }

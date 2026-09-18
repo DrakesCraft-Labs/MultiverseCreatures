@@ -10,6 +10,7 @@ import com.Chagui68.items.components.ChaosPowder;
 import com.Chagui68.items.components.CompressedGoldBlock;
 import com.Chagui68.items.components.CondensedChaosOrb;
 import com.Chagui68.items.components.EnderFragment;
+import com.Chagui68.items.components.ExecutionerWarrant;
 import com.Chagui68.items.components.FrostHeart;
 import com.Chagui68.items.components.HeadSlimeHeart;
 import com.Chagui68.items.components.MagmaCore;
@@ -454,6 +455,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             case "moltenwheelcore", "moltenwheel" -> MoltenWheelCore.MOLTEN_WHEEL_CORE.clone();
             case "moltennetherite", "molten" -> MoltenNetherite.MOLTEN_NETHERITE.clone();
             case "refinedwheelcore", "refinedwheel" -> RefinedWheelCore.REFINED_WHEEL_CORE.clone();
+            case "executionerwarrant", "warrant", "deathwarrant" -> ExecutionerWarrant.EXECUTIONER_WARRANT.clone();
             default -> null;
         };
 
@@ -614,10 +616,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     private void handleReload(CommandSender sender) {
         plugin.reloadConfig();
         mobHandler.reloadConfig();
-        plugin.getMahoraga().reloadConfig();
-        plugin.getArmorStandBoss().reloadConfig();
-        plugin.getHeadSlime().reloadConfig();
-        plugin.getWarlord().reloadConfig();
+        if (plugin.getMahoraga() != null) plugin.getMahoraga().reloadConfig();
+        if (plugin.getArmorStandBoss() != null) plugin.getArmorStandBoss().reloadConfig();
+        if (plugin.getHeadSlime() != null) plugin.getHeadSlime().reloadConfig();
+        if (plugin.getWarlord() != null) plugin.getWarlord().reloadConfig();
+        if (plugin.getNixBoss() != null) plugin.getNixBoss().reloadConfig();
         sender.sendMessage(GREEN + "Configuration reloaded. All changes have been applied.");
     }
 
@@ -1605,29 +1608,124 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendSpawnHelp(CommandSender sender, int page) {
-        List<String> lines = new ArrayList<>();
-        lines.addAll(categoryLines("Entities", SPAWNABLE_ENTITIES));
-        sendPaginatedMenu(sender, "MSC SPAWN", "/msc spawn <type>", lines, page, "spawn");
+        int totalPages = 3;
+        page = Math.max(1, Math.min(page, totalPages));
+        String subHeader = switch (page) {
+            case 1 -> "BOSSES & APEX ENTITIES";
+            case 2 -> "MILITARY STRIKE FORCE";
+            default -> "MULTIVERSE CREATURES & ELITES";
+        };
+        sendMenuHeader(sender, "MSC SPAWN - " + subHeader);
+        sendLine(sender, " &7Usage: &e/msc spawn <type>");
+        sendLine(sender, "");
+
+        switch (page) {
+            case 1 -> {
+                sendLine(sender, " &e• nix &8- &cNIX - El Verdugo &7(Scaffold Ritual Boss)");
+                sendLine(sender, " &e• armorstand &8- &6The Ancient Armor Stand &7(Multiverse Boss)");
+                sendLine(sender, " &e• mahoraga &8- &fMahoraga &7(Adapting Divine General)");
+                sendLine(sender, " &e• garou &8- &bGarou &7(Martial Arts Miniboss)");
+                sendLine(sender, " &e• kinger &8- &5Kinger &7(Floating Digital Head Boss)");
+                sendLine(sender, " &e• disctrader &8- &dDisc Trader &7(Music & Relic Merchant)");
+            }
+            case 2 -> {
+                sendLine(sender, " &e• zombietrap &8- &cHorse Trap Trigger &7(Spawns Military Army)");
+                sendLine(sender, " &e• tank &8- &aZombie Tank &7(Heavy Armor, Shield & Slam)");
+                sendLine(sender, " &e• duelist &8- &dMilitary Duelist &7(Dynamic Sword/Bow Swap)");
+                sendLine(sender, " &e• lancer &8- &eZombie Lancer &7(Charging Cavalry Rider)");
+                sendLine(sender, " &e• camel &8- &6Siege Camels &7(Husk Cavalry & Archers)");
+                sendLine(sender, " &e• sniper &8- &8Wither Sniper &7(High-velocity Bow Snipes)");
+            }
+            case 3 -> {
+                sendLine(sender, " &e• chaosmage &8- &dChaos Mage &7(Magic Bolts & Blink)");
+                sendLine(sender, " &e• soulreaper &8- &cSoul Reaper &7(Scythe Life Drain)");
+                sendLine(sender, " &e• enderknight &8- &5Ender Knight &7(Abyssal Void Blade)");
+                sendLine(sender, " &e• obsidianguard &8- &8Obsidian Guard &7(Reinforced Shield)");
+                sendLine(sender, " &e• stormcaller &8- &bStorm Caller &7(Lightning Summoner)");
+                sendLine(sender, " &e• frostgolem &8- &9Frost Golem &7(Cryo Slow Aura)");
+                sendLine(sender, " &e• flameelemental &8- &6Flame Elemental &7(Fire Nova)");
+                sendLine(sender, " &e• shadowrogue &8- &8Shadow Rogue &7(Stealth Infiltrator)");
+                sendLine(sender, " &e• voidcrawler &8- &5Void Crawler &7(End Abyss Parasite)");
+                sendLine(sender, " &e• boneshield &8- &fBone Shield Skeleton &7(Arrow Defense)");
+                sendLine(sender, " &e• venomwitch &8- &2Venom Witch &7(Toxic Splash Potions)");
+                sendLine(sender, " &e• warlord &8- &4Orcish Warlord &7(Berserker Rage)");
+                sendLine(sender, " &e• creeperjr &8- &aCreeper Jr. &7(Fast Micro-Exploder)");
+                sendLine(sender, " &e• headslime &8- &aHead Slime &7(Leaping Parasite)");
+                sendLine(sender, " &e• merchant &8- &eMultiverse Merchant &7(Custom Trades)");
+            }
+        }
+        sendMenuFooter(sender);
+        String next = page < totalPages ? " &8· &7Next: &e/msc spawn help " + (page + 1) : "";
+        sendLine(sender, " &7Page &e" + page + "&7/&e" + totalPages + next);
     }
 
     private void sendGiveHelp(CommandSender sender, int page) {
-        List<String> lines = new ArrayList<>();
-        lines.addAll(categoryLines("Food", Arrays.asList("scoobycookie")));
-        lines.addAll(categoryLines("Weapons", Arrays.asList("excalibur", "aetherpullshot", "chaosforge",
-                "cindergreatsword", "nullshearedge", "soulreapscythe", "venomfang", "skyfiretalisman",
-                "sentinelgrimoire")));
-        lines.addAll(categoryLines("Armor", Arrays.asList("eighthandledwheel", "obsidianbastionhelmet",
-                "obsidianbastionchestplate", "obsidianbastionleggings", "obsidianbastionboots")));
-        lines.addAll(categoryLines("Equipables", Arrays.asList("icecrown", "wirtslantern", "mantisclaws",
-                "militarymine", "frostheartoffhand", "marrowaegis", "veilwalkermantle")));
-        lines.addAll(categoryLines("Components", Arrays.asList("starcore", "militarycomponent", "headslimeheart",
-                "headslimegelatin", "chaosorb", "chaospowder", "chaosfragment", "chaoscore", "condensedchaosorb",
-                "enderfragment", "frostheart", "magmacore", "obsidianshard",
-                "reaperessence", "reinforcedbone", "shadowcloak", "stormcrystal", "venomgland", "voidessence",
-                "wheelessence", "wheelcore", "reapercore", "refinednetherite", "swordmold",
-                "reinforcedboneblock", "endercore", "sentinelcore", "multiversalcore", "compressedgoldblock",
-                "moltenwheelcore", "moltennetherite", "refinedwheelcore")));
-        sendPaginatedMenu(sender, "MSC GIVE", "/msc give <item> [amount] [player|@a|@p|@r|@s]", lines, page, "give");
+        int totalPages = 4;
+        page = Math.max(1, Math.min(page, totalPages));
+        String subHeader = switch (page) {
+            case 1 -> "LEGENDARY WEAPONS & MAGIC";
+            case 2 -> "ARMOR SETS, RELICS & OFFHANDS";
+            case 3 -> "BOSS CATALYSTS & APEX COMPONENTS";
+            default -> "CRAFTING MATERIALS & ESSENCES";
+        };
+        sendMenuHeader(sender, "MSC GIVE - " + subHeader);
+        sendLine(sender, " &7Usage: &e/msc give <item> [amount] [player|@a|@p|@r|@s]");
+        sendLine(sender, "");
+
+        switch (page) {
+            case 1 -> {
+                sendLine(sender, " &e• excalibur &8- &6Holy Blade of Kings");
+                sendLine(sender, " &e• cindergreatsword &8- &cBlazing Heavy Greatsword");
+                sendLine(sender, " &e• nullshearedge &8- &5Void Spatial Slicer");
+                sendLine(sender, " &e• soulreapscythe &8- &8Life-draining Scythe");
+                sendLine(sender, " &e• venomfang &8- &2Poison-tipped Dagger");
+                sendLine(sender, " &e• aetherpullshot &8- &bGravitational Pull Bow");
+                sendLine(sender, " &e• chaosforge &8- &dChaos Casting Hammer");
+                sendLine(sender, " &e• skyfiretalisman &8- &6Celestial Skyfire Charm");
+                sendLine(sender, " &e• sentinelgrimoire &8- &9Guardian Spell Grimoire");
+            }
+            case 2 -> {
+                sendLine(sender, " &e• eighthandledwheel &8- &fMahoraga's Sacred Wheel");
+                sendLine(sender, " &e• obsidianbastionhelmet &8- &8Obsidian Bastion Helmet");
+                sendLine(sender, " &e• obsidianbastionchestplate &8- &8Obsidian Bastion Chestplate");
+                sendLine(sender, " &e• obsidianbastionleggings &8- &8Obsidian Bastion Leggings");
+                sendLine(sender, " &e• obsidianbastionboots &8- &8Obsidian Bastion Boots");
+                sendLine(sender, " &e• icecrown &8- &bGlacial Monarch Crown");
+                sendLine(sender, " &e• wirtslantern &8- &6Illuminating Explorer Lantern");
+                sendLine(sender, " &e• mantisclaws &8- &aPreying Mantis Dual Claws");
+                sendLine(sender, " &e• militarymine &8- &cProximity Landmine");
+                sendLine(sender, " &e• frostheartoffhand &8- &9Cryo Shield Offhand");
+                sendLine(sender, " &e• marrowaegis &8- &fBone Marrow Aegis Shield");
+                sendLine(sender, " &e• veilwalkermantle &8- &5Shadow Veilwalker Cloak");
+            }
+            case 3 -> {
+                sendLine(sender, " &e• executionerwarrant &8- &4NIX Scaffold Summon Warrant");
+                sendLine(sender, " &e• compressedgoldblock &8- &6Boss Altar Anchor Block");
+                sendLine(sender, " &e• multiversalcore &8- &dMultiverse Nexus Core");
+                sendLine(sender, " &e• wheelcore &8- &fDivergent Sila Wheel Core");
+                sendLine(sender, " &e• moltenwheelcore &8- &cMolten Infused Wheel Core");
+                sendLine(sender, " &e• refinedwheelcore &8- &bPurified Wheel Core");
+                sendLine(sender, " &e• reapercore &8- &8Soul Reaper Core");
+                sendLine(sender, " &e• sentinelcore &8- &9Ancient Sentinel Core");
+                sendLine(sender, " &e• endercore &8- &5End Void Dimensional Core");
+                sendLine(sender, " &e• starcore &8- &eCelestial Star Core");
+                sendLine(sender, " &e• chaoscore &8- &dRaw Concentrated Chaos Core");
+                sendLine(sender, " &e• scoobycookie &8- &6Mystery Scooby Snack (Food)");
+            }
+            case 4 -> {
+                sendLine(sender, " &e• reaperessence &8/ &evoidessence &8/ &ewheelessence &8- &7Essences");
+                sendLine(sender, " &e• stormcrystal &8/ &emagmacore &8/ &efrostheart &8- &7Elemental Cores");
+                sendLine(sender, " &e• obsidianshard &8/ &erefinednetherite &8/ &emoltennetherite &8- &7Metals");
+                sendLine(sender, " &e• headslimeheart &8/ &eheadslimegelatin &8/ &evenomgland &8- &7Organics");
+                sendLine(sender, " &e• shadowcloak &8/ &eswordmold &8/ &emilitarycomponent &8- &7Relics");
+                sendLine(sender, " &e• reinforcedbone &8/ &ereinforcedboneblock &8- &7Bone Crafting");
+                sendLine(sender, " &e• chaosorb &8/ &echaospowder &8/ &echaosfragment &8- &7Chaos Alch.");
+                sendLine(sender, " &e• condensedchaosorb &8/ &eenderfragment &8- &7Infused Catalysts");
+            }
+        }
+        sendMenuFooter(sender);
+        String next = page < totalPages ? " &8· &7Next: &e/msc give help " + (page + 1) : "";
+        sendLine(sender, " &7Page &e" + page + "&7/&e" + totalPages + next);
     }
 
     private void sendSealHelp(CommandSender sender, int page) {
@@ -1639,18 +1737,73 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendAttackHelp(CommandSender sender, int page) {
-        List<String> lines = new ArrayList<>();
-        lines.addAll(categoryLines("Ground", Arrays.asList("groundslam", "groundshatter", "shieldbash", "lancestorm",
-                "earthpillar", "chaingrapple", "warstomp", "armorspikes", "vortexpull", "mirrorimage", "doombeam")));
-        lines.addAll(categoryLines("Aerial", Arrays.asList("starfall", "aerialrush", "sonicboom", "lightningstorm",
-                "gravitywell", "crossslash", "novaburst", "darkorb", "windcutter", "heavenlyjudgment",
-                "rainoflances", "airslam", "hoverbarrage")));
-        lines.addAll(categoryLines("Ranged", Arrays.asList("lancesnipe", "meteorstorm", "voidbeam", "frostlance",
-                "lightningspear", "shadowvolley", "chainlightning", "crystalbarrage", "arcaneorb", "voidrift",
-                "arcanemissiles", "spiritbeam")));
-        lines.addAll(categoryLines("Defensive", Arrays.asList("stoneskin", "reflectbarrier", "absorbshield",
-                "shieldseal", "healingcircle", "trianglecall")));
-        sendPaginatedMenu(sender, "MSC ATTACK", "/msc attack <attack> [range]", lines, page, "attack");
+        int totalPages = 4;
+        page = Math.max(1, Math.min(page, totalPages));
+        String subHeader = switch (page) {
+            case 1 -> "GROUND ATTACKS & EARTH CONTROL";
+            case 2 -> "AERIAL ASSAULTS & CELESTIAL RUSHES";
+            case 3 -> "RANGED ARTILLERY & MAGIC PROJECTIONS";
+            default -> "DEFENSIVE SHIELDS & MAGIC SEALS";
+        };
+        sendMenuHeader(sender, "MSC ATTACK - " + subHeader);
+        sendLine(sender, " &7Usage: &e/msc attack <attack> [range]");
+        sendLine(sender, "");
+
+        switch (page) {
+            case 1 -> {
+                sendLine(sender, " &e• groundslam &8- &7Earth-shattering seismic leap impact");
+                sendLine(sender, " &e• groundshatter &8- &7Fissure wave that fractures the terrain");
+                sendLine(sender, " &e• shieldbash &8- &7Forward heavy rush that stuns targets");
+                sendLine(sender, " &e• lancestorm &8- &7Piercing lance barrage across the ground");
+                sendLine(sender, " &e• earthpillar &8- &7Stone pillars erupting from beneath foes");
+                sendLine(sender, " &e• chaingrapple &8- &7Iron chain hook pulling players in");
+                sendLine(sender, " &e• warstomp &8- &7Massive area shockwave knocking entities back");
+                sendLine(sender, " &e• armorspikes &8- &7Defensive spike retribution burst");
+                sendLine(sender, " &e• vortexpull &8- &7Gravitational vortex dragging entities to center");
+                sendLine(sender, " &e• mirrorimage &8- &7Illusionary decoys to confuse adversaries");
+                sendLine(sender, " &e• doombeam &8- &7Focused demonic ground laser sweep");
+            }
+            case 2 -> {
+                sendLine(sender, " &e• starfall &8- &7Calling celestial stars crashing down");
+                sendLine(sender, " &e• aerialrush &8- &7High-speed aerial homing strike");
+                sendLine(sender, " &e• sonicboom &8- &7Acoustic blast wave penetrating defenses");
+                sendLine(sender, " &e• lightningstorm &8- &7Summoning consecutive lightning strikes");
+                sendLine(sender, " &e• gravitywell &8- &7Aerial singularity pulling upwards");
+                sendLine(sender, " &e• crossslash &8- &7Dual aerial sword cleave in cross shape");
+                sendLine(sender, " &e• novaburst &8- &7Explosive radiant detonation in midair");
+                sendLine(sender, " &e• darkorb &8- &7Floating orb radiating darkness damage");
+                sendLine(sender, " &e• windcutter &8- &7Slicing razor-wind blades");
+                sendLine(sender, " &e• heavenlyjudgment &8- &7Holy orbital beam strike");
+                sendLine(sender, " &e• rainoflances &8- &7Shower of holy lances from the sky");
+                sendLine(sender, " &e• airslam &8- &7Sky-dive slam pulverizing the landing zone");
+                sendLine(sender, " &e• hoverbarrage &8- &7Levitating volley of energy projectiles");
+            }
+            case 3 -> {
+                sendLine(sender, " &e• lancesnipe &8- &7High-velocity sniper lance projectile");
+                sendLine(sender, " &e• meteorstorm &8- &7Shower of flaming meteorites");
+                sendLine(sender, " &e• voidbeam &8- &7Linear void disintegration laser");
+                sendLine(sender, " &e• frostlance &8- &7Piercing glacial spear inflicting deep freeze");
+                sendLine(sender, " &e• lightningspear &8- &7Electrified javelin shocking targets");
+                sendLine(sender, " &e• shadowvolley &8- &7Multi-directional flurry of dark arrows");
+                sendLine(sender, " &e• chainlightning &8- &7Electric arc bouncing between nearby players");
+                sendLine(sender, " &e• crystalbarrage &8- &7Rapid crystal shards barrage");
+                sendLine(sender, " &e• arcaneorb &8- &7Pulsing magical sphere of pure arcane power");
+                sendLine(sender, " &e• voidrift &8- &7Dimensional tear distorting spacetime");
+                sendLine(sender, " &e• arcanemissiles &8- &7Homing arcane bolts seeking players");
+                sendLine(sender, " &e• spiritbeam &8- &7Piercing spectral light beam");
+            }
+            case 4 -> {
+                sendLine(sender, " &e• stoneskin &8- &7Hardens boss defense, reducing all damage");
+                sendLine(sender, " &e• reflectbarrier &8- &7Prismatic shield reflecting projectiles");
+                sendLine(sender, " &e• absorbshield &8- &7Barrier converting incoming damage into healing");
+                sendLine(sender, " &e• shieldseal &8- &7Protective ancient ward preventing melee strikes");
+                sendLine(sender, " &e• healingcircle &8- &7Radiant circle regenerating boss vitality");
+                sendLine(sender, " &e• trianglecall &8- &7Sacred geometric barrier summoning reinforcements");
+            }
+        }
+        sendMenuFooter(sender);
+        String next = page < totalPages ? " &8· &7Next: &e/msc attack help " + (page + 1) : "";
+        sendLine(sender, " &7Page &e" + page + "&7/&e" + totalPages + next);
     }
 
     private void sendDummyHelp(Player player, int page) {
@@ -1723,18 +1876,27 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(CommandSender sender) {
         sendMenuHeader(sender, "MULTIVERSE CREATURES");
-        sendCommandEntry(sender, "/msc spawn <type>", "Spawn custom mobs. Use /msc spawn alone to list them.");
-        sendCommandEntry(sender, "/msc give <item> [amount] [player|@a|@p|@r|@s]", "Give custom items. Use /msc give alone to list them.");
-        sendCommandEntry(sender, "/msc seal <pattern> [plane]", "Spawn particle seals & battle effects.");
-        sendCommandEntry(sender, "/msc attack <attack> [range]", "Trigger a registered boss attack on the nearest boss.");
-        sendCommandEntry(sender, "/msc dummy", "Spawn and pose a test armor stand.");
-        sendCommandEntry(sender, "/msc music <play|stop|list|disc> [name] [loop]", "Play .nbs music files or get a jukebox disc.");
-        sendCommandEntry(sender, "/msc dimtp <world>", "Teleport between dimensions.");
-        sendCommandEntry(sender, "/msc cleanstands [world]", "Remove all custom plugin armor stands (optionally in a dimension).");
-        sendCommandEntry(sender, "/msc kill [type|all] [radius]", "Kill/purge custom creatures (optionally by type or radius).");
-        sendCommandEntry(sender, "/msc reload", "Reload config.yml and apply all changes.");
+        sendLine(sender, " &c&l⚔ COMBAT & BOSSES&8:");
+        sendLine(sender, "   &e/msc spawn <type> &8- &7Spawn bosses, strikes & creatures.");
+        sendLine(sender, "   &e/msc attack <attack> [range] &8- &7Force a boss attack.");
+        sendLine(sender, "   &e/msc kill [type|all] [radius] &8- &7Safely purge custom mobs.");
         sendLine(sender, "");
-        sendLine(sender, " &7&oTip: &e/msc <spawn|give|seal|attack|dummy|kill> help [page]");
+        sendLine(sender, " &6&l📦 GEAR & ARTIFACTS&8:");
+        sendLine(sender, "   &e/msc give <item> [amt] [player] &8- &7Give custom items & catalysts.");
+        sendLine(sender, "");
+        sendLine(sender, " &d&l🌌 DIMENSIONS & RITUALS&8:");
+        sendLine(sender, "   &e/msc dimtp <world> &8- &7Teleport to multiverse dimensions.");
+        sendLine(sender, "   &e/msc cleanstands [world] &8- &7Purge plugin armor stands.");
+        sendLine(sender, "");
+        sendLine(sender, " &b&l🎵 AUDIO & VISUALS&8:");
+        sendLine(sender, "   &e/msc music <play|stop|list|disc> &8- &7Play .nbs music or get discs.");
+        sendLine(sender, "   &e/msc seal <pattern> [plane] &8- &7Summon magic particle seals.");
+        sendLine(sender, "");
+        sendLine(sender, " &a&l🛠 TESTING & SYSTEM&8:");
+        sendLine(sender, "   &e/msc dummy [action] &8- &7Spawn & pose test dummies.");
+        sendLine(sender, "   &e/msc reload &8- &7Reload config.yml & sync entities.");
+        sendLine(sender, "");
+        sendLine(sender, " &7&oExplore subcommands: &e/msc <cmd> help &7(e.g. &e/msc spawn help&7)");
         sendMenuFooter(sender);
     }
 
@@ -1775,7 +1937,8 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                         "eighthandledwheel", "obsidianbastionhelmet", "obsidianbastionchestplate", "obsidianbastionleggings", "obsidianbastionboots",
                         "frostheartoffhand", "marrowaegis", "veilwalkermantle",
                         "chaosorb", "chaospowder", "chaosfragment", "chaoscore", "condensedchaosorb", "enderfragment", "frostheart", "magmacore", "obsidianshard", "reaperessence", "reinforcedbone", "reinforcedboneblock", "endercore", "swordmold", "shadowcloak", "stormcrystal", "venomgland", "voidessence", "wheelessence",
-                        "wheelcore", "reapercore", "refinednetherite", "sentinelcore", "sentinel", "multiversalcore", "multiverse", "compressedgoldblock", "goldblock", "moltenwheelcore", "moltenwheel", "moltennetherite", "molten", "refinedwheelcore", "refinedwheel"
+                        "wheelcore", "reapercore", "refinednetherite", "sentinelcore", "sentinel", "multiversalcore", "multiverse", "compressedgoldblock", "goldblock", "moltenwheelcore", "moltenwheel", "moltennetherite", "molten", "refinedwheelcore", "refinedwheel",
+                        "executionerwarrant", "warrant"
                 );
                 completions.addAll(items.stream()
                         .filter(i -> i.startsWith(args[1].toLowerCase()))

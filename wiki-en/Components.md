@@ -30,6 +30,7 @@ Drop sources — for each component, the mob and chance:
 | **Refined Wheel Core** `§6§lRefined Wheel Core` (MUSIC_DISC_OTHERSIDE) | crafted from **Molten Wheel Core** + **Molten Netherite** | — | Multiverse (JJK) |
 | **Reaper Core** `§0§lReaper Core` (WITHER_ROSE) | crafted from **Reaper Essence** + Soul Sand + Nether Star | — | Multiverse |
 | **Refined Netherite** `§8§lRefined Netherite` (NETHERITE_INGOT) | crafted from **4 Star Core** (corners) + **4 Netherite Scrap** (sides) + **Compressed Gold Block** (center, 9 Gold Blocks) | — | Multiverse |
+| **Executioner's Warrant** `§4§lExecutioner Warrant` (PAPER) | crafted from Chains + Paper + Wither Skeleton Skull + Iron Ingot | — | Multiverse (NIX) |
 
 Each component is just a `msc_<name>` tagged ingredient — it does **nothing on its own**, but it's required to craft the corresponding legendary item.
 

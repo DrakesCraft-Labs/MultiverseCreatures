@@ -217,6 +217,20 @@ N S N
 
 ![Receta del Núcleo Multiversal](images/recipes/multiversal-core.png)
 
+### Sentencia de Muerte (Executioner's Warrant)
+**Resultado:** `§4§lExecutioner Warrant` (PAPER) — decreto catalizador de invocación de NIX - El Verdugo.
+
+```
+C P C
+I W I
+C P C
+```
+
+- `C` = Cadena (`chain` / `iron_chain`)
+- `P` = Papel (`paper`)
+- `W` = Calavera de Wither Skeleton (`wither_skeleton_skull`)
+- `I` = Lingote de Hierro (`iron_ingot`)
+
 ---
 
 ## 🗡️ Armas

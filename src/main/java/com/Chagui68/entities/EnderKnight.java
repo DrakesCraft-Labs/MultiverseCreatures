@@ -118,11 +118,11 @@ public class EnderKnight implements Listener {
             em.setTarget(null);
             return;
         }
-        double dist = eLoc.distance(tLoc);
+        double distSq = eLoc.distanceSquared(tLoc);
         inst.enderPullCooldown++;
         inst.enderRushCooldown++;
 
-        if (dist > 5 && dist < 25 && inst.enderPullCooldown > 60) {
+        if (distSq > 25 && distSq < 625 && inst.enderPullCooldown > 60) {
             target.setVelocity(eLoc.toVector().subtract(tLoc.toVector()).normalize().multiply(0.8));
             MscEntityUtils.damageBy(em, target, 4.0);
             for (int i = 0; i < 8; i++) {
@@ -134,7 +134,7 @@ public class EnderKnight implements Listener {
             inst.enderPullCooldown = 0;
         }
 
-        if (dist > 8 && inst.enderRushCooldown > 40) {
+        if (distSq > 64 && inst.enderRushCooldown > 40) {
             Location behind = tLoc.clone().add(tLoc.getDirection().multiply(-2));
             behind.setY(tLoc.getY());
             em.teleport(behind);
@@ -146,7 +146,7 @@ public class EnderKnight implements Listener {
             inst.enderRushCooldown = 0;
         }
 
-        if (dist < 4) {
+        if (distSq < 16) {
             target.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 0));
         }
     }

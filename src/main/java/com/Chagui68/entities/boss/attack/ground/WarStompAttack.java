@@ -76,8 +76,10 @@ public class WarStompAttack extends BossAttackBase {
                                         world.spawnParticle(Particle.BLOCK, pl, 2, 0.3, 0.3, 0.3, 0.05, Material.DIRT.createBlockData());
                                         world.spawnParticle(Particle.CRIT, pl.clone().add(0, 0.5, 0), 1, 0.2, 0.2, 0.2, 0.02);
                                     }
+                                    double maxDist = radius + 1;
+                                    double maxDistSq = maxDist * maxDist;
                                     for (Player p : boss.getValidPlayers(world)) {
-                                        if (p.getLocation().distance(center) < radius + 1) {
+                                        if (p.getLocation().distanceSquared(center) < maxDistSq) {
                                             MscEntityUtils.damageBy(stand.entidad(), p, stompDamage * (1 - r * 0.1));
                                             boss.launchPlayer(p, 0.5);
                                             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1));

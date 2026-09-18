@@ -256,17 +256,18 @@ public class Kinger implements Listener {
         inst.targetId = (target != null) ? target.getUniqueId() : null;
 
         if (target != null) {
-            double dist = stand.getLocation().distance(target.getLocation());
-            inst.moving = dist > 1.8;
-            if (inst.moving && dist <= aggroRange) {
+            double distSq = stand.getLocation().distanceSquared(target.getLocation());
+            inst.moving = distSq > 3.24; // 1.8^2
+            if (inst.moving && distSq <= (aggroRange * aggroRange)) {
                 moveTowards(stand, target.getLocation());
             }
             faceTarget(stand, target);
-            if (dist <= meleeRange && inst.meleeCooldown <= 0) {
+            double meleeRangeSq = meleeRange * meleeRange;
+            if (distSq <= meleeRangeSq && inst.meleeCooldown <= 0) {
                 meleeAttack(stand);
                 inst.meleeAnim = meleeAnimTicks;
                 inst.meleeCooldown = meleeCooldownTicks;
-            } else if (dist > meleeRange && dist <= rangedRange && inst.rangedCooldown <= 0) {
+            } else if (distSq > meleeRangeSq && distSq <= (rangedRange * rangedRange) && inst.rangedCooldown <= 0) {
                 rangedAttack(stand, target);
                 inst.rangedAnim = rangedAnimTicks;
                 inst.rangedCooldown = rangedCooldownTicks;
@@ -283,7 +284,13 @@ public class Kinger implements Listener {
         if (inst.meleeCooldown > 0) inst.meleeCooldown--;
         if (inst.rangedCooldown > 0) inst.rangedCooldown--;
 
-        syncDisplays(inst);
+        inst.tickCount++;
+
+        // Synchronize displays locked to stand location (throttled when idle)
+        boolean isIdle = !inst.moving && inst.meleeAnim == 0 && inst.rangedAnim == 0;
+        if (!isIdle || inst.tickCount % 3 == 0) {
+            syncDisplays(inst);
+        }
 
         if (inst.bossBar != null) {
             double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
@@ -387,7 +394,7 @@ public class Kinger implements Listener {
         ArmorStand stand = inst.stand;
         for (KingerPart part : KingerPart.values()) {
             UUID id = inst.partDisplays.get(part);
-            Entity e = (id != null) ? Bukkit.getEntity(id) : null;
+            Entity e = (id != null && stand != null) ? stand.getWorld().getEntity(id) : null;
             if (e instanceof ItemDisplay display && display.isValid()) {
                 display.teleport(partWorldLocation(stand, part));
                 display.setTransformation(buildTransformation(part, inst));
@@ -572,8 +579,9 @@ public class Kinger implements Listener {
     }
 
     private void cleanup(KingerInstance inst) {
+        World world = (inst.stand != null) ? inst.stand.getWorld() : null;
         for (UUID id : inst.partDisplays.values()) {
-            Entity e = Bukkit.getEntity(id);
+            Entity e = (world != null) ? world.getEntity(id) : Bukkit.getEntity(id);
             if (e != null) e.remove();
         }
         inst.partDisplays.clear();
@@ -724,6 +732,7 @@ public class Kinger implements Listener {
         public int rangedAnim;
         public boolean moving;
         public float animTicks;
+        public int tickCount;
 
         public KingerInstance(ArmorStand stand) {
             this.stand = stand;

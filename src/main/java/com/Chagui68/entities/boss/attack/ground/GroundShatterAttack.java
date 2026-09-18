@@ -70,8 +70,10 @@ public class GroundShatterAttack extends BossAttackBase {
                                         world.spawnParticle(Particle.BLOCK, pl, 3, 0.3, 0.6, 0.3, 0.1, Material.DIRT.createBlockData());
                                         world.spawnParticle(Particle.FLAME, pl, 2, 0.2, 0.1, 0.2, 0.02);
                                     }
+                                    double maxDist = radius + 1.5;
+                                    double maxDistSq = maxDist * maxDist;
                                     for (Player p : boss.getValidPlayers(world)) {
-                                        if (p.getLocation().distance(center) < radius + 1.5) {
+                                        if (p.getLocation().distanceSquared(center) < maxDistSq) {
                                             MscEntityUtils.damageBy(stand.entidad(), p, damage * (1 - r * 0.1));
                                             boss.launchPlayer(p, 0.6);
                                         }
