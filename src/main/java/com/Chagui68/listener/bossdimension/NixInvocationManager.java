@@ -97,8 +97,8 @@ public class NixInvocationManager implements Listener {
         // Broadcast title to players in the boss dimension
         for (Player p : world.getPlayers()) {
             p.sendTitle(
-                    ChatColor.DARK_RED + "" + ChatColor.BOLD + "NIX - El Verdugo",
-                    ChatColor.RED + "La sentencia ha sido dictada...",
+                    ChatColor.DARK_RED + "" + ChatColor.BOLD + "NIX - The Executioner",
+                    ChatColor.RED + "The sentence has been passed...",
                     10, 50, 20
             );
         }

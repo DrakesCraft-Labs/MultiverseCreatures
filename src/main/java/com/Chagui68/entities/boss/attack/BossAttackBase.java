@@ -6,16 +6,10 @@ import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.entities.boss.BossHost;
 
 /**
- * Base comun de los ataques.
+ * Common base for boss attacks.
  *
- * POR QUE DEPENDE DE BossHost Y NO DE ArmorStandBoss
- *
- * Antes recibia la clase concreta del Centinela de Obsidiana. Los ataques funcionaban, pero
- * quedaban atados a ese jefe: para que otro los usara habia que copiarlos y cambiarles el tipo,
- * y a partir de ahi las dos copias se separan.
- *
- * Apuntando a la interfaz, los 42 ataques valen para cualquier jefe que la implemente. De los 42
- * solo dos necesitan algo propio del Centinela, y esos hacen la conversion explicita.
+ * Attacks depend on the BossHost interface rather than a concrete boss class, allowing all
+ * attack behaviors to be reused across different bosses.
  */
 public abstract class BossAttackBase implements BossAttack {
 

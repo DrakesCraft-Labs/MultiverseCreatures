@@ -277,9 +277,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         if (stand == null) return false;
 
         double health = plugin.getConfig().getDouble("entities.armor-stand-boss.health", 3200.0);
-        AttributeInstance maxHealthAttr = stand.getAttribute(Attribute.MAX_HEALTH);
-        if (maxHealthAttr != null) maxHealthAttr.setBaseValue(health);
-        stand.setHealth(health);
+        MscEntityUtils.initVirtualHealth(stand, health);
         stand.setInvulnerable(false);
 
         stand.setCustomName(BAR_TITLE);
@@ -475,10 +473,9 @@ public class ArmorStandBoss implements Listener, BossHost {
 
     private void updatePhase(BossInstance instance) {
         BossPuppet stand = instance.stand;
-        AttributeInstance maxHealthAttr = stand.getAttribute(Attribute.MAX_HEALTH);
-        double maxHealth = maxHealthAttr != null ? maxHealthAttr.getValue() : 500.0;
+        double maxHealth = stand.getMaxHealth();
         double currentHealth = stand.getHealth();
-        double healthPercent = currentHealth / maxHealth;
+        double healthPercent = maxHealth > 0.0 ? currentHealth / maxHealth : 1.0;
 
         int newPhase;
         if (healthPercent > 0.8) newPhase = 0;
@@ -570,7 +567,7 @@ public class ArmorStandBoss implements Listener, BossHost {
                 updatePhase(instance);
 
                 syncBossBarPlayers(instance);
-                instance.bossBar.setProgress(Math.max(0.0, stand.getHealth() / (stand.getAttribute(Attribute.MAX_HEALTH) != null ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : 500.0)));
+                instance.bossBar.setProgress(MscEntityUtils.calculateVirtualProgress(stand.getHealth(), stand.getMaxHealth()));
 
                 updateBossMusic(instance, stand.getLocation());
 
@@ -660,9 +657,8 @@ public class ArmorStandBoss implements Listener, BossHost {
                         if (instance.hoverBarrageCooldown >= hoverBarrageCooldownBaseTicks + random.nextInt(hoverBarrageCooldownVarianceTicks)) {
                             instance.hoverBarrageCooldown = 0;
 
-                            double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
-                                    ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : 500.0;
-                            double healthPct = stand.getHealth() / maxHealth;
+                            double maxHealth = stand.getMaxHealth();
+                            double healthPct = maxHealth > 0.0 ? stand.getHealth() / maxHealth : 1.0;
                             int choice = random.nextInt(100);
 
                             if (healthPct < 0.4 && choice < attackWeightHealingCircle) {
@@ -684,9 +680,8 @@ public class ArmorStandBoss implements Listener, BossHost {
                             instance.defenseCooldown--;
                         } else if (instance.groundAttackCooldown >= groundAttackCooldownBaseTicks + random.nextInt(groundAttackCooldownVarianceTicks)) {
                             instance.groundAttackCooldown = 0;
-                            double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
-                                    ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : 500.0;
-                            double healthPct = stand.getHealth() / maxHealth;
+                            double maxHealth = stand.getMaxHealth();
+                            double healthPct = maxHealth > 0.0 ? stand.getHealth() / maxHealth : 1.0;
                             if (instance.activeDefense == DefenseState.NONE && healthPct < 0.5 && random.nextInt(100) < defenseActivationChance) {
                                 int defChoice = random.nextInt(100);
                                 if (defChoice < defenseWeightStoneSkin) {
@@ -2051,13 +2046,13 @@ public class ArmorStandBoss implements Listener, BossHost {
                 damage = maxDamagePerHit;
             }
 
-            double newHealth = Math.max(0, stand.getHealth() - damage);
-            stand.setHealth(newHealth);
+            double currentHealth = MscEntityUtils.getVirtualHealth(stand);
+            double newHealth = Math.max(0, currentHealth - damage);
+            MscEntityUtils.setVirtualHealth(stand, newHealth);
             event.setCancelled(true);
 
-            double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
-                    ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : 500.0;
-            double progress = Math.max(0.0, newHealth / maxHealth);
+            double maxHealth = MscEntityUtils.getVirtualMaxHealth(stand);
+            double progress = MscEntityUtils.calculateVirtualProgress(newHealth, maxHealth);
 
             if (instance != null && instance.bossBar != null) {
                 instance.bossBar.setProgress(progress);
@@ -2140,6 +2135,11 @@ public class ArmorStandBoss implements Listener, BossHost {
             if (!(entity instanceof ArmorStand stand)) continue;
             if (!stand.getScoreboardTags().contains(TAG)) continue;
             if (activeBosses.containsKey(stand.getUniqueId())) continue;
+
+            if (!stand.getPersistentDataContainer().has(MscEntityUtils.KEY_VIRTUAL_MAX_HEALTH, org.bukkit.persistence.PersistentDataType.DOUBLE)) {
+                double health = plugin.getConfig().getDouble("entities.armor-stand-boss.health", 3200.0);
+                MscEntityUtils.initVirtualHealth(stand, health);
+            }
 
             BossInstance instance = new BossInstance(stand);
             activeBosses.put(stand.getUniqueId(), instance);

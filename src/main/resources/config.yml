@@ -187,7 +187,7 @@ entities:
       - "&d%player% was outplayed by the chess piece"
 
   # -------------------------------------------------------------------------
-  # NIX - El Verdugo (The Executioner)
+  # NIX - The Executioner
   # -------------------------------------------------------------------------
   nix-executioner:
     enabled: true
@@ -202,8 +202,8 @@ entities:
     chain-cooldown-ticks: 80
     cleave-anim-ticks: 14
     death-messages:
-      - "&4%player% was executed by NIX - El Verdugo"
-      - "&4%player%'s sentence was carried out by NIX - El Verdugo"
+      - "&4%player% was executed by NIX - The Executioner"
+      - "&4%player%'s sentence was carried out by NIX - The Executioner"
       - "&4%player% fell under the guillotine of NIX"
       - "&4%player% could not escape the executioner's judgment"
 

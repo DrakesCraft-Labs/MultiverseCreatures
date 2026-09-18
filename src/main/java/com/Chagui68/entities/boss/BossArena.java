@@ -10,41 +10,37 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 
 /**
- * Consultas sobre el terreno y los jugadores alrededor de un jefe.
+ * Utility queries for terrain and players in a boss arena.
  *
- * POR QUE ESTA APARTE
- *
- * Estos metodos vivian dentro de ArmorStandBoss, una clase de mas de dos mil lineas. No usaban
- * nada del jefe: solo miran un mundo, una ubicacion o un jugador. Eso los ata a un jefe concreto
- * sin motivo, y es justo lo que impedia que otro jefe reutilizara los 42 ataques ya escritos.
- *
- * Al ser estaticos y sin estado, cualquier jefe puede llamarlos, y ademas se pueden probar solos.
- *
- * QUE CUENTA COMO JUGADOR VALIDO
- *
- * En todas partes se descartan igual los muertos, los de creativo y los espectadores. Estaba
- * repetido en cinco sitios con la misma condicion copiada; aqui se decide una sola vez, para que
- * no pueda quedar la mitad actualizada.
+ * Provides reusable static checks for valid player targets (filtering dead, creative,
+ * and spectator players) and spatial queries across worlds and arenas.
  */
 public final class BossArena {
 
     private BossArena() {}
 
-    /** Si a este jugador le afectan los ataques del jefe. */
-    public static boolean esObjetivoValido(Player p) {
-        return !p.isDead()
+    /** Checks whether a player is a valid attack target for a boss. */
+    public static boolean isValidTarget(Player p) {
+        return p != null
+                && !p.isDead()
                 && p.getGameMode() != GameMode.CREATIVE
                 && p.getGameMode() != GameMode.SPECTATOR;
     }
 
-    /** Los jugadores del mundo a los que el jefe puede atacar. */
+    /** Compatibility alias for isValidTarget. */
+    @Deprecated
+    public static boolean esObjetivoValido(Player p) {
+        return isValidTarget(p);
+    }
+
+    /** Returns all valid players in the world that a boss can target. */
     public static List<Player> getValidPlayers(World world) {
         List<Player> result = new ArrayList<>();
         if (world == null) {
             return result;
         }
         for (Player p : world.getPlayers()) {
-            if (esObjetivoValido(p)) {
+            if (isValidTarget(p)) {
                 result.add(p);
             }
         }
@@ -63,7 +59,7 @@ public final class BossArena {
             return result;
         }
         for (Player p : center.getWorld().getPlayers()) {
-            if (p != null && p.getWorld().equals(center.getWorld()) && esObjetivoValido(p)) {
+            if (p != null && p.getWorld().equals(center.getWorld()) && isValidTarget(p)) {
                 try {
                     if (p.getLocation().distanceSquared(center) <= radiusSq) {
                         result.add(p);
@@ -75,12 +71,12 @@ public final class BossArena {
         return result;
     }
 
-    /** Cuantos jugadores validos hay dentro del radio. */
+    /** Counts valid players within the given radius. */
     public static int countPlayersInRange(Location center, double radius) {
         return getValidPlayersNear(center, radius * radius).size();
     }
 
-    /** El jugador valido mas cercano dentro del alcance, o null si no hay ninguno. */
+    /** Returns the nearest valid player within range, or null if none found. */
     public static Player findNearestPlayer(Location center, double range) {
         Player nearest = null;
         if (center == null || center.getWorld() == null) {
@@ -102,7 +98,7 @@ public final class BossArena {
         return nearest;
     }
 
-    /** Distancia al jugador valido mas cercano, o Double.MAX_VALUE si no hay ninguno. */
+    /** Distance to the nearest valid player, or Double.MAX_VALUE if none found. */
     public static double getNearestPlayerDistance(Location loc) {
         Player nearest = findNearestPlayer(loc, Double.MAX_VALUE);
         if (nearest == null || nearest.getWorld() == null || loc == null || loc.getWorld() == null
@@ -117,10 +113,10 @@ public final class BossArena {
     }
 
     /**
-     * Empuja al jugador hacia arriba.
+     * Launches the player upward.
      *
-     * Si ya viene subiendo no se le toca: encadenar impulsos manda al jugador a la estratosfera y
-     * lo mata de caida, que no es lo que pretende ningun ataque.
+     * If the player is already rising upward, no additional vertical boost is applied to prevent
+     * runaway vertical compounding.
      */
     public static void launchPlayer(Player p, double y) {
         if (p.getVelocity().getY() > 0.1) {
@@ -129,7 +125,7 @@ public final class BossArena {
         p.setVelocity(p.getVelocity().setY(y));
     }
 
-    /** La altura del primer bloque solido por debajo, o la propia altura si no hay ninguno. */
+    /** The Y altitude of the first solid block below, or the current Y if none found. */
     public static double getGroundY(Location loc, double maxScan) {
         for (double dy = 1; dy <= maxScan; dy++) {
             if (loc.clone().subtract(0, dy, 0).getBlock().getType().isSolid()) {
@@ -139,12 +135,12 @@ public final class BossArena {
         return loc.getY();
     }
 
-    /** Si la entidad esta pisando suelo solido. */
+    /** Checks whether the entity is standing on a solid block. */
     public static boolean isOnGround(BossPuppet stand) {
         return stand.getLocation().subtract(0, 0.1, 0).getBlock().getType().isSolid();
     }
 
-    /** El jugador valido mas cercano dentro del alcance de agresion, o null. */
+    /** Returns the nearest valid player within the boss aggro range, or null. */
     public static Player detectTarget(BossPuppet stand, double aggroRange) {
         return findNearestPlayer(stand.getLocation(), aggroRange);
     }

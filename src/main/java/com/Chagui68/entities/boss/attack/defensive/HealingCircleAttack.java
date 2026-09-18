@@ -37,8 +37,7 @@ public class HealingCircleAttack extends BossAttackBase {
             world.playSound(stand.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_MIRROR, 1.0f, 1.2f);
         }
 
-        double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
-                ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : 500.0;
+        double maxHealth = stand.getMaxHealth();
         double maxHeal = maxHealth * 0.03;
 
         instance.healingCircleActive = true;
@@ -122,8 +121,7 @@ public class HealingCircleAttack extends BossAttackBase {
                     world.spawnParticle(Particle.HEART, pl, 1, 0, 0, 0, 0);
                 }
 
-                double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
-                        ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : 500.0;
+                double maxHealth = stand.getMaxHealth();
                 double maxHeal = maxHealth * 0.03;
                 if (instance.healingCircleHealed < maxHeal && stand.getHealth() < maxHealth) {
                     double healAmount = maxHealth * 0.0015;
@@ -134,7 +132,7 @@ public class HealingCircleAttack extends BossAttackBase {
                         stand.setHealth(stand.getHealth() + toHeal);
                         instance.healingCircleHealed += toHeal;
                         if (instance.bossBar != null) {
-                            instance.bossBar.setProgress(stand.getHealth() / maxHealth);
+                            instance.bossBar.setProgress(com.Chagui68.utils.MscEntityUtils.calculateVirtualProgress(stand.getHealth(), maxHealth));
                         }
                     }
                 }

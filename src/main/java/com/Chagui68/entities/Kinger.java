@@ -293,9 +293,9 @@ public class Kinger implements Listener {
         }
 
         if (inst.bossBar != null) {
-            double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
-                    ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : health;
-            inst.bossBar.setProgress(Math.max(0.0, stand.getHealth() / maxHealth));
+            double current = MscEntityUtils.getVirtualHealth(stand);
+            double max = MscEntityUtils.getVirtualMaxHealth(stand);
+            inst.bossBar.setProgress(MscEntityUtils.calculateVirtualProgress(current, max));
         }
     }
 
@@ -558,9 +558,7 @@ public class Kinger implements Listener {
         stand.setMaximumNoDamageTicks(0);
         stand.addScoreboardTag(TAG);
 
-        AttributeInstance maxHealthAttr = stand.getAttribute(Attribute.MAX_HEALTH);
-        if (maxHealthAttr != null) maxHealthAttr.setBaseValue(health);
-        stand.setHealth(health);
+        MscEntityUtils.initVirtualHealth(stand, health);
 
         AttributeInstance scaleAttr = stand.getAttribute(Attribute.SCALE);
         if (scaleAttr != null) scaleAttr.setBaseValue(2.0);
@@ -665,14 +663,14 @@ public class Kinger implements Listener {
 
     private void reduceHealth(ArmorStand stand, double damage) {
         stand.setNoDamageTicks(0);
-        double newHealth = Math.max(0, stand.getHealth() - damage);
-        stand.setHealth(newHealth);
+        double currentHealth = MscEntityUtils.getVirtualHealth(stand);
+        double newHealth = Math.max(0, currentHealth - damage);
+        MscEntityUtils.setVirtualHealth(stand, newHealth);
 
         KingerInstance inst = activeKingers.get(stand.getUniqueId());
         if (inst != null && inst.bossBar != null) {
-            double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
-                    ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : health;
-            inst.bossBar.setProgress(Math.max(0.0, newHealth / maxHealth));
+            double maxHealth = MscEntityUtils.getVirtualMaxHealth(stand);
+            inst.bossBar.setProgress(MscEntityUtils.calculateVirtualProgress(newHealth, maxHealth));
         }
     }
 

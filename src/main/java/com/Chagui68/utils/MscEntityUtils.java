@@ -44,6 +44,103 @@ public final class MscEntityUtils {
         }
     }
 
+    public static final org.bukkit.NamespacedKey KEY_VIRTUAL_HEALTH = new org.bukkit.NamespacedKey("multiversecreatures", "virtual_health");
+    public static final org.bukkit.NamespacedKey KEY_VIRTUAL_MAX_HEALTH = new org.bukkit.NamespacedKey("multiversecreatures", "virtual_max_health");
+
+    public static double calculateSafeHealth(double targetHealth, double effectiveMax) {
+        return Math.max(0.1, Math.min(targetHealth, effectiveMax));
+    }
+
+    public static double calculateVirtualProgress(double currentHealth, double maxHealth) {
+        if (maxHealth <= 0.0) return 0.0;
+        return Math.max(0.0, Math.min(1.0, currentHealth / maxHealth));
+    }
+
+    public static double calculateScaledPhysicalHealth(double currentHealth, double maxHealth, double physicalMax) {
+        if (currentHealth <= 0.0 || maxHealth <= 0.0 || physicalMax <= 0.0) return 0.0;
+        double ratio = currentHealth / maxHealth;
+        return Math.max(0.1, Math.min(physicalMax, ratio * physicalMax));
+    }
+
+    /**
+     * Initializes the entity with virtual health tracking in its PersistentDataContainer,
+     * while safely capping physical entity health within the server's attribute threshold.
+     */
+    public static void initVirtualHealth(LivingEntity entity, double maxHealth) {
+        if (entity == null) return;
+        setMaxHealthAndHeal(entity, maxHealth);
+        try {
+            entity.getPersistentDataContainer().set(KEY_VIRTUAL_MAX_HEALTH, PersistentDataType.DOUBLE, maxHealth);
+            entity.getPersistentDataContainer().set(KEY_VIRTUAL_HEALTH, PersistentDataType.DOUBLE, maxHealth);
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static double getVirtualMaxHealth(LivingEntity entity) {
+        if (entity == null) return 20.0;
+        try {
+            Double val = entity.getPersistentDataContainer().get(KEY_VIRTUAL_MAX_HEALTH, PersistentDataType.DOUBLE);
+            if (val != null && val > 0) return val;
+        } catch (Exception ignored) {
+        }
+        AttributeInstance attr = entity.getAttribute(Attribute.MAX_HEALTH);
+        return attr != null ? attr.getValue() : 20.0;
+    }
+
+    public static double getVirtualHealth(LivingEntity entity) {
+        if (entity == null) return 0.0;
+        try {
+            Double val = entity.getPersistentDataContainer().get(KEY_VIRTUAL_HEALTH, PersistentDataType.DOUBLE);
+            if (val != null) return Math.max(0.0, val);
+        } catch (Exception ignored) {
+        }
+        return entity.getHealth();
+    }
+
+    public static void setVirtualHealth(LivingEntity entity, double health) {
+        if (entity == null) return;
+        double max = getVirtualMaxHealth(entity);
+        double clamped = Math.max(0.0, Math.min(health, max));
+        try {
+            entity.getPersistentDataContainer().set(KEY_VIRTUAL_HEALTH, PersistentDataType.DOUBLE, clamped);
+        } catch (Exception ignored) {
+        }
+
+        AttributeInstance attr = entity.getAttribute(Attribute.MAX_HEALTH);
+        if (attr != null) {
+            double physicalMax = attr.getValue();
+            if (clamped <= 0.0) {
+                entity.setHealth(0.0);
+            } else {
+                double scaled = calculateScaledPhysicalHealth(clamped, max, physicalMax);
+                entity.setHealth(scaled);
+            }
+        } else {
+            if (clamped <= 0.0) {
+                entity.setHealth(0.0);
+            }
+        }
+    }
+
+    /**
+     * Sets the entity's max health attribute and sets current health to the target value,
+     * safely bounded by the server's attribute maximum (e.g. 1024.0 or spigot.yml maxHealth.max)
+     * to prevent IllegalArgumentException.
+     */
+    public static void setMaxHealthAndHeal(LivingEntity entity, double targetHealth) {
+        if (entity == null) return;
+        AttributeInstance maxHealthAttr = entity.getAttribute(Attribute.MAX_HEALTH);
+        if (maxHealthAttr != null) {
+            try {
+                maxHealthAttr.setBaseValue(targetHealth);
+            } catch (Exception ignored) {
+            }
+            entity.setHealth(calculateSafeHealth(targetHealth, maxHealthAttr.getValue()));
+        } else {
+            entity.setHealth(calculateSafeHealth(targetHealth, 20.0));
+        }
+    }
+
     /**
      * Spawns a tagged, persistent, non-despawning MSC entity. Returns null if the spawn failed.
      * Caller is expected to know the concrete EntityType / cast.
@@ -130,28 +227,20 @@ public final class MscEntityUtils {
     }
 
     /**
-     * Aplica a una criatura ambiental la persistencia que le corresponde.
+     * Applies appropriate ambient persistence to an entity.
      *
-     * Ambiental = la que nace convirtiendo un spawn natural. Por defecto se
-     * comporta como un mob vanilla y desaparece cuando el jugador se aleja.
-     *
-     * Marcarlas como persistentes fue la causa de que el servidor acumulara
-     * miles de entidades: al desactivar el despawn de vanilla, nada volvia a
-     * retirarlas nunca y cada spawn natural convertido se quedaba para siempre.
-     * El 2026-08-22 un `msc kill all` retiro 7.316 de golpe.
-     *
-     * Los jefes y las invocaciones manuales NO deben usar este metodo: esos si
-     * tienen que sobrevivir a que nadie los mire.
+     * Ambient = mobs converted from natural spawns. By default they behave like vanilla
+     * mobs and despawn when players move far away. Bosses and manual summons do not use this.
      */
     public static void applyAmbientPersistence(MultiverseCreatures plugin, LivingEntity entity) {
         if (entity == null) return;
-        boolean persistente = plugin.getConfig()
+        boolean persistent = plugin.getConfig()
                 .getBoolean("general.natural-spawn-persistent", false);
-        entity.setPersistent(persistente);
-        entity.setRemoveWhenFarAway(!persistente);
+        entity.setPersistent(persistent);
+        entity.setRemoveWhenFarAway(!persistent);
     }
 
-    /** Cuenta las criaturas de este plugin vivas en un mundo (tag `MSC_*`). */
+    /** Counts living MSC plugin creatures in a world (tag `MSC_*`). */
     public static int countAlive(World world) {
         if (world == null) return 0;
         int n = 0;

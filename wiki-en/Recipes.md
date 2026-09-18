@@ -218,7 +218,7 @@ N S N
 ![Multiversal Core recipe](images/recipes/multiversal-core.png)
 
 ### Executioner's Warrant
-**Result:** `§4§lExecutioner Warrant` (PAPER) — boss invocation catalyst decree for NIX - El Verdugo.
+**Result:** `§4§lExecutioner Warrant` (PAPER) — boss invocation catalyst decree for NIX - The Executioner.
 
 ```
 C P C

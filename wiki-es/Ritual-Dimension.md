@@ -70,37 +70,43 @@ _ R R R _
 
 ## 🪓 Invocación de NIX: El Cadalso del Verdugo
 
-**NIX - El Verdugo** solo puede ser invocado de forma exclusiva dentro de la **Dimensión del Jefe** (`boss_dimension`). Los jugadores deben erigir **El Cadalso del Verdugo** sobre el suelo de obsidiana llorosa y ofrecer un sacrificio de sangre.
+**NIX - El Verdugo** solo puede ser invocado de forma exclusiva dentro de la **Dimensión del Jefe** (`boss_dimension`). Los jugadores deben erigir **El Cadalso del Verdugo** y ofrecer un sacrificio de sangre sobre el yunque.
+
+> **Las coordenadas son relativas**: marcan la posición de cada bloque respecto a la **esquina suroeste del 5×5** (tu punto de origen). No hay que construirlo en un lugar fijo del mundo: el ritual detecta el patrón en cualquier sitio.
+>
+> **El suelo no es específico**: el plugin no comprueba el bloque del suelo ni los alrededores, solo los bloques de la estructura. Puedes montarlo sobre obsidiana llorosa, tierra, lo que sea.
 
 ### Distribución (Huella 5×5)
 
 ```
-P . . . P        P = Poste de Cadalso (Y=0: Ladrillos de Piedra Negra / Pizarra, Y=1: Cadena, Y=2: Calavera)
-. . c . .        c = Vela Roja (adyacente al yunque, encendida con mechero)
+P . . . P        P = Poste de Cadalso (3 bloques de alto)
+. . c . .        c = Vela Roja (encendida)
 . c Y c .        Y = Yunque Central (El Tajo de Decapitación)
 . . c . .
 P . . . P
 ```
 
 ### Materiales Requeridos
-- **1 Yunque Central** (`anvil`, `chipped_anvil` o `damaged_anvil`) en `(2, 0, 2)`.
-- **4 Velas Rojas** (`red_candle`) a nivel del suelo colocadas al Norte, Sur, Oeste y Este del yunque: `(2, 0, 1)`, `(2, 0, 3)`, `(1, 0, 2)`, `(3, 0, 2)`.
-- **4 Postes de Cadalso en las Esquinas**:
-  - `(0, 0)`, `(4, 0)`, `(0, 4)` y `(4, 4)`.
-  - Base (`Y=0`): Ladrillos de piedra negra pulida, pizarra pulida o ladrillos de pizarra profunda.
-  - Centro (`Y=1`): Cadena (`chain`).
-  - Cúspide (`Y=2`): Calavera de esqueleto (`skeleton_skull` o `wither_skeleton_skull`).
+- **1 Yunque Central** (`anvil`, `chipped_anvil` o `damaged_anvil`) en el centro: `(2, 0, 2)`.
+- **4 Velas Rojas** (`red_candle`) a nivel del suelo, una a cada lado del yunque:
+  - Norte `(2, 0, 1)`, Sur `(2, 0, 3)`, Oeste `(1, 0, 2)`, Este `(3, 0, 2)`.
+- **4 Postes de Cadalso en las Esquinas**: `(0, 0)`, `(4, 0)`, `(0, 4)` y `(4, 4)`. Cada poste son **3 bloques de alto**:
+  - `Y=0` — Base: ladrillos de piedra negra pulida, piedra negra pulida, ladrillos de pizarra profunda, pizarra pulida, obsidiana llorosa o bloque de hierro.
+  - `Y=1` — Cadena: `iron_chain` o cualquier bloque con nombre que termine en `chain`.
+  - `Y=2` — Calavera: de esqueleto, wither, jugador o zombie (normal o de pared).
 
 ### Procedimiento de Invocación
-1. Construye el cadalso en la superficie de la `boss_dimension`.
+1. Construye el cadalso en cualquier superficie de la `boss_dimension`.
 2. Enciende las **4 velas rojas** con un mechero o carga ígnea.
-3. **Efecto de Invocación Activa**:
+3. **Activa el ritual**: haz clic derecho sobre cualquiera de las velas rojas (con el mechero en la mano o con cualquier objeto). Será entonces cuando el plugin compruebe que la estructura está completa y las 4 velas encendidas.
+4. **Efecto de Invocación Activa** (mientras dura):
    - Rayos y partículas de sangre carmesí (`#8B0000`) se conectan desde las 4 calaveras de los postes hacia el yunque central.
-   - Suenan cadenas pesadas estremeciéndose a intervalos mientras una densa humareda oscura brota del yunque.
-4. **La Ofrenda de Sangre**:
-   - Suelta una **`Sentencia de Muerte`** (`Executioner's Warrant`, obtenible con `/msc give warrant` o crafteable en mesa de trabajo) sobre el yunque central.
+   - Suenan cadenas pesadas a intervalos mientras una densa humareda oscura brota del yunque.
+   - Si rompes la estructura o las velas se apagan, el ritual se **cancela** y debes empezar de nuevo.
+5. **La Ofrenda de Sangre**: suelta el objeto sobre el yunque central (a menos de **3 bloques** de él y a la altura del suelo):
+   - Una **`Sentencia de Muerte`** (`Executioner's Warrant`, con `/msc give warrant` o crafteable).
    - *(También se aceptan como ofrendas alternativas un `Hacha de Netherita` o una `Calavera de Wither Skeleton`)*.
-5. **Aparición**:
+6. **Aparición**:
    - El sacrificio es consumido al instante.
    - Un rayo carmesí azota el yunque con un impacto ensordecedor de guillotina (`Sound.BLOCK_ANVIL_LAND`).
    - Las velas se apagan y **NIX - El Verdugo** se materializa sobre el yunque desatando el combate.

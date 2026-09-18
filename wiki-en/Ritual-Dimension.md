@@ -70,40 +70,46 @@ _ R R R _
 
 ## 🪓 Invoking NIX: The Executioner's Scaffold
 
-**NIX - El Verdugo** can strictly only be summoned inside the **Boss Dimension**. Players must build **The Executioner's Scaffold** upon the crying obsidian floor and make a blood sacrifice.
+**NIX - The Executioner** can strictly only be summoned inside the **Boss Dimension** (`boss_dimension`). Players must build **The Executioner's Scaffold** and make a blood sacrifice on the anvil.
+
+> **Coordinates are relative**: they mark each block's position relative to the **south-west corner of the 5×5** (your origin point). The structure does not need to be built at any fixed spot in the world — the plugin detects the pattern anywhere.
+>
+> **The floor is not checked**: the plugin only validates the structure blocks themselves, never the ground below or the surroundings. You can build it on crying obsidian, dirt, or anything else.
 
 ### Layout (5×5 footprint)
 
 ```
-P . . . P        P = Corner Gallows (Y=0: Polished Blackstone / Deepslate Bricks, Y=1: Chain, Y=2: Skeleton Skull)
-. . c . .        c = Red Candle (placed directly around anvil, lit with flint & steel)
+P . . . P        P = Corner Gallows (3 blocks tall)
+. . c . .        c = Red Candle (lit)
 . c A c .        A = Central Anvil (The Executioner's Block)
 . . c . .
 P . . . P
 ```
 
 ### Required Materials
-- **1 Central Anvil** (`anvil`, `chipped_anvil`, or `damaged_anvil`) at `(2, 0, 2)`.
-- **4 Red Candles** (`red_candle`) on ground level placed North, South, West, and East of the anvil: `(2, 0, 1)`, `(2, 0, 3)`, `(1, 0, 2)`, `(3, 0, 2)`.
-- **4 Corner Gallows**:
-  - `(0, 0)`, `(4, 0)`, `(0, 4)`, and `(4, 4)`.
-  - Base (`Y=0`): Polished Blackstone Bricks, Polished Deepslate, or Deepslate Bricks.
-  - Middle (`Y=1`): Chain (`chain`).
-  - Top (`Y=2`): Skeleton Skull (`skeleton_skull` or `wither_skeleton_skull`).
+- **1 Central Anvil** (`anvil`, `chipped_anvil`, or `damaged_anvil`) at the center: `(2, 0, 2)`.
+- **4 Red Candles** (`red_candle`) on ground level, one on each side of the anvil:
+  - North `(2, 0, 1)`, South `(2, 0, 3)`, West `(1, 0, 2)`, East `(3, 0, 2)`.
+- **4 Corner Gallows**: at `(0, 0)`, `(4, 0)`, `(0, 4)`, and `(4, 4)`. Each gallows is **3 blocks tall**:
+  - `Y=0` — Base: Polished Blackstone Bricks, Polished Blackstone, Deepslate Bricks, Polished Deepslate, Crying Obsidian, or Iron Block.
+  - `Y=1` — Chain: `iron_chain` or any block whose name ends in `chain`.
+  - `Y=2` — Skull: Skeleton, Wither Skeleton, Player, or Zombie head (regular or wall variant).
 
 ### Invocation Procedure
-1. Build the structure on the floor of `boss_dimension`.
+1. Build the structure on any surface inside `boss_dimension`.
 2. Light all **4 red candles** with flint & steel or fire charge.
-3. **Active Invocation Effect**:
+3. **Activate the ritual**: right-click any of the red candles (with flint & steel in hand or with any item). That is when the plugin checks that the structure is complete and all 4 candles are lit.
+4. **Active Invocation Effect** (while it lasts):
    - Blood-red particle lines (`#8B0000`) connect the 4 skull gallows to the central anvil.
    - Ominous chain rattling sounds echo periodically while dark smoke rises from the anvil.
-4. **The Sacrificial Offering**:
-   - Drop an **`Executioner's Warrant`** (`/msc give warrant` or crafted via recipe) directly onto the central anvil.
-   - *(Alternative offerings accepted: `Netherite Axe` or `Wither Skeleton Skull`)*.
-5. **Awakening**:
+   - If you break the structure or the candles go out, the ritual **cancels** and you must start over.
+5. **The Sacrificial Offering**: drop the item onto the central anvil (within **3 blocks** of it, at floor height):
+   - An **`Executioner's Warrant`** (via `/msc give warrant` or a crafting recipe).
+   - *(Alternative offerings accepted: a `Netherite Axe` or a `Wither Skeleton Skull`)*.
+6. **Awakening**:
    - The sacrifice is consumed.
    - Red lightning strikes the anvil with a heavy guillotine impact sound (`Sound.BLOCK_ANVIL_LAND`).
-   - The candles extinguish and **NIX - El Verdugo** materializes above the anvil in combat stance!
+   - The candles extinguish and **NIX - The Executioner** materializes above the anvil in combat stance!
 
 > While NIX is active inside the Boss Dimension, block placing, block breaking, and combat-evading commands are locked for all non-admin players.
 

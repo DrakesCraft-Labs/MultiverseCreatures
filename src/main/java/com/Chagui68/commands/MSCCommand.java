@@ -354,8 +354,8 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             }
             case "nix", "executioner", "nixelverdugo" -> {
                 boolean success = plugin.getNixBoss().trySpawn(p.getLocation());
-                if (success) sender.sendMessage(GREEN + "Spawned NIX - El Verdugo!");
-                else sender.sendMessage(RED + "Failed to spawn NIX - El Verdugo.");
+                if (success) sender.sendMessage(GREEN + "Spawned NIX - The Executioner!");
+                else sender.sendMessage(RED + "Failed to spawn NIX - The Executioner.");
             }
             default -> sendSpawnHelp(sender, 1);
         }
@@ -1621,7 +1621,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
 
         switch (page) {
             case 1 -> {
-                sendLine(sender, " &e• nix &8- &cNIX - El Verdugo &7(Scaffold Ritual Boss)");
+                sendLine(sender, " &e• nix &8- &cNIX - The Executioner &7(Scaffold Ritual Boss)");
                 sendLine(sender, " &e• armorstand &8- &6The Ancient Armor Stand &7(Multiverse Boss)");
                 sendLine(sender, " &e• mahoraga &8- &fMahoraga &7(Adapting Divine General)");
                 sendLine(sender, " &e• garou &8- &bGarou &7(Martial Arts Miniboss)");

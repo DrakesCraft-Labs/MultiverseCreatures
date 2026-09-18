@@ -54,7 +54,7 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * NIX - El Verdugo (The Executioner)
+ * NIX - The Executioner
  * Custom boss constructed from 27 ItemDisplay player head parts with hierarchical
  * joint-pivot procedural animations, brutal execution cleaves, chain pulls, and adaptive AI.
  */
@@ -257,7 +257,7 @@ public class NixBoss implements Listener {
 
     public static final String TAG = "MSC_NixBoss";
     public static final String PART_TAG = "MSC_NixPart";
-    public static final String BAR_TITLE = ChatColor.DARK_RED + "" + ChatColor.BOLD + "NIX - El Verdugo";
+    public static final String BAR_TITLE = ChatColor.DARK_RED + "" + ChatColor.BOLD + "NIX - The Executioner";
 
     // Joint pivots relative to centered model
     private static final Vector3f PIVOT_SHOULDER_RIGHT = new Vector3f(0.3514f, 1.405f, 0.0f);
@@ -310,6 +310,9 @@ public class NixBoss implements Listener {
         for (World world : Bukkit.getWorlds()) {
             for (ArmorStand stand : world.getEntitiesByClass(ArmorStand.class)) {
                 if (!stand.getScoreboardTags().contains(TAG)) continue;
+                if (!stand.getPersistentDataContainer().has(MscEntityUtils.KEY_VIRTUAL_MAX_HEALTH, org.bukkit.persistence.PersistentDataType.DOUBLE)) {
+                    MscEntityUtils.initVirtualHealth(stand, health);
+                }
                 NixInstance inst = new NixInstance(stand);
                 activeInstances.put(stand.getUniqueId(), inst);
                 setupBossBar(inst);
@@ -428,9 +431,9 @@ public class NixBoss implements Listener {
 
         // Update BossBar progress
         if (inst.bossBar != null) {
-            double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
-                    ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : health;
-            inst.bossBar.setProgress(Math.max(0.0, Math.min(1.0, stand.getHealth() / maxHealth)));
+            double current = MscEntityUtils.getVirtualHealth(stand);
+            double max = MscEntityUtils.getVirtualMaxHealth(stand);
+            inst.bossBar.setProgress(MscEntityUtils.calculateVirtualProgress(current, max));
         }
     }
 
@@ -736,9 +739,7 @@ public class NixBoss implements Listener {
         stand.setMaximumNoDamageTicks(0);
         stand.addScoreboardTag(TAG);
 
-        AttributeInstance maxHealthAttr = stand.getAttribute(Attribute.MAX_HEALTH);
-        if (maxHealthAttr != null) maxHealthAttr.setBaseValue(health);
-        stand.setHealth(health);
+        MscEntityUtils.initVirtualHealth(stand, health);
 
         AttributeInstance scaleAttr = stand.getAttribute(Attribute.SCALE);
         if (scaleAttr != null) scaleAttr.setBaseValue(2.0);
@@ -858,14 +859,14 @@ public class NixBoss implements Listener {
 
     private void reduceHealth(ArmorStand stand, double damage) {
         stand.setNoDamageTicks(0);
-        double newHealth = Math.max(0, stand.getHealth() - damage);
-        stand.setHealth(newHealth);
+        double currentHealth = MscEntityUtils.getVirtualHealth(stand);
+        double newHealth = Math.max(0, currentHealth - damage);
+        MscEntityUtils.setVirtualHealth(stand, newHealth);
 
         NixInstance inst = activeInstances.get(stand.getUniqueId());
         if (inst != null && inst.bossBar != null) {
-            double maxHealth = stand.getAttribute(Attribute.MAX_HEALTH) != null
-                    ? stand.getAttribute(Attribute.MAX_HEALTH).getValue() : health;
-            inst.bossBar.setProgress(Math.max(0.0, Math.min(1.0, newHealth / maxHealth)));
+            double maxHealth = MscEntityUtils.getVirtualMaxHealth(stand);
+            inst.bossBar.setProgress(MscEntityUtils.calculateVirtualProgress(newHealth, maxHealth));
         }
     }
 

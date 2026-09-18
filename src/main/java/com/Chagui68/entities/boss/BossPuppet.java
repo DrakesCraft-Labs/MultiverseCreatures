@@ -92,11 +92,15 @@ public final class BossPuppet {
     }
 
     public double getHealth() {
-        return entidad.getHealth();
+        return com.Chagui68.utils.MscEntityUtils.getVirtualHealth(entidad);
     }
 
     public void setHealth(double h) {
-        entidad.setHealth(h);
+        com.Chagui68.utils.MscEntityUtils.setVirtualHealth(entidad, h);
+    }
+
+    public double getMaxHealth() {
+        return com.Chagui68.utils.MscEntityUtils.getVirtualMaxHealth(entidad);
     }
 
     public Set<String> getScoreboardTags() {

@@ -140,7 +140,7 @@ A living chess king: an invisible 2.0-scale ArmorStand dressed in a 15-piece Ite
 
 ---
 
-## 🪓 NIX - El Verdugo (The Executioner)
+## 🪓 NIX - The Executioner
 
 A towering, ruthless executioner constructed from a custom **27-piece ItemDisplay model** using specialized player skins and matrix transformations. NIX possesses advanced AI, smooth limb movement via procedural JOML quaternion animations, and deadly execution mechanics.
 
@@ -165,7 +165,7 @@ A towering, ruthless executioner constructed from a custom **27-piece ItemDispla
 - **Procedural Model Animations:**
   All 27 pieces (Head, Upper Torso, Lower Pelvis, 6-part Right Arm, 6-part Left Arm, 6-part Right Leg, 6-part Left Leg) feature synchronized walking counter-rotations, attack windups, and player-tracking head pitch.
 
-**Boss bar:** Dark Red segmented bar displaying `NIX - El Verdugo` with fog and darkened skies.
+**Boss bar:** Dark Red segmented bar displaying `NIX - The Executioner` with fog and darkened skies.
 
 **Persistence:** Tagged `MSC_NixBoss` and `MSC_NixPart` — automatically restored or cleaned up on server restart / reload.
 

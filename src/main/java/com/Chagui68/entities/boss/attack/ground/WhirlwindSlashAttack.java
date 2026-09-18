@@ -16,8 +16,8 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 /**
- * Torbellino de lanza: el jefe gira sobre si mismo y golpea a todos los que
- * esten a su alrededor, arrastrandolos hacia el centro antes del segundo giro.
+ * Whirlwind Lance: The boss spins rapidly, striking all surrounding entities
+ * and pulling them toward the center before a second finishing sweep.
  */
 public class WhirlwindSlashAttack extends BossAttackBase {
     private final double slashDamage;

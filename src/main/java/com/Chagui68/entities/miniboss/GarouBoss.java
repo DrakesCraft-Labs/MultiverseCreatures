@@ -71,11 +71,7 @@ public class GarouBoss implements Listener {
         garou.setCanPickupItems(false);
 
         // Boss attributes
-        AttributeInstance maxHealth = garou.getAttribute(Attribute.MAX_HEALTH);
-        if (maxHealth != null) {
-            maxHealth.setBaseValue(health);
-            garou.setHealth(health);
-        }
+        MscEntityUtils.setMaxHealthAndHeal(garou, health);
 
         AttributeInstance speed = garou.getAttribute(Attribute.MOVEMENT_SPEED);
         if (speed != null) {

@@ -4,6 +4,7 @@ import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.integration.SlimefunArmorAdaptation;
 import com.Chagui68.integration.DrakesBossesIntegration;
 import com.Chagui68.items.components.WheelEssence;
+import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -143,10 +144,9 @@ public class Mahoraga implements Listener {
             return;
         }
 
-        // Un objetivo en otro mundo hace que distanceSquared lance IllegalArgumentException
-        // ("Cannot measure distance between worlds"), y eso mata el tick del jefe. Pasa cuando
-        // el jugador cambia de modalidad mientras Mahoraga lo tiene fijado. Se suelta el
-        // objetivo y se reinicia la adaptacion, igual que cuando el jugador muere o se va.
+        // A target in another world causes distanceSquared to throw IllegalArgumentException
+        // ("Cannot measure distance between worlds"), which would abort the boss tick.
+        // Release the target and reset adaptation if worlds differ.
         if (!zombie.getWorld().equals(target.getWorld())) {
             zombie.setTarget(null);
             resetAdaptation(zombie);
@@ -292,8 +292,7 @@ public class Mahoraga implements Listener {
         zombie.setRemoveWhenFarAway(false);
         zombie.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 0, false, false));
 
-        setAttribute(zombie, Attribute.MAX_HEALTH, health);
-        zombie.setHealth(health);
+        MscEntityUtils.setMaxHealthAndHeal(zombie, health);
 
         if (speedEffectLevel > 1) {
             zombie.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 999999, speedEffectLevel - 1, false, false));

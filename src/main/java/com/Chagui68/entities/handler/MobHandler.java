@@ -71,14 +71,14 @@ public class MobHandler implements Listener {
     private double chaosMageRaidChance;
     private boolean debug;
 
-    /** Tope de criaturas MSC vivas por mundo. 0 o negativo lo desactiva. */
+    /** Maximum living MSC creatures per world. 0 or negative disables the cap. */
     private int maxAlivePerWorld;
-    /** Cada cuanto se vuelve a contar. Contar recorre todas las entidades del mundo. */
+    /** Recount cache interval in milliseconds. */
     private static final long RECUENTO_MS = 5000L;
-    /** Pausa local tras un iterador de mundo inestable para no inundar el log ni reintentarlo. */
+    /** Backoff delay following an unstable world entity iterator to avoid flooding logs. */
     private static final long REINTENTO_RECUENTO_TRAS_FALLO_MS = 60000L;
     private final Map<String, long[]> recuento = new HashMap<>();
-    /** Momento a partir del cual se puede volver a recorrer cada mundo que fallo. */
+    /** Timestamp threshold before retrying world enumeration after failure. */
     private final Map<String, Long> proximoReintentoRecuento = new HashMap<>();
 
     public MobHandler(MultiverseCreatures plugin) {
@@ -144,9 +144,8 @@ public class MobHandler implements Listener {
 
         Location loc = event.getLocation();
 
-        // Si el mundo ya esta en su tope de criaturas MSC, no se convierte nada
-        // mas y el mob vanilla sigue su curso. Sin esto, cada spawn natural que
-        // acertaba la tirada anadia poblacion sin techo.
+        // If the world has already reached its MSC mob cap, cancel conversion
+        // and allow the vanilla mob to spawn normally.
         if (alTope(loc.getWorld())) return;
 
         EntityType type = event.getEntityType();
@@ -198,36 +197,27 @@ public class MobHandler implements Listener {
     }
 
     /**
-     * Indica si un mundo llego al tope de criaturas de este plugin.
+     * Checks whether a world has reached the maximum allowed MSC creatures.
      *
-     * El recuento recorre todas las entidades del mundo, asi que se cachea unos
-     * segundos: `CreatureSpawnEvent` se dispara constantemente y contar en cada
-     * uno costaria mas que los propios mobs.
+     * Cached periodically to avoid expensive entity iteration on every CreatureSpawnEvent.
      */
     private boolean alTope(World world) {
         if (world == null || maxAlivePerWorld <= 0) return false;
         long[] cache = recuento.get(world.getName());
-        // Sin dato todavia se deja pasar: mas vale un mob de mas que bloquear
-        // los spawns del mundo entero por no haber contado aun.
+        // If cache is not yet available, allow spawn to avoid deadlocking mob generation
         if (cache == null) return false;
         if (cache[0] < maxAlivePerWorld) {
-            cache[0]++;          // se cuenta el que esta a punto de nacer
+            cache[0]++; // account for the entity about to spawn
             return false;
         }
         return true;
     }
 
     /**
-     * Recuenta las criaturas MSC vivas de cada mundo. Lo llama una tarea periodica.
+     * Recounts active MSC creatures in each world. Invoked by a periodic task.
      *
-     * <p>NUNCA debe llamarse desde dentro de {@code CreatureSpawnEvent}. Recorrer
-     * {@code world.getEntities()} mientras el servidor esta creando una entidad
-     * revienta el iterador de fastutil con
-     *
-     *     NullPointerException: ... because "this.wrapped" is null
-     *
-     * Asi se desplego el 2026-08-22 y genero 449 excepciones en una tarde, dejando
-     * de hecho al plugin sin convertir un solo spawn.
+     * <p>Do not call synchronously within {@code CreatureSpawnEvent} to prevent fastutil
+     * entity collection concurrent modification / null-wrapped iterator crashes.
      */
     public void refrescarRecuento() {
         long ahora = System.currentTimeMillis();

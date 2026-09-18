@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Validates and manages The Executioner's Scaffold (El Cadalso del Verdugo) 5x5 structure
- * used to invoke NIX - El Verdugo in the Boss Dimension.
+ * Validates and manages The Executioner's Scaffold 5x5 structure
+ * used to invoke NIX - The Executioner in the Boss Dimension.
  */
 public class NixInvocationStructure {
 
