@@ -2,7 +2,7 @@
 
 Welcome to the **MultiverseCreatures** wiki! This is the complete documentation for the plugin. Start here for an overview, then explore the dedicated pages for bosses, creatures, items, and configuration.
 
-> **Quick links:** [Bosses](./Bosses.md) · [Creatures](./Creatures.md) · [Weapons](./Weapons.md) · [Armor & Relics](./Armor-and-Relics.md) · [Items](./Items.md) · [Components](./Components.md) · [Music](./Music.md) · [Ritual Dimension](./Ritual-Dimension.md) · [Commands](./Commands.md) · [Architecture](./Architecture.md) · [Installation](./Installation.md)
+> **Quick links:** [Bosses](./Bosses.md) · [Creatures](./Creatures.md) · [Weapons](./Weapons.md) · [Armor & Relics](./Armor-and-Relics.md) · [Items](./Items.md) · [Components](./Components.md) · [Music](./Music.md) · [Ritual Dimension](./Ritual-Dimension.md) · [Commands](./Commands.md) · [Developer Zone](./dev/Home.md) · [Installation](./Installation.md)
 
 ---
 
@@ -59,5 +59,5 @@ Every vanilla mob spawn has a configurable chance to be replaced by an MSC count
 - [Music](./Music.md) — Bundled NBS songs, jukebox discs and the Disc Trader, song credits
 - [Recipes](./Recipes.md) — Every custom crafting recipe (shapes, ingredients, tiers)
 - [Commands](./Commands.md) — Full `/msc` reference (spawn, give, seal, dummy, attack, music, dimtp, cleanstands)
-- [Architecture](./Architecture.md) — Code structure, conventions, and how to extend the project
+- [Developer Zone](./dev/Home.md) — Code architecture, conventions, tests, and how to extend the project
 - [Installation](./Installation.md) — Step-by-step install, requirements, troubleshooting

@@ -2,7 +2,7 @@
 
 Bienvenido a la wiki de **MultiverseCreatures**! Esta es la documentación completa del plugin. Empieza aquí para obtener una visión general y luego explora las páginas dedicadas a jefes, criaturas, objetos y configuración.
 
-> **Enlaces rápidos:** [Jefes](./Bosses.md) · [Criaturas](./Creatures.md) · [Armas](./Weapons.md) · [Armaduras y Reliquias](./Armor-and-Relics.md) · [Objetos](./Items.md) · [Componentes](./Components.md) · [Música](./Music.md) · [Dimensión del Ritual](./Ritual-Dimension.md) · [Comandos](./Commands.md) · [Arquitectura](./Architecture.md) · [Instalación](./Installation.md)
+> **Enlaces rápidos:** [Jefes](./Bosses.md) · [Criaturas](./Creatures.md) · [Armas](./Weapons.md) · [Armaduras y Reliquias](./Armor-and-Relics.md) · [Objetos](./Items.md) · [Componentes](./Components.md) · [Música](./Music.md) · [Dimensión del Ritual](./Ritual-Dimension.md) · [Comandos](./Commands.md) · [Zona Técnica](./dev/Home.md) · [Instalación](./Installation.md)
 
 ---
 
@@ -60,5 +60,5 @@ Cada spawn de mob vanilla tiene una probabilidad configurable de ser reemplazado
 - [Música](./Music.md) — Canciones NBS incluidas, discos de jukebox y el Disc Trader, créditos de canciones
 - [Recetas](./Recipes.md) — Todas las recetas de crafteo personalizadas (formas, ingredientes, niveles)
 - [Comandos](./Commands.md) — Referencia completa de `/msc` (spawn, give, seal, dummy, attack, music, dimtp, cleanstands)
-- [Arquitectura](./Architecture.md) — Estructura del código, convenciones y cómo ampliar el proyecto
+- [Zona Técnica](./dev/Home.md) — Arquitectura del código, convenciones, tests y cómo ampliar el proyecto
 - [Instalación](./Installation.md) — Instalación paso a paso, requisitos, solución de problemas

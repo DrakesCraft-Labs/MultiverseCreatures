@@ -133,4 +133,4 @@ There is no teleport command available inside the dimension — the only way out
 - Spawn point: `0.5, 10, 0.5` (above the crying obsidian floor).
 - Game rules: no daylight cycle, no weather cycle, no mob spawning, immediate respawn, no advancement announcements.
 - The sky is forced red via a biome override.
-- Relevant classes: `BossDimensionManager`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure` — see [Architecture](./Architecture.md).
+- Relevant classes: `BossDimensionManager`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure` — see [Architecture](./dev/Architecture.md).

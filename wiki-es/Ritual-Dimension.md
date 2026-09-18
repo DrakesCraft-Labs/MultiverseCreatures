@@ -133,4 +133,4 @@ Con el jefe inactivo puedes salir directamente con **`/msc dimtp`** (los comando
 - Punto de spawn: `0.5, 10, 0.5` (sobre el suelo de obsidiana llorosa).
 - Reglas del mundo: sin ciclo de día/noche, sin ciclo de clima, sin spawns de mobs, reaparición inmediata, sin anuncios de avances.
 - El cielo se fuerza a rojo vía un override de bioma.
-- Clases relevantes: `BossDimensionManager`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure` — ver [Arquitectura](./Architecture.md).
+- Clases relevantes: `BossDimensionManager`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure` — ver [Arquitectura](./dev/Architecture.md).
