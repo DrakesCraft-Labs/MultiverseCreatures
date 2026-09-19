@@ -242,6 +242,7 @@ public class NixBoss implements Listener {
         }
 
         public static final Vector3f CENTER;
+
         static {
             Vector3f sum = new Vector3f();
             NixPart[] parts = values();
@@ -261,11 +262,11 @@ public class NixBoss implements Listener {
 
     // Joint pivots relative to centered model
     private static final Vector3f PIVOT_SHOULDER_RIGHT = new Vector3f(0.3514f, 1.405f, 0.0f);
-    private static final Vector3f PIVOT_SHOULDER_LEFT  = new Vector3f(-0.3514f, 1.405f, 0.0f);
-    private static final Vector3f PIVOT_HIP_RIGHT       = new Vector3f(-0.1171f, 0.702f, 0.0f);
-    private static final Vector3f PIVOT_HIP_LEFT        = new Vector3f(0.1171f, 0.702f, 0.0f);
-    private static final Vector3f PIVOT_NECK            = new Vector3f(0.0f, 1.650f, 0.0f);
-    private static final Vector3f PIVOT_TORSO           = new Vector3f(0.0f, 1.171f, 0.0f);
+    private static final Vector3f PIVOT_SHOULDER_LEFT = new Vector3f(-0.3514f, 1.405f, 0.0f);
+    private static final Vector3f PIVOT_HIP_RIGHT = new Vector3f(-0.1171f, 0.702f, 0.0f);
+    private static final Vector3f PIVOT_HIP_LEFT = new Vector3f(0.1171f, 0.702f, 0.0f);
+    private static final Vector3f PIVOT_NECK = new Vector3f(0.0f, 1.650f, 0.0f);
+    private static final Vector3f PIVOT_TORSO = new Vector3f(0.0f, 1.171f, 0.0f);
 
     private final MultiverseCreatures plugin;
     private final Random random = new Random();
