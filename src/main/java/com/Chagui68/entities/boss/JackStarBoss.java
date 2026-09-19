@@ -2,6 +2,7 @@ package com.Chagui68.entities.boss;
 
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ArchitectKernel;
+import com.Chagui68.items.food.ScoobyCookie;
 import com.Chagui68.utils.MscEntityUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -183,6 +184,10 @@ public class JackStarBoss implements Listener {
     public static final String TAG = "msc_jackstar_boss";
     public static final String PART_TAG = "msc_jackstar_part";
     public static final String MINION_TAG = "msc_jackstar_minion";
+    /** Tags make display ownership survive a plugin reload without duplicating the model. */
+    static final String PART_OWNER_TAG_PREFIX = "msc_jackstar_owner_";
+    private static final String CREATIVE_DISPLAY_TAG = "msc_jackstar_creative_display";
+    private static final String OBSERVED_BOSS_TAG = "msc_jackstar_observed_boss";
 
     public static final Vector3f PIVOT_SHOULDER_RIGHT = new Vector3f(0.35f, 1.40f, 0f);
     public static final Vector3f PIVOT_SHOULDER_LEFT  = new Vector3f(-0.35f, 1.40f, 0f);
@@ -235,11 +240,20 @@ public class JackStarBoss implements Listener {
                     MscEntityUtils.initVirtualHealth(stand, health);
                 }
                 JackInstance inst = new JackInstance(stand);
+                restorePartDisplays(inst);
                 activeInstances.put(stand.getUniqueId(), inst);
                 setupBossBar(inst);
             }
             for (ItemDisplay display : world.getEntitiesByClass(ItemDisplay.class)) {
                 if (!display.getScoreboardTags().contains(PART_TAG)) continue;
+                boolean hasOwner = display.getScoreboardTags().stream()
+                        .anyMatch(tag -> tag.startsWith(PART_OWNER_TAG_PREFIX));
+                // Displays made by pre-ownership builds cannot safely be reattached.
+                // Removing only those tagged legacy parts avoids a second overlapping body.
+                if (!hasOwner) {
+                    display.remove();
+                    continue;
+                }
                 boolean nearStand = false;
                 for (Entity e : display.getNearbyEntities(4, 4, 4)) {
                     if (e instanceof ArmorStand stand && stand.getScoreboardTags().contains(TAG)) {
@@ -278,6 +292,13 @@ public class JackStarBoss implements Listener {
             if (inst.failoverTicks <= 0) {
                 completeFailoverRecovery(inst);
             }
+            return;
+        }
+
+        // During a creative-mode invocation JackStar is an observer, never a second
+        // attacker. The summoned boss remains a normal, killable plugin boss.
+        if (inst.observedBossId != null) {
+            tickCreativeObservation(inst);
             return;
         }
 
@@ -447,6 +468,10 @@ public class JackStarBoss implements Listener {
             inst.snapshotLoc = loc.clone();
         }
 
+        if (target != null && inst.tickCount % 220 == 0) {
+            throwScoobySnack(inst, target);
+        }
+
         // Decrement animation counters & cooldowns
         if (inst.slashAnimTicks > 0) inst.slashAnimTicks--;
         if (inst.slamAnimTicks > 0) inst.slamAnimTicks--;
@@ -482,18 +507,21 @@ public class JackStarBoss implements Listener {
                 broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] JackStar: " + ChatColor.AQUA
                         + "\"Fase 2: Iniciando subprocesos del Multiverso... ¡Criaturas, asistan al Arquitecto!\"");
                 summonMultiverseMinions(inst);
+                enterCreativeModeAndSummonBoss(inst);
             }
             case 3 -> {
                 broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] JackStar: " + ChatColor.DARK_RED
                         + "\"Fase 3: Protocolo Warden activado. Desplegando levitación y oscuridad dimensional.\"");
                 inst.isLevitating = true;
                 world.playSound(loc, Sound.ENTITY_WARDEN_ROAR, 2.0f, 0.6f);
+                enterCreativeModeAndSummonBoss(inst);
             }
             case 4 -> {
                 broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] JackStar: " + ChatColor.LIGHT_PURPLE
                         + "\"Fase 4: Alquimia de Hitbox. Desbordamiento y compresión de escala en tiempo real.\"");
                 inst.isLevitating = false;
                 inst.targetScale = 2.2f;
+                enterCreativeModeAndSummonBoss(inst);
             }
             case 5 -> {
                 broadcastToArena(inst, ChatColor.RED + "" + ChatColor.BOLD
@@ -502,6 +530,7 @@ public class JackStarBoss implements Listener {
                 inst.targetScale = 1.0f;
                 inst.isLevitating = true;
                 world.playSound(loc, Sound.ENTITY_WITHER_SPAWN, 2.0f, 0.5f);
+                enterCreativeModeAndSummonBoss(inst);
             }
         }
     }
@@ -993,13 +1022,173 @@ public class JackStarBoss implements Listener {
                 display.teleport(root);
                 display.setTransformation(buildTransformation(part, inst));
             } else {
-                ItemDisplay display = spawnPart(root, part);
+                ItemDisplay display = spawnPart(root, part, inst.stand.getUniqueId());
                 inst.partDisplays.put(part, display.getUniqueId());
             }
         }
     }
 
-    private ItemDisplay spawnPart(Location root, JackPart part) {
+    private void enterCreativeModeAndSummonBoss(JackInstance inst) {
+        if (inst.observedBossId != null || inst.creativeInvocations >= 5) return;
+
+        ArmorStand stand = inst.stand;
+        World world = stand.getWorld();
+        Location origin = stand.getLocation();
+        int initial = random.nextInt(6);
+        for (int attempt = 0; attempt < 6; attempt++) {
+            int candidate = (initial + attempt) % 6;
+            double angle = Math.toRadians(random.nextInt(360));
+            Location spawn = origin.clone().add(Math.cos(angle) * 14.0, 0, Math.sin(angle) * 14.0);
+            snapToGround(spawn);
+            Entity summoned = spawnObservedBoss(candidate, spawn);
+            if (summoned == null) continue;
+
+            summoned.addScoreboardTag(OBSERVED_BOSS_TAG);
+            inst.observedBossId = summoned.getUniqueId();
+            inst.creativeInvocations++;
+            inst.creativeTicks = 0;
+            stand.setGravity(false);
+            spawnFloatingCommandBlocks(inst);
+            broadcastToArena(inst, ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD
+                    + "[CREATIVE MODE] " + ChatColor.AQUA
+                    + "JackStar ha entrado en modo creativo. Ejecutando ritual de "
+                    + ChatColor.WHITE + summoned.getName() + ChatColor.AQUA + ".");
+            world.playSound(origin, Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, 2.0f, 0.65f);
+            for (int bolt = 0; bolt < 5; bolt++) {
+                double boltAngle = Math.toRadians(bolt * 72.0);
+                world.strikeLightningEffect(origin.clone().add(Math.cos(boltAngle) * 5.0, 0, Math.sin(boltAngle) * 5.0));
+            }
+            world.spawnParticle(Particle.ENCHANT, spawn.clone().add(0, 1.0, 0), 100, 2.5, 1.3, 2.5, 0.1);
+            return;
+        }
+    }
+
+    private Entity spawnObservedBoss(int candidate, Location spawn) {
+        World world = spawn.getWorld();
+        if (world == null) return null;
+        String tag = switch (candidate) {
+            case 0 -> "MSC_Garou";
+            case 1 -> "MSC_Mahoraga";
+            case 2 -> "MSC_ChaosMage";
+            case 3 -> "MSC_ObsidianGuard";
+            case 4 -> "MSC_SoulReaper";
+            default -> NixBoss.TAG;
+        };
+        boolean created = switch (candidate) {
+            case 0 -> plugin.getGarouBoss().trySpawn(spawn);
+            case 1 -> plugin.getMahoraga().trySpawn(spawn);
+            case 2 -> plugin.getChaosMage().trySpawn(spawn);
+            case 3 -> plugin.getObsidianGuard().trySpawn(spawn);
+            case 4 -> plugin.getSoulReaper().trySpawn(spawn);
+            default -> plugin.getNixBoss().trySpawn(spawn);
+        };
+        if (!created) return null;
+        for (Entity entity : world.getNearbyEntities(spawn, 3.0, 4.0, 3.0)) {
+            if (entity.getScoreboardTags().contains(tag)) return entity;
+        }
+        return null;
+    }
+
+    private void tickCreativeObservation(JackInstance inst) {
+        ArmorStand stand = inst.stand;
+        Entity observed = stand.getWorld().getEntity(inst.observedBossId);
+        if (observed == null || observed.isDead() || !observed.isValid()) {
+            exitCreativeMode(inst);
+            return;
+        }
+
+        inst.creativeTicks++;
+        double angle = inst.creativeTicks * 0.075;
+        Location center = observed.getLocation();
+        Location orbit = center.clone().add(Math.cos(angle) * 11.5, 2.2 + Math.sin(angle * 0.5) * 0.35, Math.sin(angle) * 11.5);
+        orbit.setDirection(center.toVector().subtract(orbit.toVector()));
+        stand.teleport(orbit);
+        inst.moving = true;
+        inst.animTicks += 0.28f;
+        updateCreativeDisplays(inst, orbit);
+        syncDisplays(inst);
+
+        if (inst.creativeTicks % 20 == 0) {
+            stand.getWorld().spawnParticle(Particle.ENCHANT, orbit.clone().add(0, 1.2, 0), 18, 0.55, 0.7, 0.55, 0.05);
+            stand.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, orbit.clone().add(0, 1.2, 0), 10, 0.4, 0.5, 0.4, 0.02);
+        }
+        if (inst.creativeTicks % 100 == 0) {
+            stand.getWorld().strikeLightningEffect(observed.getLocation());
+            broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] " + ChatColor.GRAY
+                    + "JackStar observa. El subproceso debe terminar antes de reanudar el combate.");
+        }
+    }
+
+    private void spawnFloatingCommandBlocks(JackInstance inst) {
+        Location root = inst.stand.getLocation();
+        for (int i = 0; i < 6; i++) {
+            ItemDisplay display = (ItemDisplay) root.getWorld().spawnEntity(root, EntityType.ITEM_DISPLAY);
+            display.setItemStack(new ItemStack(Material.COMMAND_BLOCK));
+            display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
+            display.setBillboard(Display.Billboard.FIXED);
+            display.setBrightness(new Display.Brightness(15, 15));
+            display.setGlowColorOverride(Color.AQUA);
+            display.setGlowing(true);
+            display.setGravity(false);
+            display.setPersistent(false);
+            display.addScoreboardTag(CREATIVE_DISPLAY_TAG);
+            inst.creativeDisplays.add(display.getUniqueId());
+        }
+    }
+
+    private void updateCreativeDisplays(JackInstance inst, Location root) {
+        World world = root.getWorld();
+        for (int i = 0; i < inst.creativeDisplays.size(); i++) {
+            Entity entity = world.getEntity(inst.creativeDisplays.get(i));
+            if (!(entity instanceof ItemDisplay display) || !display.isValid()) continue;
+            double angle = inst.creativeTicks * 0.12 + (Math.PI * 2.0 * i / inst.creativeDisplays.size());
+            display.teleport(root.clone().add(Math.cos(angle) * 1.45, 1.1 + Math.sin(angle * 2.0) * 0.24, Math.sin(angle) * 1.45));
+        }
+    }
+
+    private void exitCreativeMode(JackInstance inst) {
+        for (UUID displayId : inst.creativeDisplays) {
+            Entity entity = inst.stand.getWorld().getEntity(displayId);
+            if (entity != null) entity.remove();
+        }
+        inst.creativeDisplays.clear();
+        inst.observedBossId = null;
+        inst.stand.setGravity(true);
+        inst.stand.getWorld().playSound(inst.stand.getLocation(), Sound.ENTITY_WARDEN_ROAR, 1.6f, 0.9f);
+        broadcastToArena(inst, ChatColor.RED + "[SYS] " + ChatColor.GRAY
+                + "JackStar reanuda el combate directo. El sistema vuelve a ser hostil.");
+    }
+
+    private void throwScoobySnack(JackInstance inst, Player target) {
+        Location source = inst.stand.getLocation().clone().add(0, 1.25, 0);
+        org.bukkit.entity.Item snack = source.getWorld().dropItem(source, ScoobyCookie.SCOOBY_COOKIE.clone());
+        snack.setPickupDelay(Short.MAX_VALUE);
+        snack.setVelocity(target.getEyeLocation().toVector().subtract(source.toVector()).normalize().multiply(0.65).setY(0.18));
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (snack.isValid()) snack.remove();
+        }, 50L);
+        broadcastToArena(inst, ChatColor.GOLD + "[SCOOBY PACKET] " + ChatColor.GRAY
+                + "JackStar lanzó una galleta de depuración. No alimentes procesos desconocidos.");
+    }
+
+    static String partOwnerTag(UUID ownerId) {
+        return PART_OWNER_TAG_PREFIX + ownerId.toString().replace("-", "");
+    }
+
+    private void restorePartDisplays(JackInstance inst) {
+        String ownerTag = partOwnerTag(inst.stand.getUniqueId());
+        for (ItemDisplay display : inst.stand.getWorld().getEntitiesByClass(ItemDisplay.class)) {
+            if (!display.getScoreboardTags().contains(PART_TAG) || !display.getScoreboardTags().contains(ownerTag)) continue;
+            for (JackPart part : JackPart.values()) {
+                if (display.getScoreboardTags().contains(PART_TAG + "_" + part.name())) {
+                    inst.partDisplays.put(part, display.getUniqueId());
+                    break;
+                }
+            }
+        }
+    }
+
+    private ItemDisplay spawnPart(Location root, JackPart part, UUID ownerId) {
         ItemStack head = createHead(part.profileName, part.texture);
         ItemDisplay display = (ItemDisplay) root.getWorld().spawnEntity(root, EntityType.ITEM_DISPLAY);
         display.setItemStack(head);
@@ -1015,6 +1204,8 @@ public class JackStarBoss implements Listener {
         display.setSilent(true);
         display.setPersistent(true);
         display.addScoreboardTag(PART_TAG);
+        display.addScoreboardTag(PART_TAG + "_" + part.name());
+        display.addScoreboardTag(partOwnerTag(ownerId));
         return display;
     }
 
@@ -1167,6 +1358,12 @@ public class JackStarBoss implements Listener {
         world.playSound(spawnLoc, Sound.BLOCK_BEACON_ACTIVATE, 2.0f, 1.0f);
         world.spawnParticle(Particle.PORTAL, spawnLoc.clone().add(0, 1.5, 0), 80, 1.0, 1.5, 1.0, 0.05);
 
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (activeInstances.get(stand.getUniqueId()) == inst && stand.isValid()) {
+                enterCreativeModeAndSummonBoss(inst);
+            }
+        }, 60L);
+
         return true;
     }
 
@@ -1231,6 +1428,18 @@ public class JackStarBoss implements Listener {
         }
         inst.summonedMinions.clear();
 
+        for (UUID displayId : inst.creativeDisplays) {
+            Entity display = world.getEntity(displayId);
+            if (display != null) display.remove();
+        }
+        inst.creativeDisplays.clear();
+
+        if (inst.observedBossId != null) {
+            Entity observed = world.getEntity(inst.observedBossId);
+            if (observed != null) observed.remove();
+            inst.observedBossId = null;
+        }
+
         // Cleanup active temporary builder blocks (guarantee zero world griefing)
         for (Map.Entry<Block, Material> entry : inst.activeTemporaryBlocks.entrySet()) {
             entry.getKey().setType(entry.getValue());
@@ -1261,6 +1470,15 @@ public class JackStarBoss implements Listener {
             player = p;
         } else if (event.getDamager() instanceof Projectile proj && proj.getShooter() instanceof Player p) {
             player = p;
+        }
+
+        if (inst.observedBossId != null) {
+            event.setCancelled(true);
+            if (player != null && inst.creativeTicks % 40 == 0) {
+                player.sendMessage(ChatColor.LIGHT_PURPLE + "[CREATIVE MODE] " + ChatColor.GRAY
+                        + "JackStar es invulnerable mientras su invocación siga activa.");
+            }
+            return;
         }
 
         // Projectile Packet Loss
@@ -1432,6 +1650,10 @@ public class JackStarBoss implements Listener {
         public int tickCount;
         public double snapshotHp;
         public Location snapshotLoc;
+        public UUID observedBossId;
+        public int creativeInvocations;
+        public int creativeTicks;
+        public final List<UUID> creativeDisplays = new ArrayList<>();
 
         public JackInstance(ArmorStand stand) {
             this.stand = stand;
