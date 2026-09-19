@@ -2,6 +2,7 @@ package com.Chagui68.commands;
 
 import com.Chagui68.items.armor.EightHandledWheel;
 import com.Chagui68.items.armor.ObsidianBastion;
+import com.Chagui68.items.components.ArchitectKernel;
 import com.Chagui68.items.components.BoneMarrow;
 import com.Chagui68.items.components.ChaosCore;
 import com.Chagui68.items.components.ChaosFragment;
@@ -100,7 +101,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             "duelist", "lancer", "camel", "sniper", "mahoraga", "garou", "shadowrogue", "flameelemental",
             "frostgolem", "voidcrawler", "stormcaller", "boneshield", "venomwitch",
             "obsidianguard", "soulreaper", "chaosmage", "enderknight", "kinger", "disctrader",
-            "warlord", "nix"
+            "warlord", "nix", "jack", "jackstar", "arquitecto"
     );
 
     public MSCCommand(MultiverseCreatures plugin, MobHandler mobHandler) {
@@ -357,6 +358,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 if (success) sender.sendMessage(GREEN + "Spawned NIX - The Executioner!");
                 else sender.sendMessage(RED + "Failed to spawn NIX - The Executioner.");
             }
+            case "jack", "jackstar", "arquitecto", "systemarchitect" -> {
+                boolean success = plugin.getJackStarBoss().trySpawn(p.getLocation());
+                if (success) sender.sendMessage(GREEN + "Spawned JackStar — El Arquitecto del Sistema!");
+                else sender.sendMessage(RED + "Failed to spawn JackStar Boss.");
+            }
             default -> sendSpawnHelp(sender, 1);
         }
     }
@@ -456,6 +462,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             case "moltennetherite", "molten" -> MoltenNetherite.MOLTEN_NETHERITE.clone();
             case "refinedwheelcore", "refinedwheel" -> RefinedWheelCore.REFINED_WHEEL_CORE.clone();
             case "executionerwarrant", "warrant", "deathwarrant" -> ExecutionerWarrant.EXECUTIONER_WARRANT.clone();
+            case "architectkernel", "kernel", "architect" -> ArchitectKernel.ARCHITECT_KERNEL.clone();
             default -> null;
         };
 
@@ -621,6 +628,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         if (plugin.getHeadSlime() != null) plugin.getHeadSlime().reloadConfig();
         if (plugin.getWarlord() != null) plugin.getWarlord().reloadConfig();
         if (plugin.getNixBoss() != null) plugin.getNixBoss().reloadConfig();
+        if (plugin.getJackStarBoss() != null) plugin.getJackStarBoss().reloadConfig();
         sender.sendMessage(GREEN + "Configuration reloaded. All changes have been applied.");
     }
 

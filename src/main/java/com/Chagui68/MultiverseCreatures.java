@@ -2,6 +2,7 @@ package com.Chagui68;
 
 import com.Chagui68.entities.miniboss.Mahoraga;
 import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.JackStarBoss;
 import com.Chagui68.entities.boss.MagicSealListener;
 import com.Chagui68.entities.boss.NixBoss;
 import com.Chagui68.entities.handler.MobHandler;
@@ -28,6 +29,7 @@ import com.Chagui68.listener.armor.ObsidianBastionHandler;
 import com.Chagui68.listener.bossdimension.BossDimensionBlockHandler;
 import com.Chagui68.listener.bossdimension.BossDimensionCommandHandler;
 import com.Chagui68.listener.bossdimension.BossInvocationManager;
+import com.Chagui68.listener.bossdimension.JackInvocationManager;
 import com.Chagui68.listener.bossdimension.NixInvocationManager;
 import com.Chagui68.listener.combat.ItemCombatHandler;
 import com.Chagui68.listener.CustomItemPlaceHandler;
@@ -83,6 +85,8 @@ public class MultiverseCreatures extends JavaPlugin {
     private EnderKnight enderKnight;
     private Kinger kinger;
     private NixBoss nixBoss;
+    private JackStarBoss jackStarBoss;
+    private JackInvocationManager jackInvocationManager;
     private DiscTrader discTrader;
     private Warlord warlord;
     private DiscJukeboxHandler discJukeboxHandler;
@@ -153,6 +157,7 @@ public class MultiverseCreatures extends JavaPlugin {
         enderKnight = new EnderKnight(this);
         kinger = new Kinger(this);
         nixBoss = new NixBoss(this);
+        jackStarBoss = new JackStarBoss(this);
         discTrader = new DiscTrader(this);
         warlord = new Warlord(this);
 
@@ -182,6 +187,8 @@ public class MultiverseCreatures extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new RitualCandleListener(this), this);
         getServer().getPluginManager().registerEvents(new BossInvocationManager(this), this);
         getServer().getPluginManager().registerEvents(new NixInvocationManager(this), this);
+        jackInvocationManager = new JackInvocationManager(this);
+        getServer().getPluginManager().registerEvents(jackInvocationManager, this);
 
         getServer().getPluginManager().registerEvents(new CinderGreatswordHandler(this), this);
         getServer().getPluginManager().registerEvents(new VeilwalkerMantleHandler(this), this);
@@ -317,6 +324,14 @@ public class MultiverseCreatures extends JavaPlugin {
 
     public NixBoss getNixBoss() {
         return nixBoss;
+    }
+
+    public JackStarBoss getJackStarBoss() {
+        return jackStarBoss;
+    }
+
+    public JackInvocationManager getJackInvocationManager() {
+        return jackInvocationManager;
     }
 
     public DiscTrader getDiscTrader() {

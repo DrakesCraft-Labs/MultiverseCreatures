@@ -208,6 +208,26 @@ entities:
       - "&4%player% could not escape the executioner's judgment"
 
   # -------------------------------------------------------------------------
+  # JACKSTAR - The System Architect
+  # -------------------------------------------------------------------------
+  jackstar-architect:
+    enabled: true
+    health: 600.0
+    aggro-range: 30.0
+    move-speed: 0.32
+    melee-range: 3.8
+    melee-damage: 16.0
+    slam-damage: 20.0
+    sigkill-damage: 35.0
+    dodge-chance: 0.22
+    packet-loss-chance: 0.25
+    death-messages:
+      - "&b%player% &7fue desmantelado por &3JackStar — El Arquitecto del Sistema"
+      - "&b%player% &7recibió un &cSIGKILL (kill -9) &7de &3JackStar"
+      - "&b%player% &7no pudo escapar del &5Vector Override &7de &3JackStar"
+      - "&b%player% &7fue eliminado como proceso huérfano por el &eGarbage Collector"
+
+  # -------------------------------------------------------------------------
   # Head Slime
   # -------------------------------------------------------------------------
   head-slime:
