@@ -25,13 +25,18 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 41 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 42 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
 - **`calculateSafeHealth`** — Clamps the requested health to the server limit (attribute cap, default 1024 on Paper) to avoid `IllegalArgumentException`. Verifies real boss cases: ArmorStandBoss (3200), NIX (450), Frost Golem (200); clamps to a minimum of **0.1** (prevents instant death on spawn) and protects against negative input.
 - **`calculateVirtualProgress`** — Clamps the boss-bar progress to [0.0, 1.0] (including `0/0` = 0).
 - **`calculateScaledPhysicalHealth`** — Converts **virtual** health (e.g. 3200) into the real physical health stored on the entity (scaled to its physical max), with 0 → death.
+
+### `utils/MscLeftoversTest` — Startup sweep of attack props
+- The props of an attack that a restart cut short are removed at enable (orbiting shields, the planted shield holder, the lance ring, the wing panels, the triangle seal, the mirror copies, Kinger's bullets), because their attack object is gone and nothing else would ever remove them.
+- The list is tested from the other side too: **creatures** (`MSC_FrostGolem`, the summons), **suit pieces** (each boss adopts its own) and **hand-placed markers** (`MSC_Dummy`, `MSC_SealMarker`) are never swept.
+- The sweep only touches the entities it recognises — it does not unload the world around them — and a missing world is ignored instead of throwing.
 
 ### `utils/MscBossBarTest` — Who sees a boss bar
 - A boss bar is a packet per player, not a world object, so the viewer list has to be revisited: a player who **logs in later** gets the bar and one who already had it is never added twice.

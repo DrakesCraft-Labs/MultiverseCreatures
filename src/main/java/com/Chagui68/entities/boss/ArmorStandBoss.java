@@ -346,10 +346,6 @@ public class ArmorStandBoss implements Listener, BossHost {
     private void reloadExistingBosses() {
         for (World world : Bukkit.getWorlds()) {
             for (Entity entity : world.getEntities()) {
-                if (entity.getScoreboardTags().contains(SHIELD_HOLDER_TAG)) {
-                    entity.remove();
-                    continue;
-                }
                 if (!(entity instanceof ArmorStand stand)) continue;
                 if (!stand.getScoreboardTags().contains(TAG)) continue;
                 BossInstance instance = new BossInstance(stand);

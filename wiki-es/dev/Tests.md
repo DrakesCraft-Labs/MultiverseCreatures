@@ -25,13 +25,18 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 41 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 42 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - **`calculateSafeHealth`** — Ajusta la salud pedida al límite del servidor (cap de atributo, por defecto 1024 en Paper) evitando `IllegalArgumentException`. Verifica casos de jefes reales: ArmorStandBoss (3200), NIX (450), Frost Golem (200); clampa a mínimo **0.1** (evita muerte instantánea al aparecer) y protege de entradas negativas.
 - **`calculateVirtualProgress`** — Clampa el progreso de la boss bar entre 0.0 y 1.0 (incluye `0/0` = 0).
 - **`calculateScaledPhysicalHealth`** — Convierte la salud **virtual** (p. ej. 3200) a la salud física real almacenada en la entidad (escalada a su máximo físico), con 0 → muerte.
+
+### `utils/MscLeftoversTest` — Barrido de sobrantes de ataques al arrancar
+- Los props de un ataque que un reinicio cortó se eliminan al habilitar (escudos orbitando, el portador de escudo plantado, el anillo de lanzas, los paneles de alas, el sello triangular, las copias espejo, las balas de Kinger), porque su ataque ya no existe y nada más los quitaría.
+- La lista se prueba también desde el otro lado: **criaturas** (`MSC_FrostGolem`, las invocaciones), **piezas del traje** (cada jefe adopta las suyas) y **marcadores colocados a mano** (`MSC_Dummy`, `MSC_SealMarker`) no se barren nunca.
+- El barrido solo toca las entidades que reconoce — no descarga el mundo alrededor — y un mundo ausente se ignora en vez de lanzar excepción.
 
 ### `utils/MscBossBarTest` — Quién ve una barra de jefe
 - Una barra de jefe es un paquete por jugador, no un objeto del mundo, así que la lista de espectadores hay que revisarla: el jugador que **entra más tarde** recibe la barra y al que ya la tenía no se le añade dos veces.

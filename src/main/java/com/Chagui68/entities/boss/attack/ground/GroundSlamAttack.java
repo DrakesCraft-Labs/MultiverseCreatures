@@ -142,7 +142,9 @@ public class GroundSlamAttack extends BossAttackBase {
         holder.setItemStack(shieldItem);
         holder.setGravity(false);
         holder.setInvulnerable(true);
-        holder.setPersistent(true);
+        // Not persistent, like the other attack props: the attack removes this holder itself, and a
+        // display the server saves can come back with no fight left to remove it.
+        holder.setPersistent(false);
         holder.customName(Component.text("MSC_ShieldHolder"));
         holder.setCustomNameVisible(false);
         holder.addScoreboardTag("MSC_ShieldHolder");

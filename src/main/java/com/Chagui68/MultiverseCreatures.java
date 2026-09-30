@@ -140,6 +140,14 @@ public class MultiverseCreatures extends JavaPlugin {
             }
         }
 
+        // Props from an attack cut short by the last restart have no owner left to remove them: the
+        // mobs, the suit pieces and the hand-placed markers all have one. Runs before any boss can be
+        // mid-attack, so a tag in that list can only belong to a fight that is already over.
+        int leftovers = com.Chagui68.utils.MscLeftovers.sweepAll();
+        if (leftovers > 0) {
+            getLogger().info("Removed " + leftovers + " leftover boss-attack displays from the previous run.");
+        }
+
         creeperJr = new CreeperJr(this);
         headSlime = new HeadSlime(this);
         zombieHorseTrap = new ZombieHorseTrap(this);

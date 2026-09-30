@@ -212,7 +212,9 @@ public class ShieldSealAttack extends BossAttackBase {
             holder.setItemStack(shieldItem);
             holder.setGravity(false);
             holder.setInvulnerable(true);
-            holder.setPersistent(true);
+            // Not persistent, like the other attack props: a display that outlives its attack is
+            // litter the server saves and loads back on every restart.
+            holder.setPersistent(false);
             holder.addScoreboardTag("MSC_ShieldSealOrbit");
             instance.shieldSealDisplays.add(holder);
         }
