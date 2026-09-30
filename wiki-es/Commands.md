@@ -13,6 +13,7 @@ Todos los comandos usan la raíz **`/msc`**. **Permiso:** `msc.admin` (OP del se
 /msc dimtp <mundo>             Teletransporta entre mundos
 /msc cleanstands [mundo]       Elimina todos los armor stands relacionados con MSC
 /msc kill [tipo|all] [radio]   Purga criaturas de MSC de forma segura
+/msc debug [jugador]           Desglosa el daño de cada jefe hacia y desde un jugador
 /msc reload                    Recarga config.yml y sincroniza entidades y jefes
 ```
 
@@ -225,6 +226,43 @@ Dispara un ataque, defensa o mecánica de transición de fase del ArmorStandBoss
 `trianglecall`, `flyup`, `land`, `shieldseal`, `heal`, `reset`
 
 La lista completa y los detalles están en la [página de Jefes](./Bosses.md).
+
+---
+
+## /msc debug [jugador]
+
+Diagnostica el daño de los jefes. Sin argumento apunta al jugador al que estás mirando (hasta 30 bloques); también puedes indicar un nombre, la única forma de usarlo desde la consola.
+
+El informe tiene una sección por jefe (el Obsidian Sentinel, Nix y Jack Star) y lee la **muestra más reciente** de ese jugador en ambos sentidos, así que deja que el jefe le golpee (o golpéale tú) una vez antes:
+
+- **DEALT to player** — el ataque, el daño que pedía (`Intended`) y lo que el jugador recibió de verdad (`Applied`), tras su armadura y efectos.
+- **TAKEN from player** — el golpe tal como llegó (`Hit`), la mecánica propia del jefe (`cap N`, el reparto del load balancer, los multiplicadores de defensa, un esquive…) y el daño que el jefe aplicó.
+
+La entrada `DEALT` del Sentinel es el **desglose penetrante** (daño del evento, armadura/Protección/Resistencia devueltas, el cap por golpe y la perforación de Resistencia), porque todos sus golpes pasan por ese pipeline. La entrada `TAKEN` de Nix muestra su cap `max-damage-per-hit`; la de Jack Star, el reparto del Load Balancer.
+
+```
+OBSIDIAN SENTINEL
+  ▸ DEALT to player · penetrating
+      Event : 3.52 · armour : -17.60 · protection : 0.00 · resistance : -0.88
+      Through armour : 22.00 · cap : 15.00 · pierce : 20% · Resistance : level 1
+      Final damage dealt : 12.60
+  ▸ TAKEN from player · Incoming hit
+      Hit : 120.00 · stone skin ×0.5, cap 50.0 · Applied : 50.00
+
+NIX - THE EXECUTIONER
+  ▸ DEALT to player · Guillotine Cleave
+      Intended : 22.00 · Applied : 9.90
+  ▸ TAKEN from player · Incoming hit
+      Hit : 300.00 · cap 100.0 · Applied : 100.00
+
+JACK STAR - THE SYSTEM ARCHITECT
+  ▸ DEALT to player · Three-Slash
+      Intended : 16.00 · Applied : 8.40
+  ▸ TAKEN from player · Incoming hit
+      Hit : 134.00 · load balancer: 46.9 shared · Applied : 87.10
+```
+
+Las secciones sin datos se omiten; si aún no te ha tocado ningún jefe el comando lo dice en vez de mostrar un desglose vacío. Las muestras son transitorias: las de un jugador se pierden al desconectarse y las de un jefe al morir o despawnear, así que el informe siempre refleja la sesión actual. Los caps y multiplicadores están en `entities.<jefe>.*` en `config.yml`; mira [Instalación](./Installation.md) y [Jefes](./Bosses.md) para saber qué hace cada opción.
 
 ---
 

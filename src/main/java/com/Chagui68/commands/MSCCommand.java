@@ -1,6 +1,9 @@
 package com.Chagui68.commands;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossDamageSample;
+import com.Chagui68.entities.boss.PenetratingHit;
 import com.Chagui68.entities.handler.MobHandler;
 import com.Chagui68.music.MusicDisc;
 import com.Chagui68.utils.MscText;
@@ -45,7 +48,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
 
     /** Sub-commands shown by {@code /msc} and offered by tab completion. */
     private static final List<String> SUB_COMMANDS = List.of(
-            "spawn", "give", "attack", "music", "cleanstands", "kill", "reload", "seal", "dummy", "dimtp");
+            "spawn", "give", "attack", "music", "cleanstands", "kill", "debug", "reload", "seal", "dummy",
+            "dimtp");
+
+    /** How far {@code /msc debug} looks for the player the executor is aiming at. */
+    private static final int DEBUG_TARGET_RANGE = 30;
 
     private static final List<String> MUSIC_ACTIONS = List.of("play", "stop", "list", "disc");
 
@@ -116,6 +123,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             case "music" -> handleMusic(sender, args);
             case "cleanstands" -> handleCleanStands(sender, args);
             case "kill" -> handleKill(sender, args);
+            case "debug" -> handleDebug(sender, args);
             case "reload" -> handleReload(sender);
             default -> {
                 sender.sendMessage(RED + "Unknown command. Use /msc for help.");
@@ -479,6 +487,54 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 + (radius != null ? " within " + radius + " blocks." : " on the server."));
     }
 
+    // ------------------------------------------------------------------ debug
+
+    /**
+     * Prints the bosses' last damage samples for a player, so an admin can see why the numbers came
+     * out the way they did: what each boss dealt to them and what it took back. The target defaults
+     * to the player the executor is looking at; a name can be passed explicitly, which is also the
+     * only way to use it from the console.
+     */
+    private void handleDebug(CommandSender sender, String[] args) {
+        CommandMenu menu = new CommandMenu(sender);
+        if (args.length > 1 && args[1].equalsIgnoreCase("help")) {
+            menu.debugHelp();
+            return;
+        }
+
+        Player target;
+        if (args.length > 1) {
+            target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                sender.sendMessage(RED + "Player " + args[1] + " not found or offline.");
+                return;
+            }
+        } else {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage(RED + "From the console, name the target: /msc debug <player>.");
+                return;
+            }
+            Entity lookedAt = player.getTargetEntity(DEBUG_TARGET_RANGE, false);
+            if (!(lookedAt instanceof Player lookedPlayer)) {
+                sender.sendMessage(RED + "You are not looking at a player. Use /msc debug <player>.");
+                return;
+            }
+            target = lookedPlayer;
+        }
+
+        ArmorStandBoss boss = plugin.getArmorStandBoss();
+        PenetratingHit sentinelDealt = boss == null ? null : boss.lastPenetratingHit(target.getUniqueId());
+        List<BossDamageSample> samples = plugin.getBossDamageLog().samplesFor(target.getUniqueId());
+        if (sentinelDealt == null && samples.isEmpty()) {
+            sender.sendMessage(YELLOW + "No boss damage recorded for " + target.getName() + " yet.");
+            sender.sendMessage(GRAY + "Let the Sentinel, Nix or Jack Star hit them (or hit the boss),"
+                    + " then run /msc debug again.");
+            return;
+        }
+        menu.debugReport(target.getName(), sentinelDealt, samples,
+                boss == null || boss.isPenetratingDamageEnabled());
+    }
+
     // ------------------------------------------------------------------ dimensions
 
     private void handleDimtp(CommandSender sender, String[] args) {
@@ -546,6 +602,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 case "attack" -> addMatching(completions, AttackCatalogue.names(), args[1]);
                 case "music" -> addMatching(completions, MUSIC_ACTIONS, args[1]);
                 case "dummy" -> addMatching(completions, DummyStudio.actionCompletions(), args[1]);
+                case "debug" -> addMatchingPlayers(completions, args[1]);
                 case "dimtp", "cleanstands" -> addMatching(completions, worldNames(), args[1]);
                 default -> {
                 }
@@ -574,11 +631,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 4 && subCommand.equals("give")) {
             addMatching(completions, GIVE_TARGETS, args[3]);
-            for (Player online : Bukkit.getOnlinePlayers()) {
-                if (online.getName().toLowerCase().startsWith(args[3].toLowerCase())) {
-                    completions.add(online.getName());
-                }
-            }
+            addMatchingPlayers(completions, args[3]);
         }
 
         return completions;
@@ -590,6 +643,16 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         for (String candidate : candidates) {
             if (candidate.toLowerCase().startsWith(needle)) {
                 completions.add(candidate);
+            }
+        }
+    }
+
+    /** Adds every online player whose name starts with {@code prefix}, keeping the server order. */
+    private static void addMatchingPlayers(List<String> completions, String prefix) {
+        String needle = prefix.toLowerCase();
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (online.getName().toLowerCase().startsWith(needle)) {
+                completions.add(online.getName());
             }
         }
     }

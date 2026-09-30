@@ -13,6 +13,7 @@ All commands use the **`/msc`** root. **Permission:** `msc.admin` (server OP by 
 /msc dimtp <world>             Teleport across worlds
 /msc cleanstands [world]       Remove all MSC-related armor stands (optionally by world)
 /msc kill [type|all] [radius]  Safely kill/purge MSC custom creatures
+/msc debug [player]            Break down each boss's damage to and from a player
 /msc reload                    Reload config.yml and sync entities and bosses
 ```
 
@@ -225,6 +226,43 @@ Triggers an ArmorStandBoss attack, defense, or phase-transition mechanic by name
 `trianglecall`, `flyup`, `land`, `shieldseal`, `heal`, `reset`
 
 The full list and details are on the [Bosses wiki page](./Bosses.md).
+
+---
+
+## /msc debug [player]
+
+Diagnoses boss damage. Without an argument it targets the player you are looking at (within 30 blocks); you can also name a player, which is the only way to use it from the console.
+
+The report has one section per boss (the Obsidian Sentinel, Nix and Jack Star) and reads the **most recent sample** for that player in both directions, so let the boss hit them (or hit the boss) once first:
+
+- **DEALT to player** — the attack, the damage it asked for (`Intended`) and what the player actually took (`Applied`), after their armour and effects.
+- **TAKEN from player** — the hit as it arrived (`Hit`), the boss's own mechanic (`cap N`, the load-balancer split, the defence multipliers, a dodge…), and the damage the boss applied.
+
+The Sentinel's `DEALT` entry is the **penetrating breakdown** (event damage, the armour/Protection/Resistance credited back, the per-hit cap, the Resistance pierce), because every hit it lands goes through that pipeline. Nix's `TAKEN` entry shows its `max-damage-per-hit` cap; Jack Star's shows the Load Balancer split.
+
+```
+OBSIDIAN SENTINEL
+  ▸ DEALT to player · penetrating
+      Event : 3.52 · armour : -17.60 · protection : 0.00 · resistance : -0.88
+      Through armour : 22.00 · cap : 15.00 · pierce : 20% · Resistance : level 1
+      Final damage dealt : 12.60
+  ▸ TAKEN from player · Incoming hit
+      Hit : 120.00 · stone skin ×0.5, cap 50.0 · Applied : 50.00
+
+NIX - THE EXECUTIONER
+  ▸ DEALT to player · Guillotine Cleave
+      Intended : 22.00 · Applied : 9.90
+  ▸ TAKEN from player · Incoming hit
+      Hit : 300.00 · cap 100.0 · Applied : 100.00
+
+JACK STAR - THE SYSTEM ARCHITECT
+  ▸ DEALT to player · Three-Slash
+      Intended : 16.00 · Applied : 8.40
+  ▸ TAKEN from player · Incoming hit
+      Hit : 134.00 · load balancer: 46.9 shared · Applied : 87.10
+```
+
+Sections with nothing recorded are skipped; if no boss has touched the player yet the command says so instead of printing an empty breakdown. The samples are transient: a player's are dropped when they disconnect and a boss's when it dies or despawns, so the report always reflects the current session. The caps and multipliers live in `entities.<boss>.*` in `config.yml`; see [Installation](./Installation.md) and [Bosses](./Bosses.md) for what each knob does.
 
 ---
 

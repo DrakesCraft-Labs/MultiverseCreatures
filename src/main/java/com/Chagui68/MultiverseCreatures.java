@@ -2,6 +2,7 @@ package com.Chagui68;
 
 import com.Chagui68.entities.miniboss.Mahoraga;
 import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.BossDamageLog;
 import com.Chagui68.entities.boss.JackStarBoss;
 import com.Chagui68.entities.boss.MagicSealListener;
 import com.Chagui68.entities.boss.NixBoss;
@@ -68,6 +69,8 @@ public class MultiverseCreatures extends JavaPlugin {
     private Mahoraga mahoraga;
     private com.Chagui68.entities.miniboss.GarouBoss garouBoss;
     private ArmorStandBoss armorStandBoss;
+    /** Latest damage samples the bosses report, read by {@code /msc debug}. */
+    private final BossDamageLog bossDamageLog = new BossDamageLog();
     private MagicSealListener magicSealListener;
     private MusicManager musicManager;
     private BossDimensionManager bossDimensionManager;
@@ -171,6 +174,7 @@ public class MultiverseCreatures extends JavaPlugin {
 
         MobHandler mobHandler = new MobHandler(this);
         getServer().getPluginManager().registerEvents(mobHandler, this);
+        getServer().getPluginManager().registerEvents(bossDamageLog, this);
         // El tope de poblacion se calcula aqui, fuera de CreatureSpawnEvent: contar
         // entidades dentro del evento rompe el iterador del mundo. Cada 5 s basta.
         getServer().getScheduler().runTaskTimer(this, mobHandler::refrescarRecuento, 100L, 100L);
@@ -253,6 +257,10 @@ public class MultiverseCreatures extends JavaPlugin {
 
     public ArmorStandBoss getArmorStandBoss() {
         return armorStandBoss;
+    }
+
+    public BossDamageLog getBossDamageLog() {
+        return bossDamageLog;
     }
 
     public MagicSealListener getMagicSealListener() {

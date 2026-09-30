@@ -1,5 +1,8 @@
 package com.Chagui68.commands;
 
+import com.Chagui68.entities.boss.BossDamageSample;
+import com.Chagui68.entities.boss.BossId;
+import com.Chagui68.entities.boss.PenetratingHit;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
@@ -8,6 +11,7 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static org.bukkit.ChatColor.*;
 
@@ -138,6 +142,7 @@ final class CommandMenu {
         line("");
         line(" &a&l🛠 TESTING & SYSTEM&8:");
         line("   &e/msc dummy [action] &8- &7Spawn & pose test dummies.");
+        line("   &e/msc debug [player] &8- &7Break down the Sentinel's last penetrating hit.");
         line("   &e/msc reload &8- &7Reload config.yml & sync entities.");
         line("");
         line(" &7&oExplore subcommands: &e/msc <cmd> help &7(e.g. &e/msc spawn help&7)");
@@ -228,6 +233,119 @@ final class CommandMenu {
         line("      &7Without a world, removes them from every loaded dimension.");
         line("      &7Worlds: &f" + worldList());
         footer();
+    }
+
+    // ------------------------------------------------------------------ debug
+
+    /**
+     * Detail lines of one penetrating hit, without the section bullet, so the exact figures the
+     * report prints can be asserted without a live server or a sender.
+     */
+    static List<String> penetratingLines(PenetratingHit hit) {
+        List<String> lines = new ArrayList<>();
+        lines.add("      &7Event &8: &f" + decimal(hit.eventDamage())
+                + " &8· &7armour &8: &f" + decimal(hit.armorCreditedBack())
+                + " &8· &7protection &8: &f" + decimal(hit.protectionCreditedBack())
+                + " &8· &7resistance &8: &f" + decimal(hit.resistanceCreditedBack()));
+        lines.add("      &7Through armour &8: &f" + decimal(hit.throughArmor())
+                + " &8· &7cap &8: &f" + decimal(hit.cap())
+                + " &8· &7pierce &8: &f" + percent(hit.pierce())
+                + " &8· &7Resistance &8: &f" + resistanceLabel(hit));
+        lines.add("      &c&lFinal damage dealt &8: &c&l" + decimal(hit.dealt()));
+        return lines;
+    }
+
+    /**
+     * One generic damage sample as a bullet plus its figures, without the boss section header.
+     * {@code now} is passed in so the age line is deterministic under test.
+     */
+    static List<String> sampleLines(BossDamageSample sample, long now) {
+        List<String> lines = new ArrayList<>();
+        boolean dealt = sample.direction() == BossDamageSample.Direction.DEALT_TO_PLAYER;
+        lines.add("   &e▸ " + (dealt ? "&cDEALT to player" : "&aTAKEN from player")
+                + " &8· &7" + sample.source() + " &8· &7" + age(sample.ageMillis(now)) + " ago");
+        StringBuilder detail = new StringBuilder("      &7" + (dealt ? "Intended" : "Hit")
+                + " &8: &f" + decimal(sample.before()));
+        if (!sample.note().isBlank()) {
+            detail.append(" &8· &7").append(sample.note());
+        }
+        detail.append(" &8· &7Applied &8: &f").append(decimal(sample.after()));
+        lines.add(detail.toString());
+        return lines;
+    }
+
+    /**
+     * Full {@code /msc debug} report: the target, then one section per boss listing the damage it
+     * dealt to that player and the damage it took from them. Sections with nothing recorded are
+     * skipped, and the detail lines can be asserted headlessly through the two static helpers above.
+     */
+    void debugReport(String targetName, PenetratingHit sentinelDealt, List<BossDamageSample> samples,
+                     boolean penetratingEnabled) {
+        header("MSC DEBUG - BOSS DAMAGE");
+        line(" &7Target: &f" + targetName);
+        long now = System.currentTimeMillis();
+
+        for (BossId boss : BossId.values()) {
+            List<String> section = new ArrayList<>();
+            if (boss == BossId.SENTINEL && sentinelDealt != null) {
+                section.add("   &e▸ &cDEALT to player &8· &7penetrating &8· &7"
+                        + age(sentinelDealt.ageMillis(now)) + " ago");
+                section.addAll(penetratingLines(sentinelDealt));
+            }
+            for (BossDamageSample sample : samples) {
+                if (sample.boss() == boss) section.addAll(sampleLines(sample, now));
+            }
+            if (section.isEmpty()) continue;
+            line("");
+            line(" &6&l" + boss.displayName() + "&8:");
+            for (String sectionLine : section) {
+                line(sectionLine);
+            }
+        }
+
+        if (!penetratingEnabled) {
+            line("");
+            line(" &cNote&8: &7penetrating damage is currently disabled in config.yml.");
+        }
+        footer();
+    }
+
+    void debugHelp() {
+        header("MSC DEBUG - BOSS DAMAGE");
+        line(" &7Usage: &e/msc debug [player]");
+        line("");
+        line(" &6&lInfo&8:");
+        line("   &e• &fShows what the Obsidian Sentinel, Nix and Jack Star did to a");
+        line("      &fplayer and what they took back, per boss.");
+        line("   &e• &fTargets the player you are looking at, or a named player.");
+        line("   &e• &fDEALT lists the attack, the intended damage and what the player");
+        line("      &freally took; TAKEN lists the hit, the boss's cap or load-balancer");
+        line("      &fsplit and the damage the boss applied.");
+        footer();
+    }
+
+    private static String resistanceLabel(PenetratingHit hit) {
+        return hit.resistanceLevel() == 0
+                ? "none"
+                : "level " + hit.resistanceLevel();
+    }
+
+    private static String decimal(double value) {
+        return String.format(Locale.ROOT, "%.2f", value);
+    }
+
+    /** Clamped to [0, 1] so an out-of-range config value reads as the pierce the maths uses. */
+    private static String percent(double fraction) {
+        double clamped = Math.max(0.0, Math.min(1.0, fraction));
+        return String.format(Locale.ROOT, "%.0f%%", clamped * 100.0);
+    }
+
+    /** Human-readable age of a hit, from milliseconds up to minutes. */
+    private static String age(long millis) {
+        if (millis < 1000) return millis + "ms";
+        double seconds = millis / 1000.0;
+        if (seconds < 60.0) return String.format(Locale.ROOT, "%.1fs", seconds);
+        return String.format(Locale.ROOT, "%.1fmin", seconds / 60.0);
     }
 
     void killHelp() {

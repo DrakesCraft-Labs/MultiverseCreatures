@@ -210,6 +210,13 @@ public class JackStarBoss implements Listener {
     private double meleeDamage;
     private double slamDamage;
     private double sigkillDamage;
+    /**
+     * Source and intended amount of the hit currently being applied, read back by the damage
+     * listener so {@code /msc debug} can name the attack. Set and cleared by {@link #dealToPlayer}
+     * around the synchronous damage call.
+     */
+    private String outgoingSource;
+    private double outgoingIntended;
     private double dodgeChance;
     private double packetLossChance;
 
@@ -630,7 +637,7 @@ public class JackStarBoss implements Listener {
                         if (e instanceof Player p && p.getGameMode() != GameMode.CREATIVE && p.getGameMode() != GameMode.SPECTATOR) {
                             Vector toP = p.getLocation().add(0, 1, 0).toVector().subtract(eye.toVector());
                             if (toP.length() <= 20 && Math.abs(toP.normalize().angle(dir)) < 0.40) {
-                                p.damage(24.0, stand);
+                                dealToPlayer(stand, p, 24.0, "Sonic Boom");
                                 p.setVelocity(dir.clone().multiply(1.8).setY(0.45));
                                 p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 100, 0, false, false));
                             }
@@ -655,7 +662,7 @@ public class JackStarBoss implements Listener {
 
         for (Entity e : world.getNearbyEntities(loc, 9.0, 4.0, 9.0)) {
             if (e instanceof Player p && p.getGameMode() != GameMode.CREATIVE && p.getGameMode() != GameMode.SPECTATOR) {
-                p.damage(18.0, stand);
+                dealToPlayer(stand, p, 18.0, "Giant Stomp");
                 p.setVelocity(new Vector(0, 0.85, 0));
                 p.sendMessage(ChatColor.RED + "[SÍSMICA] ¡La pisada colosal de JackStar te arrojó por los aires!");
             }
@@ -702,7 +709,7 @@ public class JackStarBoss implements Listener {
             if (!(e instanceof Player p)) continue;
             if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) continue;
 
-            p.damage(meleeDamage * (scale > 1.5f ? 1.4 : 1.0), stand);
+            dealToPlayer(stand, p, meleeDamage * (scale > 1.5f ? 1.4 : 1.0), "Three-Slash");
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1, false, true));
             Vector knock = p.getLocation().toVector().subtract(stand.getLocation().toVector()).normalize().multiply(0.7 * scale).setY(0.25);
             p.setVelocity(knock);
@@ -728,7 +735,7 @@ public class JackStarBoss implements Listener {
                     target.setVelocity(new Vector(0, -1.8, 0));
                     world.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 1.4f);
                     world.spawnParticle(Particle.EXPLOSION, target.getLocation(), 1);
-                    target.damage(slamDamage, stand);
+                    dealToPlayer(stand, target, slamDamage, "Vector Slam");
                     target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2, false, true));
                 }
             }
@@ -765,7 +772,7 @@ public class JackStarBoss implements Listener {
 
                     for (Entity e : world.getNearbyEntities(ground, 4.2, 3.0, 4.2)) {
                         if (e instanceof Player p && p.getGameMode() != GameMode.CREATIVE && p.getGameMode() != GameMode.SPECTATOR) {
-                            p.damage(sigkillDamage, stand);
+                            dealToPlayer(stand, p, sigkillDamage, "Sigkill -9");
                             p.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "[SIGKILL -9] "
                                     + ChatColor.DARK_RED + "Proceso terminado con señal de aniquilación forzada.");
                         }
@@ -854,7 +861,7 @@ public class JackStarBoss implements Listener {
             double perPlayer = sharedPart / party.size();
 
             for (Player p : party) {
-                p.damage(perPlayer, stand);
+                dealToPlayer(stand, p, perPlayer, "Load Balancer");
                 p.spawnParticle(Particle.CRIT, p.getLocation().add(0, 1.0, 0), 5, 0.2, 0.2, 0.2, 0.05);
                 p.sendActionBar(ChatColor.GOLD + "[LOAD BALANCER] " + ChatColor.YELLOW + "Workload shared (-" + String.format("%.1f", perPlayer) + " HP)");
             }
@@ -1453,6 +1460,16 @@ public class JackStarBoss implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
         Entity victim = event.getEntity();
+
+        // A hit Jack lands on a player: pair the intended damage with what the player actually took.
+        if (victim instanceof Player target && isJackAttacker(event.getDamager())) {
+            plugin.getBossDamageLog().record(target.getUniqueId(), BossDamageSample.dealt(BossId.JACK_STAR,
+                    outgoingSource == null ? "Attack" : outgoingSource,
+                    outgoingSource == null ? event.getFinalDamage() : outgoingIntended,
+                    event.getFinalDamage(), System.currentTimeMillis()));
+            return;
+        }
+
         ArmorStand stand = null;
         if (victim instanceof ArmorStand as && as.getScoreboardTags().contains(TAG)) {
             stand = as;
@@ -1510,14 +1527,17 @@ public class JackStarBoss implements Listener {
         if (player != null) {
             event.setCancelled(true);
 
+            double incoming = Math.max(1.0, event.getFinalDamage());
             double effDodge = (inst.currentScale < 0.8f) ? 0.45 : dodgeChance;
             if (random.nextDouble() < effDodge) {
                 triggerMuiDodge(stand, player);
+                recordIncoming(player, incoming, 0.0, "ultra instinct dodge");
                 return;
             }
 
-            double damage = Math.max(1.0, event.getFinalDamage());
-            damage = applyLoadBalancer(inst, damage, player);
+            double damage = applyLoadBalancer(inst, incoming, player);
+            recordIncoming(player, incoming, damage,
+                    damage < incoming ? "load balancer: " + (incoming - damage) + " shared" : "");
 
             reduceHealth(stand, damage);
             hitEffect(stand);
@@ -1538,6 +1558,33 @@ public class JackStarBoss implements Listener {
         Location loc = stand.getLocation().clone().add(0, 1.5, 0);
         stand.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, loc, 10, 0.4, 0.6, 0.4, 0.1);
         stand.getWorld().playSound(loc, Sound.ENTITY_PLAYER_ATTACK_CRIT, 0.9f, 0.9f);
+    }
+
+    /** Damages a player with this boss and remembers the attack so the listener can name it. */
+    private void dealToPlayer(ArmorStand stand, Player target, double amount, String source) {
+        outgoingSource = source;
+        outgoingIntended = amount;
+        try {
+            target.damage(amount, stand);
+        } finally {
+            outgoingSource = null;
+            outgoingIntended = 0.0;
+        }
+    }
+
+    /** Records an incoming hit's split for {@code /msc debug}. */
+    private void recordIncoming(Player player, double incoming, double applied, String note) {
+        plugin.getBossDamageLog().record(player.getUniqueId(), BossDamageSample.taken(BossId.JACK_STAR,
+                "Incoming hit", incoming, applied, note, System.currentTimeMillis()));
+    }
+
+    /** Whether a damage source is one of this boss's armor stands. */
+    private static boolean isJackAttacker(Entity damager) {
+        if (damager instanceof ArmorStand stand) return stand.getScoreboardTags().contains(TAG);
+        if (damager instanceof Projectile projectile && projectile.getShooter() instanceof ArmorStand stand) {
+            return stand.getScoreboardTags().contains(TAG);
+        }
+        return false;
     }
 
     private void reduceHealth(ArmorStand stand, double damage) {

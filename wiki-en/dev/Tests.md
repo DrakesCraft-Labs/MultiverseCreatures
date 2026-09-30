@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 28 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 31 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -81,6 +81,19 @@ Covers the health math in `utils/MscEntityUtils`:
 - **Armour is credited back**: the engine folds `ARMOR`, `MAGIC` (Protection enchantments) and `RESISTANCE` into the event damage, and `unmitigated` undoes those three so a 22-damage cleave survives full netherite. Shield blocking is deliberately *not* credited back, and the result never goes negative.
 - `penetratingDamage` keeps Resistance partially effective: the boss ignores `penetrating-resistance-pierce` (default **0.2**) of the potion's reduction, so Resistance I blocks 16% instead of 20% (a 10 hit deals 8.4), `0.0` leaves the potion fully effective and `1.0` ignores it entirely. Mitigation is 20% per level and caps at 100% (Resistance V).
 - Out-of-range pierce values are clamped, a hit can never grow past the raw damage, and the per-hit cap (`max-damage-dealt`, 15) is applied before Resistance so the potion can never raise it.
+
+### `entities/boss/PenetratingHitTest` — `/msc debug` snapshot
+- The immutable `PenetratingHit` record is the single place the whole pipeline runs (credit armour/Protection/Resistance back, cap, pierce Resistance), so the figures `/msc debug` prints cannot drift from the live handler: a full-netherite 22-damage cleave comes back as 12.6, the cap is applied before Resistance, and a hit absorbed by armour ends at 0 instead of a negative or `NaN`.
+- Resistance is reported as a one-based level (amplifier 2 → level 3), and the snapshotted age is elapsed time clamped at zero, so a backwards clock cannot produce a negative age.
+
+### `commands/DebugReportTest` — `/msc debug` rendering
+- Pins the rendered lines without a sender: a penetrating hit lists its event damage, the credited-back armour/Protection/Resistance, the through-armour total, the cap, the pierce, the Resistance level and the final value; a `DEALT` sample pairs the attack's intended damage with what the player actually took; a `TAKEN` sample spells out the cap or load-balancer split between the hit and what it cost.
+- An empty mechanic note is skipped instead of leaving a dangling separator, and the age line is driven by an injected clock so the output is deterministic.
+
+### `entities/boss/BossDamageLogTest` — `/msc debug` registry
+- Keeps one sample per player, boss and direction: a newer sample replaces the older one in its slot, and `samplesFor` returns them ordered by `BossId` then direction regardless of insert order, so the report cannot reshuffle between runs.
+- Players are tracked independently, `forget` clears one without touching another, and null records are ignored rather than throwing.
+- `forgetBoss` drops one boss's samples for every player in a single sweep and leaves the other bosses intact — the same call the log's own listener runs when a boss stand leaves the world.
 
 ### `entities/NixModelKinematicsTest` — NIX kinematic model (27 parts)
 - The model has **exactly 27** `ItemDisplay` parts (Blockbench export).

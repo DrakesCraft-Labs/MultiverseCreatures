@@ -88,6 +88,7 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.Chagui68.entities.BossInstance.ShieldState;
 import com.Chagui68.entities.BossInstance.DefenseState;
@@ -142,6 +143,12 @@ public class ArmorStandBoss implements Listener, BossHost {
     private double penetratingResistancePierce;
     private boolean penetratingDamageEnabled;
     private boolean penetratingBossDamage;
+    /**
+     * Last penetrating hit served to each player, so {@code /msc debug} can show the breakdown the
+     * damage event produced. Keyed by player; entries live for the rest of the session because one
+     * small record per player is cheaper than tracking logouts, and the command reports its age.
+     */
+    private final Map<UUID, PenetratingHit> lastPenetratingHits = new ConcurrentHashMap<>();
     private int mediumRangeAttackChance;
     private int farRangeAttackChance;
     private int attackWeightHealingCircle;
@@ -2061,14 +2068,18 @@ public class ArmorStandBoss implements Listener, BossHost {
         // The engine already folded armour, Protection and Resistance into the event's damage, so
         // those three are credited back: a penetrating hit must not be shrunk by the very defences
         // it is supposed to pierce. Shields, absorption and everything else stay as they came.
-        double throughArmor = unmitigated(event.getDamage(),
+        PenetratingHit hit = PenetratingHit.of(event.getDamage(),
                 modifierValue(event, EntityDamageEvent.DamageModifier.ARMOR),
                 modifierValue(event, EntityDamageEvent.DamageModifier.MAGIC),
-                modifierValue(event, EntityDamageEvent.DamageModifier.RESISTANCE));
-        double raw = Math.min(throughArmor, maxDamageDealtPerHit);
-        if (raw <= 0) return;
+                modifierValue(event, EntityDamageEvent.DamageModifier.RESISTANCE),
+                resistanceAmplifier(player),
+                penetratingResistancePierce,
+                maxDamageDealtPerHit,
+                System.currentTimeMillis());
+        if (hit.raw() <= 0) return;
         event.setCancelled(true);
-        double dealt = penetratingDamage(raw, resistanceAmplifier(player), penetratingResistancePierce);
+        lastPenetratingHits.put(player.getUniqueId(), hit);
+        double dealt = hit.dealt();
         penetratingBossDamage = true;
         try {
             // OUT_OF_WORLD skips armour and Resistance on its own, so `dealt` already carries the
@@ -2082,6 +2093,16 @@ public class ArmorStandBoss implements Listener, BossHost {
         } finally {
             penetratingBossDamage = false;
         }
+    }
+
+    /** Most recent penetrating hit served to {@code playerId}, or {@code null} when there is none. */
+    public PenetratingHit lastPenetratingHit(UUID playerId) {
+        return lastPenetratingHits.get(playerId);
+    }
+
+    /** Whether penetrating damage is on; {@code /msc debug} notes when it is off. */
+    public boolean isPenetratingDamageEnabled() {
+        return penetratingDamageEnabled;
     }
 
     /** Value of a damage modifier, or {@code 0} when the engine does not apply it to this event. */
@@ -2182,25 +2203,38 @@ public class ArmorStandBoss implements Listener, BossHost {
 
         if (player != null) {
             BossInstance instance = activeBosses.get(stand.getUniqueId());
-            double damage = event.getFinalDamage();
+            double incoming = event.getFinalDamage();
+            double damage = incoming;
+            // Every defence the hit went through, collected so /msc debug can explain the number
+            // instead of just printing where it landed.
+            List<String> steps = new ArrayList<>();
 
             if (instance != null) {
                 if (instance.invulnerable) {
                     damage = 0;
+                    steps.add("invulnerable");
                     stand.getWorld().spawnParticle(Particle.CRIT, player.getLocation().add(0, 1, 0), 5, 0.3, 0.3, 0.3, 0.05);
                     player.sendMessage(ChatColor.GRAY + "The Sentinel is invulnerable!");
                 } else {
                     if (instance.shieldSealActive) {
                         damage *= 0.5;
+                        steps.add("shield seal \u00d70.5");
                         stand.getWorld().playSound(stand.getLocation(), Sound.ITEM_SHIELD_BLOCK, 1.0f, 1.3f);
                         stand.getWorld().spawnParticle(Particle.END_ROD, stand.getLocation().add(0, 6, 0), 8, 3.0, 3.0, 3.0, 0.02);
                     }
-                    if (instance.healingCircleActive) damage *= 0.8;
+                    if (instance.healingCircleActive) {
+                        damage *= 0.8;
+                        steps.add("healing circle \u00d70.8");
+                    }
 
                     switch (instance.activeDefense) {
-                        case STONE_SKIN -> damage *= 0.5;
+                        case STONE_SKIN -> {
+                            damage *= 0.5;
+                            steps.add("stone skin \u00d70.5");
+                        }
                         case REFLECT_BARRIER -> {
                             damage *= 0.7;
+                            steps.add("reflect barrier \u00d70.7");
                             MscEntityUtils.damageBy(stand, player, damage * 0.3);
                             player.getWorld().spawnParticle(Particle.CRIT, player.getLocation().add(0, 1, 0), 8, 0.3, 0.5, 0.3, 0.1);
                         }
@@ -2208,6 +2242,7 @@ public class ArmorStandBoss implements Listener, BossHost {
                             double absorbed = Math.min(instance.absorbShieldHealth, damage);
                             instance.absorbShieldHealth -= absorbed;
                             damage -= absorbed;
+                            if (absorbed > 0) steps.add("absorb shield -" + absorbed);
                             if (damage < 0) damage = 0;
                             stand.getWorld().spawnParticle(Particle.END_ROD, stand.getLocation().add(0, 5, 0), 5, 1, 1, 1, 0.02);
                             if (instance.absorbShieldHealth <= 0) {
@@ -2220,7 +2255,12 @@ public class ArmorStandBoss implements Listener, BossHost {
 
             if (damage > maxDamagePerHit) {
                 damage = maxDamagePerHit;
+                steps.add("cap " + maxDamagePerHit);
             }
+
+            plugin.getBossDamageLog().record(player.getUniqueId(), BossDamageSample.taken(
+                    BossId.SENTINEL, "Incoming hit", incoming, damage, String.join(", ", steps),
+                    System.currentTimeMillis()));
 
             double currentHealth = MscEntityUtils.getVirtualHealth(stand);
             double newHealth = Math.max(0, currentHealth - damage);

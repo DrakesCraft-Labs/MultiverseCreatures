@@ -283,6 +283,13 @@ public class NixBoss implements Listener {
     private double chainRange;
     /** Ceiling on a single hit, so no burst source can one-shot the boss. */
     private double maxDamagePerHit;
+    /**
+     * Source and intended amount of the hit currently being applied, read back by the damage
+     * listener so {@code /msc debug} can name the attack. Set and cleared by {@link #dealToPlayer}
+     * around the synchronous damage call.
+     */
+    private String outgoingSource;
+    private double outgoingIntended;
     private int meleeCooldownTicks;
     private int chainCooldownTicks;
     private int cleaveAnimTicks = 16;
@@ -474,7 +481,7 @@ public class NixBoss implements Listener {
             if (!(e instanceof Player p)) continue;
             if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) continue;
 
-            p.damage(cleaveDamage, stand);
+            dealToPlayer(stand, p, cleaveDamage, "Guillotine Cleave");
             p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 80, 1, false, true));
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1, false, true));
 
@@ -810,18 +817,20 @@ public class NixBoss implements Listener {
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         Entity damaged = event.getEntity();
 
+        // A hit Nix lands on a player: pair the intended damage with what the player actually took.
+        if (damaged instanceof Player victim && isNixAttacker(event.getDamager())) {
+            plugin.getBossDamageLog().record(victim.getUniqueId(), BossDamageSample.dealt(BossId.NIX,
+                    outgoingSource == null ? "Attack" : outgoingSource,
+                    outgoingSource == null ? event.getFinalDamage() : outgoingIntended,
+                    event.getFinalDamage(), System.currentTimeMillis()));
+            return;
+        }
+
         if (damaged instanceof ArmorStand stand && stand.getScoreboardTags().contains(TAG)) {
-            Player player = null;
-            if (event.getDamager() instanceof Player p) {
-                player = p;
-            } else if (event.getDamager() instanceof Projectile projectile
-                    && projectile.getShooter() instanceof Player p) {
-                player = p;
-            }
+            Player player = attackerPlayer(event.getDamager());
             if (player != null) {
                 event.setCancelled(true);
-                double damage = Math.max(1.0, event.getFinalDamage());
-                reduceHealth(stand, damage);
+                recordIncoming(player, stand, Math.max(1.0, event.getFinalDamage()));
                 hitEffect(stand);
             }
             return;
@@ -831,7 +840,13 @@ public class NixBoss implements Listener {
             ArmorStand stand = findOwner(display);
             if (stand != null && !stand.isDead() && stand.isValid()) {
                 event.setCancelled(true);
-                reduceHealth(stand, Math.max(1.0, event.getDamage()));
+                double damage = Math.max(1.0, event.getDamage());
+                Player player = attackerPlayer(event.getDamager());
+                if (player != null) {
+                    recordIncoming(player, stand, damage);
+                } else {
+                    reduceHealth(stand, damage);
+                }
                 hitEffect(stand);
             }
             return;
@@ -869,6 +884,45 @@ public class NixBoss implements Listener {
      */
     static double capIncomingDamage(double damage, double cap) {
         return cap > 0 ? Math.min(damage, cap) : damage;
+    }
+
+    /** Damages a player with this boss and remembers the attack so the listener can name it. */
+    private void dealToPlayer(ArmorStand stand, Player target, double amount, String source) {
+        outgoingSource = source;
+        outgoingIntended = amount;
+        try {
+            target.damage(amount, stand);
+        } finally {
+            outgoingSource = null;
+            outgoingIntended = 0.0;
+        }
+    }
+
+    /** Records the incoming hit's cap for {@code /msc debug}, then applies it as usual. */
+    private void recordIncoming(Player player, ArmorStand stand, double damage) {
+        double applied = capIncomingDamage(damage, maxDamagePerHit);
+        plugin.getBossDamageLog().record(player.getUniqueId(), BossDamageSample.taken(BossId.NIX,
+                "Incoming hit", damage, applied,
+                applied < damage ? "cap " + maxDamagePerHit : "", System.currentTimeMillis()));
+        reduceHealth(stand, damage);
+    }
+
+    /** The player behind a melee or projectile hit, or {@code null} for anything else. */
+    private static Player attackerPlayer(Entity damager) {
+        if (damager instanceof Player p) return p;
+        if (damager instanceof Projectile projectile && projectile.getShooter() instanceof Player p) {
+            return p;
+        }
+        return null;
+    }
+
+    /** Whether a damage source is one of this boss's armor stands. */
+    private static boolean isNixAttacker(Entity damager) {
+        if (damager instanceof ArmorStand stand) return stand.getScoreboardTags().contains(TAG);
+        if (damager instanceof Projectile projectile && projectile.getShooter() instanceof ArmorStand stand) {
+            return stand.getScoreboardTags().contains(TAG);
+        }
+        return false;
     }
 
     private void reduceHealth(ArmorStand stand, double damage) {

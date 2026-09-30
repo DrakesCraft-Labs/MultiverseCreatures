@@ -11,7 +11,7 @@ softdepend: [Slimefun, InfinityExpansion, SlimeTinker, DrakesBosses]
 commands:
   msc:
     description: Main command for MultiverseCreatures
-    usage: /msc <spawn|give|attack|music|seal|dummy|dimtp|cleanstands|kill|reload> - run /msc for help
+    usage: /msc <spawn|give|attack|music|seal|dummy|dimtp|cleanstands|kill|debug|reload> - run /msc for help
     permission: msc.admin
 
 permissions:

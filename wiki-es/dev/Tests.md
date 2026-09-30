@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 28 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 31 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -81,6 +81,19 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - **La armadura se devuelve**: el motor ya ha aplicado `ARMOR`, `MAGIC` (encantamientos de Protección) y `RESISTANCE` al daño del evento, y `unmitigated` deshace esos tres para que un tajo de 22 sobreviva a netherite completo. El bloqueo con escudo *no* se devuelve a propósito y el resultado nunca es negativo.
 - `penetratingDamage` mantiene la Resistencia parcialmente efectiva: el jefe ignora `penetrating-resistance-pierce` (por defecto **0.2**) de la reducción de la poción, así que Resistencia I bloquea el 16% en lugar del 20% (un golpe de 10 quita 8.4), `0.0` deja la poción totalmente efectiva y `1.0` la ignora por completo. La mitigación es del 20% por nivel y se topa al 100% (Resistencia V).
 - Los valores de perforación fuera de rango se recortan, un golpe nunca puede superar el daño bruto y el cap por golpe (`max-damage-dealt`, 15) se aplica antes de la Resistencia, así que la poción nunca puede subirlo.
+
+### `entities/boss/PenetratingHitTest` — Snapshot de `/msc debug`
+- El record inmutable `PenetratingHit` es el único sitio donde se ejecuta el pipeline completo (devolver armadura/Protección/Resistencia, aplicar el cap y perforar la Resistencia), así que las cifras que imprime `/msc debug` no pueden desviarse del manejador real: un tajo de 22 con netherite completo vuelve como 12.6, el cap se aplica antes de la Resistencia y un golpe absorbido por la armadura termina en 0, no en un negativo ni `NaN`.
+- La Resistencia se reporta como nivel de base uno (amplificador 2 → nivel 3) y la edad del snapshot es tiempo transcurrido recortado a cero, así que un reloj hacia atrás no puede producir una edad negativa.
+
+### `commands/DebugReportTest` — Render de `/msc debug`
+- Fija las líneas renderizadas sin sender: un golpe penetrante lista su daño del evento, la armadura/Protección/Resistencia devueltas, el total tras la armadura, el cap, la perforación, el nivel de Resistencia y el valor final; una muestra `DEALT` empareja el daño deseado del ataque con lo que el jugador recibió; una muestra `TAKEN` detalla el cap o el reparto del load balancer entre el golpe y lo que costó.
+- Una nota de mecánica vacía se omite en vez de dejar un separador suelto, y la línea de edad se controla con un reloj inyectado para que la salida sea determinista.
+
+### `entities/boss/BossDamageLogTest` — Registro de `/msc debug`
+- Mantiene una muestra por jugador, jefe y sentido: una muestra nueva sustituye a la anterior en su hueco, y `samplesFor` las devuelve ordenadas por `BossId` y luego por sentido sin importar el orden de inserción, así que el informe no puede reordenarse entre ejecuciones.
+- Los jugadores se siguen por separado, `forget` limpia uno sin tocar otro, y los registros nulos se ignoran en vez de lanzar.
+- `forgetBoss` elimina las muestras de un jefe para todos los jugadores en una sola pasada y deja intactos los otros jefes: es la misma llamada que hace el listener de la propia bitácora cuando el soporte de un jefe sale del mundo.
 
 ### `entities/NixModelKinematicsTest` — Modelo cinemático de NIX (27 partes)
 - El modelo tiene **exactamente 27** partes `ItemDisplay` (export de Blockbench).
