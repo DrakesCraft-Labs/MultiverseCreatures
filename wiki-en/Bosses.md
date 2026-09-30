@@ -165,7 +165,7 @@ A living chess king: an invisible ArmorStand dressed in a 15-piece ItemDisplay s
 
 **Boss bar:** purple "Kinger" bar, always updated with current health.
 
-**Persistence:** tagged `MSC_Kinger`, so it survives plugin reloads and is picked up again on startup — a reload reattaches the suit it already spawned instead of building a second, overlapping body.
+**Persistence:** tagged `MSC_Kinger`, so it survives plugin reloads and is picked up again on startup — a reload reattaches the suit it already spawned instead of building a second, overlapping body, and rebuilds its boss bar.
 
 **Death:** removes all suit displays and broadcasts one of the chess-themed `kinger.death-messages` ("checked by the King", "knocked off the board", "lost the game"...).
 

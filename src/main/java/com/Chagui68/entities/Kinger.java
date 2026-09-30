@@ -33,6 +33,7 @@ import org.bukkit.event.entity.EntityPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.profile.PlayerProfile;
@@ -254,9 +255,16 @@ public class Kinger implements Listener {
         for (World world : Bukkit.getWorlds()) {
             for (ArmorStand stand : world.getEntitiesByClass(ArmorStand.class)) {
                 if (!stand.getScoreboardTags().contains(TAG)) continue;
+                // A boss from a build that never wrote its virtual health would otherwise get a bar
+                // that can never move off empty, because progress comes from that stored number.
+                if (!stand.getPersistentDataContainer().has(MscEntityUtils.KEY_VIRTUAL_MAX_HEALTH,
+                        PersistentDataType.DOUBLE)) {
+                    MscEntityUtils.initVirtualHealth(stand, health);
+                }
                 KingerInstance inst = new KingerInstance(stand);
                 restorePartDisplays(inst);
                 activeKingers.put(stand.getUniqueId(), inst);
+                setupBossBar(inst);
             }
             for (ItemDisplay display : world.getEntitiesByClass(ItemDisplay.class)) {
                 if (!display.getScoreboardTags().contains(PART_TAG)) continue;

@@ -165,7 +165,7 @@ Un rey de ajedrez viviente: un ArmorStand invisible vestido con un traje de 15 p
 
 **Barra de jefe:** barra púrpura "Kinger", siempre actualizada con la salud actual.
 
-**Persistencia:** etiquetado `MSC_Kinger`, por lo que sobrevive a recargas del plugin y se retoma al iniciar — al recargar se vuelven a enganchar las piezas que ya había creado, en vez de construir un segundo cuerpo superpuesto.
+**Persistencia:** etiquetado `MSC_Kinger`, por lo que sobrevive a recargas del plugin y se retoma al iniciar — al recargar se vuelven a enganchar las piezas que ya había creado, en vez de construir un segundo cuerpo superpuesto, y se reconstruye su barra de jefe.
 
 **Muerte:** elimina todos los displays del traje y transmite uno de los `kinger.death-messages` temáticos de ajedrez ("checked by the King", "knocked off the board", "lost the game"...).
 

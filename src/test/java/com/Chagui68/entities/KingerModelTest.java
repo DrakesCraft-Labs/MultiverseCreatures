@@ -303,7 +303,7 @@ class KingerModelTest {
     }
 
     @Test
-    @DisplayName("A piece never lags behind the stand, and a reload reattaches pieces instead of duplicating them")
+    @DisplayName("A piece never lags, and a reload reattaches the suit and its boss bar instead of duplicating them")
     void partDisplaysFollowTheStandExactly() throws IOException {
         String source = Files.readString(Path.of("src", "main", "java",
                 "com", "Chagui68", "entities", "Kinger.java"));
@@ -329,6 +329,10 @@ class KingerModelTest {
                 "the enable path must adopt the pieces of a boss that is already alive");
         assertTrue(source.contains("findPartDisplay("),
                 "syncDisplays must adopt an orphaned piece before spawning a new one");
+        assertTrue(source.contains("setupBossBar(inst)"),
+                "a boss that survived a restart must get its boss bar back, or it fights with none");
+        assertTrue(source.contains("KEY_VIRTUAL_MAX_HEALTH"),
+                "a restored boss must have the virtual health its bar progress is read from");
 
         // The animations run through the joint maths, not through a per-piece transform: that is what
         // keeps a limb rigid.
