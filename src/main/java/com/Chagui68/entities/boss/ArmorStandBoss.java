@@ -2204,62 +2204,35 @@ public class ArmorStandBoss implements Listener, BossHost {
         if (player != null) {
             BossInstance instance = activeBosses.get(stand.getUniqueId());
             double incoming = event.getFinalDamage();
-            double damage = incoming;
-            // Every defence the hit went through, collected so /msc debug can explain the number
-            // instead of just printing where it landed.
-            List<String> steps = new ArrayList<>();
+            // The maths is in SentinelDefense so it can be tested away from the server; this handler
+            // only plays the effects the resolved hit calls for.
+            SentinelDefense.Result hit = SentinelDefense.from(instance, maxDamagePerHit).resolve(incoming);
+            double damage = hit.applied();
 
             if (instance != null) {
                 if (instance.invulnerable) {
-                    damage = 0;
-                    steps.add("invulnerable");
                     stand.getWorld().spawnParticle(Particle.CRIT, player.getLocation().add(0, 1, 0), 5, 0.3, 0.3, 0.3, 0.05);
                     player.sendMessage(ChatColor.GRAY + "The Sentinel is invulnerable!");
                 } else {
                     if (instance.shieldSealActive) {
-                        damage *= 0.5;
-                        steps.add("shield seal \u00d70.5");
                         stand.getWorld().playSound(stand.getLocation(), Sound.ITEM_SHIELD_BLOCK, 1.0f, 1.3f);
                         stand.getWorld().spawnParticle(Particle.END_ROD, stand.getLocation().add(0, 6, 0), 8, 3.0, 3.0, 3.0, 0.02);
                     }
-                    if (instance.healingCircleActive) {
-                        damage *= 0.8;
-                        steps.add("healing circle \u00d70.8");
-                    }
-
-                    switch (instance.activeDefense) {
-                        case STONE_SKIN -> {
-                            damage *= 0.5;
-                            steps.add("stone skin \u00d70.5");
-                        }
-                        case REFLECT_BARRIER -> {
-                            damage *= 0.7;
-                            steps.add("reflect barrier \u00d70.7");
-                            MscEntityUtils.damageBy(stand, player, damage * 0.3);
-                            player.getWorld().spawnParticle(Particle.CRIT, player.getLocation().add(0, 1, 0), 8, 0.3, 0.5, 0.3, 0.1);
-                        }
-                        case ABSORB_SHIELD -> {
-                            double absorbed = Math.min(instance.absorbShieldHealth, damage);
-                            instance.absorbShieldHealth -= absorbed;
-                            damage -= absorbed;
-                            if (absorbed > 0) steps.add("absorb shield -" + absorbed);
-                            if (damage < 0) damage = 0;
-                            stand.getWorld().spawnParticle(Particle.END_ROD, stand.getLocation().add(0, 5, 0), 5, 1, 1, 1, 0.02);
-                            if (instance.absorbShieldHealth <= 0) {
-                                stand.getWorld().playSound(stand.getLocation(), Sound.ITEM_SHIELD_BREAK, 1.5f, 0.8f);
-                            }
+                    if (instance.activeDefense == DefenseState.REFLECT_BARRIER) {
+                        MscEntityUtils.damageBy(stand, player, hit.reflected());
+                        player.getWorld().spawnParticle(Particle.CRIT, player.getLocation().add(0, 1, 0), 8, 0.3, 0.5, 0.3, 0.1);
+                    } else if (instance.activeDefense == DefenseState.ABSORB_SHIELD) {
+                        instance.absorbShieldHealth -= hit.absorbed();
+                        stand.getWorld().spawnParticle(Particle.END_ROD, stand.getLocation().add(0, 5, 0), 5, 1, 1, 1, 0.02);
+                        if (hit.shieldBroken()) {
+                            stand.getWorld().playSound(stand.getLocation(), Sound.ITEM_SHIELD_BREAK, 1.5f, 0.8f);
                         }
                     }
                 }
             }
 
-            if (damage > maxDamagePerHit) {
-                damage = maxDamagePerHit;
-                steps.add("cap " + maxDamagePerHit);
-            }
-
             plugin.getBossDamageLog().record(player.getUniqueId(), BossDamageSample.taken(
-                    BossId.SENTINEL, "Incoming hit", incoming, damage, String.join(", ", steps),
+                    BossId.SENTINEL, "Incoming hit", incoming, damage, String.join(", ", hit.steps()),
                     System.currentTimeMillis()));
 
             double currentHealth = MscEntityUtils.getVirtualHealth(stand);

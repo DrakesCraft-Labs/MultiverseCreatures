@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 31 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 32 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -85,6 +85,11 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 ### `entities/boss/PenetratingHitTest` — Snapshot de `/msc debug`
 - El record inmutable `PenetratingHit` es el único sitio donde se ejecuta el pipeline completo (devolver armadura/Protección/Resistencia, aplicar el cap y perforar la Resistencia), así que las cifras que imprime `/msc debug` no pueden desviarse del manejador real: un tajo de 22 con netherite completo vuelve como 12.6, el cap se aplica antes de la Resistencia y un golpe absorbido por la armadura termina en 0, no en un negativo ni `NaN`.
 - La Resistencia se reporta como nivel de base uno (amplificador 2 → nivel 3) y la edad del snapshot es tiempo transcurrido recortado a cero, así que un reloj hacia atrás no puede producir una edad negativa.
+
+### `entities/boss/SentinelDefenseTest` — Daño entrante del Centinela
+- Fija todo el stack defensivo del jefe, ahora extraído de su manejador de eventos a `SentinelDefense`: sello de escudo ×0.5, círculo de curación ×0.8, piel de piedra ×0.5, barrera reflectante ×0.7, el escudo de absorción gastando su vida y el cap `max-damage-per-hit` aplicado **al final**.
+- Comprueba las trampas que escondía la versión inline: las defensas no pueden subir un golpe por encima del cap (`200 → 40 → cap 30`), un golpe justo en el cap no se marca como capeado, la barrera reflectante devuelve el 30% del golpe *reducido* y el cap no recorta lo que devuelve, y un jefe invulnerable no genera ningún paso de cap.
+- La traza `steps` se comprueba byte a byte porque `/msc debug` la imprime, y un barrido por todas las combinaciones de defensa demuestra que ninguna puede agrandar un golpe ni devolver un valor negativo.
 
 ### `commands/DebugReportTest` — Render de `/msc debug`
 - Fija las líneas renderizadas sin sender: un golpe penetrante lista su daño del evento, la armadura/Protección/Resistencia devueltas, el total tras la armadura, el cap, la perforación, el nivel de Resistencia y el valor final; una muestra `DEALT` empareja el daño deseado del ataque con lo que el jugador recibió; una muestra `TAKEN` detalla el cap o el reparto del load balancer entre el golpe y lo que costó.

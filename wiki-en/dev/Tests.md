@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 31 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 32 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -85,6 +85,11 @@ Covers the health math in `utils/MscEntityUtils`:
 ### `entities/boss/PenetratingHitTest` — `/msc debug` snapshot
 - The immutable `PenetratingHit` record is the single place the whole pipeline runs (credit armour/Protection/Resistance back, cap, pierce Resistance), so the figures `/msc debug` prints cannot drift from the live handler: a full-netherite 22-damage cleave comes back as 12.6, the cap is applied before Resistance, and a hit absorbed by armour ends at 0 instead of a negative or `NaN`.
 - Resistance is reported as a one-based level (amplifier 2 → level 3), and the snapshotted age is elapsed time clamped at zero, so a backwards clock cannot produce a negative age.
+
+### `entities/boss/SentinelDefenseTest` — Sentinel incoming damage
+- Pins the boss's whole defensive stack, now extracted from its event handler into `SentinelDefense`: shield seal ×0.5, healing circle ×0.8, stone skin ×0.5, reflect barrier ×0.7, the absorb shield spending its health, and the `max-damage-per-hit` cap applied **last**.
+- Checks the traps the inline version hid: the defences cannot raise a hit above the cap (`200 → 40 → capped 30`), a hit exactly at the cap is not marked as capped, the reflect barrier returns 30% of the *reduced* hit and the cap does not shrink what it returns, and an invulnerable boss produces no cap step at all.
+- The `steps` trace is asserted byte-for-byte because `/msc debug` prints it, and a sweep over every defence combination proves no defence can enlarge a hit or return a negative value.
 
 ### `commands/DebugReportTest` — `/msc debug` rendering
 - Pins the rendered lines without a sender: a penetrating hit lists its event damage, the credited-back armour/Protection/Resistance, the through-armour total, the cap, the pierce, the Resistance level and the final value; a `DEALT` sample pairs the attack's intended damage with what the player actually took; a `TAKEN` sample spells out the cap or load-balancer split between the hit and what it cost.
