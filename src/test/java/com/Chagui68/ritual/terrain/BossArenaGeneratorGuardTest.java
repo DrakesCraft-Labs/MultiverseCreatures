@@ -1,6 +1,7 @@
 package com.Chagui68.ritual.terrain;
 
 import com.Chagui68.testsupport.ProjectPaths;
+import com.Chagui68.testsupport.SourceText;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
@@ -38,7 +39,7 @@ class BossArenaGeneratorGuardTest {
     @Test
     @DisplayName("The generator never reads the Random the server passes in")
     void generationIgnoresTheServerRandom() {
-        String body = methodBody(ProjectPaths.read(GENERATOR), "public void generateNoise(");
+        String body = SourceText.methodBody(ProjectPaths.read(GENERATOR), "public void generateNoise(");
         assertTrue(body.contains("ArenaShape") || body.contains("generateArea"),
                 "generateNoise should only forward to the area generator: " + body);
         assertFalse(body.contains("random"),
@@ -60,12 +61,12 @@ class BossArenaGeneratorGuardTest {
                 "shouldGenerateStructures", false);
 
         for (Map.Entry<String, Boolean> stage : expected.entrySet()) {
-            String body = methodBody(source, "public boolean " + stage.getKey() + "(");
+            String body = SourceText.methodBody(source, "public boolean " + stage.getKey() + "(");
             assertTrue(body.contains("return " + stage.getValue() + ";"),
                     stage.getKey() + " must return " + stage.getValue() + ", found: " + body);
         }
         assertTrue(source.contains("isParallelCapable"), "the generator is stateless and must say so");
-        assertTrue(methodBody(source, "public boolean isParallelCapable(").contains("return true;"));
+        assertTrue(SourceText.methodBody(source, "public boolean isParallelCapable(").contains("return true;"));
     }
 
     @Test
@@ -73,7 +74,7 @@ class BossArenaGeneratorGuardTest {
     void theSinkKeepsItsBoundsCheck() {
         String source = ProjectPaths.read(GENERATOR);
         for (String method : List.of("public void set(", "public void column(")) {
-            String body = methodBody(source, method);
+            String body = SourceText.methodBody(source, method);
             assertTrue(body.contains("localX < 0") && body.contains("localZ < 0")
                             && body.contains("CHUNK_SIZE"),
                     method + " must reject writes outside the chunk: " + body);
@@ -86,11 +87,11 @@ class BossArenaGeneratorGuardTest {
     @DisplayName("The shape and the noise stay pure: no Bukkit, so a test can run them anywhere")
     void theShapeStaysPure() {
         for (String file : List.of("ArenaShape.java", "ArenaNoise.java")) {
-            assertFalse(codeOnly(ProjectPaths.read(TERRAIN.resolve(file))).contains("org.bukkit"),
+            assertFalse(SourceText.codeOnly(ProjectPaths.read(TERRAIN.resolve(file))).contains("org.bukkit"),
                     file + " uses Bukkit, so it can no longer be reasoned about (or tested) "
                             + "without a server");
         }
-        String sink = codeOnly(ProjectPaths.read(TERRAIN.resolve("TerrainSink.java")));
+        String sink = SourceText.codeOnly(ProjectPaths.read(TERRAIN.resolve("TerrainSink.java")));
         assertFalse(sink.contains("ChunkData"),
                 "the sink interface must stay usable without a chunk, or the terrain tests lose "
                         + "the seam they drive the generator through");
@@ -114,7 +115,7 @@ class BossArenaGeneratorGuardTest {
     void noMutableStaticState() {
         for (Path file : ProjectPaths.javaFiles(TERRAIN)) {
             List<String> offenders = new ArrayList<>();
-            for (String line : codeOnly(ProjectPaths.read(file)).lines().toList()) {
+            for (String line : SourceText.codeOnly(ProjectPaths.read(file)).lines().toList()) {
                 String trimmed = line.trim();
                 if (!trimmed.contains("static")) continue;
                 if (trimmed.contains("(") || trimmed.contains("final")) continue;
@@ -152,7 +153,6 @@ class BossArenaGeneratorGuardTest {
         }
     }
 
-    // ------------------------------------------------------------------ helpers
 
     /**
      * The body of the first method whose signature starts with {@code signature}.
@@ -161,44 +161,4 @@ class BossArenaGeneratorGuardTest {
      * assertions all look for text inside the body, so a body that stopped early would fail them
      * rather than pass silently.
      */
-    /** The source with comments removed, so a javadoc that merely names a type is not a guard hit. */
-    private static String codeOnly(String source) {
-        StringBuilder code = new StringBuilder(source.length());
-        boolean inBlockComment = false;
-        for (String line : source.lines().toList()) {
-            String trimmed = line.trim();
-            if (inBlockComment) {
-                int end = trimmed.indexOf("*/");
-                if (end < 0) continue;
-                inBlockComment = false;
-                line = trimmed.substring(end + 2);
-                trimmed = line.trim();
-            }
-            if (trimmed.startsWith("/*")) {
-                inBlockComment = !trimmed.contains("*/");
-                continue;
-            }
-            int comment = line.indexOf("//");
-            if (comment >= 0) line = line.substring(0, comment);
-            code.append(line).append('\n');
-        }
-        return code.toString();
-    }
-
-    private static String methodBody(String source, String signature) {
-        int start = source.indexOf(signature);
-        assertTrue(start >= 0, "the source no longer declares " + signature);
-        int open = source.indexOf('{', start);
-        assertTrue(open > 0, signature + " has no body");
-        int depth = 0;
-        for (int index = open; index < source.length(); index++) {
-            char character = source.charAt(index);
-            if (character == '{') depth++;
-            if (character == '}') {
-                depth--;
-                if (depth == 0) return source.substring(open + 1, index);
-            }
-        }
-        throw new AssertionError("the body of " + signature + " is not closed");
-    }
 }

@@ -33,6 +33,8 @@ El plugin usa APIs específicas de 1.21 (entidades de display con transformació
 
 Todos los ajustes del plugin viven en `plugins/MultiverseCreatures/config.yml`. El config por defecto viene con valores sensatos; los ajustes más útiles son:
 
+> **Actualizar el plugin.** Tu `config.yml` nunca se sobrescribe. Al arrancar, el plugin lee el archivo que trae el jar, añade las claves que le faltan al tuyo, sella el nuevo `config-version` y lo dice en el log; los valores que editaste se quedan tal cual. En cada arranque se guarda una copia del archivo anterior en `plugins/MultiverseCreatures/backups/`, así que la fusión siempre se puede revertir.
+
 ### Probabilidades de spawn
 
 Cada reemplazo de spawn natural tiene su propia clave de probabilidad:

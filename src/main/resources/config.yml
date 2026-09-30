@@ -1,6 +1,11 @@
 # =============================================================================
 # MultiverseCreatures — Main Configuration
 # =============================================================================
+# Version of this file. A server that updates the plugin keeps its own config.yml and the plugin
+# adds whatever keys are missing on start (values you edited are never touched), stamping the new
+# version here. See MscConfigMigration.CONFIG_VERSION — keep the two in step.
+config-version: 1
+#
 # All paths match the code:
 #   general.*                          -> MultiverseCreatures, MobHandler, MscWorldPolicy
 #   recipes.*                          -> MultiverseCreatures#onEnable

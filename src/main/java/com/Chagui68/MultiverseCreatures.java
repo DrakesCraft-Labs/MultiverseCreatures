@@ -131,6 +131,10 @@ public class MultiverseCreatures extends JavaPlugin {
         com.Chagui68.utils.MscLog.init(getLogger());
         backupConfigFile();
         saveDefaultConfig();
+        // saveDefaultConfig only writes a config when there is none, so an updated server keeps its
+        // old file and every new knob stays invisible. This adds what is missing before anything
+        // reads the config.
+        com.Chagui68.utils.MscConfigMigration.run(this);
 
         if (getConfig().getBoolean("recipes.enabled", true)) {
             if (getConfig().getBoolean("recipes.deferred-registration", true)) {

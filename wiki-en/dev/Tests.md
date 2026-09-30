@@ -9,7 +9,7 @@ This page documents **how plugin changes are tested** and **what each suite veri
 - **Java 21** — same compiler as the main code.
 - **Headless**: no Paper/Purpur server is booted. Bukkit classes that get touched (e.g. `World`) are simulated with `java.lang.reflect.Proxy`, or `Location` objects with a `null` world are used to exercise only the arithmetic.
 - **SnakeYAML** (shipped with `purpur-api`) parses `config.yml` and `plugin.yml` in `ConfigFilesGuardTest`, so an invalid indent fails the suite instead of the server start.
-- **Test support** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`, `testsupport/RecordingTerrain`) is the harness the guards share: it finds the project by walking up from the working directory (a source-reading guard used to read `src/main/java` from wherever Maven was started, which found nothing and passed vacuously), names a file by path segments with one failure mode, reads a limb's second joint out of the export instead of trusting the code that hardcodes it, and records what the terrain generator writes so its chunks can be inspected without a server.
+- **Test support** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`, `testsupport/RecordingTerrain`, `testsupport/SourceText`) is the harness the guards share: it finds the project by walking up from the working directory (a source-reading guard used to read `src/main/java` from wherever Maven was started, which found nothing and passed vacuously), names a file by path segments with one failure mode, reads a limb's second joint out of the export instead of trusting the code that hardcodes it, and records what the terrain generator writes so its chunks can be inspected without a server; and `SourceText` reads a method body or strips comments for the source-reading guards, so the three of them cannot drift apart.
 
 Commands:
 
@@ -283,6 +283,11 @@ Covers the health math in `utils/MscEntityUtils`:
 - The twenty-one catch blocks that used to swallow their exception (`catch (Exception ignored) { }`) now report through `utils/MscLog`; this suite drives it with a capturing `Handler` and asserts the plugin logger is actually asked to print.
 - A tolerated failure is logged at `FINE` and an actionable one at `WARNING`, always with the context, the exception's simple name and its message — a `NumberFormatException` keeps the offending input.
 - An exception without a message is still named (`java.lang.IllegalStateException`), a null one reports `unknown error` instead of throwing, and `init(null)` keeps the previous logger so the startup order cannot silence the plugin.
+
+### `utils/MscConfigMigrationTest` — Config upgrades
+- The merge rule is pure and tested: only paths the file lacks are reported, an operator's edited value is never listed as missing, and a path is dotted all the way through sections while a **list stays a leaf** (indexing into it would invent keys that are not in the file).
+- Reads `config.yml` and asserts it declares the same `config-version` as `MscConfigMigration.CONFIG_VERSION`, so a release cannot ship a file the code disagrees with, nor a version bump that never happened.
+- Reads `MultiverseCreatures.onEnable` and proves the migration runs **after `saveDefaultConfig()` and before the first `getConfig()`**: `saveDefaultConfig()` only writes a config when there is none, so a key added by an update would otherwise stay invisible on every server that already exists.
 
 ### `utils/SilentCatchGuardTest` — No silent catch blocks
 - A source guard: it strips comments, strings and chars (keeping line numbers), finds every `catch` clause under `src/main/java` and **fails if any body is left blank**, with an empty allow-list and a floor of 40 catches so the scanner cannot pass vacuously.
