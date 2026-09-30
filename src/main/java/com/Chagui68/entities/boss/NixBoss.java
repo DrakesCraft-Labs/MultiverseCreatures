@@ -482,7 +482,7 @@ public class NixBoss implements Listener {
         }
 
         // Timers & stride progression
-        float speedMultiplier = inst.bloodlust ? 0.40f : 0.28f;
+        float speedMultiplier = inst.bloodlust ? 0.40f : NixModel.WALK_RATE;
         if (inst.moving) inst.animTicks += speedMultiplier;
         if (inst.cleaveAnim > 0) inst.cleaveAnim--;
         if (inst.chainAnim > 0) inst.chainAnim--;

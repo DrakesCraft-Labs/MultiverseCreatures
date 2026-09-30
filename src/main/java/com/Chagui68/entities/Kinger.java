@@ -374,7 +374,7 @@ public class Kinger implements Listener {
 
         snapToGround(stand);
 
-        if (inst.moving) inst.animTicks += 0.3;
+        if (inst.moving) inst.animTicks += KingerModel.WALK_RATE;
         if (inst.meleeAnim > 0) inst.meleeAnim--;
         if (inst.rangedAnim > 0) inst.rangedAnim--;
         if (inst.meleeCooldown > 0) inst.meleeCooldown--;

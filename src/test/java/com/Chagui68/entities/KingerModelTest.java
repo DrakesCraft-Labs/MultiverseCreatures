@@ -431,6 +431,80 @@ class KingerModelTest {
                 "a broken scale in config.yml must not leave the boss impossible to hit");
     }
 
+    @Test
+    @DisplayName("The walk pose is a rigid skeleton whose knees fold inside the hitbox")
+    void theWalkPoseIsARigidSkeleton() {
+        List<MscLimb.Limb> rest = KingerModel.walkPose(0f);
+        assertEquals(4, rest.size(), "the four limbs are the whole walk skeleton");
+        for (Kinger.LimbGroup group : List.of(Kinger.LimbGroup.ARM_RIGHT, Kinger.LimbGroup.ARM_LEFT,
+                Kinger.LimbGroup.LEG_RIGHT, Kinger.LimbGroup.LEG_LEFT)) {
+            MscLimb.Limb limb = limbAt(rest, KingerModel.pivot(group));
+            assertNotNull(limb, group + " is missing from the walk skeleton");
+            if (KingerModel.secondJoint(group) == null) {
+                assertNull(limb.joint(), group + " has no second joint and must not grow one in the pose");
+            } else {
+                assertEquals(0f, limb.joint().distance(KingerModel.secondJoint(group)), 1.0e-5f,
+                        group + " must fold exactly at the knee the display pieces fold at");
+            }
+        }
+
+        float halfWidth = (float) (0.25 * Kinger.MODEL_HITBOX_SCALE);
+        float height = (float) (1.975 * Kinger.MODEL_HITBOX_SCALE);
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.1f) {
+            List<MscLimb.Limb> posed = KingerModel.walkPose(phase);
+            assertEquals(rest.size(), posed.size());
+            for (int index = 0; index < posed.size(); index++) {
+                MscLimb.Limb limb = posed.get(index);
+                MscLimb.Limb idle = rest.get(index);
+                assertEquals(0f, limb.pivot().distance(idle.pivot()), 1.0e-5f,
+                        "a limb's pivot moved at phase " + phase);
+                if (limb.joint() == null) {
+                    assertEquals(idle.pivot().distance(idle.tip()), limb.pivot().distance(limb.tip()), 1.0e-4f,
+                            "a one-piece arm changed length at phase " + phase);
+                } else {
+                    assertEquals(idle.pivot().distance(idle.joint()), limb.pivot().distance(limb.joint()),
+                            1.0e-4f, "the thigh changed length at phase " + phase);
+                    assertEquals(idle.joint().distance(idle.tip()), limb.joint().distance(limb.tip()),
+                            1.0e-4f, "the shin came away from its knee at phase " + phase);
+                }
+                List<Vector3f> points = (limb.joint() == null)
+                        ? List.of(limb.pivot(), limb.tip())
+                        : List.of(limb.pivot(), limb.joint(), limb.tip());
+                for (Vector3f point : points) {
+                    assertTrue(Math.abs(point.x) < halfWidth,
+                            "the walk left the hitbox sideways at phase " + phase);
+                    assertTrue(Math.abs(point.z) < halfWidth,
+                            "the walk left the hitbox front or back at phase " + phase);
+                    assertTrue(point.y > 0f && point.y < height,
+                            "the walk left the hitbox vertically at phase " + phase);
+                }
+            }
+        }
+
+        // The knee folds on the back half of the step: the shin swings behind the straight leg and
+        // the foot comes closer to the hip, which is the fold the replay exists to show.
+        float backPhase = (float) (-Math.PI / 2);
+        MscLimb.Limb bent = limbAt(KingerModel.walkPose(backPhase), KingerModel.pivot(Kinger.LimbGroup.LEG_RIGHT));
+        MscLimb.Limb straight = limbAt(rest, KingerModel.pivot(Kinger.LimbGroup.LEG_RIGHT));
+        Vector3f straightFoot = MscLimb.swing(straight.tip(), straight.pivot(),
+                new Quaternionf().rotateX(KingerModel.walkSwing(Kinger.LimbGroup.LEG_RIGHT, backPhase)));
+        assertTrue(bent.tip().z > straightFoot.z, "the knee must fold the foot behind the straight leg");
+        assertTrue(bent.tip().distance(bent.pivot()) < straightFoot.distance(straight.pivot()),
+                "the fold must bring the foot closer to the hip, or the knee never bent");
+
+        // And the mob itself steps at the same rate the replay does.
+        String source = ProjectPaths.read(ProjectPaths.source("com", "Chagui68", "entities", "Kinger.java"));
+        assertTrue(source.contains("KingerModel.WALK_RATE"),
+                "the mob's own step and the walk replay must advance at the same rate");
+    }
+
+    private static MscLimb.Limb limbAt(List<MscLimb.Limb> limbs, Vector3f pivot) {
+        for (MscLimb.Limb limb : limbs) {
+            if (limb.pivot().distance(pivot) < 1.0e-5f) return limb;
+        }
+        return null;
+    }
+
     private static float midTorso(char axis) {
         float upper = axis == 'x' ? Kinger.KingerPart.TORSO_UPPER.offset.x : Kinger.KingerPart.TORSO_UPPER.offset.z;
         float lower = axis == 'x' ? Kinger.KingerPart.TORSO_LOWER.offset.x : Kinger.KingerPart.TORSO_LOWER.offset.z;

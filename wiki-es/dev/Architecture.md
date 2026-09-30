@@ -79,7 +79,7 @@ src/main/java/com/Chagui68/
     ├── DisplaySuit.java               El traje de ItemDisplay que visten los jefes
     ├── MscBossBar.java                Contabilidad de barras de jefe: quién ve cuál y cuándo se va
     ├── MscLeftovers.java              Barrido de arranque de props de ataque dejados en el mundo
-    ├── MscGeometryOverlay.java        Dibuja las articulaciones de un modelo en el mundo (/msc debug geometry)
+    ├── MscGeometryOverlay.java        Dibuja las articulaciones de un modelo o reproduce su caminar (/msc debug geometry [walk])
     └── MscText/MscLog/MscWorldPolicy   Texto, fallos reportados, lista de mundos permitidos
 
 src/main/resources/

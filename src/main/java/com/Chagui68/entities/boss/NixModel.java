@@ -5,6 +5,8 @@ import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -58,7 +60,50 @@ public final class NixModel {
     private static final float STRIDE = 0.32f;
     private static final float ARM_SWING = 0.25f;
 
+    /**
+     * How fast a step advances while NIX walks, in radians per tick: the boss's own tick uses it,
+     * and the walk replay of {@code /msc debug geometry} poses the skeleton with it, so the preview
+     * steps at the pace the boss walks. Bloodlust accelerates the boss in combat, not the model.
+     */
+    public static final float WALK_RATE = 0.28f;
+
     private NixModel() {
+    }
+
+    /**
+     * The model at a walk phase: the four limbs as three points each — the joint it hangs from, the
+     * elbow or knee, and the hand or foot — posed with the same maths the display pieces run.
+     *
+     * <p>This is what {@code /msc debug geometry <boss> walk} replays: the skeleton of a walking
+     * NIX, drawn where a boss would stand, without spawning one. The trunk and the head are not
+     * part of it: the audit is how the limbs fold.
+     */
+    public static List<MscLimb.Limb> walkPose(float phase) {
+        List<MscLimb.Limb> limbs = new ArrayList<>(4);
+        for (NixBoss.LimbGroup group : List.of(NixBoss.LimbGroup.ARM_RIGHT, NixBoss.LimbGroup.ARM_LEFT,
+                NixBoss.LimbGroup.LEG_RIGHT, NixBoss.LimbGroup.LEG_LEFT)) {
+            NixBoss.NixPart tip = tipOf(group);
+            Vector3f joint = secondJoint(group);
+            Quaternionf upper = new Quaternionf().rotateX(walkSwing(group, phase));
+            Quaternionf lower = (joint == null) ? new Quaternionf() : lowerRotation(tip, phase);
+            limbs.add(new MscLimb.Limb(pivot(group), joint, baseTranslation(tip)).swung(upper, lower));
+        }
+        return limbs;
+    }
+
+    /** The piece a limb ends on: the one that reaches furthest from its pivot, the hand or the foot. */
+    private static NixBoss.NixPart tipOf(NixBoss.LimbGroup group) {
+        NixBoss.NixPart tip = null;
+        float reach = -1f;
+        for (NixBoss.NixPart part : NixBoss.NixPart.values()) {
+            if (part.group != group) continue;
+            float distance = baseTranslation(part).distance(pivot(group));
+            if (distance > reach) {
+                reach = distance;
+                tip = part;
+            }
+        }
+        return tip;
     }
 
     /** The joint a limb group rotates around. */

@@ -312,6 +312,78 @@ class NixModelTest {
                 "syncDisplays must adopt an orphaned part before spawning a new one");
     }
 
+    @Test
+    @DisplayName("The walk pose is a rigid skeleton whose elbows and knees fold inside the hitbox")
+    void theWalkPoseIsARigidSkeleton() {
+        List<MscLimb.Limb> rest = NixModel.walkPose(0f);
+        assertEquals(4, rest.size(), "the four limbs are the whole walk skeleton");
+        for (NixBoss.LimbGroup group : List.of(NixBoss.LimbGroup.ARM_RIGHT, NixBoss.LimbGroup.ARM_LEFT,
+                NixBoss.LimbGroup.LEG_RIGHT, NixBoss.LimbGroup.LEG_LEFT)) {
+            MscLimb.Limb limb = limbAt(rest, NixModel.pivot(group));
+            assertNotNull(limb, group + " is missing from the walk skeleton");
+            assertEquals(0f, limb.joint().distance(NixModel.secondJoint(group)), 1.0e-5f,
+                    group + " must fold exactly at the joint the display pieces fold at");
+        }
+
+        float halfWidth = 0.25f * (float) NixBoss.MODEL_HITBOX_SCALE;
+        float height = 1.975f * (float) NixBoss.MODEL_HITBOX_SCALE;
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.1f) {
+            List<MscLimb.Limb> posed = NixModel.walkPose(phase);
+            assertEquals(rest.size(), posed.size());
+            for (int index = 0; index < posed.size(); index++) {
+                MscLimb.Limb limb = posed.get(index);
+                MscLimb.Limb idle = rest.get(index);
+                assertEquals(0f, limb.pivot().distance(idle.pivot()), 1.0e-5f,
+                        "a limb's pivot moved at phase " + phase);
+                assertEquals(idle.pivot().distance(idle.joint()), limb.pivot().distance(limb.joint()),
+                        1.0e-4f, "the upper segment changed length at phase " + phase);
+                assertEquals(idle.joint().distance(idle.tip()), limb.joint().distance(limb.tip()),
+                        1.0e-4f, "the lower segment came away from its joint at phase " + phase);
+                for (Vector3f point : List.of(limb.pivot(), limb.joint(), limb.tip())) {
+                    assertTrue(Math.abs(point.x) < halfWidth,
+                            "the walk left the hitbox sideways at phase " + phase);
+                    assertTrue(Math.abs(point.z) < halfWidth,
+                            "the walk left the hitbox front or back at phase " + phase);
+                    assertTrue(point.y > 0f && point.y < height,
+                            "the walk left the hitbox vertically at phase " + phase);
+                }
+            }
+        }
+
+        // The knee folds on the back half of the step and the elbow on the forward half, each
+        // bringing the end closer to the joint it hangs from.
+        float backPhase = (float) (-Math.PI / 2);
+        MscLimb.Limb bentLeg = limbAt(NixModel.walkPose(backPhase), NixModel.pivot(NixBoss.LimbGroup.LEG_RIGHT));
+        MscLimb.Limb straightLeg = limbAt(rest, NixModel.pivot(NixBoss.LimbGroup.LEG_RIGHT));
+        Vector3f straightFoot = MscLimb.swing(straightLeg.tip(), straightLeg.pivot(),
+                new Quaternionf().rotateX(NixModel.walkSwing(NixBoss.LimbGroup.LEG_RIGHT, backPhase)));
+        assertTrue(bentLeg.tip().z > straightFoot.z, "the knee must fold the foot behind the straight leg");
+        assertTrue(bentLeg.tip().distance(bentLeg.pivot()) < straightFoot.distance(straightLeg.pivot()),
+                "the fold must bring the foot closer to the hip, or the knee never bent");
+
+        float forwardPhase = (float) (Math.PI / 2);
+        MscLimb.Limb bentArm = limbAt(NixModel.walkPose(forwardPhase), NixModel.pivot(NixBoss.LimbGroup.ARM_LEFT));
+        MscLimb.Limb straightArm = limbAt(rest, NixModel.pivot(NixBoss.LimbGroup.ARM_LEFT));
+        Vector3f straightHand = MscLimb.swing(straightArm.tip(), straightArm.pivot(),
+                new Quaternionf().rotateX(NixModel.walkSwing(NixBoss.LimbGroup.ARM_LEFT, forwardPhase)));
+        assertTrue(bentArm.tip().z < straightHand.z, "the elbow must fold the hand in front of the straight arm");
+        assertTrue(bentArm.tip().distance(bentArm.pivot()) < straightHand.distance(straightArm.pivot()),
+                "the fold must bring the hand closer to the shoulder, or the elbow never bent");
+
+        // And the boss itself steps at the same rate the replay does.
+        String source = ProjectPaths.read(
+                ProjectPaths.source("com", "Chagui68", "entities", "boss", "NixBoss.java"));
+        assertTrue(source.contains("NixModel.WALK_RATE"),
+                "the boss's own step and the walk replay must advance at the same rate");
+    }
+
+    private static MscLimb.Limb limbAt(List<MscLimb.Limb> limbs, Vector3f pivot) {
+        for (MscLimb.Limb limb : limbs) {
+            if (limb.pivot().distance(pivot) < 1.0e-5f) return limb;
+        }
+        return null;
+    }
+
     private static float baseY(NixBoss.NixPart part) {
         return NixModel.baseTranslation(part).y;
     }

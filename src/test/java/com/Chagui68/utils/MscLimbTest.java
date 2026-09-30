@@ -78,6 +78,32 @@ class MscLimbTest {
     }
 
     @Test
+    @DisplayName("Posing a limb keeps it rigid, and folding it brings the hand or foot closer")
+    void posingALimbKeepsItRigid() {
+        MscLimb.Limb leg = new MscLimb.Limb(new Vector3f(0.09f, 0.9f, 0f), new Vector3f(0.09f, 0.45f, 0f),
+                new Vector3f(0.09f, 0.2f, 0f));
+        Quaternionf swing = new Quaternionf().rotateX(-0.3f);
+        MscLimb.Limb posed = leg.swung(swing, MscLimb.knee(-0.3f));
+
+        assertEquals(0f, posed.pivot().distance(leg.pivot()), EPS, "the joint the limb hangs from never moves");
+        assertEquals(leg.pivot().distance(leg.joint()), posed.pivot().distance(posed.joint()), EPS,
+                "the thigh changed length while posing");
+        assertEquals(leg.joint().distance(leg.tip()), posed.joint().distance(posed.tip()), EPS,
+                "the shin came away from the knee while posing");
+        assertTrue(posed.tip().z > leg.tip().z, "a knee folds the foot behind the leg");
+        assertTrue(posed.tip().distance(posed.pivot()) < leg.tip().distance(leg.pivot()),
+                "a bent leg must reach less far than a straight one, or nothing folded");
+
+        // A limb exported in one piece has no second joint: it swings rigid, tip and all.
+        MscLimb.Limb arm = new MscLimb.Limb(new Vector3f(0.07f, 1.63f, 0f), null,
+                new Vector3f(0.07f, 1.51f, -0.16f));
+        MscLimb.Limb swungArm = arm.swung(new Quaternionf().rotateX(0.35f), new Quaternionf());
+        assertNull(swungArm.joint(), "a one-piece limb must not grow a joint when posed");
+        assertEquals(arm.pivot().distance(arm.tip()), swungArm.pivot().distance(swungArm.tip()), EPS);
+        assertTrue(swungArm.tip().z < arm.tip().z, "a forward swing carries the arm forward");
+    }
+
+    @Test
     @DisplayName("A knee folds on the back half of the swing and an elbow on the forward half")
     void theJointsOnlyBendOneWay() {
         assertRotation(0f, MscLimb.knee(0f), "a leg at the end of its step is straight");

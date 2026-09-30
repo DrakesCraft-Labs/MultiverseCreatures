@@ -1,6 +1,7 @@
 package com.Chagui68.entities.boss;
 
 import com.Chagui68.testsupport.LimbGeometry;
+import com.Chagui68.testsupport.ProjectPaths;
 import com.Chagui68.utils.MscLimb;
 import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
@@ -256,6 +257,87 @@ class JackModelTest {
         assertTrue(headTop < height, "the head top must be inside the scaled hitbox: " + headTop);
         assertTrue(headTop > 1.975f,
                 "the scaled stand is pointless unless a vanilla box would have missed the head: " + headTop);
+    }
+
+    @Test
+    @DisplayName("The walk pose is a rigid skeleton whose elbows and knees fold over the legs' hitbox")
+    void theWalkPoseIsARigidSkeleton() {
+        List<MscLimb.Limb> rest = JackModel.walkPose(0f);
+        assertEquals(4, rest.size(), "the four limbs are the whole walk skeleton");
+        for (JackStarBoss.LimbGroup group : List.of(JackStarBoss.LimbGroup.ARM_RIGHT, JackStarBoss.LimbGroup.ARM_LEFT,
+                JackStarBoss.LimbGroup.LEG_RIGHT, JackStarBoss.LimbGroup.LEG_LEFT)) {
+            MscLimb.Limb limb = limbAt(rest, JackModel.pivot(group));
+            assertNotNull(limb, group + " is missing from the walk skeleton");
+            assertEquals(0f, limb.joint().distance(JackModel.secondJoint(group)), 1.0e-5f,
+                    group + " must fold exactly at the joint the display pieces fold at");
+        }
+
+        float halfWidth = 0.25f * (float) JackStarBoss.MODEL_HITBOX_SCALE;
+        float height = 1.975f * (float) JackStarBoss.MODEL_HITBOX_SCALE;
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.1f) {
+            List<MscLimb.Limb> posed = JackModel.walkPose(phase);
+            assertEquals(rest.size(), posed.size());
+            for (int index = 0; index < posed.size(); index++) {
+                MscLimb.Limb limb = posed.get(index);
+                MscLimb.Limb idle = rest.get(index);
+                assertEquals(0f, limb.pivot().distance(idle.pivot()), 1.0e-5f,
+                        "a limb's pivot moved at phase " + phase);
+                assertEquals(idle.pivot().distance(idle.joint()), limb.pivot().distance(limb.joint()),
+                        1.0e-4f, "the upper segment changed length at phase " + phase);
+                assertEquals(idle.joint().distance(idle.tip()), limb.joint().distance(limb.tip()),
+                        1.0e-4f, "the lower segment came away from its joint at phase " + phase);
+
+                // The arms sit outside the box by design, as the hitbox test above says; the walk is
+                // judged where the box promises to cover it, on the legs.
+                if (!isLeg(limb)) continue;
+                for (Vector3f point : List.of(limb.pivot(), limb.joint(), limb.tip())) {
+                    assertTrue(Math.abs(point.x) < halfWidth,
+                            "the walk left the hitbox sideways at phase " + phase);
+                    assertTrue(Math.abs(point.z) < halfWidth,
+                            "the walk left the hitbox front or back at phase " + phase);
+                    assertTrue(point.y > 0f && point.y < height,
+                            "the walk left the hitbox vertically at phase " + phase);
+                }
+            }
+        }
+
+        // The knee folds on the back half of the step and the elbow on the forward half, each
+        // bringing the end closer to the joint it hangs from.
+        float backPhase = (float) (-Math.PI / 2);
+        MscLimb.Limb bentLeg = limbAt(JackModel.walkPose(backPhase), JackModel.pivot(JackStarBoss.LimbGroup.LEG_RIGHT));
+        MscLimb.Limb straightLeg = limbAt(rest, JackModel.pivot(JackStarBoss.LimbGroup.LEG_RIGHT));
+        Vector3f straightFoot = MscLimb.swing(straightLeg.tip(), straightLeg.pivot(),
+                new Quaternionf().rotateX(JackModel.walkSwing(JackStarBoss.LimbGroup.LEG_RIGHT, backPhase)));
+        assertTrue(bentLeg.tip().z > straightFoot.z, "the knee must fold the foot behind the straight leg");
+        assertTrue(bentLeg.tip().distance(bentLeg.pivot()) < straightFoot.distance(straightLeg.pivot()),
+                "the fold must bring the foot closer to the hip, or the knee never bent");
+
+        float forwardPhase = (float) (Math.PI / 2);
+        MscLimb.Limb bentArm = limbAt(JackModel.walkPose(forwardPhase), JackModel.pivot(JackStarBoss.LimbGroup.ARM_LEFT));
+        MscLimb.Limb straightArm = limbAt(rest, JackModel.pivot(JackStarBoss.LimbGroup.ARM_LEFT));
+        Vector3f straightHand = MscLimb.swing(straightArm.tip(), straightArm.pivot(),
+                new Quaternionf().rotateX(JackModel.walkSwing(JackStarBoss.LimbGroup.ARM_LEFT, forwardPhase)));
+        assertTrue(bentArm.tip().z < straightHand.z, "the elbow must fold the hand in front of the straight arm");
+        assertTrue(bentArm.tip().distance(bentArm.pivot()) < straightHand.distance(straightArm.pivot()),
+                "the fold must bring the hand closer to the shoulder, or the elbow never bent");
+
+        // And the boss itself steps at the same rate the replay does.
+        String source = ProjectPaths.read(
+                ProjectPaths.source("com", "Chagui68", "entities", "boss", "JackStarBoss.java"));
+        assertTrue(source.contains("JackModel.WALK_RATE"),
+                "the boss's own step and the walk replay must advance at the same rate");
+    }
+
+    private static boolean isLeg(MscLimb.Limb limb) {
+        return limb.pivot().distance(JackModel.pivot(JackStarBoss.LimbGroup.LEG_RIGHT)) < 1.0e-5f
+                || limb.pivot().distance(JackModel.pivot(JackStarBoss.LimbGroup.LEG_LEFT)) < 1.0e-5f;
+    }
+
+    private static MscLimb.Limb limbAt(List<MscLimb.Limb> limbs, Vector3f pivot) {
+        for (MscLimb.Limb limb : limbs) {
+            if (limb.pivot().distance(pivot) < 1.0e-5f) return limb;
+        }
+        return null;
     }
 
     private static float baseY(JackStarBoss.JackPart part) {

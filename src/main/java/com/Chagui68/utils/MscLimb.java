@@ -31,6 +31,27 @@ public final class MscLimb {
     }
 
     /**
+     * One limb of a walking skeleton, in model space: the joint it hangs from, the joint below it —
+     * {@code null} when the export gave the limb a single segment — and the piece that reaches
+     * furthest, the hand or the foot.
+     *
+     * <p>{@link #swung} poses the limb with the same two rotations a display piece carries, so a
+     * skeleton built from these points moves exactly where the suit does. That is what lets the
+     * geometry overlay replay a walk without a boss: these are the model's own points, not a
+     * screenshot of one.
+     */
+    public record Limb(Vector3f pivot, Vector3f joint, Vector3f tip) {
+
+        /** The limb after a step: the parent joint swings it and the second joint folds the end. */
+        public Limb swung(Quaternionf upper, Quaternionf lower) {
+            if (joint == null) {
+                return new Limb(pivot, null, swing(tip, pivot, upper));
+            }
+            return new Limb(pivot, swing(joint, pivot, upper), swingAndFold(tip, pivot, joint, upper, lower));
+        }
+    }
+
+    /**
      * The joint between two stacked export segments: halfway between their centres.
      *
      * <p>The two segments are stacked on one axis in the export and their centres sit on either side

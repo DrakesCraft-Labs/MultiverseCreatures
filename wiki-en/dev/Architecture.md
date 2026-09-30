@@ -79,7 +79,7 @@ src/main/java/com/Chagui68/
     ├── DisplaySuit.java               The ItemDisplay suit the dressed bosses wear
     ├── MscBossBar.java                Boss-bar bookkeeping: who sees which bar, and when it goes
     ├── MscLeftovers.java               Startup sweep of attack props left in the world
-    ├── MscGeometryOverlay.java        Draws a model's joints in the world (/msc debug geometry)
+    ├── MscGeometryOverlay.java        Draws a model's joints, or replays its walk (/msc debug geometry [walk])
     └── MscText/MscLog/MscWorldPolicy   Text helpers, reported failures, world allowlist
 
 src/main/resources/

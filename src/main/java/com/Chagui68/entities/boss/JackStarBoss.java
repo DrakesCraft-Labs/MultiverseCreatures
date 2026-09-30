@@ -512,7 +512,7 @@ public class JackStarBoss implements Listener {
         if (inst.minionCooldown > 0) inst.minionCooldown--;
         if (inst.buildCooldown > 0) inst.buildCooldown--;
 
-        inst.animTicks += 0.18f;
+        inst.animTicks += JackModel.WALK_RATE;
         inst.tickCount++;
 
         // Sync visual model position

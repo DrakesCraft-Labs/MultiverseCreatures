@@ -31,6 +31,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BoundingBox;
+import org.bukkit.util.Vector;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -76,6 +77,12 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
 
     /** What {@code /msc debug} can draw instead of reporting damage. */
     private static final List<String> DEBUG_ACTIONS = List.of("geometry");
+
+    /** What {@code /msc debug geometry <boss>} accepts after the boss. */
+    private static final List<String> GEOMETRY_MODES = List.of("walk");
+
+    /** How far in front of the player a walk replay draws its rig: a step back leaves it in view. */
+    private static final double WALK_PREVIEW_DISTANCE = 2.5;
 
     private static final List<String> GEOMETRY_TARGETS = List.of("kinger", "nix", "jack", "sentinel");
 
@@ -540,8 +547,12 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
 
     // ------------------------------------------------------------------ debug
 
-    /** One boss the overlay knows how to draw: a tag to find it by and the joints it swings around. */
-    private record GeometryTarget(String name, String tag, List<Vector3f> joints) {
+    /**
+     * One boss the overlay knows how to draw: a tag to find it by, the joints it swings around and,
+     * for the three that walk, the rig their walk cycle is replayed with.
+     */
+    private record GeometryTarget(String name, String tag, List<Vector3f> joints,
+                                  MscGeometryOverlay.WalkRig walk) {
     }
 
     private static List<GeometryTarget> geometryTargets() {
@@ -550,36 +561,61 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                         KingerModel.PIVOT_SHOULDER_RIGHT, KingerModel.PIVOT_SHOULDER_LEFT,
                         KingerModel.PIVOT_HIP_RIGHT, KingerModel.PIVOT_HIP_LEFT,
                         KingerModel.PIVOT_KNEE_RIGHT, KingerModel.PIVOT_KNEE_LEFT,
-                        KingerModel.PIVOT_NECK, KingerModel.PIVOT_TORSO)),
+                        KingerModel.PIVOT_NECK, KingerModel.PIVOT_TORSO),
+                        new MscGeometryOverlay.WalkRig(Kinger.MODEL_HITBOX_SCALE, KingerModel.WALK_RATE,
+                                KingerModel::walkPose)),
                 new GeometryTarget("nix", NixBoss.TAG, List.of(
                         NixModel.PIVOT_SHOULDER_RIGHT, NixModel.PIVOT_SHOULDER_LEFT,
                         NixModel.PIVOT_HIP_RIGHT, NixModel.PIVOT_HIP_LEFT,
                         NixModel.PIVOT_ELBOW_RIGHT, NixModel.PIVOT_ELBOW_LEFT,
                         NixModel.PIVOT_KNEE_RIGHT, NixModel.PIVOT_KNEE_LEFT,
-                        NixModel.PIVOT_NECK, NixModel.PIVOT_TORSO)),
+                        NixModel.PIVOT_NECK, NixModel.PIVOT_TORSO),
+                        new MscGeometryOverlay.WalkRig(NixBoss.MODEL_HITBOX_SCALE, NixModel.WALK_RATE,
+                                NixModel::walkPose)),
                 new GeometryTarget("jack", JackStarBoss.TAG, List.of(
                         JackModel.PIVOT_SHOULDER_RIGHT, JackModel.PIVOT_SHOULDER_LEFT,
                         JackModel.PIVOT_HIP_RIGHT, JackModel.PIVOT_HIP_LEFT,
                         JackModel.PIVOT_ELBOW_RIGHT, JackModel.PIVOT_ELBOW_LEFT,
                         JackModel.PIVOT_KNEE_RIGHT, JackModel.PIVOT_KNEE_LEFT,
-                        JackModel.PIVOT_NECK, JackModel.PIVOT_TORSO)),
-                // The Sentinel wears its armour on the stand itself, so it has no joints of its own.
-                new GeometryTarget("sentinel", ArmorStandBoss.TAG, List.of()));
+                        JackModel.PIVOT_NECK, JackModel.PIVOT_TORSO),
+                        new MscGeometryOverlay.WalkRig(JackStarBoss.MODEL_HITBOX_SCALE, JackModel.WALK_RATE,
+                                JackModel::walkPose)),
+                // The Sentinel wears its armour on the stand itself, so it has no joints of its own —
+                // and nothing to walk with either.
+                new GeometryTarget("sentinel", ArmorStandBoss.TAG, List.of(), null));
     }
 
     /**
-     * Draws a boss's hitbox and limb joints in the world for a few seconds.
+     * Draws a boss's hitbox and limb joints in the world for a few seconds — or, with a trailing
+     * {@code walk}, replays a model's walk cycle on a rig of its own.
      *
      * <p>This is the audit made visible: every visible piece has to sit inside the red box, and every
      * limb has to hang from one of the cyan dots. It exists because the alternative was a throwaway
      * unit test that printed the numbers and had to be deleted afterwards.
      */
-    private void handleGeometry(CommandSender sender, String requested) {
+    private void handleGeometry(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(RED + "Geometry is drawn around a boss, so run it in game.");
             return;
         }
+        // A trailing "walk" asks for the walk replay instead of the drawing that follows a live boss;
+        // anything else is the boss name. The loop reads both orders, so /msc debug geometry walk
+        // kinger needs no second form.
+        boolean walk = false;
+        String requested = null;
+        for (int index = 2; index < args.length; index++) {
+            if (args[index].equalsIgnoreCase("walk")) {
+                walk = true;
+            } else if (requested == null) {
+                requested = args[index];
+            }
+        }
         String kind = (requested == null) ? "" : requested.toLowerCase(Locale.ROOT);
+
+        if (walk) {
+            replayWalk(player, kind);
+            return;
+        }
 
         ArmorStand stand = null;
         GeometryTarget found = null;
@@ -612,6 +648,74 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
+     * Replays a model's walk cycle on a rig in front of the player, so the knee and elbow folding can
+     * be judged on demand: the legs and arms are drawn posed at every step of the cycle, the same
+     * maths and the same pace the boss walks at, and no boss has to be spawned or provoked into
+     * walking.
+     */
+    private void replayWalk(Player player, String kind) {
+        GeometryTarget target = null;
+        if (!kind.isEmpty()) {
+            for (GeometryTarget candidate : geometryTargets()) {
+                if (candidate.name().equals(kind)) {
+                    target = candidate;
+                    break;
+                }
+            }
+        }
+        if (target != null && target.walk() == null) {
+            player.sendMessage(RED + "The Sentinel wears its armour on the stand itself: there is no "
+                    + "walk to replay.");
+            return;
+        }
+        if (target == null) {
+            player.sendMessage(RED + "Name a boss that walks: /msc debug geometry <kinger|nix|jack> walk.");
+            return;
+        }
+
+        Location anchor = walkPreviewAnchor(player);
+        MscGeometryOverlay.showWalk(plugin, anchor, target.walk(), MscGeometryOverlay.DEFAULT_TICKS);
+        player.sendMessage(GREEN + "Replaying " + target.name() + "'s walk in front of you for "
+                + (MscGeometryOverlay.DEFAULT_TICKS / 20) + " s: hitbox (red), joints (cyan), bones (blue), "
+                + "hands and feet (green). Nothing was spawned.");
+    }
+
+    /**
+     * Where a walk replay stands: a couple of blocks in front of the player, on the ground and facing
+     * them, so the folding is watched from the front instead of from inside the skeleton.
+     */
+    private Location walkPreviewAnchor(Player player) {
+        Location anchor = player.getLocation().clone();
+        Vector forward = anchor.getDirection();
+        forward.setY(0);
+        if (forward.lengthSquared() > 0.01) {
+            anchor.add(forward.normalize().multiply(WALK_PREVIEW_DISTANCE));
+        }
+        anchor.setY(groundLevel(anchor));
+        // A player looking straight up or down has no horizontal heading to place the rig by: leave the
+        // yaw they had rather than hand setDirection a zero vector, which throws.
+        Vector toPlayer = player.getLocation().toVector().subtract(anchor.toVector()).setY(0);
+        if (toPlayer.lengthSquared() > 0.01) {
+            anchor.setDirection(toPlayer);
+        }
+        anchor.setPitch(0);
+        return anchor;
+    }
+
+    /** The first standable ground below an anchor, or its own height when there is none. */
+    private double groundLevel(Location anchor) {
+        World world = anchor.getWorld();
+        if (world == null) return anchor.getY();
+        int floor = Math.max(world.getMinHeight(), anchor.getBlockY() - 6);
+        for (int y = anchor.getBlockY() + 1; y >= floor; y--) {
+            if (world.getBlockAt(anchor.getBlockX(), y, anchor.getBlockZ()).getType().isSolid()) {
+                return y + 1.0;
+            }
+        }
+        return anchor.getY();
+    }
+
+    /**
      * Prints the bosses' last damage samples for a player, so an admin can see why the numbers came
      * out the way they did: what each boss dealt to them and what it took back. The target defaults
      * to the player the executor is looking at; a name can be passed explicitly, which is also the
@@ -624,7 +728,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (args.length > 1 && args[1].equalsIgnoreCase("geometry")) {
-            handleGeometry(sender, args.length > 2 ? args[2] : null);
+            handleGeometry(sender, args);
             return;
         }
 
@@ -762,9 +866,15 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             return completions;
         }
 
-        if (args.length == 4 && subCommand.equals("give")) {
-            addMatching(completions, GIVE_TARGETS, args[3]);
-            addMatchingPlayers(completions, args[3]);
+        if (args.length == 4) {
+            if (subCommand.equals("give")) {
+                addMatching(completions, GIVE_TARGETS, args[3]);
+                addMatchingPlayers(completions, args[3]);
+            } else if (subCommand.equals("debug") && args[1].equalsIgnoreCase("geometry")
+                    && !args[2].equalsIgnoreCase("sentinel")) {
+                // Only the three dressed models have limbs to walk: the Sentinel is the stand itself.
+                addMatching(completions, GEOMETRY_MODES, args[3]);
+            }
         }
 
         return completions;

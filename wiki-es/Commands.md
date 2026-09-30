@@ -14,7 +14,7 @@ Todos los comandos usan la raíz **`/msc`**. **Permiso:** `msc.admin` (OP del se
 /msc cleanstands [mundo]       Elimina todos los armor stands relacionados con MSC
 /msc kill [tipo|all] [radio]   Purga criaturas de MSC de forma segura
 /msc debug [jugador]           Desglosa el daño de cada jefe hacia y desde un jugador
-/msc debug geometry [jefe]     Dibuja la hitbox real de un jefe y sus articulaciones en el mundo
+/msc debug geometry [jefe]     Dibuja la hitbox y las articulaciones de un jefe, o reproduce su caminar
 /msc reload                    Recarga config.yml, fusiona los defaults nuevos y sincroniza entidades y jefes
 ```
 
@@ -271,7 +271,7 @@ Las secciones sin datos se omiten; si aún no te ha tocado ningún jefe el coman
 
 ---
 
-## /msc debug geometry [kinger|nix|jack|sentinel]
+## /msc debug geometry [kinger|nix|jack|sentinel] [walk]
 
 Dibuja en el mundo la **hitbox real** de un jefe y las **articulaciones** sobre las que giran sus extremidades durante diez segundos, siguiéndolo mientras se mueve. Apunta al jefe de ese tipo más cercano en 32 bloques (omite el nombre para cualquier jefe vestido); la geometría se dibuja con partículas, así que no aparece ni queda nada en el mundo.
 
@@ -280,8 +280,11 @@ Dibuja en el mundo la **hitbox real** de un jefe y las **articulaciones** sobre 
 
 El Centinela no tiene articulaciones propias (viste la armadura sobre el stand), así que solo dibuja la caja. Es la versión en juego de los tests de modelo: existe para revisar un modelo junto al jefe en vez de con un test temporal.
 
+Añade **`walk`** (p. ej. `/msc debug geometry kinger walk`) para reproducir el **ciclo de caminar** de un modelo en vez de dibujar un jefe vivo: la misma hitbox roja y el esqueleto de las extremidades —pivotes y articulaciones en cian, huesos en azul, manos y pies en verde— caminando en el sitio sobre un rig a dos bloques y medio delante de ti, al ritmo al que camina el propio jefe. No se invoca ni se provoca a ningún jefe, así que el plegado de rodillas y codos se juzga por sí solo.
+
 ```
 Drawing kinger for 10 s: hitbox 0.50 x 1.98 x 0.50 blocks (red), 8 joints (cyan).
+Replaying kinger's walk in front of you for 10 s: hitbox (red), joints (cyan), bones (blue), hands and feet (green). Nothing was spawned.
 ```
 
 ---

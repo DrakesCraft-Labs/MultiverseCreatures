@@ -14,7 +14,7 @@ All commands use the **`/msc`** root. **Permission:** `msc.admin` (server OP by 
 /msc cleanstands [world]       Remove all MSC-related armor stands (optionally by world)
 /msc kill [type|all] [radius]  Safely kill/purge MSC custom creatures
 /msc debug [player]            Break down each boss's damage to and from a player
-/msc debug geometry [boss]     Draw a boss's real hitbox and its limb joints in the world
+/msc debug geometry [boss]     Draw a boss's hitbox and joints, or replay its walk
 /msc reload                    Reload config.yml, merge new defaults and sync entities and bosses
 ```
 
@@ -271,7 +271,7 @@ Sections with nothing recorded are skipped; if no boss has touched the player ye
 
 ---
 
-## /msc debug geometry [kinger|nix|jack|sentinel]
+## /msc debug geometry [kinger|nix|jack|sentinel] [walk]
 
 Draws a boss's **real hitbox** and the **joints its limbs swing around** in the world for ten seconds, following it as it moves. It targets the nearest boss of that kind within 32 blocks (omit the name for any dressed boss); the geometry is drawn with particles, so nothing is spawned and nothing is left behind.
 
@@ -280,8 +280,11 @@ Draws a boss's **real hitbox** and the **joints its limbs swing around** in the 
 
 The Sentinel has no joints of its own (it wears its armour on the stand), so it only draws the box. This is the in-game counterpart of the model tests: it exists so a model can be checked next to the boss instead of through a throwaway unit test.
 
+Append **`walk`** (e.g. `/msc debug geometry kinger walk`) to replay a model's **walk cycle** instead of drawing a live boss: the same red hitbox, plus the limb skeleton — cyan pivots and joints, blue bones, green hands and feet — stepping in place on a rig two and a half blocks in front of you, at the pace the boss itself walks. No boss is spawned or provoked, so the knee and elbow folding can be judged on its own.
+
 ```
 Drawing kinger for 10 s: hitbox 0.50 x 1.98 x 0.50 blocks (red), 8 joints (cyan).
+Replaying kinger's walk in front of you for 10 s: hitbox (red), joints (cyan), bones (blue), hands and feet (green). Nothing was spawned.
 ```
 
 ---

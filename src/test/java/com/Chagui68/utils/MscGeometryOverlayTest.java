@@ -1,8 +1,11 @@
 package com.Chagui68.utils;
 
+import com.Chagui68.entities.Kinger;
 import com.Chagui68.entities.KingerModel;
 import com.Chagui68.entities.boss.JackModel;
+import com.Chagui68.entities.boss.NixBoss;
 import com.Chagui68.entities.boss.NixModel;
+import com.Chagui68.testsupport.ProjectPaths;
 import org.bukkit.Location;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
@@ -113,6 +116,79 @@ class MscGeometryOverlayTest {
             assertTrue(Math.abs(joint.x) < 0.5f, "joint off the body axis: " + joint);
             assertEquals(0f, joint.z, 1.0e-3f, "a joint hangs on the body's own plane: " + joint);
         }
+    }
+
+    @Test
+    @DisplayName("A walk replay draws the stand's hitbox and the bones that connect the joints")
+    void aWalkReplayDrawsTheStandBoxAndItsBones() {
+        // The preview has no stand to measure, so its box is the scaled stand's own: half a block
+        // wide and 1.975 tall at scale 1, centred on the anchor with its feet on it.
+        Location anchor = new Location(null, 10.5, 64.0, -3.25, 0f, 0f);
+        BoundingBox kinger = MscGeometryOverlay.previewBox(anchor, Kinger.MODEL_HITBOX_SCALE);
+        assertEquals(0.5, kinger.getWidthX(), 1.0e-9);
+        assertEquals(1.975, kinger.getHeight(), 1.0e-9);
+        assertEquals(anchor.getX(), kinger.getCenterX(), 1.0e-9);
+        assertEquals(anchor.getZ(), kinger.getCenterZ(), 1.0e-9);
+        assertEquals(anchor.getY(), kinger.getMinY(), 1.0e-9);
+
+        BoundingBox nix = MscGeometryOverlay.previewBox(anchor, NixBoss.MODEL_HITBOX_SCALE);
+        assertEquals(0.5 * NixBoss.MODEL_HITBOX_SCALE, nix.getWidthX(), 1.0e-9);
+        assertEquals(1.975 * NixBoss.MODEL_HITBOX_SCALE, nix.getHeight(), 1.0e-9);
+
+        // A limb that folds is two bones meeting at its joint; a rigid one is a single bone.
+        Vector3f pivot = new Vector3f(0f, 1f, 0f);
+        Vector3f joint = new Vector3f(0f, 0.6f, 0f);
+        Vector3f tip = new Vector3f(0f, 0.2f, 0f);
+        List<MscGeometryOverlay.Segment> folded =
+                MscGeometryOverlay.limbSegments(List.of(new MscLimb.Limb(pivot, joint, tip)));
+        assertEquals(2, folded.size());
+        assertEquals(0.0, folded.get(0).from().distance(vectorOf(pivot)), 1.0e-9);
+        assertEquals(0.0, folded.get(0).to().distance(vectorOf(joint)), 1.0e-9);
+        assertEquals(0.0, folded.get(1).from().distance(vectorOf(joint)), 1.0e-9,
+                "the two bones must meet at the joint instead of leaving a gap");
+        assertEquals(0.0, folded.get(1).to().distance(vectorOf(tip)), 1.0e-9);
+
+        List<MscGeometryOverlay.Segment> rigid =
+                MscGeometryOverlay.limbSegments(List.of(new MscLimb.Limb(pivot, null, tip)));
+        assertEquals(1, rigid.size());
+        assertEquals(0.0, rigid.get(0).from().distance(vectorOf(pivot)), 1.0e-9);
+        assertEquals(0.0, rigid.get(0).to().distance(vectorOf(tip)), 1.0e-9);
+
+        // And the rigs the command ships: Kinger's arms are single pieces, so six bones; NIX and Jack
+        // Star were exported in two segments on all four limbs, so eight.
+        assertEquals(6, MscGeometryOverlay.limbSegments(KingerModel.walkPose(0.4f)).size());
+        assertEquals(8, MscGeometryOverlay.limbSegments(NixModel.walkPose(0.4f)).size());
+        assertEquals(8, MscGeometryOverlay.limbSegments(JackModel.walkPose(0.4f)).size());
+    }
+
+    @Test
+    @DisplayName("The command replays every model that walks, at the pace the model walks at")
+    void theCommandReplaysEveryModelThatWalks() {
+        String source = ProjectPaths.read(
+                ProjectPaths.source("com", "Chagui68", "commands", "MSCCommand.java"));
+
+        for (String model : List.of("KingerModel", "NixModel", "JackModel")) {
+            assertTrue(source.contains(model + "::walkPose"),
+                    model + " is not replayable, so its walk can only be judged by provoking a boss");
+            assertTrue(source.contains(model + ".WALK_RATE"),
+                    model + "'s replay must step at the pace the boss itself walks");
+        }
+        assertTrue(source.contains("MscGeometryOverlay.showWalk("),
+                "the walk replay belongs to the overlay, not to a second drawing in the command");
+        assertEquals(3, occurrences(source, "::walkPose"),
+                "a fourth walk rig would mean a model that does not exist, or a copy of one that does");
+    }
+
+    private static Vector vectorOf(Vector3f point) {
+        return new Vector(point.x, point.y, point.z);
+    }
+
+    private static int occurrences(String source, String needle) {
+        int count = 0;
+        for (int index = source.indexOf(needle); index >= 0; index = source.indexOf(needle, index + 1)) {
+            count++;
+        }
+        return count;
     }
 
     private static String corner(Vector point) {
