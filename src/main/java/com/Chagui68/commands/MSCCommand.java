@@ -6,6 +6,7 @@ import com.Chagui68.entities.boss.BossDamageSample;
 import com.Chagui68.entities.boss.PenetratingHit;
 import com.Chagui68.entities.handler.MobHandler;
 import com.Chagui68.music.MusicDisc;
+import com.Chagui68.utils.MscLog;
 import com.Chagui68.utils.MscText;
 import com.Chagui68.utils.MscWorldPolicy;
 import net.kyori.adventure.text.Component;
@@ -473,7 +474,8 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
             targetType = args[1].toLowerCase();
             try {
                 radius = Integer.parseInt(args[2]);
-            } catch (NumberFormatException ignored) {
+            } catch (NumberFormatException e) {
+                MscLog.debug("the radius argument is not a number", e);
             }
         }
 

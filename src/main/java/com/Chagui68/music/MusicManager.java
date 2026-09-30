@@ -1,6 +1,7 @@
 package com.Chagui68.music;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.utils.MscLog;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -82,7 +83,8 @@ public class MusicManager {
                             File target = new File(musicDir, fileName);
                             try {
                                 java.nio.file.Files.copy(p, target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                            } catch (Exception ignored) {
+                            } catch (Exception e) {
+                                MscLog.warn("could not copy the bundled song " + fileName, e);
                             }
                         });
             } else {
@@ -98,7 +100,8 @@ public class MusicManager {
                             });
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            MscLog.warn("could not read the bundled music folder", e);
         }
 
         if (!jarSongs.isEmpty()) {

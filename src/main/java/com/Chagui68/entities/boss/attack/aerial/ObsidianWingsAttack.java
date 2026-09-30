@@ -5,6 +5,7 @@ import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscLog;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -204,7 +205,8 @@ public class ObsidianWingsAttack extends BossAttackBase {
                 org.bukkit.util.Transformation transformation = wing.getTransformation();
                 transformation.getScale().set(1.7f);
                 wing.setTransformation(transformation);
-            } catch (Throwable ignored) {
+            } catch (Throwable e) {
+                MscLog.debug("could not scale a wing panel", e);
             }
             wing.setViewRange(64.0f);
             wing.setGravity(false);

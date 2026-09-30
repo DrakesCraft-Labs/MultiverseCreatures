@@ -128,6 +128,7 @@ public class MultiverseCreatures extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        com.Chagui68.utils.MscLog.init(getLogger());
         backupConfigFile();
         saveDefaultConfig();
 

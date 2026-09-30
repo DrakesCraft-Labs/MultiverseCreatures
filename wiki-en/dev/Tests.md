@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 35 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 37 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -192,6 +192,15 @@ Covers the health math in `utils/MscEntityUtils`:
 - Reads `src/main/java` and fails if any file goes back to the deprecated String name APIs (`setDisplayName`, `setLore`, `setItemName`, `setCustomName`, `getDisplayName`, `getCustomName`). Those methods still compile and still work, so an item written the old way would otherwise only show up as a subtly wrong tooltip.
 - Matches inside comments are ignored, and the scan asserts it walked the whole source set so it cannot pass vacuously.
 - A second test feeds the detector a sample with all six APIs plus a commented-out one, proving the guard catches exactly what it is looking for.
+
+### `utils/MscLogTest` — Reported failures
+- The twenty-one catch blocks that used to swallow their exception (`catch (Exception ignored) { }`) now report through `utils/MscLog`; this suite drives it with a capturing `Handler` and asserts the plugin logger is actually asked to print.
+- A tolerated failure is logged at `FINE` and an actionable one at `WARNING`, always with the context, the exception's simple name and its message — a `NumberFormatException` keeps the offending input.
+- An exception without a message is still named (`java.lang.IllegalStateException`), a null one reports `unknown error` instead of throwing, and `init(null)` keeps the previous logger so the startup order cannot silence the plugin.
+
+### `utils/SilentCatchGuardTest` — No silent catch blocks
+- A source guard: it strips comments, strings and chars (keeping line numbers), finds every `catch` clause under `src/main/java` and **fails if any body is left blank**, with an empty allow-list and a floor of 40 catches so the scanner cannot pass vacuously.
+- It is what keeps the logging change from being undone one block at a time: a swallowed exception is invisible in review, a blank catch body is not.
 
 ## 🗃️ Where they run
 

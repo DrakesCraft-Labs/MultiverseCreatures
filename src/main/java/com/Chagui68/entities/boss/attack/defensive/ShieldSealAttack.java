@@ -5,6 +5,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.utils.MscLog;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -201,7 +202,8 @@ public class ShieldSealAttack extends BossAttackBase {
                 org.bukkit.util.Transformation transformation = holder.getTransformation();
                 transformation.getScale().set(3.5f, 3.5f, 3.5f);
                 holder.setTransformation(transformation);
-            } catch (Throwable ignored) {
+            } catch (Throwable e) {
+                MscLog.debug("could not scale the shield display", e);
             }
 
             holder.setBillboard(org.bukkit.entity.Display.Billboard.FIXED);

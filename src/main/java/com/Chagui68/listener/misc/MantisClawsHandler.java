@@ -1,6 +1,7 @@
 package com.Chagui68.listener.misc;
 
 import com.Chagui68.items.misc.MantisClaws;
+import com.Chagui68.utils.MscLog;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -250,7 +251,8 @@ public class MantisClawsHandler implements Listener {
             try {
                 Method m = clazz.getMethod(name);
                 if (m.getReturnType() == boolean.class) return m;
-            } catch (NoSuchMethodException ignored) {
+            } catch (NoSuchMethodException e) {
+                MscLog.debug("no boolean " + name + "() on " + clazz.getSimpleName(), e);
             }
         }
         return null;

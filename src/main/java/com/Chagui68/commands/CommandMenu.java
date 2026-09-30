@@ -3,6 +3,7 @@ package com.Chagui68.commands;
 import com.Chagui68.entities.boss.BossDamageSample;
 import com.Chagui68.entities.boss.BossId;
 import com.Chagui68.entities.boss.PenetratingHit;
+import com.Chagui68.utils.MscLog;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
@@ -88,7 +89,8 @@ final class CommandMenu {
             try {
                 int page = Integer.parseInt(args[index]);
                 if (page >= 1) return page;
-            } catch (NumberFormatException ignored) {
+            } catch (NumberFormatException e) {
+                MscLog.debug("the requested page is not a number", e);
             }
             sender.sendMessage(RED + "Invalid page. Use a number >= 1.");
         }

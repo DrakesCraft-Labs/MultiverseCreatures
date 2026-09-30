@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 35 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 37 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -192,6 +192,15 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Lee `src/main/java` y falla si algún archivo vuelve a las APIs String deprecadas de nombre (`setDisplayName`, `setLore`, `setItemName`, `setCustomName`, `getDisplayName`, `getCustomName`). Esos métodos siguen compilando y funcionando, así que un item escrito a la vieja usanza solo se notaría como un tooltip sutilmente mal.
 - Las coincidencias dentro de comentarios se ignoran, y el escaneo verifica que recorrió todo el sourceset para no pasar de forma vacua.
 - Un segundo test le da al detector una muestra con las seis APIs más una comentada, probando que la guardia detecta exactamente lo que busca.
+
+### `utils/MscLogTest` — Fallos reportados
+- Los veintiún bloques `catch` que se tragaban su excepción (`catch (Exception ignored) { }`) ahora reportan por `utils/MscLog`; esta suite lo maneja con un `Handler` capturador y comprueba que de verdad se pide al logger del plugin que imprima.
+- Un fallo tolerado se registra en `FINE` y uno accionable en `WARNING`, siempre con el contexto, el nombre simple de la excepción y su mensaje — un `NumberFormatException` conserva la entrada ofensiva.
+- Una excepción sin mensaje igualmente se nombra (`java.lang.IllegalStateException`), una nula reporta `unknown error` en vez de lanzar, e `init(null)` conserva el logger anterior, así que el orden de arranque no puede silenciar el plugin.
+
+### `utils/SilentCatchGuardTest` — Sin bloques catch silenciosos
+- Guardia de fuentes: recorta comentarios, strings y chars (conservando las líneas), localiza cada cláusula `catch` bajo `src/main/java` y **falla si algún cuerpo queda en blanco**, con una lista de permitidos vacía y un suelo de 40 catches para que el escáner no pase de forma vacua.
+- Es lo que impide deshacer el cambio de logging bloque a bloque: una excepción tragada es invisible en una revisión, pero un cuerpo de `catch` vacío no.
 
 ## 🗃️ Dónde se corren
 

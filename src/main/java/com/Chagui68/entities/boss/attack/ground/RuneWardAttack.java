@@ -6,6 +6,7 @@ import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.boss.MagicSealListener;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscLog;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -171,7 +172,8 @@ public class RuneWardAttack extends BossAttackBase {
             org.bukkit.util.Transformation transformation = ward.getTransformation();
             transformation.getScale().set(2.4f);
             ward.setTransformation(transformation);
-        } catch (Throwable ignored) {
+        } catch (Throwable e) {
+            MscLog.debug("could not scale the rune ward", e);
         }
         ward.setViewRange(64.0f);
         ward.setGravity(false);

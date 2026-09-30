@@ -3,6 +3,8 @@ package com.Chagui68.entities.boss;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.Chagui68.utils.MscLog;
+
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -65,7 +67,8 @@ public final class BossArena {
                     if (p.getLocation().distanceSquared(center) <= radiusSq) {
                         result.add(p);
                     }
-                } catch (IllegalArgumentException ignored) {
+                } catch (IllegalArgumentException e) {
+                    MscLog.debug("skipped a player whose location is in another world", e);
                 }
             }
         }
@@ -92,7 +95,8 @@ public final class BossArena {
                         nearestDistSq = distSq;
                         nearest = p;
                     }
-                } catch (IllegalArgumentException ignored) {
+                } catch (IllegalArgumentException e) {
+                    MscLog.debug("skipped a player whose location is in another world", e);
                 }
             }
         }

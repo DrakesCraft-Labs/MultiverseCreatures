@@ -73,7 +73,8 @@ public final class MscEntityUtils {
         try {
             entity.getPersistentDataContainer().set(KEY_VIRTUAL_MAX_HEALTH, PersistentDataType.DOUBLE, maxHealth);
             entity.getPersistentDataContainer().set(KEY_VIRTUAL_HEALTH, PersistentDataType.DOUBLE, maxHealth);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            MscLog.debug("could not store the virtual health on " + entity.getType(), e);
         }
     }
 
@@ -82,7 +83,8 @@ public final class MscEntityUtils {
         try {
             Double val = entity.getPersistentDataContainer().get(KEY_VIRTUAL_MAX_HEALTH, PersistentDataType.DOUBLE);
             if (val != null && val > 0) return val;
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            MscLog.debug("could not read the virtual max health from " + entity.getType(), e);
         }
         AttributeInstance attr = entity.getAttribute(Attribute.MAX_HEALTH);
         return attr != null ? attr.getValue() : 20.0;
@@ -93,7 +95,8 @@ public final class MscEntityUtils {
         try {
             Double val = entity.getPersistentDataContainer().get(KEY_VIRTUAL_HEALTH, PersistentDataType.DOUBLE);
             if (val != null) return Math.max(0.0, val);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            MscLog.debug("could not read the virtual health from " + entity.getType(), e);
         }
         return entity.getHealth();
     }
@@ -104,7 +107,8 @@ public final class MscEntityUtils {
         double clamped = Math.max(0.0, Math.min(health, max));
         try {
             entity.getPersistentDataContainer().set(KEY_VIRTUAL_HEALTH, PersistentDataType.DOUBLE, clamped);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            MscLog.debug("could not store the virtual health on " + entity.getType(), e);
         }
 
         AttributeInstance attr = entity.getAttribute(Attribute.MAX_HEALTH);
@@ -134,7 +138,8 @@ public final class MscEntityUtils {
         if (maxHealthAttr != null) {
             try {
                 maxHealthAttr.setBaseValue(targetHealth);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                MscLog.warn("could not set the max health attribute on " + entity.getType(), e);
             }
             entity.setHealth(calculateSafeHealth(targetHealth, maxHealthAttr.getValue()));
         } else {
@@ -257,10 +262,12 @@ public final class MscEntityUtils {
                             break;
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (Exception ex) {
+                    MscLog.debug("skipped an entity whose scoreboard tags could not be read", ex);
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception ex) {
+            MscLog.debug("could not finish counting MSC creatures in " + world.getName(), ex);
         }
         return n;
     }

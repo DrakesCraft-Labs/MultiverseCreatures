@@ -1,6 +1,7 @@
 package com.Chagui68.entities.handler;
 
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscLog;
 import com.Chagui68.utils.MscText;
 import com.Chagui68.utils.MscWorldPolicy;
 import com.Chagui68.MultiverseCreatures;
@@ -284,10 +285,12 @@ public class MobHandler implements Listener {
                         entity.remove();
                         removed++;
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    MscLog.debug("skipped an entity whose scoreboard tags could not be read", e);
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            MscLog.warn("could not finish purging MSC creatures from " + world.getName(), e);
         }
         if (removed > 0) {
             plugin.getLogger().warning("[WorldPolicy] Removed " + removed
