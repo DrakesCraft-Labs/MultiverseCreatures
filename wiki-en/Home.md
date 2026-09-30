@@ -58,6 +58,6 @@ Every vanilla mob spawn has a configurable chance to be replaced by an MSC count
 - [Components](./Components.md) — All 16 crafting drops and what mob provides each
 - [Music](./Music.md) — Bundled NBS songs, jukebox discs and the Disc Trader, song credits
 - [Recipes](./Recipes.md) — Every custom crafting recipe (shapes, ingredients, tiers)
-- [Commands](./Commands.md) — Full `/msc` reference (spawn, give, seal, dummy, attack, music, dimtp, cleanstands)
+- [Commands](./Commands.md) — Full `/msc` reference (spawn, give, attack, music, seal, dummy, dimtp, cleanstands, kill, reload)
 - [Developer Zone](./dev/Home.md) — Code architecture, conventions, tests, and how to extend the project
 - [Installation](./Installation.md) — Step-by-step install, requirements, troubleshooting

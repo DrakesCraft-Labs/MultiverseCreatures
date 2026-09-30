@@ -69,7 +69,11 @@ public class GarouBoss implements Listener {
 
         WitherSkeleton garou = (WitherSkeleton) loc.getWorld().spawnEntity(loc, EntityType.WITHER_SKELETON);
         garou.addScoreboardTag("MSC_Garou");
-        garou.setCustomName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Garou " + ChatColor.LIGHT_PURPLE + "[Hero Hunter]");
+        // A legacy colour code clears bold, so "[Hero Hunter]" is light purple and NOT bold. Two
+        // siblings keep the bold off the second half, where a decorated parent would leak it down.
+        garou.customName(Component.empty()
+                .append(MscText.title(DARK_PURPLE, "Garou "))
+                .append(MscText.line(LIGHT_PURPLE, "[Hero Hunter]")));
         garou.setCustomNameVisible(true);
         garou.setRemoveWhenFarAway(true);
         garou.setCanPickupItems(false);

@@ -3,6 +3,8 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ChaosOrb;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.*;
@@ -16,6 +18,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class ChaosMage implements Listener {
 
@@ -86,7 +90,7 @@ public class ChaosMage implements Listener {
 
     private void customize(Evoker evoker) {
         evoker.addScoreboardTag(TAG);
-        evoker.setCustomName(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Chaos Mage");
+        evoker.customName(MscText.title(LIGHT_PURPLE, "Chaos Mage"));
         evoker.setCustomNameVisible(true);
         MscEntityUtils.setAttribute(evoker, Attribute.MAX_HEALTH, health);
         evoker.setHealth(70.0);
@@ -115,7 +119,7 @@ public class ChaosMage implements Listener {
                     if (evoker.getPassengers().isEmpty()) {
                         Vex vex = (Vex) eLoc.getWorld().spawnEntity(eLoc.clone().add(0, 2, 0), EntityType.VEX);
                         if (vex != null) {
-                            vex.setCustomName(ChatColor.LIGHT_PURPLE + "Chaos Vex");
+                            vex.customName(MscText.line(LIGHT_PURPLE, "Chaos Vex"));
                             vex.setCustomNameVisible(true);
                             MscEntityUtils.applyAmbientPersistence(plugin, vex);
                             vex.addScoreboardTag("MSC_ChaosVex");

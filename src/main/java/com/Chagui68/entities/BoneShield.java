@@ -3,6 +3,7 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ReinforcedBone;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
@@ -21,6 +22,8 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class BoneShield implements Listener {
 
@@ -74,7 +77,7 @@ public class BoneShield implements Listener {
         Skeleton sk = (Skeleton) location.getWorld().spawnEntity(location, EntityType.SKELETON);
         if (sk == null) return false;
         sk.addScoreboardTag(TAG);
-        sk.setCustomName(ChatColor.WHITE + "" + ChatColor.BOLD + "Bone Shield");
+        sk.customName(MscText.title(WHITE, "Bone Shield"));
         sk.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, sk);
         MscEntityUtils.setAttribute(sk, Attribute.MAX_HEALTH, health);

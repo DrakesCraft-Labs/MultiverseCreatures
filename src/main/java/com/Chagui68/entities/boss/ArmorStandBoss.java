@@ -51,6 +51,8 @@ import com.Chagui68.entities.boss.attack.defensive.StoneSkinAttack;
 import com.Chagui68.entities.boss.attack.defensive.TriangleCallAttack;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -65,6 +67,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
@@ -89,6 +92,8 @@ import java.util.*;
 import com.Chagui68.entities.BossInstance.ShieldState;
 import com.Chagui68.entities.BossInstance.DefenseState;
 
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+
 public class ArmorStandBoss implements Listener, BossHost {
 
     private final MultiverseCreatures plugin;
@@ -97,10 +102,26 @@ public class ArmorStandBoss implements Listener, BossHost {
     private final Random random = new Random();
     public static final String TAG = "MSC_ArmorStandBoss";
     public static final String SUMMON_TAG = "MSC_ArmorBossSummoned";
-    private static final String BAR_TITLE = ChatColor.GOLD + "" + ChatColor.BOLD + "THE OBSIDIAN SENTINEL";
+    private static final String BOSS_NAME = "THE OBSIDIAN SENTINEL";
+    private static final String BAR_TITLE = ChatColor.GOLD + "" + ChatColor.BOLD + BOSS_NAME;
+    /** The armor stand's own name tag, which must read exactly like the boss bar. */
+    private static final Component STAND_NAME = MscText.title(GOLD, BOSS_NAME);
     private static final double MAX_PROGRESS = 1.0;
-    private static final int PHASES = 5;
     private static final String SHIELD_HOLDER_TAG = "MSC_ShieldHolder";
+    /** Default ticks a stone-skin defence lasts (~10 s). */
+    private static final int DEFENSE_STONE_SKIN_TICKS = 200;
+    /** Default ticks a reflect-barrier defence lasts (~8 s). */
+    private static final int DEFENSE_REFLECT_BARRIER_TICKS = 160;
+    /** Default ticks an absorb-shield defence lasts (~15 s, or until the shield is broken). */
+    private static final int DEFENSE_ABSORB_SHIELD_TICKS = 300;
+    /** Default ticks the boss keeps fighting after the last player leaves its radius (~10 s). */
+    private static final int NO_PLAYER_DESPAWN_TICKS = 200;
+    /**
+     * Share of a player's Resistance mitigation that penetrating hits ignore. Penetration is
+     * partial on purpose: armour is bypassed outright, but the potion still protects with the
+     * remaining 80% of its reduction.
+     */
+    static final double RESISTANCE_PIERCE = 0.2;
     private static final double FLY_HEIGHT = 15.0;
     private static final double DIST_CLOSE = 5.0;
     private static final double DIST_MEDIUM = 15.0;
@@ -118,6 +139,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     private double aggroRange;
     private double maxDamagePerHit;
     private double maxDamageDealtPerHit;
+    private double penetratingResistancePierce;
     private boolean penetratingDamageEnabled;
     private boolean penetratingBossDamage;
     private int mediumRangeAttackChance;
@@ -142,6 +164,12 @@ public class ArmorStandBoss implements Listener, BossHost {
     private int groundRecoveryGraceTicks;
     private int groundRecoverySearchRadius;
     private int groundRecoveryCooldownTicks;
+    /** Health fractions at which each next phase begins, highest first. Drives the phase count. */
+    private List<Double> phaseThresholds;
+    private int defenseStoneSkinTicks;
+    private int defenseReflectBarrierTicks;
+    private int defenseAbsorbShieldTicks;
+    private int noPlayerDespawnTicks;
 
     public ArmorStandBoss(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -228,6 +256,8 @@ public class ArmorStandBoss implements Listener, BossHost {
         this.shieldPlantIntervalVarianceTicks = plugin.getConfig().getInt("entities.armor-stand-boss.shield-plant-interval-variance-ticks", 100);
         this.penetratingDamageEnabled = plugin.getConfig().getBoolean("entities.armor-stand-boss.penetrating-damage", true);
         this.maxDamageDealtPerHit = plugin.getConfig().getDouble("entities.armor-stand-boss.max-damage-dealt", 15.0);
+        this.penetratingResistancePierce = plugin.getConfig().getDouble(
+                "entities.armor-stand-boss.penetrating-resistance-pierce", RESISTANCE_PIERCE);
         this.hoverBarrageCooldownBaseTicks = plugin.getConfig().getInt("entities.armor-stand-boss.hover-barrage-cooldown-base-ticks", 240);
         this.hoverBarrageCooldownVarianceTicks = plugin.getConfig().getInt("entities.armor-stand-boss.hover-barrage-cooldown-variance-ticks", 120);
         this.groundAttackCooldownBaseTicks = plugin.getConfig().getInt("entities.armor-stand-boss.ground-attack-cooldown-base-ticks", 40);
@@ -240,6 +270,19 @@ public class ArmorStandBoss implements Listener, BossHost {
         this.groundRecoveryCooldownTicks = Math.max(20, plugin.getConfig().getInt(
                 "entities.armor-stand-boss.ground-recovery-cooldown-ticks", GROUND_SEARCH_COOLDOWN_TICKS));
         this.phaseTransitionSlamDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.phase-transition-slam-damage", 10.0);
+        // The ladder is the single source of truth: the phase count follows from its length.
+        this.phaseThresholds = SentinelPhase.sanitizeThresholds(
+                plugin.getConfig().getDoubleList("entities.armor-stand-boss.phase-thresholds"));
+        // Clamped: a zero-tick defence would expire on the same tick it starts.
+        this.defenseStoneSkinTicks = Math.max(1, plugin.getConfig().getInt(
+                "entities.armor-stand-boss.defense-duration-stone-skin-ticks", DEFENSE_STONE_SKIN_TICKS));
+        this.defenseReflectBarrierTicks = Math.max(1, plugin.getConfig().getInt(
+                "entities.armor-stand-boss.defense-duration-reflect-barrier-ticks", DEFENSE_REFLECT_BARRIER_TICKS));
+        this.defenseAbsorbShieldTicks = Math.max(1, plugin.getConfig().getInt(
+                "entities.armor-stand-boss.defense-duration-absorb-shield-ticks", DEFENSE_ABSORB_SHIELD_TICKS));
+        // 0 means "despawn as soon as nobody is in range".
+        this.noPlayerDespawnTicks = Math.max(0, plugin.getConfig().getInt(
+                "entities.armor-stand-boss.no-player-despawn-ticks", NO_PLAYER_DESPAWN_TICKS));
         List<Integer> delays = plugin.getConfig().getIntegerList("entities.armor-stand-boss.shield-retrieve-delays");
         this.shieldRetrieveDelays = delays.isEmpty() ? List.of(80, 90, 100, 110, 120) : delays;
     }
@@ -298,7 +341,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         MscEntityUtils.initVirtualHealth(stand, health);
         stand.setInvulnerable(false);
 
-        stand.setCustomName(BAR_TITLE);
+        stand.customName(STAND_NAME);
         stand.setCustomNameVisible(true);
         stand.setRemoveWhenFarAway(false);
         stand.setPersistent(true);
@@ -388,9 +431,6 @@ public class ArmorStandBoss implements Listener, BossHost {
         instance.bossBar = bar;
     }
 
-    public void triggerSealForPhase(BossInstance instance, int phase) {
-    }
-
     public void skyPentagramAttack(BossInstance instance) {
         if (plugin.getMagicSealListener() == null) return;
         BossPuppet stand = instance.stand;
@@ -463,30 +503,12 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     private BarColor getPhaseColor(int phase) {
-        return switch (phase) {
-            case 0, 1 -> BarColor.RED;
-            case 2 -> BarColor.YELLOW;
-            case 3 -> BarColor.GREEN;
-            case 4 -> BarColor.BLUE;
-            default -> BarColor.RED;
-        };
+        return SentinelPhase.barColor(phase);
     }
 
+    /** The boss bar title for a phase, generated from the configured ladder instead of hardcoded. */
     private String getPhaseTitle(int phase) {
-        return switch (phase) {
-            case 0 ->
-                    ChatColor.DARK_RED + "" + ChatColor.BOLD + "THE OBSIDIAN SENTINEL " + ChatColor.RED + "\u25a0\u25a0\u25a0\u25a0\u25a0";
-            case 1 ->
-                    ChatColor.DARK_RED + "" + ChatColor.BOLD + "THE OBSIDIAN SENTINEL " + ChatColor.RED + "\u25a0\u25a0\u25a0\u25a0" + ChatColor.GRAY + "\u25a0";
-            case 2 ->
-                    ChatColor.YELLOW + "" + ChatColor.BOLD + "THE OBSIDIAN SENTINEL " + ChatColor.RED + "\u25a0\u25a0\u25a0" + ChatColor.GRAY + "\u25a0\u25a0";
-            case 3 ->
-                    ChatColor.GREEN + "" + ChatColor.BOLD + "THE OBSIDIAN SENTINEL " + ChatColor.RED + "\u25a0\u25a0" + ChatColor.GRAY + "\u25a0\u25a0\u25a0";
-            case 4 ->
-                    ChatColor.BLUE + "" + ChatColor.BOLD + "THE OBSIDIAN SENTINEL " + ChatColor.RED + "\u25a0" + ChatColor.GRAY + "\u25a0\u25a0\u25a0\u25a0";
-            default ->
-                    ChatColor.DARK_RED + "" + ChatColor.BOLD + "THE OBSIDIAN SENTINEL " + ChatColor.RED + "\u25a0\u25a0\u25a0\u25a0\u25a0";
-        };
+        return SentinelPhase.title(BOSS_NAME, phase, SentinelPhase.phaseCount(phaseThresholds));
     }
 
     private void updatePhase(BossInstance instance) {
@@ -495,13 +517,8 @@ public class ArmorStandBoss implements Listener, BossHost {
         double currentHealth = stand.getHealth();
         double healthPercent = maxHealth > 0.0 ? currentHealth / maxHealth : 1.0;
 
-        int newPhase;
-        if (healthPercent > 0.8) newPhase = 0;
-        else if (healthPercent > 0.6) newPhase = 1;
-        else if (healthPercent > 0.4) newPhase = 2;
-        else if (healthPercent > 0.2) newPhase = 3;
-        else newPhase = 4;
-
+        // SentinelPhase owns the ladder; here we only make sure it never walks back upwards.
+        int newPhase = SentinelPhase.phaseFor(healthPercent, phaseThresholds);
         if (newPhase < instance.currentPhase) {
             newPhase = instance.currentPhase;
         }
@@ -512,10 +529,10 @@ public class ArmorStandBoss implements Listener, BossHost {
             if (instance.bossBar != null) {
                 instance.bossBar.setTitle(getPhaseTitle(newPhase));
                 instance.bossBar.setColor(getPhaseColor(newPhase));
-                instance.bossBar.setProgress(healthPercent);
+                instance.bossBar.setProgress(MscEntityUtils.calculateVirtualProgress(
+                        instance.stand.getHealth(), maxHealth));
             }
             instance.stand.getWorld().playSound(instance.stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.5f, 0.5f);
-            triggerSealForPhase(instance, newPhase);
 
             if (oldPhase == 0 && newPhase == 1) {
                 phaseTransitionRage(instance);
@@ -540,13 +557,14 @@ public class ArmorStandBoss implements Listener, BossHost {
             boolean expired = false;
             switch (instance.activeDefense) {
                 case STONE_SKIN -> {
-                    if (instance.defenseTimer >= 200) expired = true;
+                    if (instance.defenseTimer >= defenseStoneSkinTicks) expired = true;
                 }
                 case REFLECT_BARRIER -> {
-                    if (instance.defenseTimer >= 160) expired = true;
+                    if (instance.defenseTimer >= defenseReflectBarrierTicks) expired = true;
                 }
                 case ABSORB_SHIELD -> {
-                    if (instance.defenseTimer >= 300 || instance.absorbShieldHealth <= 0) expired = true;
+                    if (instance.defenseTimer >= defenseAbsorbShieldTicks
+                            || instance.absorbShieldHealth <= 0) expired = true;
                 }
             }
             if (expired) {
@@ -561,20 +579,13 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     private void startBossAI(BossInstance instance) {
-        new BukkitRunnable() {
+        BukkitRunnable ai = new BukkitRunnable() {
             @Override
             public void run() {
                 BossPuppet stand = instance.stand;
 
                 if (stand.isDead() || !stand.isValid()) {
-                    cleanupShield(instance);
-                    stopBossMusic(instance, true);
-                    if (instance.bossBar != null) {
-                        instance.bossBar.removeAll();
-                        instance.bossBar.setVisible(false);
-                    }
-                    activeBosses.remove(stand.getUniqueId());
-                    cancel();
+                    teardown(instance);
                     return;
                 }
 
@@ -761,22 +772,46 @@ public class ArmorStandBoss implements Listener, BossHost {
                 if (hasPlayer) {
                     instance.noPlayerTicks = 0;
                 } else {
+                    // The counter exists for this grace period. Despawning on the first playerless
+                    // tick deleted the boss on a one-tick gap: a lag spike, a wipe, or everyone
+                    // stepping just outside the radius mid-fight.
                     instance.noPlayerTicks++;
-                    if (instance.noPlayerTicks >= 1) {
-                        cleanupShield(instance);
-                        stopBossMusic(instance, true);
-                        if (instance.bossBar != null) {
-                            instance.bossBar.removeAll();
-                            instance.bossBar.setVisible(false);
-                        }
-                        activeBosses.remove(stand.getUniqueId());
+                    if (instance.noPlayerTicks >= noPlayerDespawnTicks) {
+                        teardown(instance);
                         stand.remove();
-                        cancel();
                         return;
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+        };
+        // Scheduled first: cancelling a runnable that was never scheduled throws, so the handle is
+        // only published once the task really exists.
+        ai.runTaskTimer(plugin, 0L, 1L);
+        instance.aiTask = ai;
+    }
+
+    /**
+     * Ends a fight exactly once: stops the AI tick, every attack task, the seals, the music, the
+     * boss bar, and forgets the instance.
+     *
+     * The three ways a fight can end — the boss dies, nobody is left in range, or the death event
+     * fires — each used to repeat this by hand, and the event path cancelled only five of the eight
+     * attack tasks and could not stop the AI at all: it kept ticking until it noticed the corpse on
+     * its own, cleaning up a second time. Doing it here also means a boss killed with {@code /kill}
+     * leaves nothing behind.
+     */
+    private void teardown(BossInstance instance) {
+        if (instance.aiTask != null) {
+            instance.aiTask.cancel();
+            instance.aiTask = null;
+        }
+        cleanupShield(instance);
+        stopBossMusic(instance, true);
+        if (instance.bossBar != null) {
+            instance.bossBar.removeAll();
+            instance.bossBar.setVisible(false);
+        }
+        activeBosses.remove(instance.stand.getUniqueId());
     }
 
     /**
@@ -2023,18 +2058,69 @@ public class ArmorStandBoss implements Listener, BossHost {
         if (!(event.getDamager() instanceof ArmorStand stand) || !stand.getScoreboardTags().contains(TAG)) return;
         if (!(event.getEntity() instanceof Player player)) return;
         if (!penetratingDamageEnabled || event.isCancelled() || player.isDead()) return;
-        double raw = Math.min(event.getDamage(), maxDamageDealtPerHit);
+        // The engine already folded armour, Protection and Resistance into the event's damage, so
+        // those three are credited back: a penetrating hit must not be shrunk by the very defences
+        // it is supposed to pierce. Shields, absorption and everything else stay as they came.
+        double throughArmor = unmitigated(event.getDamage(),
+                modifierValue(event, EntityDamageEvent.DamageModifier.ARMOR),
+                modifierValue(event, EntityDamageEvent.DamageModifier.MAGIC),
+                modifierValue(event, EntityDamageEvent.DamageModifier.RESISTANCE));
+        double raw = Math.min(throughArmor, maxDamageDealtPerHit);
         if (raw <= 0) return;
         event.setCancelled(true);
+        double dealt = penetratingDamage(raw, resistanceAmplifier(player), penetratingResistancePierce);
         penetratingBossDamage = true;
         try {
-            player.damage(raw, DamageSource.builder(DamageType.OUT_OF_WORLD)
+            // OUT_OF_WORLD skips armour and Resistance on its own, so `dealt` already carries the
+            // Resistance share we chose to keep; clearing the hurt cooldown keeps back-to-back
+            // boss hits from being swallowed by the vanilla invulnerability window.
+            player.setNoDamageTicks(0);
+            player.damage(dealt, DamageSource.builder(DamageType.OUT_OF_WORLD)
                     .withDirectEntity(stand)
                     .withCausingEntity(stand)
                     .build());
         } finally {
             penetratingBossDamage = false;
         }
+    }
+
+    /** Value of a damage modifier, or {@code 0} when the engine does not apply it to this event. */
+    private static double modifierValue(EntityDamageEvent event, EntityDamageEvent.DamageModifier modifier) {
+        return event.isApplicable(modifier) ? event.getDamage(modifier) : 0.0;
+    }
+
+    /**
+     * Damage left once the given mitigations are credited back. Mitigations arrive as the negative
+     * modifiers the engine computed, so {@code 3.52 - (-17.6) - (-0.88) = 22} restores a hit that
+     * full netherite had cut down to a fifth. Never returns less than zero.
+     */
+    static double unmitigated(double finalDamage, double... mitigations) {
+        double total = finalDamage;
+        for (double mitigation : mitigations) {
+            total -= mitigation;
+        }
+        return Math.max(0.0, total);
+    }
+
+    /** Vanilla Resistance mitigation for an amplifier: 20% per level, capped at 100%. */
+    static double resistanceMitigation(int amplifier) {
+        return amplifier < 0 ? 0.0 : Math.min(1.0, 0.2 * (amplifier + 1));
+    }
+
+    /**
+     * Damage a penetrating hit really deals. {@code pierce} is the share of the potion's mitigation
+     * the boss ignores, so {@code 0} leaves Resistance fully effective, {@code 1} ignores it
+     * completely, and the default {@code 0.2} shaves a fifth off its protection.
+     */
+    static double penetratingDamage(double raw, int resistanceAmplifier, double pierce) {
+        double ignored = Math.max(0.0, Math.min(1.0, pierce));
+        return raw * (1.0 - resistanceMitigation(resistanceAmplifier) * (1.0 - ignored));
+    }
+
+    /** Amplifier of the player's Resistance effect, or {@code -1} when they have none. */
+    private static int resistanceAmplifier(Player player) {
+        PotionEffect effect = player.getPotionEffect(PotionEffectType.RESISTANCE);
+        return effect == null ? -1 : effect.getAmplifier();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -2168,34 +2254,9 @@ public class ArmorStandBoss implements Listener, BossHost {
         if (!(event.getEntity() instanceof ArmorStand stand)) return;
         if (!stand.getScoreboardTags().contains(TAG)) return;
 
-        BossInstance instance = activeBosses.remove(stand.getUniqueId());
+        BossInstance instance = activeBosses.get(stand.getUniqueId());
         if (instance != null) {
-            if (instance.groundSlamTask != null) {
-                instance.groundSlamTask.cancel();
-                instance.groundSlamTask = null;
-            }
-            if (instance.wingTask != null) {
-                instance.wingTask.cancel();
-                instance.wingTask = null;
-            }
-            if (instance.hoverBarrageTask != null) {
-                instance.hoverBarrageTask.cancel();
-                instance.hoverBarrageTask = null;
-            }
-            if (instance.triangleCallTask != null) {
-                instance.triangleCallTask.cancel();
-                instance.triangleCallTask = null;
-            }
-            if (instance.flyTask != null) {
-                instance.flyTask.cancel();
-                instance.flyTask = null;
-            }
-            cleanupShield(instance);
-            stopBossMusic(instance, true);
-            if (instance.bossBar != null) {
-                instance.bossBar.removeAll();
-                instance.bossBar.setVisible(false);
-            }
+            teardown(instance);
         }
 
         event.getDrops().clear();

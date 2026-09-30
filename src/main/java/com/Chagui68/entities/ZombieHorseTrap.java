@@ -3,9 +3,9 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.MilitaryComponent;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -43,6 +43,8 @@ import org.bukkit.util.Vector;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class ZombieHorseTrap implements Listener {
 
@@ -96,7 +98,7 @@ public class ZombieHorseTrap implements Listener {
         if (horse == null) return false;
 
         horse.addScoreboardTag(TRAP_TAG);
-        horse.setCustomName(ChatColor.WHITE + "" + ChatColor.BOLD + "Military Zombie Horse");
+        horse.customName(MscText.title(WHITE, "Military Zombie Horse"));
         horse.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, horse);
         horse.setTamed(true);
@@ -337,7 +339,7 @@ public class ZombieHorseTrap implements Listener {
         tank.setBaby(false);
 
         tank.addScoreboardTag(TANK_TAG);
-        tank.setCustomName(ChatColor.GREEN + "" + ChatColor.BOLD + "Zombie Tank");
+        tank.customName(MscText.title(GREEN, "Zombie Tank"));
         tank.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, tank);
 
@@ -362,7 +364,7 @@ public class ZombieHorseTrap implements Listener {
         if (duelist == null) return null;
 
         duelist.addScoreboardTag(DUELIST_TAG);
-        duelist.setCustomName(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Military Skeleton Duelist");
+        duelist.customName(MscText.title(LIGHT_PURPLE, "Military Skeleton Duelist"));
         duelist.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, duelist);
 
@@ -389,7 +391,7 @@ public class ZombieHorseTrap implements Listener {
         lancer.setBaby(false);
 
         lancer.addScoreboardTag(LANCER_TAG);
-        lancer.setCustomName(ChatColor.GRAY + "" + ChatColor.BOLD + "Zombie Lancer");
+        lancer.customName(MscText.title(GRAY, "Zombie Lancer"));
         lancer.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, lancer);
 
@@ -407,7 +409,7 @@ public class ZombieHorseTrap implements Listener {
         ZombieHorse horse = (ZombieHorse) loc.getWorld().spawnEntity(loc, EntityType.ZOMBIE_HORSE);
         if (horse != null) {
             horse.addScoreboardTag(LANCER_HORSE_TAG);
-            horse.setCustomName(ChatColor.WHITE + "" + ChatColor.BOLD + "Military Zombie Horse");
+            horse.customName(MscText.title(WHITE, "Military Zombie Horse"));
             horse.setCustomNameVisible(false);
             MscEntityUtils.applyAmbientPersistence(plugin, horse);
             horse.setTamed(true);
@@ -441,7 +443,7 @@ public class ZombieHorseTrap implements Listener {
         if (zombie != null) {
             zombie.setBaby(false);
             zombie.addScoreboardTag(CAMEL_ZOMBIE_TAG);
-            zombie.setCustomName(ChatColor.GOLD + "" + ChatColor.BOLD + "Camel Zombie Rider");
+            zombie.customName(MscText.title(GOLD, "Camel Zombie Rider"));
             zombie.setCustomNameVisible(true);
             MscEntityUtils.applyAmbientPersistence(plugin, zombie);
 
@@ -462,7 +464,7 @@ public class ZombieHorseTrap implements Listener {
         LivingEntity skeleton = (LivingEntity) loc.getWorld().spawnEntity(loc, EntityType.BOGGED);
         if (skeleton != null) {
             skeleton.addScoreboardTag(CAMEL_SKELETON_TAG);
-            skeleton.setCustomName(ChatColor.GOLD + "" + ChatColor.BOLD + "Camel Skeleton Rider");
+            skeleton.customName(MscText.title(GOLD, "Camel Skeleton Rider"));
             skeleton.setCustomNameVisible(true);
             MscEntityUtils.applyAmbientPersistence(plugin, skeleton);
 
@@ -504,7 +506,7 @@ public class ZombieHorseTrap implements Listener {
         if (sniper == null) return null;
 
         sniper.addScoreboardTag(SNIPER_TAG);
-        sniper.setCustomName(ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Sniper Skeleton");
+        sniper.customName(MscText.title(DARK_GREEN, "Sniper Skeleton"));
         sniper.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, sniper);
 

@@ -10,8 +10,8 @@ A gigantic 7.5×-scale animated ArmorStand. The climax of the plugin.
 
 | Stat | Default |
 |---|---|
-| Health | `armor-stand-boss.health` (default 500) |
-| Boss bar | `SEGMENTED_6`, red → blue across 5 phases |
+| Health | `armor-stand-boss.health` (default 3200) |
+| Boss bar | `SEGMENTED_6`, red → blue across the phases (see `phase-thresholds`) |
 | Music | `Undertale — Megalovania` (60-block range, stops on death) |
 | Equipment | Full Netherite (Amethyst/Silence trim) + Netherite Lance + unbreakable Shield |
 | Summon | `/msc spawn armorstand` (alias `armorstandboss`) |
@@ -26,12 +26,16 @@ A gigantic 7.5×-scale animated ArmorStand. The climax of the plugin.
 | 3 — Green | >20% | Despair: invulnerable 80t, AoE damage ×1.5 + Darkness II + Blindness I + Slowness III |
 | 4 — Blue | ≤20% | final phase |
 
+The ladder is data, not code: `armor-stand-boss.phase-thresholds` holds the health fractions at which each next phase begins, highest first. The number of phases is one more than the entries in that list, and it is also how many squares the boss bar title shows — one per phase, red for the phases still to come and grey for the ones already spent. Entries outside `(0, 1]` are dropped and duplicates collapsed, so a typo cannot leave the boss with a single phase.
+
 ### AI behaviour
 
 - **Ground mode** chooses between HealingCircle (<40% HP, 25%), FlyUp (15%), ShieldSeal (35%), GroundAttack (55%), HoverBarrage (default).
 - **Flying mode** executes random aerial attacks every 80 ticks; lands via AirSlam when ≥10 unique attacks have been performed.
-- **Defense states** (random, only below 50% HP, on ground): **Stone Skin** (×0.5 dmg taken), **Reflect Barrier** (×0.7 dmg + 30% reflect), **Absorb Shield** (100-HP absorber that visually shifts blue → red).
+- **Defense states** (random, only below 50% HP, on ground): **Stone Skin** (×0.5 dmg taken), **Reflect Barrier** (×0.7 dmg + 30% reflect), **Absorb Shield** (100-HP absorber that visually shifts blue → red). Their durations come from `defense-duration-stone-skin-ticks` (200), `defense-duration-reflect-barrier-ticks` (160) and `defense-duration-absorb-shield-ticks` (300).
 - **Ground recovery** — a grounded boss only attacks while `isOnGround` is true. If it ends up with no solid block under it (void, water, a hole, a cliff edge), it hovers silently forever. After `ground-recovery-grace-ticks` (40) without ground it teleports to the nearest column with a floor and headroom, preferring the area around its current target and falling back to the world spawn, then resumes attacking with its cooldowns reset.
+- **Despawn** — with nobody inside a 100-block radius the boss keeps fighting for `no-player-despawn-ticks` (200, ~10 s) before it despawns and cleans up its tasks, seals, music and boss bar. Set it to `0` to remove the boss as soon as the arena empties.
+- **Penetrating damage** — with `penetrating-damage: true` the boss's own hits bypass armour and Protection enchantments (they are re-applied as `OUT_OF_WORLD` damage, capped at `max-damage-dealt` (15) per hit). Resistance is only *partially* pierced: `penetrating-resistance-pierce: 0.2` makes the boss ignore 20% of the potion's mitigation, so a player with Resistance I (20% reduction) still blocks 16% of the hit. `0.0` leaves Resistance fully effective, `1.0` ignores it entirely.
 
 ### Special mechanics
 
@@ -53,6 +57,8 @@ All attacks are classes extending `BossAttackBase` under `entities/boss/attack/<
 ```
 /msc attack <attack-name> [range]
 ```
+
+All 45 names are listed by `/msc attack help` (four pages, one per category) and offered by tab completion. `/msc attack` also accepts the mechanics above (`flyup`, `land`, `heal`, `reset`, the four `phase*` transitions) plus `hoverbarrage`'s legacy alias `crossbarrage`.
 
 | Ground (14) | Aerial (13) | Ranged (12) | Defensive (6) |
 |---|---|---|---|
@@ -153,6 +159,7 @@ A towering, ruthless executioner constructed from a custom **27-piece ItemDispla
 | Move speed | `nix-executioner.move-speed` (0.30) |
 | Melee range / Cleave damage | `nix-executioner.melee-range` (3.5) · `nix-executioner.cleave-damage` (22.0) |
 | Chain pull range | `nix-executioner.chain-range` (24.0 blocks) |
+| Damage cap taken | `nix-executioner.max-damage-per-hit` (100.0 per hit; `0` disables the cap) |
 | Cooldowns | melee 20 ticks · chain pull 80 ticks |
 | Summon Ritual | **The Executioner's Scaffold** in Boss Dimension (sacrificing `Executioner's Warrant`) · `/msc spawn nix` (OP) |
 

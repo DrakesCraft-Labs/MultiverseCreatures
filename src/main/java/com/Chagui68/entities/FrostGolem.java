@@ -3,6 +3,8 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.FrostHeart;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
@@ -27,6 +29,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class FrostGolem implements Listener {
 
@@ -110,7 +114,7 @@ public class FrostGolem implements Listener {
         IronGolem golem = (IronGolem) location.getWorld().spawnEntity(location, EntityType.IRON_GOLEM);
         if (golem == null) return false;
         golem.addScoreboardTag(TAG);
-        golem.setCustomName(ChatColor.AQUA + "" + ChatColor.BOLD + "Frost Golem");
+        golem.customName(MscText.title(AQUA, "Frost Golem"));
         golem.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, golem);
         MscEntityUtils.setAttribute(golem, Attribute.MAX_HEALTH, health);

@@ -259,6 +259,8 @@ public class NixBoss implements Listener {
     public static final String TAG = "MSC_NixBoss";
     public static final String PART_TAG = "MSC_NixPart";
     public static final String BAR_TITLE = ChatColor.DARK_RED + "" + ChatColor.BOLD + "NIX - The Executioner";
+    /** Default ceiling on a single hit taken by Nix. */
+    public static final double DEFAULT_MAX_DAMAGE_PER_HIT = 100.0;
 
     // Joint pivots relative to centered model
     private static final Vector3f PIVOT_SHOULDER_RIGHT = new Vector3f(0.3514f, 1.405f, 0.0f);
@@ -279,6 +281,8 @@ public class NixBoss implements Listener {
     private double meleeDamage;
     private double cleaveDamage;
     private double chainRange;
+    /** Ceiling on a single hit, so no burst source can one-shot the boss. */
+    private double maxDamagePerHit;
     private int meleeCooldownTicks;
     private int chainCooldownTicks;
     private int cleaveAnimTicks = 16;
@@ -302,6 +306,7 @@ public class NixBoss implements Listener {
         meleeDamage = config.getDouble("entities.nix-executioner.melee-damage", 14.0);
         cleaveDamage = config.getDouble("entities.nix-executioner.cleave-damage", 22.0);
         chainRange = config.getDouble("entities.nix-executioner.chain-range", 24.0);
+        maxDamagePerHit = config.getDouble("entities.nix-executioner.max-damage-per-hit", DEFAULT_MAX_DAMAGE_PER_HIT);
         meleeCooldownTicks = config.getInt("entities.nix-executioner.melee-cooldown-ticks", 24);
         chainCooldownTicks = config.getInt("entities.nix-executioner.chain-cooldown-ticks", 80);
         cleaveAnimTicks = config.getInt("entities.nix-executioner.cleave-anim-ticks", 16);
@@ -858,10 +863,18 @@ public class NixBoss implements Listener {
         stand.getWorld().playSound(loc, Sound.ENTITY_PLAYER_ATTACK_CRIT, 0.9f, 0.8f);
     }
 
+    /**
+     * Clamps one incoming hit to the configured ceiling. A {@code cap <= 0} disables the limit.
+     * Exposed for tests: the damage path itself needs a live server.
+     */
+    static double capIncomingDamage(double damage, double cap) {
+        return cap > 0 ? Math.min(damage, cap) : damage;
+    }
+
     private void reduceHealth(ArmorStand stand, double damage) {
         stand.setNoDamageTicks(0);
         double currentHealth = MscEntityUtils.getVirtualHealth(stand);
-        double newHealth = Math.max(0, currentHealth - damage);
+        double newHealth = Math.max(0, currentHealth - capIncomingDamage(damage, maxDamagePerHit));
         MscEntityUtils.setVirtualHealth(stand, newHealth);
 
         NixInstance inst = activeInstances.get(stand.getUniqueId());

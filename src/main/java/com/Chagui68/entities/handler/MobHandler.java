@@ -1,6 +1,7 @@
 package com.Chagui68.entities.handler;
 
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
 import com.Chagui68.utils.MscWorldPolicy;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.misc.IceCrown;
@@ -11,7 +12,6 @@ import com.Chagui68.items.components.StarCore;
 import com.Chagui68.items.misc.WirtsLantern;
 import io.papermc.paper.world.MoonPhase;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -37,6 +37,8 @@ import java.util.logging.Level;
 
 import static com.Chagui68.items.weapons.melee.Excalibur.EXCALIBUR_SWORD;
 import static com.Chagui68.items.food.ScoobyCookie.SCOOBY_COOKIE;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class MobHandler implements Listener {
 
@@ -512,7 +514,7 @@ public class MobHandler implements Listener {
 
     public void equipWanderingVillager(WanderingTrader trader) {
         List<MerchantRecipe> trades = new ArrayList<>();
-        trader.setCustomName(ChatColor.GOLD + "Multiverse Merchant");
+        trader.customName(MscText.line(GOLD, "Multiverse Merchant"));
         trader.setCustomNameVisible(true);
 
         ItemStack cookies = SCOOBY_COOKIE.clone();

@@ -12,7 +12,14 @@ This page is for developers who want to extend MultiverseCreatures. It explains 
 src/main/java/com/Chagui68/
 ├── MultiverseCreatures.java          Plugin entrypoint: onEnable/onDisable, recipe + listener registration
 ├── commands/                          /msc command executor + tab completer
-│   └── MSCCommand.java
+│   ├── MSCCommand.java                 Dispatcher: permission gate, sub-command routing, tab completion
+│   ├── CommandMenu.java                Every rendered menu + the pagination maths
+│   ├── SpawnCatalogue.java             Spawnable entities: aliases, messages, help pages
+│   ├── GiveCatalogue.java              Givable items: aliases, item factories, help pages
+│   ├── AttackCatalogue.java            Attack names + help pages
+│   ├── DummyStudio.java                Pose-dummy subsystem (spawn, poses, wings, animations)
+│   ├── SealStudio.java                 Particle-seal patterns, planes and hand-drawn shapes
+│   └── MscKillFilter.java              Pure "is this one of ours?" predicates for /msc kill
 ├── entities/
 │   ├── boss/                          ArmorStandBoss + attack framework (THE OBSIDIAN SENTINEL)
 │   │   ├── ArmorStandBoss.java        Boss class: spawn, phases, shield, bar, AI ticker, attack registry
@@ -48,6 +55,10 @@ src/main/java/com/Chagui68/
     ├── ItemBuilder.java               Fluent builder for ItemStacks (lore, PDC tags, enchants)
     └── MscEntityUtils.java            setAttribute, spawnTagged, permanentFireResistance,
                                        isValidTarget, handleDeath — shared mob utilities
+
+src/main/resources/
+├── plugin.yml                         command, permission nodes and usage line
+└── config.yml                         every knob the code reads (contract checked by ConfigFilesGuardTest)
 ```
 
 ---
@@ -124,12 +135,14 @@ All custom entities receive an `MSC_<name>` scoreboard tag (e.g. `MSC_ObsidianGu
 | **New mob** | 1. Create a class under `entities/<...>/` implementing `Listener`. Use `MscEntityUtils.spawnTagged/setAttribute/handleDeath`.<br>2. Self-register in the constructor.<br>3. Instantiate it once in `MultiverseCreatures.onEnable()` so it's alive to receive events.<br>4. (Optional) Register a spawn replacement route inside `MobHandler`. |
 | **New boss attack** | 1. Create a class extending `BossAttackBase` under `entities/boss/attack/<aerial\|ground\|ranged>/` returning a unique `getName()`.<br>2. Delegate shared logic via `boss.<helper>()` (the base class already exposes `boss`, `plugin`, a `Random`, `sealDamage(...)`, etc.).<br>3. Register it in `ArmorStandBoss.initAttacks()` with `registerAttack(new XxxAttack(this))`. No edits to dispatch code needed. |
 | **New tool/weapon handler** | 1. Create `listener/XxxHandler implements Listener`.<br>2. Use `MscEntityUtils.isCreativeOrSpectator` for game-mode guards.<br>3. Register it in `MultiverseCreatures.onEnable()` via `getServer().getPluginManager().registerEvents(new XxxHandler(this), this)`. |
+| **New `/msc` alias, item or attack** | 1. Add one entry to `commands/SpawnCatalogue`, `commands/GiveCatalogue` or `commands/AttackCatalogue`: the executor, the help pages and the tab completer all read that single table.<br>2. An attack still needs its class registered in `ArmorStandBoss.initAttacks()` and its `getName()` copied into the catalogue entry, plus into the aerial/ground name sets that gate when it is allowed to fire. |
+| **New config option** | 1. Read it with a default (`config.getInt("path.to.key", fallback)`) so existing configs keep working.<br>2. Declare it in `config.yml` — `ConfigFilesGuardTest` fails the build when a key is read by the code but missing from the file. |
 
 ---
 
 ## Code style
 
-- **No comments in code** — names and structure must self-document.
+- **Comments explain *why*, never *what*** — names and structure must self-document; a comment earns its place when it records a constraint, a legacy quirk or a non-obvious ordering (`SentinelPhase` and the `/msc` catalogues document their data that way).
 - **Fluent item construction** — always via `ItemBuilder`, never `new ItemStack(...) + ItemMeta` inline.
 - **PDC tags for identification** — never compare by display name.
 - **Modern `AttributeModifier`** — `NamespacedKey` constructor only.
@@ -140,16 +153,17 @@ All custom entities receive an `MSC_<name>` scoreboard tag (e.g. `MSC_ObsidianGu
 ## Build
 
 ```bash
-mvn clean package -DskipTests
+mvn verify                  # compile + unit tests + shaded jar (what CI runs)
+mvn clean package -DskipTests  # build only, no tests
 ```
 
-Output: `target/MultiverseCreatures-v${project.version}.jar`
+Output: `target/MultiverseCreatures-v${project.version}.jar` (the shaded plugin jar).
 
-Dependencies (all `provided` by Paper/Purpur at runtime):
+Dependencies (all `provided` by Paper/Purpur at runtime except Gson, which is shaded):
 - `org.purpurmc.purpur:purpur-api:1.21.11-R0.1-SNAPSHOT`
-- `org.joml:joml:1.10.5` (3D Display Entities)
-- `io.netty:netty-all:4.1.82.Final` (packet interception)
-- `com.google.code.gson:gson:2.10.1` (schematic JSON parsing)
+- `org.joml:joml:1.10.9` (3D Display Entities)
+- `io.netty:netty-transport:4.2.18.Final` (packet interception)
+- `com.google.code.gson:gson:2.14.0` (schematic JSON parsing, shaded as `com/Chagui68/libs/gson`)
 - `com.google.code.findbugs:jsr305:3.0.2`
 - `org.jetbrains:annotations:24.0.1`
 

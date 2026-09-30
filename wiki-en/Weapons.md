@@ -69,6 +69,7 @@ A blade that cuts the seam between the world and the nothing behind it.
 | Particles | PORTAL at both ends |
 
 - **Give:** `/msc give nullshearedge` (alias `nullshear`)
+- **Config:** `nullshear-edge.darkness-chance`, `darkness-duration-ticks`, `void-fraction`, `void-blink-cooldown-ms`, `void-blink-range` (read once at startup)
 - **Theme:** Multiverse (Void Crawler chain via Void Essence)
 
 ---

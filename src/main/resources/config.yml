@@ -75,9 +75,26 @@ entities:
 
     # Penetrating damage: ignores armor / protection. If false, uses normal damage.
     penetrating-damage: true
+    # Share of the Resistance potion's damage reduction that penetrating hits ignore (0.2 = 20%).
+    # 0.0 leaves Resistance fully effective, 1.0 ignores it completely.
+    penetrating-resistance-pierce: 0.2
     max-damage-dealt: 15.0        # cap for penetrating damage dealt per hit
     max-damage-per-hit: 50.0      # cap for damage the boss can receive per hit
     phase-transition-slam-damage: 10.0
+
+    # Phase thresholds: the fraction of max health at which each next phase begins, highest first.
+    # The number of phases is one more than the entries here, and it is also how many squares the
+    # boss bar title shows (one per phase, red for the phases left, grey for the ones spent).
+    phase-thresholds: [0.8, 0.6, 0.4, 0.2]
+
+    # How long each defensive state lasts, in ticks (20 ticks = 1 s).
+    defense-duration-stone-skin-ticks: 200       # ~10 s
+    defense-duration-reflect-barrier-ticks: 160  # ~8 s
+    defense-duration-absorb-shield-ticks: 300    # ~15 s, or until the shield is broken
+
+    # How long the boss keeps fighting after the last player leaves its 100-block radius (~10 s).
+    # 0 despawns it as soon as nobody is in range.
+    no-player-despawn-ticks: 200
 
     # Attack weight / chance
     medium-range-attack-chance: 15
@@ -210,6 +227,7 @@ entities:
     melee-damage: 14.0
     cleave-damage: 22.0
     chain-range: 24.0
+    max-damage-per-hit: 100.0      # cap on the damage Nix can receive from a single hit
     melee-cooldown-ticks: 20
     chain-cooldown-ticks: 80
     cleave-anim-ticks: 14
@@ -513,6 +531,17 @@ items:
       blindness-duration: 60
       knockback-horizontal: 1.5
       knockback-vertical: 0.8
+
+  # Void-blink passive of the Nullshear Edge. Read once at startup, so restart after editing.
+  nullshear-edge:
+    # Chance that a hit applies Darkness
+    darkness-chance: 0.1
+    darkness-duration-ticks: 100
+    # Fraction of the damage dealt that is applied again as void damage
+    void-fraction: 0.3
+    # Right-click void blink
+    void-blink-cooldown-ms: 20000
+    void-blink-range: 30.0
 
   ice-crown:
     enabled: true

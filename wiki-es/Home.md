@@ -59,6 +59,6 @@ Cada spawn de mob vanilla tiene una probabilidad configurable de ser reemplazado
 - [Componentes](./Components.md) — Los 16 drops de crafteo y qué mob proporciona cada uno
 - [Música](./Music.md) — Canciones NBS incluidas, discos de jukebox y el Disc Trader, créditos de canciones
 - [Recetas](./Recipes.md) — Todas las recetas de crafteo personalizadas (formas, ingredientes, niveles)
-- [Comandos](./Commands.md) — Referencia completa de `/msc` (spawn, give, seal, dummy, attack, music, dimtp, cleanstands)
+- [Comandos](./Commands.md) — Referencia completa de `/msc` (spawn, give, attack, music, seal, dummy, dimtp, cleanstands, kill, reload)
 - [Zona Técnica](./dev/Home.md) — Arquitectura del código, convenciones, tests y cómo ampliar el proyecto
 - [Instalación](./Installation.md) — Instalación paso a paso, requisitos, solución de problemas

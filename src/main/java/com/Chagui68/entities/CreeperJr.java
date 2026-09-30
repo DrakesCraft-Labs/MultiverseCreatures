@@ -2,6 +2,8 @@ package com.Chagui68.entities;
 
 import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -22,6 +24,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.util.Vector;
 
 import java.util.Random;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class CreeperJr implements Listener {
 
@@ -57,7 +61,7 @@ public class CreeperJr implements Listener {
 
             creeper.addScoreboardTag(TAG);
             applyAttributes(creeper);
-            creeper.setCustomName(ChatColor.GREEN + "" + ChatColor.BOLD + "Creeper Jr.");
+            creeper.customName(MscText.title(GREEN, "Creeper Jr."));
             creeper.setCustomNameVisible(true);
             MscEntityUtils.applyAmbientPersistence(plugin, creeper);
             creeper.setCollidable(true);

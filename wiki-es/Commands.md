@@ -1,11 +1,11 @@
 # 🛠️ Comandos
 
-Todos los comandos usan la raíz **`/msc`**. **Permiso:** `msc.admin` (OP del servidor por defecto).
+Todos los comandos usan la raíz **`/msc`**. **Permiso:** `msc.admin` (OP del servidor por defecto). `msc.admin.bypass` (también OP) omite las reglas de construcción y teletransporte de la dimensión protegida del jefe.
 
 ```
 /msc                           Muestra el menú de ayuda estructurado y categorizado
 /msc spawn <tipo>              Invoca un mob, jefe, strike force militar, etc. (/msc spawn help [1-3])
-/msc give <objeto> [cantidad]  Entrega armas legendarias, armaduras o componentes (/msc give help [1-4])
+/msc give <objeto> [cantidad] [jugador]  Entrega armas legendarias, armaduras o componentes (/msc give help [1-4])
 /msc seal <patrón> [plano]     Renderiza un patrón de sello de partículas
 /msc dummy ...                 Invoca / posa / anima ArmorStands de prueba
 /msc attack <nombre> [rango]   Dispara un ataque o mecánica del ArmorStandBoss (/msc attack help [1-4])
@@ -18,6 +18,8 @@ Todos los comandos usan la raíz **`/msc`**. **Permiso:** `msc.admin` (OP del se
 
 Cada comando se detalla abajo.
 
+Los alias que aceptan `spawn`, `give` y `attack` — y los que ofrece el autocompletado — se declaran en una sola tabla por comando (`SpawnCatalogue`, `GiveCatalogue` y `AttackCatalogue`): la misma tabla alimenta el ejecutor, el menú de ayuda y el tab-complete.
+
 ---
 
 ## /msc spawn <tipo>
@@ -29,8 +31,10 @@ Invoca una sola entidad (o una formación táctica) en la ubicación del ejecuto
 | `merchant` | Comerciante Multiversal ("Shaggy" Comerciante Errante) |
 | `mahoraga` | Minijefe Mahoraga |
 | `kinger` | Minijefe Kinger |
+| `garou` | Minijefe Garou [Hero Hunter] |
 | `nix` (`executioner`, `nixelverdugo`) | NIX - El Verdugo (jefe con modelo custom de 27 piezas) |
 | `armorstand` (`armorstandboss`) | EL CENTINELA DE OBSIDIANA, jefe final |
+| `jack` | JACK STAR — El Arquitecto del Sistema (5 fases, 3 vidas) |
 | `creeperjr` | Creeper Jr. (×3 — aparece en trío) |
 | `headslime` | Head Slime |
 | `zombietrap` (`army`) | Trampa de Caballo Zombie Militar (emboscada de ejército completo de 5 unidades) |
@@ -50,15 +54,16 @@ Invoca una sola entidad (o una formación táctica) en la ubicación del ejecuto
 | `stormcaller` (`storm`) | Invocador de Tormentas |
 | `venomwitch` (`venom`) | Bruja de Veneno |
 | `voidcrawler` (`void`) | Void Crawler |
+| `warlord` | Orcish Warlord (furia berserker) |
 | `disctrader` | Disc Trader — aldeano bibliotecario que vende discos de música |
 
 Los detalles de cada entidad viven en [Jefes](./Bosses.md) y [Criaturas](./Creatures.md).
 
 ---
 
-## /msc give <objeto> [cantidad]
+## /msc give <objeto> [cantidad] [jugador|@a|@p|@r|@s]
 
-La cantidad por defecto es 1 y puede ser de 1 a 64.
+La cantidad por defecto es 1 y puede ser de 1 a 64. Sin destino el objeto va al ejecutor; si se indica, acepta el nombre exacto de un jugador o un selector (`@e` se rechaza a propósito).
 
 ### Armas
 
@@ -68,8 +73,10 @@ La cantidad por defecto es 1 y puede ser de 1 a 64.
 | `cindergreatsword` | `greatsword` |
 | `nullshearedge` | `nullshear` |
 | `soulreapscythe` | `scythe` |
+| `venomfang` | `dagger` |
 | `aetherpullshot` | `pullshot` |
 | `skyfiretalisman` | `talisman` |
+| `sentinelgrimoire` | `grimoire` |
 | `chaosforge` | — |
 
 ### Armaduras y reliquias
@@ -100,17 +107,22 @@ La cantidad por defecto es 1 y puede ser de 1 a 64.
 
 | Objeto | Alias |
 |---|---|
-| `scoobycookie` (arriba) | `cookie` |
 | `starcore` | `star` |
 | `militarycomponent` | `component` |
+| `swordmold` | `mold` |
 | `headslimeheart` | `heart` |
 | `chaosorb` | — |
+| `chaospowder` | — |
+| `chaosfragment` | — |
+| `chaoscore` | — |
+| `condensedchaosorb` | `condensed` |
 | `enderfragment` | `ender` |
 | `frostheart` | `frost` |
 | `magmacore` | `magma` |
 | `obsidianshard` | `shard` |
 | `reaperessence` | `reaper` |
 | `reinforcedbone` | `bone` |
+| `reinforcedboneblock` | — |
 | `bonemarrow` | `marrow` |
 | `ossifiedplate` | `plate` |
 | `moltenmarrow` | — |
@@ -119,7 +131,23 @@ La cantidad por defecto es 1 y puede ser de 1 a 64.
 | `venomgland` | `venom` |
 | `voidessence` | `void` |
 | `wheelessence` | `whelessence` |
-| `warrant` | `executionerwarrant`, `deathwarrant` |
+
+### Catalizadores de jefe y bloques nucleares
+
+| Objeto | Alias |
+|---|---|
+| `wheelcore` | — |
+| `moltenwheelcore` | `moltenwheel` |
+| `refinedwheelcore` | `refinedwheel` |
+| `reapercore` | — |
+| `sentinelcore` | `sentinel` |
+| `endercore` | — |
+| `multiversalcore` | `multiverse` |
+| `compressedgoldblock` | `goldblock` |
+| `refinednetherite` | — |
+| `moltennetherite` | `molten` |
+| `executionerwarrant` | `warrant`, `deathwarrant` |
+| `architectkernel` | `kernel`, `architect` |
 
 > Nota: algunos alias se solapan (`bone` = componente Hueso Reforzado, pero `bone` **también** es el alias de spawn de Bone Shield). El contexto (spawn vs give) los desambigua.
 
@@ -172,9 +200,9 @@ Manipula un ArmorStand de prueba usado para posar/vista previa de contenido. Út
 
 Dispara un ataque, defensa o mecánica de transición de fase del ArmorStandBoss por nombre. Encuentra el jefe más cercano dentro de `rango` bloques (por defecto `aggro-range` = 50) y lo ejecuta.
 
-### Ataques de suelo (11)
+### Ataques de suelo (14)
 
-`groundslam`, `groundshatter`, `shieldbash`, `lancestorm`, `earthpillar`, `chaingrapple`, `warstomp`, `armorspikes`, `vortexpull`, `mirrorimage`, `doombeam`
+`groundslam`, `groundshatter`, `shieldbash`, `lancestorm`, `earthpillar`, `chaingrapple`, `warstomp`, `armorspikes`, `vortexpull`, `mirrorimage`, `doombeam`, `lanceflurry`, `whirlwindslash`, `executionsweep`
 
 ### Ataques aéreos (13)
 

@@ -4,6 +4,7 @@ import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ArchitectKernel;
 import com.Chagui68.items.food.ScoobyCookie;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.kyori.adventure.text.Component;
@@ -60,6 +61,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 /**
  * JACKSTAR — The System Architect
@@ -1342,7 +1345,7 @@ public class JackStarBoss implements Listener {
         stand.setInvulnerable(false);
         stand.setCollidable(true);
         stand.setCanPickupItems(false);
-        stand.setCustomName(ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "JackStar — El Arquitecto del Sistema");
+        stand.customName(MscText.title(DARK_AQUA, "JackStar — El Arquitecto del Sistema"));
         stand.setCustomNameVisible(true);
         stand.addScoreboardTag(TAG);
 

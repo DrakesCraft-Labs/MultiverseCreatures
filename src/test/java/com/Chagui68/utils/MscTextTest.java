@@ -145,4 +145,44 @@ class MscTextTest {
                 "\u00a78\u2726 \u00a77Slime Kingdom\u00a78 \u2726"),
                 lore.stream().map(MscTextTest::legacy).toList());
     }
+
+    @Test
+    @DisplayName("Verify plainText() strips colour and decoration, for code that compares a name")
+    void testPlainTextStripsFormatting() {
+        assertEquals("Head Slime", MscText.plainText(MscText.title(GREEN, "Head Slime")));
+        assertEquals("Obsidian Guard: Face me!", MscText.plainText(
+                MscText.rich(DARK_GRAY, "Obsidian Guard: ", GRAY, "Face me!")));
+        assertEquals("Garou [Hero Hunter]", MscText.plainText(garouName()));
+    }
+
+    @Test
+    @DisplayName("Verify plainText() of a nameless entity is empty rather than a crash")
+    void testPlainTextOfNamelessEntityIsEmpty() {
+        assertEquals("", MscText.plainText(null));
+        assertEquals("", MscText.plainText(Component.empty()));
+    }
+
+    /**
+     * The Garou name tag: a bold dark-purple prefix followed by a light-purple bracket.
+     *
+     * In legacy formatting a colour code clears bold, so the bracket is NOT bold. Building the two
+     * halves as siblings reproduces that; appending the second half to the decorated first one would
+     * let the bold leak down into it instead, which is why the code reads the long way round.
+     */
+    private static Component garouName() {
+        return Component.empty()
+                .append(MscText.title(DARK_PURPLE, "Garou "))
+                .append(MscText.line(LIGHT_PURPLE, "[Hero Hunter]"));
+    }
+
+    @Test
+    @DisplayName("Verify a bold prefix followed by another colour keeps legacy's bold reset")
+    void testBoldPrefixFollowedByColourKeepsLegacyReset() {
+        assertEquals("\u00a75\u00a7lGarou \u00a7d[Hero Hunter]", legacy(garouName()));
+
+        // The trap this avoids: as a child of the bold component, the bracket would inherit bold.
+        Component leaked = MscText.title(DARK_PURPLE, "Garou ")
+                .append(MscText.line(LIGHT_PURPLE, "[Hero Hunter]"));
+        assertNotEquals("\u00a75\u00a7lGarou \u00a7d[Hero Hunter]", legacy(leaked));
+    }
 }

@@ -47,6 +47,12 @@ public class ItemCombatHandler implements Listener {
         if (!config.getBoolean("items.excalibur.enabled", true)
                 || !config.getBoolean("items.excalibur.passive-effect.enabled", true)) return;
         int strengthLevel = config.getInt("items.excalibur.passive-effect.strength.amplifier", 2);
+        // Both of these were documented in config.yml but hardcoded here (80 ticks / 20 ticks).
+        // Defaults match the old constants, so an untouched config behaves exactly as before.
+        int strengthDurationTicks = Math.max(1,
+                config.getInt("items.excalibur.passive-effect.strength.duration-ticks", 80));
+        long intervalTicks = Math.max(1L,
+                config.getLong("items.excalibur.passive-effect.interval-ticks", 20));
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -61,11 +67,11 @@ public class ItemCombatHandler implements Listener {
 
                     if (meta.getPersistentDataContainer().has(Excalibur.EXCALIBUR_KEY,
                             PersistentDataType.INTEGER)) {
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 80, strengthLevel));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, strengthDurationTicks, strengthLevel));
                     }
                 }
             }
-        }.runTaskTimer(plugin, 20L, 20L);
+        }.runTaskTimer(plugin, intervalTicks, intervalTicks);
     }
 
     @EventHandler

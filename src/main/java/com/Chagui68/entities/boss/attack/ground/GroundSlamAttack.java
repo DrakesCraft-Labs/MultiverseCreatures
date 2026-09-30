@@ -5,6 +5,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.ArmorStandBoss;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -142,7 +143,7 @@ public class GroundSlamAttack extends BossAttackBase {
         holder.setGravity(false);
         holder.setInvulnerable(true);
         holder.setPersistent(true);
-        holder.setCustomName("MSC_ShieldHolder");
+        holder.customName(Component.text("MSC_ShieldHolder"));
         holder.setCustomNameVisible(false);
         holder.addScoreboardTag("MSC_ShieldHolder");
 

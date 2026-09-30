@@ -69,6 +69,7 @@ Una hoja que corta la costura entre el mundo y la nada que hay detrás.
 | Partículas | PORTAL en ambos extremos |
 
 - **Give:** `/msc give nullshearedge` (alias `nullshear`)
+- **Config:** `nullshear-edge.darkness-chance`, `darkness-duration-ticks`, `void-fraction`, `void-blink-cooldown-ms`, `void-blink-range` (se leen una vez al arrancar)
 - **Tema:** Multiverso (cadena del Void Crawler vía Esencia del Vacío)
 
 ---

@@ -5,6 +5,8 @@ import com.Chagui68.integration.SlimefunArmorAdaptation;
 import com.Chagui68.integration.DrakesBossesIntegration;
 import com.Chagui68.items.components.WheelEssence;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -43,6 +45,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class Mahoraga implements Listener {
 
@@ -286,7 +290,7 @@ public class Mahoraga implements Listener {
         zombie.setBaby(false);
 
         zombie.addScoreboardTag(TAG);
-        zombie.setCustomName(ChatColor.WHITE + "" + ChatColor.BOLD + "Mahoraga");
+        zombie.customName(MscText.title(WHITE, "Mahoraga"));
         zombie.setCustomNameVisible(true);
         zombie.setPersistent(true);
         zombie.setRemoveWhenFarAway(false);

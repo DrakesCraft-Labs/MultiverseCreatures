@@ -74,23 +74,49 @@ zombie-horse-trap:
 
 ```yaml
 armor-stand-boss:
-  health: 500.0
-  aggro-range: 50
+  health: 3200.0                            # virtual health; the physical attribute cap is applied automatically
+  aggro-range: 50.0
   seal-damage: 15.0
   hover-barrage-damage: 12.0
+  penetrating-damage: true                  # boss hits bypass armor; Resistance is only partially pierced
+  penetrating-resistance-pierce: 0.2        # share of the Resistance reduction those hits ignore
+  max-damage-dealt: 15.0                    # cap per penetrating hit
+  max-damage-per-hit: 50.0                  # cap on the damage the boss can take per hit
+  phase-thresholds: [0.8, 0.6, 0.4, 0.2]    # phases = entries + 1 = squares on the boss bar title
+  defense-duration-stone-skin-ticks: 200
+  defense-duration-reflect-barrier-ticks: 160
+  defense-duration-absorb-shield-ticks: 300
+  no-player-despawn-ticks: 200              # 0 despawns the boss as soon as nobody is in range
+  ground-recovery-grace-ticks: 40           # ticks without a floor before it relocates
+  ground-recovery-search-radius: 12
+  ground-recovery-cooldown-ticks: 100
 ```
 
 ### Item cooldowns & amplifiers
 
 ```yaml
 excalibur:
+  passive-effect:
+    interval-ticks: 20        # how often the held-blade passive is re-applied
+    strength:
+      duration-ticks: 80
+      amplifier: 2
   solar-flare:
     range: 20
     cooldown-ms: 15000
 
-ice-king-crown:
-  launch-cooldown-ms: 10000
-  blizzard-cooldown-ms: 60000
+nullshear-edge:
+  darkness-chance: 0.1        # chance a hit applies Darkness
+  darkness-duration-ticks: 100
+  void-fraction: 0.3          # extra void damage as a fraction of the hit
+  void-blink-cooldown-ms: 20000
+  void-blink-range: 30.0
+
+ice-crown:
+  snow-block-launch:
+    cooldown-ms: 10000
+  blizzard:
+    cooldown-ms: 60000
 ```
 
 ### Death messages

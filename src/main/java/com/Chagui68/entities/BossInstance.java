@@ -54,6 +54,14 @@ public class BossInstance {
     public int healingCircleTimer = 0;
     public double healingCircleHealed = 0;
     public BukkitRunnable healingCircleTask;
+    /**
+     * The boss tick loop.
+     *
+     * Held so the fight can be stopped from the outside: without a handle, a boss killed by
+     * {@code /kill} or removed by a command left its loop running until the loop itself noticed the
+     * corpse on the following tick.
+     */
+    public BukkitRunnable aiTask;
     public BukkitRunnable groundSlamTask;
     public BukkitRunnable floatingShieldTask;
     public BukkitRunnable wingTask;

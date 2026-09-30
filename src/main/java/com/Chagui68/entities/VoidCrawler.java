@@ -3,6 +3,8 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.VoidEssence;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.EntityType;
@@ -18,6 +20,8 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class VoidCrawler implements Listener {
 
@@ -71,7 +75,7 @@ public class VoidCrawler implements Listener {
         Spider spider = (Spider) location.getWorld().spawnEntity(location, EntityType.SPIDER);
         if (spider == null) return false;
         spider.addScoreboardTag(TAG);
-        spider.setCustomName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Void Crawler");
+        spider.customName(MscText.title(DARK_PURPLE, "Void Crawler"));
         spider.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, spider);
         MscEntityUtils.setAttribute(spider, Attribute.MAX_HEALTH, health);

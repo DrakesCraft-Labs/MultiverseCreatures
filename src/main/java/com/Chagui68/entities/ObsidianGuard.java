@@ -3,6 +3,7 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ObsidianShard;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
@@ -24,6 +25,8 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class ObsidianGuard implements Listener {
 
@@ -76,7 +79,7 @@ public class ObsidianGuard implements Listener {
         if (zombie == null) return false;
         zombie.setBaby(false);
         zombie.addScoreboardTag(TAG);
-        zombie.setCustomName(ChatColor.DARK_GRAY + "" + ChatColor.BOLD + "Obsidian Guard");
+        zombie.customName(MscText.title(DARK_GRAY, "Obsidian Guard"));
         zombie.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, zombie);
         MscEntityUtils.setAttribute(zombie, Attribute.MAX_HEALTH, health);

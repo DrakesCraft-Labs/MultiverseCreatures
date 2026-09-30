@@ -3,6 +3,8 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.VenomGland;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.AreaEffectCloud;
@@ -18,6 +20,8 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class VenomWitch implements Listener {
 
@@ -82,7 +86,7 @@ public class VenomWitch implements Listener {
 
     private void customize(Witch witch) {
         witch.addScoreboardTag(TAG);
-        witch.setCustomName(ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Venom Witch");
+        witch.customName(MscText.title(DARK_GREEN, "Venom Witch"));
         witch.setCustomNameVisible(true);
         MscEntityUtils.setAttribute(witch, Attribute.MAX_HEALTH, health);
         witch.setHealth(50.0);

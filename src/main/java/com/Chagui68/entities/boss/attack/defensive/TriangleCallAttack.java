@@ -6,8 +6,8 @@ import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.MagicSealListener;
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.utils.MscText;
 import net.kyori.adventure.text.Component;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -22,6 +22,8 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 import java.util.Random;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class TriangleCallAttack extends BossAttackBase {
 
@@ -80,7 +82,7 @@ public class TriangleCallAttack extends BossAttackBase {
 
                 Ghast ghast = (Ghast) world.spawnEntity(spawnLoc, EntityType.GHAST);
                 if (ghast != null) {
-                    ghast.setCustomName(ChatColor.RED + "" + ChatColor.BOLD + "Infernal Ghast");
+                    ghast.customName(MscText.title(RED, "Infernal Ghast"));
                     ghast.setCustomNameVisible(true);
                     ghast.setPersistent(true);
                     ghast.setRemoveWhenFarAway(false);
@@ -95,7 +97,7 @@ public class TriangleCallAttack extends BossAttackBase {
                 Location phantomLoc = sealLoc.clone().add(0, 6 + i * 4, 0);
                 Phantom phantom = (Phantom) world.spawnEntity(phantomLoc, EntityType.PHANTOM);
                 if (phantom != null) {
-                    phantom.setCustomName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Night Stalker");
+                    phantom.customName(MscText.title(DARK_PURPLE, "Night Stalker"));
                     phantom.setCustomNameVisible(true);
                     phantom.setPersistent(true);
                     phantom.setRemoveWhenFarAway(false);
@@ -108,7 +110,7 @@ public class TriangleCallAttack extends BossAttackBase {
 
                     WitherSkeleton sniper = (WitherSkeleton) world.spawnEntity(phantomLoc, EntityType.WITHER_SKELETON);
                     if (sniper != null) {
-                        sniper.setCustomName(ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Sniper Skeleton");
+                        sniper.customName(MscText.title(DARK_GREEN, "Sniper Skeleton"));
                         sniper.setCustomNameVisible(true);
                         sniper.setPersistent(true);
                         sniper.setRemoveWhenFarAway(false);
@@ -160,7 +162,7 @@ public class TriangleCallAttack extends BossAttackBase {
 
                 Ravager ravager = (Ravager) world.spawnEntity(spawnLoc, EntityType.RAVAGER);
                 if (ravager != null) {
-                    ravager.setCustomName(ChatColor.DARK_RED + "" + ChatColor.BOLD + "War Beast");
+                    ravager.customName(MscText.title(DARK_RED, "War Beast"));
                     ravager.setCustomNameVisible(true);
                     ravager.setPersistent(true);
                     ravager.setRemoveWhenFarAway(false);
@@ -175,7 +177,7 @@ public class TriangleCallAttack extends BossAttackBase {
 
                     Evoker evoker = (Evoker) world.spawnEntity(spawnLoc, EntityType.EVOKER);
                     if (evoker != null) {
-                        evoker.setCustomName(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Dark Priest");
+                        evoker.customName(MscText.title(LIGHT_PURPLE, "Dark Priest"));
                         evoker.setCustomNameVisible(true);
                         evoker.setPersistent(true);
                         evoker.setRemoveWhenFarAway(false);

@@ -2,6 +2,8 @@ package com.Chagui68.entities;
 
 import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -26,6 +28,8 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.List;
 import java.util.Random;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class Warlord implements Listener {
 
@@ -78,7 +82,7 @@ public class Warlord implements Listener {
 
     private void customize(Pillager pillager) {
         pillager.addScoreboardTag(TAG);
-        pillager.setCustomName(ChatColor.DARK_RED + "" + ChatColor.BOLD + "Warlord");
+        pillager.customName(MscText.title(DARK_RED, "Warlord"));
         pillager.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, pillager);
         if (pillager.getAttribute(Attribute.MAX_HEALTH) != null) {

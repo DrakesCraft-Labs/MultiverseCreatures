@@ -4,17 +4,20 @@ main: com.Chagui68.MultiverseCreatures
 api-version: '1.21'
 load: STARTUP
 author: Chagui68
-description: A themed creatures and items plugin 
+description: A themed creatures and items plugin
 website: https://github.com/DrakesCraft-Labs/MultiverseCreatures
 softdepend: [Slimefun, InfinityExpansion, SlimeTinker, DrakesBosses]
 
 commands:
   msc:
     description: Main command for MultiverseCreatures
-    usage: /msc <spawn|give|seal|dummy|attack|music|dimtp|cleanstands>
+    usage: /msc <spawn|give|attack|music|seal|dummy|dimtp|cleanstands|kill|reload> - run /msc for help
     permission: msc.admin
 
 permissions:
   msc.admin:
     description: Allows all /msc commands
+    default: op
+  msc.admin.bypass:
+    description: Bypasses the protected boss-dimension build and teleport rules
     default: op

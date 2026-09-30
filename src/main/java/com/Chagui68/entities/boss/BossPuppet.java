@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss;
 import java.util.Set;
 import java.util.UUID;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
@@ -111,11 +112,11 @@ public final class BossPuppet {
         return entidad.getEquipment();
     }
 
-    public void setCustomName(String n) {
-        entidad.setCustomName(n);
+    public void customName(Component n) {
+        entidad.customName(n);
     }
 
-    public void setCustomNameVisible(boolean v) {
+    public void customNameVisible(boolean v) {
         entidad.setCustomNameVisible(v);
     }
 

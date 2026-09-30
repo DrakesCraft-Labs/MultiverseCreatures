@@ -41,7 +41,7 @@ MultiverseCreatures is a content plugin for **Minecraft 1.21+** that turns a ser
 
 ### ✨ Core Highlights
 
-- **🛡️ THE OBSIDIAN SENTINEL** — fully animated 5-phase ArmorStand final boss with **45 attacks** (13 aerial · 14 ground · 12 ranged · 6 defensive), boss bar, megalovania music, magic seals, summoned reinforcements, defensive states — and a ground-recovery fallback that keeps it fighting instead of idling when the floor under it disappears.
+- **🛡️ THE OBSIDIAN SENTINEL** — fully animated 5-phase ArmorStand final boss with **45 attacks** (13 aerial · 14 ground · 12 ranged · 6 defensive), boss bar, megalovania music, magic seals, summoned reinforcements, defensive states — and a ground-recovery fallback that keeps it fighting instead of idling when the floor under it disappears. Its phase ladder (`phase-thresholds`), the three defence durations and the playerless-despawn timer are all `config.yml` keys.
 - **👑 NIX** — the third boss, with its own invocation ritual, phased fight and private arena.
 - **🤖 JACK STAR** — *The System Architect*: 5 phases, 3 lives, ritual invocation and builder defence.
 - **🧠 Adaptive Bosses** — *Mahoraga* reads your **full inventory every tick** and evolves its stats in real time (Sharpness → Resistance, Protection → Strength, Knockback → knockback immunity, distance → Speed).
@@ -76,6 +76,7 @@ The project has a complete documentation site built into the repository. It cove
 | [Components](wiki-en/Components.md) | The 16 mob-drop crafting ingredients + the loot → item chains |
 | [Commands](wiki-en/Commands.md) | Full `/msc` reference (spawn, give, seal, dummy, attack, music, dimtp, cleanstands) |
 | [Architecture](wiki-en/dev/Architecture.md) | Code structure, conventions and how to extend the plugin |
+| [Tests](wiki-en/dev/Tests.md) | The JUnit suite: how to run it and what every test class pins down |
 | [Installation](wiki-en/Installation.md) | Step-by-step install, config.yml guide, troubleshooting |
 
 ---
@@ -104,10 +105,28 @@ anywhere and tested on their own. The "is this player a valid target?" rule (ski
 and spectator) is decided in exactly one place.
 
 > **Heads-up if you are writing a non-ArmorStand boss:** the attacks animate the boss through
-> ArmorStand poses — `setHeadPose`, `setBodyPose`, arm poses — over 250 calls across the 42
+> ArmorStand poses — `setHeadPose`, `setBodyPose`, arm poses — over 250 calls across the 45
 > classes. A mob-based boss can reuse an attack's *effect* (damage, particles, projectiles) but
 > not its choreography. Splitting each attack into "effect" and "animation" is the natural next
 > step if that is needed.
+
+---
+
+## 🧪 Tests & CI
+
+The suite runs **without a server or a network**: the logic that can be checked in isolation is kept
+in classes that take plain arguments (phase ladders, help pagination, command catalogues, kill
+filters, structure validators), so it runs in plain JUnit 5.
+
+```bash
+mvn verify                          # compile + tests + shaded jar
+mvn test -Dtest=SpawnCatalogueTest  # one class only
+```
+
+CI runs `mvn verify` on every push and pull request
+([verify.yml](.github/workflows/verify.yml)), and the Modrinth release workflow only publishes when
+that gate passes. The [Tests wiki page](wiki-en/dev/Tests.md) documents every test class; the
+Spanish version lives in [wiki-es/dev/Tests.md](wiki-es/dev/Tests.md).
 
 ---
 
@@ -142,14 +161,16 @@ Output JAR will be at `target/MultiverseCreatures-v<version>.jar`.
 All interactions use the `/msc` command. **Permission:** `msc.admin` (server OP by default).
 
 ```
-/msc spawn <type>      Summon a mob/boss/merchant at your location
-/msc give <item> [n]   Obtain an item (amount 1–64)
-/msc seal <pattern>    Render a particle seal pattern
-/msc dummy ...         Spawn/pose/an animation ArmorStand dummies
-/msc attack <name>     Trigger an ArmorStandBoss attack/mechanic
-/msc music <play|stop> Play or stop NBS songs
-/msc dimtp <world>     Teleport across worlds
-/msc cleanstands        Remove all MSC-related armor stands
+/msc spawn <type>              Summon a mob/boss/merchant at your location (/msc spawn help)
+/msc give <item> [n] [who]     Obtain an item (amount 1–64, target a player or @a) (/msc give help)
+/msc seal <pattern> [plane]    Render a particle seal pattern
+/msc dummy ...                 Spawn, pose, add wings or animate preview ArmorStands (/msc dummy help)
+/msc attack <name> [range]     Trigger one of the 45 boss attacks or mechanics (/msc attack help)
+/msc music <play|stop|list|disc>  Play or stop NBS songs, or get a music disc
+/msc dimtp <world>             Teleport across worlds
+/msc cleanstands [world]       Remove all MSC-related armor stands
+/msc kill [type|all] [radius]  Purge MSC custom creatures safely
+/msc reload                    Reload config.yml and re-sync entities and bosses
 ```
 
 Full breakdown (alias tables, all spawn types, giveable items, attack names, seal patterns, dummy animations) is in the [Commands wiki page](wiki-en/Commands.md).
@@ -161,7 +182,15 @@ Full breakdown (alias tables, all spawn types, giveable items, attack names, sea
 ```
 src/main/java/com/Chagui68/
 ├── MultiverseCreatures.java      
-├── commands/                     
+├── commands/                     /msc dispatcher + data tables + menus
+│   ├── MSCCommand.java           permission gate, routing, tab completion
+│   ├── CommandMenu.java          every help menu + pagination maths
+│   ├── SpawnCatalogue.java       spawn aliases, messages and help pages
+│   ├── GiveCatalogue.java        item aliases + help pages
+│   ├── AttackCatalogue.java      attack names + help pages
+│   ├── DummyStudio.java          pose-dummy subsystem
+│   ├── SealStudio.java           particle seals
+│   └── MscKillFilter.java        "is this one of ours?" predicates
 ├── entities/
 │   ├── boss/                    
 │   │   ├── attack/{aerial,ground,ranged,defensive}/  
@@ -188,7 +217,9 @@ wiki-en/  wiki-es/                 (English / Spanish docs)
 ├── Components.md
 ├── Commands.md
 ├── Installation.md
-└── dev/Architecture.md
+└── dev/
+    ├── Architecture.md
+    └── Tests.md
 ```
 
 The `wiki-en/` and `wiki-es/` folders are **pure Markdown documentation** and are excluded from the

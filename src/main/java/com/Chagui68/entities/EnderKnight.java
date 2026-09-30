@@ -3,6 +3,7 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.EnderFragment;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
@@ -23,6 +24,8 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class EnderKnight implements Listener {
 
@@ -74,7 +77,7 @@ public class EnderKnight implements Listener {
         Enderman em = (Enderman) location.getWorld().spawnEntity(location, EntityType.ENDERMAN);
         if (em == null) return false;
         em.addScoreboardTag(TAG);
-        em.setCustomName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Ender Knight");
+        em.customName(MscText.title(DARK_PURPLE, "Ender Knight"));
         em.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, em);
         MscEntityUtils.setAttribute(em, Attribute.MAX_HEALTH, health);

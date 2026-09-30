@@ -12,7 +12,14 @@ Esta página es para desarrolladores que quieran extender MultiverseCreatures. E
 src/main/java/com/Chagui68/
 ├── MultiverseCreatures.java          Punto de entrada del plugin: onEnable/onDisable, registro de recetas + listeners
 ├── commands/                          Ejecutor del comando /msc + tab completer
-│   └── MSCCommand.java
+│   ├── MSCCommand.java                 Dispatcher: permiso, enrutado de subcomandos, autocompletado
+│   ├── CommandMenu.java                Todos los menús renderizados + la aritmética de paginación
+│   ├── SpawnCatalogue.java             Entidades spawneables: alias, mensajes, páginas de ayuda
+│   ├── GiveCatalogue.java              Ítems entregables: alias, fábricas de ítem, páginas de ayuda
+│   ├── AttackCatalogue.java            Nombres de ataques + páginas de ayuda
+│   ├── DummyStudio.java                Subsistema del muñeco de poses (spawn, poses, alas, animaciones)
+│   ├── SealStudio.java                 Patrones de sellos de partículas, planos y formas dibujadas a mano
+│   └── MscKillFilter.java              Predicados puros de "¿esto es nuestro?" para /msc kill
 ├── entities/
 │   ├── boss/                          ArmorStandBoss + framework de ataques (EL CENTINELA DE OBSIDIANA)
 │   │   ├── ArmorStandBoss.java        Clase del jefe: spawn, fases, escudo, barra, ticker de IA, registro de ataques
@@ -48,6 +55,10 @@ src/main/java/com/Chagui68/
     ├── ItemBuilder.java               Builder fluido para ItemStacks (lore, etiquetas PDC, encantamientos)
     └── MscEntityUtils.java            setAttribute, spawnTagged, permanentFireResistance,
                                        isValidTarget, handleDeath — utilidades compartidas de mobs
+
+src/main/resources/
+├── plugin.yml                         comando, nodos de permiso y línea de usage
+└── config.yml                         cada ajuste que lee el código (contrato verificado por ConfigFilesGuardTest)
 ```
 
 ---
@@ -124,12 +135,14 @@ Todas las entidades personalizadas reciben una etiqueta de scoreboard `MSC_<nomb
 | **Mob nuevo** | 1. Crea una clase en `entities/<...>/` que implemente `Listener`. Usa `MscEntityUtils.spawnTagged/setAttribute/handleDeath`.<br>2. Auto-regístrate en el constructor.<br>3. Instánciala una vez en `MultiverseCreatures.onEnable()` para que esté viva y reciba eventos.<br>4. (Opcional) Registra una ruta de reemplazo de spawn dentro de `MobHandler`. |
 | **Ataque de jefe nuevo** | 1. Crea una clase que extienda `BossAttackBase` en `entities/boss/attack/<aerial\|ground\|ranged>/` devolviendo un `getName()` único.<br>2. Delega la lógica compartida vía `boss.<helper>()` (la clase base ya expone `boss`, `plugin`, un `Random`, `sealDamage(...)`, etc.).<br>3. Regístrala en `ArmorStandBoss.initAttacks()` con `registerAttack(new XxxAttack(this))`. Sin editar el código de despacho. |
 | **Manejador de herramienta/arma nuevo** | 1. Crea `listener/XxxHandler implements Listener`.<br>2. Usa `MscEntityUtils.isCreativeOrSpectator` para los controles de modo de juego.<br>3. Regístralo en `MultiverseCreatures.onEnable()` vía `getServer().getPluginManager().registerEvents(new XxxHandler(this), this)`. |
+| **Alias, objeto o ataque nuevo de `/msc`** | 1. Añade una entrada en `commands/SpawnCatalogue`, `commands/GiveCatalogue` o `commands/AttackCatalogue`: el ejecutor, las páginas de ayuda y el autocompletado leen esa única tabla.<br>2. Un ataque igual necesita su clase registrada en `ArmorStandBoss.initAttacks()`, su `getName()` copiado en la entrada del catálogo y el nombre añadido a los sets aéreo/suelo que gobiernan cuándo puede dispararse. |
+| **Opción de configuración nueva** | 1. Léela con valor por defecto (`config.getInt("ruta.a.clave", fallback)`) para que las configs existentes sigan funcionando.<br>2. Declárala en `config.yml`: `ConfigFilesGuardTest` falla el build cuando el código lee una clave que no está en el archivo. |
 
 ---
 
 ## Estilo de código
 
-- **Sin comentarios en el código** — los nombres y la estructura deben auto-documentarse.
+- **Los comentarios explican el *porqué*, nunca el *qué*** — los nombres y la estructura deben auto-documentarse; un comentario se gana su lugar cuando registra una restricción, una rareza heredada o un orden no obvio (`SentinelPhase` y los catálogos de `/msc` documentan sus datos así).
 - **Construcción fluida de objetos** — siempre vía `ItemBuilder`, nunca `new ItemStack(...) + ItemMeta` inline.
 - **Etiquetas PDC para identificación** — nunca compares por nombre visible.
 - **`AttributeModifier` moderno** — solo el constructor `NamespacedKey`.
@@ -140,16 +153,17 @@ Todas las entidades personalizadas reciben una etiqueta de scoreboard `MSC_<nomb
 ## Compilación
 
 ```bash
-mvn clean package -DskipTests
+mvn verify                     # compila + tests + jar sombreado (lo que corre CI)
+mvn clean package -DskipTests  # solo compilar, sin tests
 ```
 
-Salida: `target/MultiverseCreatures-v${project.version}.jar`
+Salida: `target/MultiverseCreatures-v${project.version}.jar` (el jar del plugin sombreado).
 
-Dependencias (todas `provided` por Paper/Purpur en tiempo de ejecución):
+Dependencias (todas `provided` por Paper/Purpur en tiempo de ejecución salvo Gson, que va sombreado):
 - `org.purpurmc.purpur:purpur-api:1.21.11-R0.1-SNAPSHOT`
-- `org.joml:joml:1.10.5` (3D Display Entities)
-- `io.netty:netty-all:4.1.82.Final` (intercepción de paquetes)
-- `com.google.code.gson:gson:2.10.1` (análisis de JSON de esquemas)
+- `org.joml:joml:1.10.9` (3D Display Entities)
+- `io.netty:netty-transport:4.2.18.Final` (intercepción de paquetes)
+- `com.google.code.gson:gson:2.14.0` (análisis de JSON de esquemas, sombreado como `com/Chagui68/libs/gson`)
 - `com.google.code.findbugs:jsr305:3.0.2`
 - `org.jetbrains:annotations:24.0.1`
 

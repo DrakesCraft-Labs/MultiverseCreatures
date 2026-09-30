@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 /**
  * Adventure Components for item names and lore.
@@ -34,6 +35,20 @@ public final class MscText {
     /** A line with no formatting at all (plain white). */
     public static Component plain(String text) {
         return Component.text(text);
+    }
+
+    /**
+     * The plain text of a component, with no colour codes or decorations.
+     *
+     * For code that <em>compares</em> a name instead of showing it: reading a name back through the
+     * legacy {@code getCustomName()} string is the deprecated path, and flattening the component
+     * gives the same answer without depending on how the server serialises colours.
+     *
+     * A nameless entity yields an empty string, so callers never have to null-check. Note this is
+     * the counterpart of {@link #plain(String)}: one builds a component, this one reads it back.
+     */
+    public static String plainText(Component component) {
+        return component == null ? "" : PlainTextComponentSerializer.plainText().serialize(component);
     }
 
     /** A single-colour line. */

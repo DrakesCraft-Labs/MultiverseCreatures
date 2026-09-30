@@ -8,6 +8,7 @@ This page documents **how plugin changes are tested** and **what each suite veri
 - **Maven Surefire 3.5.2** — runs the tests automatically during the `test` phase.
 - **Java 21** — same compiler as the main code.
 - **Headless**: no Paper/Purpur server is booted. Bukkit classes that get touched (e.g. `World`) are simulated with `java.lang.reflect.Proxy`, or `Location` objects with a `null` world are used to exercise only the arithmetic.
+- **SnakeYAML** (shipped with `purpur-api`) parses `config.yml` and `plugin.yml` in `ConfigFilesGuardTest`, so an invalid indent fails the suite instead of the server start.
 
 Commands:
 
@@ -24,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 18 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 28 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -48,8 +49,38 @@ Covers the health math in `utils/MscEntityUtils`:
 - `containsCandle` validates the 12-candle ring and rejects the center and the outside.
 
 ### `commands/CommandHelpPaginationTest` — `/msc` pagination
-- The pagination logic clamps any requested page into `[1, totalPages]` (negative inputs, `0`, and above the maximum).
-- The `spawn`, `give`, and `attack` subheaders exist for every valid page (1–3, 1–4 and 1–4 respectively).
+- Drives the real `commands/CommandMenu` helpers (not a local copy): `clampPage` clamps any requested page into `[1, totalPages]` (negative inputs, `0`, and above the maximum), `pageCount` always covers every line with at least one page, and `pageSlice` returns exactly one non-overlapping window per page.
+- Category prefixes keep the legacy `&6&lLabel&8:` / `   &e• &fitem` formatting.
+- The `spawn`, `give`, and `attack` titles and help lines exist for every valid page (1–3, 1–4 and 1–4 respectively), and the self-paginated `dummy` and `seal` menus still fit in two pages of 12 lines.
+
+### `commands/SpawnCatalogueTest` — `/msc spawn` data table
+- The three help pages are byte-for-byte the text the command printed before the table was extracted.
+- Every alias resolves back to its own type, aliases are unique, lowercase and free of blanks, and the legacy shortcuts (`army`, `rogue`, `flame`, …) are all offered by tab completion.
+- Success/failure messages match the old per-branch wording (`Spawned Military Zombie Horse trap!` / `Failed to spawn trap.`).
+- Spawnable-but-undocumented kinds (JackStar) stay out of the help menu, and the Jack boss answers to **exactly one alias** (`jack`): the retired `jackstar`/`arquitecto`/`systemarchitect` shortcuts no longer resolve from commands nor appear in tab completion.
+
+### `commands/GiveCatalogueTest` — `/msc give` data table
+- The four help pages are byte-for-byte the text the command printed before.
+- Every item named in the help text is a real, givable alias (grouped lines like `reaperessence &8/ &evoidessence` included), and unknown aliases return `null` instead of throwing.
+- Aliases are unique and lowercase, and every entry declares an item factory.
+
+### `commands/AttackCatalogueTest` — `/msc attack` data table
+- The four help pages are byte-for-byte the text the command printed before.
+- Tab completion names are the documented attacks, unique and lowercase; every entry sits on a page that exists and shares the `&7` body colour.
+
+### `commands/MscKillFilterTest` — `/msc kill` predicates
+- `MSC_`-prefixed scoreboard tags identify a plugin entity; the legacy untagged names (Mahoraga, Garou, Bone Shield, …) still count; vanilla mobs are left alone.
+- The type filter matches tags with `-`/`_` stripped and falls back to a name substring; `null`/blank types never match.
+
+### `entities/boss/NixDamageCapTest` — NIX damage cap
+- Nix can never lose more than `entities.nix-executioner.max-damage-per-hit` (default **100**) from a single hit: anything above is clamped, anything below passes through untouched, and the cap never *inflates* a hit.
+- `0` (or any non-positive value) disables the limit, which is the documented way back to the old unbounded behaviour.
+- Pins the health-pool arithmetic down: a 10 000-damage burst leaves 350 of 450 HP, four capped hits leave 50, the fifth finishes the boss.
+
+### `entities/boss/PenetratingDamageTest` — Sentinel penetrating damage
+- **Armour is credited back**: the engine folds `ARMOR`, `MAGIC` (Protection enchantments) and `RESISTANCE` into the event damage, and `unmitigated` undoes those three so a 22-damage cleave survives full netherite. Shield blocking is deliberately *not* credited back, and the result never goes negative.
+- `penetratingDamage` keeps Resistance partially effective: the boss ignores `penetrating-resistance-pierce` (default **0.2**) of the potion's reduction, so Resistance I blocks 16% instead of 20% (a 10 hit deals 8.4), `0.0` leaves the potion fully effective and `1.0` ignores it entirely. Mitigation is 20% per level and caps at 100% (Resistance V).
+- Out-of-range pierce values are clamped, a hit can never grow past the raw damage, and the per-hit cap (`max-damage-dealt`, 15) is applied before Resistance so the potion can never raise it.
 
 ### `entities/NixModelKinematicsTest` — NIX kinematic model (27 parts)
 - The model has **exactly 27** `ItemDisplay` parts (Blockbench export).
@@ -99,6 +130,30 @@ Covers the health math in `utils/MscEntityUtils`:
 ### `entities/HeadSlimeImmunityTest` — Head Slime gelatin immunity
 - The immunity window is a deadline per player, so eating a second gelatin **extends** it instead of the older scheduled removal ending it early, and nothing outlives the window after a logout.
 - An expired window is dropped on access, and `clearAllImmunity()` is called from `onDisable`.
+
+### `entities/boss/SentinelPhaseTest` — Sentinel phase ladder
+- The ladder **reproduces the old hardcoded comparison chain exactly**: a sweep of health fractions from −5% to 105% is checked against the `> 0.8 / > 0.6 / > 0.4 / > 0.2` chain the boss used to inline, plus the exact boundaries (at precisely 80% health the boss is already in phase 1), nonsense inputs, and that the phase only ever grows as health drops.
+- `sanitizeThresholds` drops thresholds outside `(0, 1]` and non-finite ones, sorts the rest highest first, collapses duplicates (they would be a zero-width phase), keeps `1.0`, returns an immutable list, and falls back to the defaults when a config edit leaves nothing usable.
+- The generated boss bar titles are asserted **byte for byte** against the five strings the old switch held, for the default five phases and for a rescaled three-phase ladder — including that a phase past the end cannot emit a negative number of squares.
+- Bar colours follow the phases, and a longer ladder reuses the last colour of the palette instead of falling back to red.
+
+### `utils/MscTextTest` — Item and mob name parity
+- Every helper that builds item names, lore, flavour quotes and the `✦ … ✦` footers is serialised back with `LegacyComponentSerializer.legacySection()` and compared to the exact `ChatColor` string it replaced, so the migration cannot shift a space, a colour code or a bold flag unnoticed.
+- Covers the mid-sentence colour switches (`rich`), the empty spacer lines (`blank`), the colourless names (`plain`) and the argument validation of `rich`.
+- Pins the legacy rule that a **colour code clears bold**: a bold prefix followed by another colour stays bold only on the prefix, which is why the Garou name tag is built as two siblings instead of a decorated parent. A child would inherit the bold, and the test keeps that trap visible.
+- `plainText` is the counterpart used to **compare** a name rather than show it, so it must strip every code and return an empty string for a nameless entity.
+
+### `ConfigFilesGuardTest` — Resource contract (`config.yml` / `plugin.yml`)
+- Parses both resources with SnakeYAML, so a broken indent or a lost section fails the build instead of the server start.
+- Scans `src/main/java` for quoted config paths and fails if any of them is missing from `config.yml`. Nothing else enforced the header's "all paths match the code" promise: the Nullshear Edge handler read five `items.nullshear-edge.*` keys that were not in the file, and two Excalibur passive keys were documented but hardcoded, both falling back to code defaults silently.
+- Asserts `plugin.yml` keeps the command, the `msc.admin` node (the same one `commands.permission` declares), the `msc.admin.bypass` node used by the boss-dimension handlers, and a `usage` line listing every sub-command.
+- Checks the player-facing knobs stay sane: the Sentinels `phase-thresholds` descend inside `(0, 1]`, defence durations are at least one tick, `no-player-despawn-ticks` allows `0`, and every toggleable mob keeps its `enabled` flag.
+- A self-test proves the literal scanner reports dotted literals outside comments and ignores the ones inside them.
+
+### `utils/LegacyNameApiGuardTest` — Migration guard
+- Reads `src/main/java` and fails if any file goes back to the deprecated String name APIs (`setDisplayName`, `setLore`, `setItemName`, `setCustomName`, `getDisplayName`, `getCustomName`). Those methods still compile and still work, so an item written the old way would otherwise only show up as a subtly wrong tooltip.
+- Matches inside comments are ignored, and the scan asserts it walked the whole source set so it cannot pass vacuously.
+- A second test feeds the detector a sample with all six APIs plus a commented-out one, proving the guard catches exactly what it is looking for.
 
 ## 🗃️ Where they run
 

@@ -3,8 +3,9 @@ package com.Chagui68.entities;
 import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.music.MusicDisc;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
@@ -16,6 +17,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 /**
  * The Disc Trader: a librarian villager that sells one music disc per song
@@ -34,7 +37,7 @@ public class DiscTrader {
         if (location.getWorld() == null) return false;
 
         Villager villager = (Villager) location.getWorld().spawnEntity(location, EntityType.VILLAGER);
-        villager.setCustomName(ChatColor.GOLD + "Disc Trader");
+        villager.customName(MscText.line(GOLD, "Disc Trader"));
         villager.setCustomNameVisible(true);
         villager.setAdult();
         villager.setAgeLock(true);

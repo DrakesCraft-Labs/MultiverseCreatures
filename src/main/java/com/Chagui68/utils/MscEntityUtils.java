@@ -1,6 +1,7 @@
 package com.Chagui68.utils;
 
 import com.Chagui68.MultiverseCreatures;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -150,14 +151,14 @@ public final class MscEntityUtils {
             Location location,
             EntityType type,
             String tag,
-            String customName,
+            Component customName,
             Consumer<T> configure) {
         Entity raw = location.getWorld().spawnEntity(location, type);
         if (raw == null || !(raw instanceof LivingEntity)) return null;
         T entity = (T) raw;
         entity.addScoreboardTag(tag);
         if (customName != null) {
-            entity.setCustomName(customName);
+            entity.customName(customName);
             entity.setCustomNameVisible(true);
         }
         entity.setPersistent(true);

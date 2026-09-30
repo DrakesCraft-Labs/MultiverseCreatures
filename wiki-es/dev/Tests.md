@@ -8,6 +8,7 @@ Esta página documenta **cómo se prueban** los cambios del plugin y **qué veri
 - **Maven Surefire 3.5.2** — ejecuta los tests automáticamente en la fase `test`.
 - **Java 21** — mismo compilador que el código principal.
 - **Headless**: no se arranca un servidor Paper/Purpur. Las clases de Bukkit que se tocan (p. ej. `World`) se simulan con `java.lang.reflect.Proxy` o se usan objetos `Location` con mundo `null` para ejercitar solo la aritmética.
+- **SnakeYAML** (viene con `purpur-api`) parsea `config.yml` y `plugin.yml` en `ConfigFilesGuardTest`, así una indentación inválida falla en la suite y no al arrancar el servidor.
 
 Comandos:
 
@@ -24,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 18 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 28 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -48,8 +49,38 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - `containsCandle` valida el anillo de 12 velas rojas y rechaza el centro y el exterior.
 
 ### `commands/CommandHelpPaginationTest` — Paginación de `/msc`
-- La lógica de paginación estrecha cualquier página pedida al rango `[1, totalPages]` (entradas negativas, `0`, y por encima del máximo).
-- Los subencabezados de `spawn`, `give` y `attack` existen para todas las páginas válidas (1–3, 1–4 y 1–4 respectivamente).
+- Ejercita los helpers reales de `commands/CommandMenu` (ya no una copia local): `clampPage` estrecha cualquier página pedida al rango `[1, totalPages]` (entradas negativas, `0`, y por encima del máximo), `pageCount` siempre cubre todas las líneas con al menos una página, y `pageSlice` devuelve exactamente una ventana por página, sin solapes.
+- Los prefijos de categoría conservan el formato legacy `&6&lLabel&8:` / `   &e• &fitem`.
+- Los títulos y líneas de `spawn`, `give` y `attack` existen para todas las páginas válidas (1–3, 1–4 y 1–4 respectivamente), y los menús autopaginados `dummy` y `seal` siguen cabiendo en dos páginas de 12 líneas.
+
+### `commands/SpawnCatalogueTest` — Tabla de datos de `/msc spawn`
+- Las tres páginas de ayuda son, byte a byte, el texto que imprimía el comando antes de extraer la tabla.
+- Cada alias resuelve a su propio tipo, los alias son únicos, en minúsculas y sin vacíos, y los atajos legacy (`army`, `rogue`, `flame`, …) se ofrecen en el autocompletado.
+- Los mensajes de éxito/fallo conservan el texto de cada rama antigua (`Spawned Military Zombie Horse trap!` / `Failed to spawn trap.`).
+- Los tipos spawneables pero indocumentados (JackStar) quedan fuera del menú de ayuda, y el jefe Jack responde a **un único alias** (`jack`): los atajos retirados `jackstar`/`arquitecto`/`systemarchitect` ya no se resuelven por comandos ni aparecen en el autocompletado.
+
+### `commands/GiveCatalogueTest` — Tabla de datos de `/msc give`
+- Las cuatro páginas de ayuda son, byte a byte, el texto que imprimía el comando antes.
+- Todo ítem nombrado en la ayuda es un alias real entregable (incluidas las líneas agrupadas como `reaperessence &8/ &evoidessence`), y un alias desconocido devuelve `null` en lugar de lanzar.
+- Los alias son únicos y en minúsculas, y cada entrada declara su fábrica de ítem.
+
+### `commands/AttackCatalogueTest` — Tabla de datos de `/msc attack`
+- Las cuatro páginas de ayuda son, byte a byte, el texto que imprimía el comando antes.
+- Los nombres del autocompletado son los ataques documentados, únicos y en minúsculas; cada entrada está en una página existente y comparte el color de cuerpo `&7`.
+
+### `commands/MscKillFilterTest` — Predicados de `/msc kill`
+- Las etiquetas de scoreboard con prefijo `MSC_` identifican a una entidad del plugin; los nombres legacy sin etiqueta (Mahoraga, Garou, Bone Shield, …) siguen contando; los mobs vanilla quedan intactos.
+- El filtro por tipo compara etiquetas con `-`/`_` eliminados y cae al nombre como subcadena; un tipo `null` o vacío nunca coincide.
+
+### `entities/boss/NixDamageCapTest` — Cap de daño de NIX
+- Nix nunca puede perder más de `entities.nix-executioner.max-damage-per-hit` (por defecto **100**) en un solo golpe: lo que supera el cap se recorta, lo que queda por debajo pasa intacto y el cap nunca *infla* un golpe.
+- `0` (o cualquier valor no positivo) desactiva el límite, que es la forma documentada de volver al comportamiento sin tope.
+- Fija la aritmética del pool de vida: una ráfaga de 10 000 deja 350 de 450 HP, cuatro golpes con cap dejan 50 y el quinto termina con el jefe.
+
+### `entities/boss/PenetratingDamageTest` — Daño penetrante del Centinela
+- **La armadura se devuelve**: el motor ya ha aplicado `ARMOR`, `MAGIC` (encantamientos de Protección) y `RESISTANCE` al daño del evento, y `unmitigated` deshace esos tres para que un tajo de 22 sobreviva a netherite completo. El bloqueo con escudo *no* se devuelve a propósito y el resultado nunca es negativo.
+- `penetratingDamage` mantiene la Resistencia parcialmente efectiva: el jefe ignora `penetrating-resistance-pierce` (por defecto **0.2**) de la reducción de la poción, así que Resistencia I bloquea el 16% en lugar del 20% (un golpe de 10 quita 8.4), `0.0` deja la poción totalmente efectiva y `1.0` la ignora por completo. La mitigación es del 20% por nivel y se topa al 100% (Resistencia V).
+- Los valores de perforación fuera de rango se recortan, un golpe nunca puede superar el daño bruto y el cap por golpe (`max-damage-dealt`, 15) se aplica antes de la Resistencia, así que la poción nunca puede subirlo.
 
 ### `entities/NixModelKinematicsTest` — Modelo cinemático de NIX (27 partes)
 - El modelo tiene **exactamente 27** partes `ItemDisplay` (export de Blockbench).
@@ -99,6 +130,30 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 ### `entities/HeadSlimeImmunityTest` — Inmunidad de la gelatina
 - La ventana de inmunidad es una fecha límite por jugador, así que comer una segunda gelatina la **extiende** en vez de que el removal programado anterior la corte antes, y nada sobrevive a la ventana tras un logout.
 - Una ventana expirada se descarta al consultarla, y `clearAllImmunity()` se invoca desde `onDisable`.
+
+### `entities/boss/SentinelPhaseTest` — Escalera de fases del Centinela
+- La escalera **reproduce exactamente la cadena de comparaciones hardcodeada**: un barrido de fracciones de salud de −5% a 105% se compara contra la cadena `> 0.8 / > 0.6 / > 0.4 / > 0.2` que el jefe tenía en línea, más los bordes exactos (a 80% justos el jefe ya está en la fase 1), entradas sin sentido, y que la fase solo crece cuando la salud baja.
+- `sanitizeThresholds` descarta umbrales fuera de `(0, 1]` y no finitos, ordena el resto de mayor a menor, colapsa duplicados (serían una fase de ancho cero), conserva el `1.0`, devuelve una lista inmutable, y recurre a los valores por defecto cuando una edición del config no deja nada usable.
+- Los títulos generados de la barra de jefe se afirman **byte a byte** contra los cinco strings que tenía el switch, para las cinco fases por defecto y para una escalera reescalada de tres fases — incluyendo que una fase más allá del final no puede emitir cuadrados negativos.
+- Los colores de la barra siguen a las fases, y una escalera más larga reusa el último color de la paleta en vez de caer a rojo.
+
+### `utils/MscTextTest` — Paridad de nombres de items y mobs
+- Cada helper que arma nombres de items, lore, frases de sabor y los pies `✦ … ✦` se serializa de vuelta con `LegacyComponentSerializer.legacySection()` y se compara con el string `ChatColor` exacto al que reemplazó, así la migración no puede mover un espacio, un código de color ni una negrita sin que se note.
+- Cubre los cambios de color a mitad de línea (`rich`), las líneas vacías separadoras (`blank`), los nombres sin color (`plain`) y la validación de argumentos de `rich`.
+- Fija la regla legacy de que **un código de color limpia la negrita**: un prefijo en negrita seguido de otro color queda en negrita solo en el prefijo, y por eso el nombre de Garou se arma como dos hermanos y no como padre decorado. Un hijo heredaría la negrita, y el test deja esa trampa a la vista.
+- `plainText` es la contraparte que sirve para **comparar** un nombre en vez de mostrarlo, así que debe quitar todo código y devolver string vacío para una entidad sin nombre.
+
+### `ConfigFilesGuardTest` — Contrato de recursos (`config.yml` / `plugin.yml`)
+- Parsea ambos recursos con SnakeYAML, así una indentación rota o una sección perdida fallan en el build y no al arrancar el servidor.
+- Escanea `src/main/java` buscando rutas de config entre comillas y falla si alguna no existe en `config.yml`. Nada hacía cumplir la promesa del encabezado ("all paths match the code"): el handler del Nullshear Edge leía cinco claves `items.nullshear-edge.*` que no estaban en el archivo, y dos claves del pasivo de Excalibur estaban documentadas pero hardcodeadas, cayendo ambas silenciosamente a los valores por defecto del código.
+- Verifica que `plugin.yml` conserve el comando, el nodo `msc.admin` (el mismo que declara `commands.permission`), el nodo `msc.admin.bypass` que usan los handlers de la dimensión del jefe, y una línea `usage` que liste todos los subcomandos.
+- Comprueba que los ajustes visibles para el jugador sigan sanos: los `phase-thresholds` del Centinela descienden dentro de `(0, 1]`, las duraciones de defensa duran al menos un tick, `no-player-despawn-ticks` admite `0`, y cada mob conmutable conserva su flag `enabled`.
+- Un autotest prueba que el escáner de literales reporta los literales con punto fuera de comentarios e ignora los que están dentro.
+
+### `utils/LegacyNameApiGuardTest` — Guardia de la migración
+- Lee `src/main/java` y falla si algún archivo vuelve a las APIs String deprecadas de nombre (`setDisplayName`, `setLore`, `setItemName`, `setCustomName`, `getDisplayName`, `getCustomName`). Esos métodos siguen compilando y funcionando, así que un item escrito a la vieja usanza solo se notaría como un tooltip sutilmente mal.
+- Las coincidencias dentro de comentarios se ignoran, y el escaneo verifica que recorrió todo el sourceset para no pasar de forma vacua.
+- Un segundo test le da al detector una muestra con las seis APIs más una comentada, probando que la guardia detecta exactamente lo que busca.
 
 ## 🗃️ Dónde se corren
 

@@ -3,6 +3,7 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ReaperEssence;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
@@ -25,6 +26,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class SoulReaper implements Listener {
 
@@ -76,7 +79,7 @@ public class SoulReaper implements Listener {
         WitherSkeleton ws = (WitherSkeleton) location.getWorld().spawnEntity(location, EntityType.WITHER_SKELETON);
         if (ws == null) return false;
         ws.addScoreboardTag(TAG);
-        ws.setCustomName(ChatColor.BLACK + "" + ChatColor.BOLD + "Soul Reaper");
+        ws.customName(MscText.title(BLACK, "Soul Reaper"));
         ws.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, ws);
         MscEntityUtils.setAttribute(ws, Attribute.MAX_HEALTH, health);

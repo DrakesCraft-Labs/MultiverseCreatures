@@ -1,11 +1,11 @@
 # 🛠️ Commands
 
-All commands use the **`/msc`** root. **Permission:** `msc.admin` (server OP by default).
+All commands use the **`/msc`** root. **Permission:** `msc.admin` (server OP by default). `msc.admin.bypass` (also OP) skips the protected boss-dimension build and teleport rules.
 
 ```
 /msc                           Show structured, categorized help menu
 /msc spawn <type>              Summon a mob, boss, military strike, etc. (/msc spawn help [1-3])
-/msc give <item> [amount]      Give legendary weapons, armor or components (/msc give help [1-4])
+/msc give <item> [amount] [player]  Give legendary weapons, armor or components (/msc give help [1-4])
 /msc seal <pattern> [plane]    Render a particle seal pattern
 /msc dummy ...                 Spawn / pose / animate ArmorStand dummies
 /msc attack <name> [range]     Trigger an ArmorStandBoss attack/mechanic (/msc attack help [1-4])
@@ -18,6 +18,8 @@ All commands use the **`/msc`** root. **Permission:** `msc.admin` (server OP by 
 
 Each command is detailed below.
 
+The aliases accepted by `spawn`, `give` and `attack` — and the ones offered by tab completion — are declared in a single table per command (`SpawnCatalogue`, `GiveCatalogue` and `AttackCatalogue`): the same table feeds the executor, the help menu and the completer.
+
 ---
 
 ## /msc spawn <type>
@@ -29,8 +31,10 @@ Summons a single entity (or a tactical formation) at the executor's location. Th
 | `merchant` | Multiverse Merchant ("Shaggy" Wandering Trader) |
 | `mahoraga` | Mahoraga miniboss |
 | `kinger` | Kinger miniboss |
+| `garou` | Garou [Hero Hunter] miniboss |
 | `nix` (`executioner`, `nixelverdugo`) | NIX - The Executioner (custom 27-part model boss) |
 | `armorstand` (`armorstandboss`) | THE OBSIDIAN SENTINEL final boss |
+| `jack` | JACK STAR — The System Architect (5 phases, 3 lives) |
 | `creeperjr` | Creeper Jr. (×3 — spawns in trio) |
 | `headslime` | Head Slime |
 | `zombietrap` (`army`) | Military Zombie Horse trap (full 5-unit army ambush) |
@@ -50,15 +54,16 @@ Summons a single entity (or a tactical formation) at the executor's location. Th
 | `stormcaller` (`storm`) | Storm Caller |
 | `venomwitch` (`venom`) | Venom Witch |
 | `voidcrawler` (`void`) | Void Crawler |
+| `warlord` | Orcish Warlord (berserker rage) |
 | `disctrader` | Disc Trader — librarian villager selling music discs |
 
 Details for each entity live in [Bosses](./Bosses.md) and [Creatures](./Creatures.md).
 
 ---
 
-## /msc give <item> [amount]
+## /msc give <item> [amount] [player|@a|@p|@r|@s]
 
-Amount defaults to 1 and can be 1–64.
+Amount defaults to 1 and can be 1–64. Without a target the item goes to the executor; otherwise it accepts an exact player name or a selector (`@e` is rejected on purpose).
 
 ### Weapons
 
@@ -68,8 +73,10 @@ Amount defaults to 1 and can be 1–64.
 | `cindergreatsword` | `greatsword` |
 | `nullshearedge` | `nullshear` |
 | `soulreapscythe` | `scythe` |
+| `venomfang` | `dagger` |
 | `aetherpullshot` | `pullshot` |
 | `skyfiretalisman` | `talisman` |
+| `sentinelgrimoire` | `grimoire` |
 | `chaosforge` | — |
 
 ### Armor & relics
@@ -100,17 +107,22 @@ Amount defaults to 1 and can be 1–64.
 
 | Item | Aliases |
 |---|---|
-| `scoobycookie` (above) | `cookie` |
 | `starcore` | `star` |
 | `militarycomponent` | `component` |
+| `swordmold` | `mold` |
 | `headslimeheart` | `heart` |
 | `chaosorb` | — |
+| `chaospowder` | — |
+| `chaosfragment` | — |
+| `chaoscore` | — |
+| `condensedchaosorb` | `condensed` |
 | `enderfragment` | `ender` |
 | `frostheart` | `frost` |
 | `magmacore` | `magma` |
 | `obsidianshard` | `shard` |
 | `reaperessence` | `reaper` |
 | `reinforcedbone` | `bone` |
+| `reinforcedboneblock` | — |
 | `bonemarrow` | `marrow` |
 | `ossifiedplate` | `plate` |
 | `moltenmarrow` | — |
@@ -119,7 +131,23 @@ Amount defaults to 1 and can be 1–64.
 | `venomgland` | `venom` |
 | `voidessence` | `void` |
 | `wheelessence` | `whelessence` |
-| `warrant` | `executionerwarrant`, `deathwarrant` |
+
+### Boss catalysts & core blocks
+
+| Item | Aliases |
+|---|---|
+| `wheelcore` | — |
+| `moltenwheelcore` | `moltenwheel` |
+| `refinedwheelcore` | `refinedwheel` |
+| `reapercore` | — |
+| `sentinelcore` | `sentinel` |
+| `endercore` | — |
+| `multiversalcore` | `multiverse` |
+| `compressedgoldblock` | `goldblock` |
+| `refinednetherite` | — |
+| `moltennetherite` | `molten` |
+| `executionerwarrant` | `warrant`, `deathwarrant` |
+| `architectkernel` | `kernel`, `architect` |
 
 > Note: some aliases overlap (`bone` = Reinforced Bone component, but `bone` is **also** the spawn alias for Bone Shield). Context (spawn vs give) disambiguates.
 
@@ -172,9 +200,9 @@ Manipulates an ArmorStand dummy used for posing/content preview. Useful for desi
 
 Triggers an ArmorStandBoss attack, defense, or phase-transition mechanic by name. Finds the nearest boss within `range` blocks (default `aggro-range` = 50) and executes.
 
-### Ground attacks (11)
+### Ground attacks (14)
 
-`groundslam`, `groundshatter`, `shieldbash`, `lancestorm`, `earthpillar`, `chaingrapple`, `warstomp`, `armorspikes`, `vortexpull`, `mirrorimage`, `doombeam`
+`groundslam`, `groundshatter`, `shieldbash`, `lancestorm`, `earthpillar`, `chaingrapple`, `warstomp`, `armorspikes`, `vortexpull`, `mirrorimage`, `doombeam`, `lanceflurry`, `whirlwindslash`, `executionsweep`
 
 ### Aerial attacks (13)
 

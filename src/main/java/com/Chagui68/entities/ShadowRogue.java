@@ -3,6 +3,7 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ShadowCloak;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
@@ -23,6 +24,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class ShadowRogue implements Listener {
 
@@ -74,7 +77,7 @@ public class ShadowRogue implements Listener {
         Skeleton sk = (Skeleton) location.getWorld().spawnEntity(location, EntityType.SKELETON);
         if (sk == null) return false;
         sk.addScoreboardTag(TAG);
-        sk.setCustomName(ChatColor.DARK_GRAY + "" + ChatColor.BOLD + "Shadow Rogue");
+        sk.customName(MscText.title(DARK_GRAY, "Shadow Rogue"));
         sk.setCustomNameVisible(true);
         MscEntityUtils.applyAmbientPersistence(plugin, sk);
         MscEntityUtils.setAttribute(sk, Attribute.MAX_HEALTH, health);

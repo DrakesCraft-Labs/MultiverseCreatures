@@ -10,8 +10,8 @@ Un ArmorStand animado gigante de escala 7.5×. El clímax del plugin.
 
 | Estadística | Valor por defecto |
 |---|---|
-| Salud | `armor-stand-boss.health` (por defecto 500) |
-| Barra de jefe | `SEGMENTED_6`, roja → azul a lo largo de 5 fases |
+| Salud | `armor-stand-boss.health` (por defecto 3200) |
+| Barra de jefe | `SEGMENTED_6`, roja → azul a lo largo de las fases (ver `phase-thresholds`) |
 | Música | `Undertale — Megalovania` (radio de 60 bloques, se detiene al morir) |
 | Equipamiento | Netherita completa (trim Amatista/Silencio) + Lanza de Netherita + Escudo irrompible |
 | Invocación | `/msc spawn armorstand` (alias `armorstandboss`) |
@@ -26,12 +26,16 @@ Un ArmorStand animado gigante de escala 7.5×. El clímax del plugin.
 | 3 — Verde | >20% | Desesperación: invulnerable 80t, daño AoE ×1.5 + Oscuridad II + Ceguera I + Lentitud III |
 | 4 — Azul | ≤20% | fase final |
 
+La escalera es datos, no código: `armor-stand-boss.phase-thresholds` contiene las fracciones de salud en las que empieza cada fase siguiente, de mayor a menor. El número de fases es uno más que las entradas de esa lista, y es también cuántos cuadrados muestra el título de la barra de jefe — uno por fase, rojo para las que quedan y gris para las ya gastadas. Las entradas fuera de `(0, 1]` se descartan y los duplicados se colapsan, así que una errata no puede dejar al jefe con una sola fase.
+
 ### Comportamiento de la IA
 
 - **Modo suelo** elige entre Círculo de Curación (<40% HP, 25%), Vuelo (15%), Sello de Escudo (35%), Ataque de Suelo (55%), Bombardeo Flotante (por defecto).
 - **Modo vuelo** ejecuta ataques aéreos aleatorios cada 80 ticks; aterriza con AirSlam cuando se han realizado ≥10 ataques únicos.
-- **Estados defensivos** (aleatorios, solo por debajo del 50% de HP, en el suelo): **Piel de Piedra** (×0.5 daño recibido), **Barrera Reflectante** (×0.7 daño + 30% reflejado), **Escudo Absorbente** (absorbedor de 100 HP que visualmente cambia de azul a rojo).
+- **Estados defensivos** (aleatorios, solo por debajo del 50% de HP, en el suelo): **Piel de Piedra** (×0.5 daño recibido), **Barrera Reflectante** (×0.7 daño + 30% reflejado), **Escudo Absorbente** (absorbedor de 100 HP que visualmente cambia de azul a rojo). Sus duraciones salen de `defense-duration-stone-skin-ticks` (200), `defense-duration-reflect-barrier-ticks` (160) y `defense-duration-absorb-shield-ticks` (300).
 - **Recuperación de suelo** — un jefe en modo suelo solo ataca mientras `isOnGround` es cierto. Si se queda sin bloque sólido debajo (vacío, agua, un agujero, un borde), flotaba en silencio para siempre. Tras `ground-recovery-grace-ticks` (40) ticks sin suelo se teletransporta a la columna más cercana con piso y espacio libre, prefiriendo la zona de su objetivo actual y recurriendo al spawn del mundo si no encuentra nada, y reanuda el ataque con los cooldowns reiniciados.
+- **Despawn** — sin nadie en un radio de 100 bloques el jefe sigue peleando durante `no-player-despawn-ticks` (200, ~10 s) antes de despawnear y limpiar sus tareas, sellos, música y barra de jefe. Ponlo a `0` para que el jefe se vaya en cuanto la arena se vacíe.
+- **Daño penetrante** — con `penetrating-damage: true` los golpes del jefe ignoran armadura y encantamientos de Protección (se reaplican como daño `OUT_OF_WORLD`, con cap de `max-damage-dealt` (15) por golpe). La Resistencia solo se perfora *en parte*: `penetrating-resistance-pierce: 0.2` hace que el jefe ignore el 20% de la mitigación de la poción, así que un jugador con Resistencia I (20% de reducción) sigue bloqueando el 16% del golpe. `0.0` deja la Resistencia totalmente efectiva y `1.0` la ignora por completo.
 
 ### Mecánicas especiales
 
@@ -53,6 +57,8 @@ Todos los ataques son clases que extienden `BossAttackBase` bajo `entities/boss/
 ```
 /msc attack <nombre-del-ataque> [rango]
 ```
+
+Los 45 nombres los lista `/msc attack help` (cuatro páginas, una por categoría) y los ofrece el autocompletado. `/msc attack` también acepta las mecánicas de arriba (`flyup`, `land`, `heal`, `reset`, las cuatro transiciones `phase*`) y el alias heredado `crossbarrage` de `hoverbarrage`.
 
 | Suelo (14) | Aéreos (13) | A distancia (12) | Defensivos (6) |
 |---|---|---|---|
@@ -153,6 +159,7 @@ Un verdugo colosal e implacable construido a partir de un **modelo personalizado
 | Velocidad de movimiento | `nix-executioner.move-speed` (0.30) |
 | Rango cuerpo a cuerpo / Daño de tajo | `nix-executioner.melee-range` (3.5) · `nix-executioner.cleave-damage` (22.0) |
 | Rango de atracción con cadenas | `nix-executioner.chain-range` (24.0 bloques) |
+| Cap de daño recibido | `nix-executioner.max-damage-per-hit` (100.0 por golpe; `0` desactiva el cap) |
 | Cooldowns | cuerpo a cuerpo 20 ticks · cadenas 80 ticks |
 | Ritual de Invocación | **El Cadalso del Verdugo** en la Boss Dimension (sacrificando `Sentencia de Muerte`) · `/msc spawn nix` (OP) |
 
