@@ -297,20 +297,18 @@ class KingerModelTest {
         // A step bends the knee, which carries the shin further from the axis than the rest pose does,
         // so the rest-pose coverage above is not enough on its own: the whole cycle has to fit too.
         //
-        // The deepest step does carry the shin about four centimetres past the stand's 0.5-wide box,
-        // which is the price of a knee that bends enough to be visible: an unscaled stand is what the
-        // rest pose needs, and widening it to cover the walk would swallow the swings at the air the
-        // comment above the hitbox test refuses to grow the box for. That slack is pinned here so it
-        // cannot grow unnoticed.
-        float walkSlack = 0.05f;
+        // No slack: the stride is tuned so even the deepest step keeps the folded shin over the box.
+        // This used to allow five centimetres of overhang, which was the price of the wider stride
+        // the walk started with; a swing that misses the stand hits nothing at all, so the budget for
+        // "the leg looks lively" is the box and nothing more.
         for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.2f) {
             for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
                 Vector3f moved = KingerModel.compose(part, new Quaternionf().rotateX(KingerModel.walkSwing(part.group(), phase)),
                         KingerModel.lowerRotation(part, phase)).getTranslation();
 
-                assertTrue(Math.abs(moved.x) < halfWidth + walkSlack,
+                assertTrue(Math.abs(moved.x) < halfWidth,
                         part + " swung far out of the hitbox sideways at phase " + phase);
-                assertTrue(Math.abs(moved.z) < halfWidth + walkSlack,
+                assertTrue(Math.abs(moved.z) < halfWidth,
                         part + " swung far out of the hitbox front or back at phase " + phase + ": z=" + moved.z);
                 assertTrue(moved.y > 0f && moved.y < (float) (1.975 * Kinger.MODEL_HITBOX_SCALE),
                         part + " left the hitbox vertically at phase " + phase);

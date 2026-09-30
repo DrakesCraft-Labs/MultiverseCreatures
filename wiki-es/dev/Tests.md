@@ -26,7 +26,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 52 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 54 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -198,13 +198,18 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - **15** partes (spec de Blockbench) con las mismas garantías de integridad de matrices (16 floats, offset/scale/quaternion finitos) y `CENTER` finito.
 - **Throttling de sync de displays**: parado y sin animación sincroniza cada 3 ticks (**30** de 90, ~66% menos); moviéndose o en animación sincroniza **a cada tick** (90 de 90). Esto valida la regla `!isIdle || tickCount % 3 == 0`.
 
+### `entities/LimbArticulationGuardTest` — Cada segmento exportado está articulado
+- Guardia cruzada sobre los tres jefes vestidos: recorre **todas** las agrupaciones de extremidad del enum de piezas de cada modelo — no la lista escrita a mano que usan los tests de cada modelo — y le pregunta la respuesta al export. Donde está el hueco más grande entre dos piezas apiladas, ahí va una articulación, y el código tiene que plegar exactamente las piezas de debajo, ni una más ni una menos.
+- Falla cuando una extremidad viene exportada en dos segmentos que el código nunca articula (media extremidad se quedaría rígida para siempre) y cuando el código pliega una extremidad que el export dejó de una pieza. También demuestra que al menos una extremidad *sí* quedó articulada por modelo, así que la guardia no puede pasar de forma vacua.
+- Encontró un caso real mientras se escribía: el `TORSO_UPPER` de Kinger son dos piezas a 19 cm. Eso no es una articulación —el torso se inclina desde la cintura y no se dobla por la mitad— así que la guardia exige **ninguna** articulación a los grupos del cuerpo, y el hallazgo queda documentado en la clase en vez de taparlo con un umbral de hueco.
+
 ### `entities/KingerModelTest` — Geometría del modelo de Kinger
 - Las quince piezas del traje quedan fijadas contra el **modelo exportado**: cada traslación coincide, el tronco y las piernas comparten un único eje Z, y cada mitad de pierna está apilada sobre su propio eje X, así que una pierna que gira no puede partirse de lado.
 - `CENTER` es el **eje del torso** (el punto medio de las dos piezas del torso) y no la media de las quince anclas ni el punto medio del bbox, que los brazos arrastran 0.03 y 0.08 bloques hacia delante; el tronco, las piernas y la cabeza quedan sobre ese eje, y el recentrado nunca toca una altura.
 - Cada pieza pertenece a un **grupo de extremidad**: las piezas de un grupo conservan sus distancias al girar, ninguna se desliza de lado ni se desprende de su articulación, y no hay dos piezas en el mismo sitio.
 - Una extremidad tiene **dos articulaciones donde el export tiene dos segmentos y una donde no**: la espinilla se pliega en la rodilla que el export deja entre el muslo y la espinilla (comparada con el hueco mayor de la geometría de esa pierna), el muslo y la placa de la bota quedan rígidos, los brazos de una sola pieza de Kinger no exponen ninguna segunda articulación, y un jefe quieto (o cuyo balanceo está en la mitad delantera del paso) no pliega nada.
 - El **test de la hitbox** mantiene `MODEL_HITBOX_SCALE` cubriendo toda la pose de reposo (0.5 de ancho, 1.975 de alto) sin alejarse más de 0.1 de la escala 0.94 que la geometría necesita — el literal `2.0` anterior duplicaba la caja en todas direcciones y se tragaba golpes al aire.
-- Un segundo test de hitbox **recorre toda la forma de caminar**: un paso dobla la rodilla y lleva la espinilla más lejos del eje que la pose de reposo, así que cada pieza se comprueba en un ciclo completo de `walkSwing`. El paso más profundo lleva la espinilla unos cuatro centímetros fuera de la caja de 0.5 del stand, que es el precio documentado de una rodilla que se dobla lo suficiente para verse; ese margen queda fijado para que no crezca sin que se note.
+- Un segundo test de hitbox **recorre toda la forma de caminar**: un paso dobla la rodilla y lleva la espinilla más lejos del eje que la pose de reposo, así que cada pieza se comprueba en un ciclo completo de `walkSwing`, y **sin ningún margen de tolerancia**. El paso está calibrado para que incluso el más profundo deje la espinilla doblada sobre la caja de 0.5 del stand: un golpe que falla al stand no golpea nada, así que el presupuesto para «que la pierna parezca viva» es la caja y nada más.
 - La etiqueta de cada pieza es única y lleva su propietario, así que una adopción no puede confundir dos piezas; una guardia de fuentes impide que las piezas vuelvan a retrasarse (`setTeleportDuration`/`setInterpolationDuration`/`setInterpolationDelay`/`setDisplayWidth`/`setDisplayHeight` a cero, configurados en un solo sitio), exige que un recargue **adopte** el traje que ya tiene en vez de crear un segundo superpuesto y que **reconstruya la barra de jefe** de ese jefe (con la salud virtual de la que se lee su progreso), y mantiene la animación pasando por `KingerModel.compose` en lugar de una transformación por pieza.
 
 ### `listener/bossdimension/BossDimensionGuardLogicTest` — Guardia de la dimensión del jefe

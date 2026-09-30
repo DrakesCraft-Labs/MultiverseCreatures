@@ -42,8 +42,16 @@ public final class KingerModel {
     public static final Vector3f PIVOT_KNEE_LEFT = kneeOf(Kinger.KingerPart.LEG_LEFT_UPPER,
             Kinger.KingerPart.LEG_LEFT_LOWER);
 
-    /** Radians the thigh of a walking leg swings by; the arms swing a little further. */
-    private static final float STRIDE = 0.3f;
+    /**
+     * Radians the thigh of a walking leg swings by.
+     *
+     * <p>Smaller than the arm swing on purpose: the shin folds back as the leg comes forward, and at
+     * a wider stride it carried the knee past the stand's 0.5-wide box — the box a player's swing
+     * has to hit — so the walk now stays inside it (see {@code KingerModelTest}).
+     */
+    private static final float STRIDE = 0.25f;
+
+    /** Radians an arm swings by: one piece per arm, so nothing folds and it can afford to swing. */
     private static final float ARM_SWING = 0.35f;
 
     private KingerModel() {

@@ -26,7 +26,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 52 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 54 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -198,13 +198,18 @@ Covers the health math in `utils/MscEntityUtils`:
 - **15** parts (Blockbench spec) with the same matrix-integrity guarantees (16 floats, finite offset/scale/quaternion) and a finite `CENTER`.
 - **Display sync throttling**: stationary with no animation syncs every 3 ticks (**30** of 90, ~66% reduction); while moving or animating it syncs **every tick** (90 of 90). This validates the `!isIdle || tickCount % 3 == 0` rule.
 
+### `entities/LimbArticulationGuardTest` — Every exported segment is articulated
+- Cross-model guard over the three dressed bosses: it walks **every** limb group of every model's part enum — not the hand-written list the per-model tests use — and asks the export for its answer. Wherever the biggest gap between two stacked pieces is, a joint belongs there, and the code must fold exactly the pieces below it, no more and no fewer.
+- Fails when a limb is exported in two segments the code never articulates (half the limb would swing rigid forever) and when the code folds a limb the export left in one piece. It also proves at least one limb *was* articulated per model, so the guard cannot pass vacuously.
+- It found a real one while being written: Kinger's `TORSO_UPPER` is two pieces 19 cm apart. That is not a joint — the torso leans around the waist and does not bend in the middle — so the guard asks body groups for **no** joint, and the finding is documented in the class instead of being papered over with a gap threshold.
+
 ### `entities/KingerModelTest` — Kinger model geometry
 - The fifteen suit pieces are pinned against the **exported model**: every translation matches, the trunk and the legs share one Z axis, and each half of a leg is stacked on its own X so a swinging leg cannot split sideways.
 - `CENTER` is the **torso axis** (the midpoint of the two torso pieces) instead of the mean of the fifteen anchors or the bounding-box midpoint, which the arms pull 0.03 and 0.08 blocks forward; the trunk, the legs and the head all sit on that axis, and re-centring never touches a height.
 - Every piece belongs to a **limb group**: the pieces of a group keep their distances while swinging, no piece slides sideways or flies off its joint, and no two pieces share a place.
 - A limb has **two joints where the export has two segments and one where it does not**: the shin folds at the knee the export leaves between the thigh and the shin (compared against the biggest gap in the leg's own geometry), the thigh and the boot plate stay rigid, Kinger's one-piece arms expose no second joint at all, and a still boss (or one whose swing is on the forward half of the step) folds nothing.
 - The **hitbox test** keeps `MODEL_HITBOX_SCALE` covering the whole rest pose (0.5 wide, 1.975 tall) while staying within 0.1 of the 0.94 the geometry strictly needs — the old literal `2.0` doubled the box in every direction and swallowed swings at thin air.
-- A second hitbox test **walks the whole gait**: a step bends the knee and carries the shin further from the axis than the rest pose does, so every piece is checked over a full cycle of `walkSwing`. The deepest step takes the shin about four centimetres past the stand's 0.5-wide box, which is the documented price of a knee that bends enough to be visible; that slack is pinned so it cannot grow unnoticed.
+- A second hitbox test **walks the whole gait**: a step bends the knee and carries the shin further from the axis than the rest pose does, so every piece is checked over a full cycle of `walkSwing`, with **no slack allowance at all**. The stride is tuned so even the deepest step keeps the folded shin over the stand's 0.5-wide box: a swing that misses the stand hits nothing, so the budget for "the leg looks lively" is the box and nothing more.
 - Every piece's tag is unique and carries its owner, so an adoption cannot mix two pieces up; a source guard keeps the pieces from lagging (`setTeleportDuration`/`setInterpolationDuration`/`setInterpolationDelay`/`setDisplayWidth`/`setDisplayHeight` all zero, configured in one place), requires a reload to **adopt** the suit it already has instead of spawning a second, overlapping one and to **rebuild that boss's boss bar** (with the virtual health its progress is read from), and keeps the animation going through `KingerModel.compose` rather than a per-piece transform.
 
 ### `listener/bossdimension/BossDimensionGuardLogicTest` — Boss dimension guard

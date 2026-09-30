@@ -144,7 +144,7 @@ Outfit: white stained-glass helmet + white leather armor (unbreakable).
 
 ## ♟️ Kinger — Miniboss (The Amazing Digital Circus)
 
-A living chess king: an invisible ArmorStand dressed in a 15-piece ItemDisplay suit (base, legs, torso, collar, belt, arms, head and ornament) that walks, fights and tracks players like a chess piece come to life. The stand is unscaled — a plain 0.5 × 1.975-block hitbox, sized to the suit instead of the old doubled one — and the pieces are grouped into limbs, so a leg swings from its hip and the shin follows the thigh rather than every piece turning on its own anchor — and the **knee bends with the step**, because the shin hinges on a second joint halfway between the exported thigh and shin instead of staying frozen against the thigh.
+A living chess king: an invisible ArmorStand dressed in a 15-piece ItemDisplay suit (base, legs, torso, collar, belt, arms, head and ornament) that walks, fights and tracks players like a chess piece come to life. The stand is unscaled — a plain 0.5 × 1.975-block hitbox, sized to the suit instead of the old doubled one — and the pieces are grouped into limbs, so a leg swings from its hip and the shin follows the thigh rather than every piece turning on its own anchor — and the **knee bends with the step**, because the shin hinges on a second joint halfway between the exported thigh and shin instead of staying frozen against the thigh. The stride is calibrated to that box: even the deepest step keeps the folded shin over the stand, so a sword swing aimed at the leg never passes through empty air.
 
 | Stat | Default |
 |---|---|
