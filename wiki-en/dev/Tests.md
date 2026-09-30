@@ -25,13 +25,18 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 43 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 44 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
 - **`calculateSafeHealth`** — Clamps the requested health to the server limit (attribute cap, default 1024 on Paper) to avoid `IllegalArgumentException`. Verifies real boss cases: ArmorStandBoss (3200), NIX (450), Frost Golem (200); clamps to a minimum of **0.1** (prevents instant death on spawn) and protects against negative input.
 - **`calculateVirtualProgress`** — Clamps the boss-bar progress to [0.0, 1.0] (including `0/0` = 0).
 - **`calculateScaledPhysicalHealth`** — Converts **virtual** health (e.g. 3200) into the real physical health stored on the entity (scaled to its physical max), with 0 → death.
+
+### `utils/MscGeometryOverlayTest` — Geometry drawn in the world
+- The hitbox overlay is drawn along the **twelve edges** of the box: each edge runs on exactly one axis, they add up to four of each side length and they meet at exactly the eight corners — an outline missing an edge would hide the gap the audit is looking for. A degenerate (empty) box still draws instead of throwing.
+- A joint is placed in the **same frame the display pieces use** (`yaw + 180`): a stand facing north mirrors the model point, a quarter turn maps it onto the other axis, and no rotation ever changes its height or its distance from the stand.
+- The joints the command actually hands over (Kinger's, NIX's and Jack Star's real pivot constants) all sit inside a body: within the stand's height, near the body axis and on its own plane.
 
 ### `utils/DisplaySuitTest` — The suit every dressed boss wears
 - An adoption recognises a piece only when its **suit, piece and owner tags all agree**: a piece of another boss, another piece of the same suit, or a suit tag without the rest is never taken.

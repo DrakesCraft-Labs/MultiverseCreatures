@@ -25,13 +25,18 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 43 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 44 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - **`calculateSafeHealth`** — Ajusta la salud pedida al límite del servidor (cap de atributo, por defecto 1024 en Paper) evitando `IllegalArgumentException`. Verifica casos de jefes reales: ArmorStandBoss (3200), NIX (450), Frost Golem (200); clampa a mínimo **0.1** (evita muerte instantánea al aparecer) y protege de entradas negativas.
 - **`calculateVirtualProgress`** — Clampa el progreso de la boss bar entre 0.0 y 1.0 (incluye `0/0` = 0).
 - **`calculateScaledPhysicalHealth`** — Convierte la salud **virtual** (p. ej. 3200) a la salud física real almacenada en la entidad (escalada a su máximo físico), con 0 → muerte.
+
+### `utils/MscGeometryOverlayTest` — Geometría dibujada en el mundo
+- El overlay de la hitbox se dibuja por las **doce aristas** de la caja: cada arista corre por un único eje, suman cuatro de cada lado y se encuentran en exactamente las ocho esquinas — un contorno al que le falta una arista escondería justo el hueco que la auditoría busca. Una caja degenerada (vacía) también se dibuja en vez de lanzar excepción.
+- Una articulación se coloca en el **mismo marco que usan las piezas del display** (`yaw + 180`): un stand mirando al norte refleja el punto del modelo, un cuarto de vuelta lo lleva al otro eje, y ninguna rotación cambia su altura ni su distancia al stand.
+- Las articulaciones que el comando entrega de verdad (las constantes reales de Kinger, NIX y Jack Star) quedan dentro de un cuerpo: dentro de la altura del stand, cerca del eje del cuerpo y sobre su propio plano.
 
 ### `utils/DisplaySuitTest` — El traje que viste cada jefe
 - Una adopción reconoce una pieza solo cuando coinciden sus **etiquetas de traje, pieza y propietario**: una pieza de otro jefe, otra pieza del mismo traje, o la etiqueta de traje sin las demás nunca se adoptan.

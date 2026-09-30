@@ -14,6 +14,7 @@ Todos los comandos usan la raíz **`/msc`**. **Permiso:** `msc.admin` (OP del se
 /msc cleanstands [mundo]       Elimina todos los armor stands relacionados con MSC
 /msc kill [tipo|all] [radio]   Purga criaturas de MSC de forma segura
 /msc debug [jugador]           Desglosa el daño de cada jefe hacia y desde un jugador
+/msc debug geometry [jefe]     Dibuja la hitbox real de un jefe y sus articulaciones en el mundo
 /msc reload                    Recarga config.yml y sincroniza entidades y jefes
 ```
 
@@ -267,6 +268,21 @@ JACK STAR - THE SYSTEM ARCHITECT
 ```
 
 Las secciones sin datos se omiten; si aún no te ha tocado ningún jefe el comando lo dice en vez de mostrar un desglose vacío. Las muestras son transitorias: las de un jugador se pierden al desconectarse y las de un jefe al morir o despawnear, así que el informe siempre refleja la sesión actual. Los caps y multiplicadores están en `entities.<jefe>.*` en `config.yml`; mira [Instalación](./Installation.md) y [Jefes](./Bosses.md) para saber qué hace cada opción.
+
+---
+
+## /msc debug geometry [kinger|nix|jack|sentinel]
+
+Dibuja en el mundo la **hitbox real** de un jefe y las **articulaciones** sobre las que giran sus extremidades durante diez segundos, siguiéndolo mientras se mueve. Apunta al jefe de ese tipo más cercano en 32 bloques (omite el nombre para cualquier jefe vestido); la geometría se dibuja con partículas, así que no aparece ni queda nada en el mundo.
+
+- En **rojo**, las doce aristas de la caja del ArmorStand — la caja que recibe de verdad los golpes. Cada pieza visible tiene que quedar **dentro**; si no, un golpe a esa pieza se pierde.
+- En **cian**, cada articulación: hombro, cadera, cintura y cuello. Una extremidad cuelga de su punto y su extremo lejano mantiene la distancia mientras gira.
+
+El Centinela no tiene articulaciones propias (viste la armadura sobre el stand), así que solo dibuja la caja. Es la versión en juego de los tests de modelo: existe para revisar un modelo junto al jefe en vez de con un test temporal.
+
+```
+Drawing kinger for 10 s: hitbox 0.50 x 1.98 x 0.50 blocks (red), 6 joints (cyan).
+```
 
 ---
 

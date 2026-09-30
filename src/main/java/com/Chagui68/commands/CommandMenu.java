@@ -336,8 +336,12 @@ final class CommandMenu {
     void debugHelp() {
         header("MSC DEBUG - BOSS DAMAGE");
         line(" &7Usage: &e/msc debug [player]");
+        line(" &7Usage: &e/msc debug geometry [kinger|nix|jack|sentinel]");
         line("");
         line(" &6&lInfo&8:");
+        line("   &e• &fGeometry draws the hitbox the boss really uses and the");
+        line("      &fjoints its limbs swing around, so a model can be checked");
+        line("      &fin game: every piece has to sit inside the box.");
         line("   &e• &fShows what the Obsidian Sentinel, Nix and Jack Star did to a");
         line("      &fplayer and what they took back, per boss.");
         line("   &e• &fTargets the player you are looking at, or a named player.");

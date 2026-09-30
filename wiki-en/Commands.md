@@ -14,6 +14,7 @@ All commands use the **`/msc`** root. **Permission:** `msc.admin` (server OP by 
 /msc cleanstands [world]       Remove all MSC-related armor stands (optionally by world)
 /msc kill [type|all] [radius]  Safely kill/purge MSC custom creatures
 /msc debug [player]            Break down each boss's damage to and from a player
+/msc debug geometry [boss]     Draw a boss's real hitbox and its limb joints in the world
 /msc reload                    Reload config.yml and sync entities and bosses
 ```
 
@@ -267,6 +268,21 @@ JACK STAR - THE SYSTEM ARCHITECT
 ```
 
 Sections with nothing recorded are skipped; if no boss has touched the player yet the command says so instead of printing an empty breakdown. The samples are transient: a player's are dropped when they disconnect and a boss's when it dies or despawns, so the report always reflects the current session. The caps and multipliers live in `entities.<boss>.*` in `config.yml`; see [Installation](./Installation.md) and [Bosses](./Bosses.md) for what each knob does.
+
+---
+
+## /msc debug geometry [kinger|nix|jack|sentinel]
+
+Draws a boss's **real hitbox** and the **joints its limbs swing around** in the world for ten seconds, following it as it moves. It targets the nearest boss of that kind within 32 blocks (omit the name for any dressed boss); the geometry is drawn with particles, so nothing is spawned and nothing is left behind.
+
+- **Red** traces the twelve edges of the armour stand's bounding box — the box that actually takes the hits. Every visible piece has to be **inside** it, or a swing at that piece misses.
+- **Cyan** marks each joint: shoulder, hip, waist and neck. A limb has to hang from its dot, and the limb's far end has to stay the same distance from it while it swings.
+
+The Sentinel has no joints of its own (it wears its armour on the stand), so it only draws the box. This is the in-game counterpart of the model tests: it exists so a model can be checked next to the boss instead of through a throwaway unit test.
+
+```
+Drawing kinger for 10 s: hitbox 0.50 x 1.98 x 0.50 blocks (red), 6 joints (cyan).
+```
 
 ---
 

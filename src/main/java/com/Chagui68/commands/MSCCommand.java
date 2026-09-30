@@ -1,11 +1,18 @@
 package com.Chagui68.commands;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.entities.Kinger;
+import com.Chagui68.entities.KingerModel;
 import com.Chagui68.entities.boss.ArmorStandBoss;
 import com.Chagui68.entities.boss.BossDamageSample;
+import com.Chagui68.entities.boss.JackModel;
+import com.Chagui68.entities.boss.JackStarBoss;
+import com.Chagui68.entities.boss.NixBoss;
+import com.Chagui68.entities.boss.NixModel;
 import com.Chagui68.entities.boss.PenetratingHit;
 import com.Chagui68.entities.handler.MobHandler;
 import com.Chagui68.music.MusicDisc;
+import com.Chagui68.utils.MscGeometryOverlay;
 import com.Chagui68.utils.MscLog;
 import com.Chagui68.utils.MscText;
 import com.Chagui68.utils.MscWorldPolicy;
@@ -22,9 +29,12 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.BoundingBox;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import static org.bukkit.ChatColor.*;
@@ -61,6 +71,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     private static final List<String> KILL_RADII = List.of("10", "25", "50", "100", "200");
 
     private static final List<String> GIVE_TARGETS = List.of("@a", "@p", "@r", "@s");
+
+    /** What {@code /msc debug} can draw instead of reporting damage. */
+    private static final List<String> DEBUG_ACTIONS = List.of("geometry");
+
+    private static final List<String> GEOMETRY_TARGETS = List.of("kinger", "nix", "jack", "sentinel");
 
     private final MultiverseCreatures plugin;
     private final MobHandler mobHandler;
@@ -520,10 +535,80 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
      * to the player the executor is looking at; a name can be passed explicitly, which is also the
      * only way to use it from the console.
      */
+    /** One boss the overlay knows how to draw: a tag to find it by and the joints it swings around. */
+    private record GeometryTarget(String name, String tag, List<Vector3f> joints) {
+    }
+
+    private static List<GeometryTarget> geometryTargets() {
+        return List.of(
+                new GeometryTarget("kinger", Kinger.TAG, List.of(
+                        KingerModel.PIVOT_SHOULDER_RIGHT, KingerModel.PIVOT_SHOULDER_LEFT,
+                        KingerModel.PIVOT_HIP_RIGHT, KingerModel.PIVOT_HIP_LEFT,
+                        KingerModel.PIVOT_NECK, KingerModel.PIVOT_TORSO)),
+                new GeometryTarget("nix", NixBoss.TAG, List.of(
+                        NixModel.PIVOT_SHOULDER_RIGHT, NixModel.PIVOT_SHOULDER_LEFT,
+                        NixModel.PIVOT_HIP_RIGHT, NixModel.PIVOT_HIP_LEFT,
+                        NixModel.PIVOT_NECK, NixModel.PIVOT_TORSO)),
+                new GeometryTarget("jack", JackStarBoss.TAG, List.of(
+                        JackModel.PIVOT_SHOULDER_RIGHT, JackModel.PIVOT_SHOULDER_LEFT,
+                        JackModel.PIVOT_HIP_RIGHT, JackModel.PIVOT_HIP_LEFT,
+                        JackModel.PIVOT_NECK, JackModel.PIVOT_TORSO)),
+                // The Sentinel wears its armour on the stand itself, so it has no joints of its own.
+                new GeometryTarget("sentinel", ArmorStandBoss.TAG, List.of()));
+    }
+
+    /**
+     * Draws a boss's hitbox and limb joints in the world for a few seconds.
+     *
+     * <p>This is the audit made visible: every visible piece has to sit inside the red box, and every
+     * limb has to hang from one of the cyan dots. It exists because the alternative was a throwaway
+     * unit test that printed the numbers and had to be deleted afterwards.
+     */
+    private void handleGeometry(CommandSender sender, String requested) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(RED + "Geometry is drawn around a boss, so run it in game.");
+            return;
+        }
+        String kind = (requested == null) ? "" : requested.toLowerCase(Locale.ROOT);
+
+        ArmorStand stand = null;
+        GeometryTarget found = null;
+        double best = Double.MAX_VALUE;
+        for (Entity entity : player.getWorld().getNearbyEntities(player.getLocation(), 32, 32, 32)) {
+            if (!(entity instanceof ArmorStand candidate)) continue;
+            for (GeometryTarget target : geometryTargets()) {
+                if (!candidate.getScoreboardTags().contains(target.tag())) continue;
+                if (!kind.isEmpty() && !target.name().equals(kind)) continue;
+                double distance = candidate.getLocation().distanceSquared(player.getLocation());
+                if (distance < best) {
+                    best = distance;
+                    stand = candidate;
+                    found = target;
+                }
+            }
+        }
+        if (stand == null) {
+            sender.sendMessage(YELLOW + "No " + (kind.isEmpty() ? "dressed boss" : kind)
+                    + " within 32 blocks of you.");
+            return;
+        }
+
+        BoundingBox box = stand.getBoundingBox();
+        MscGeometryOverlay.show(plugin, stand, found.joints(), MscGeometryOverlay.DEFAULT_TICKS);
+        sender.sendMessage(GREEN + "Drawing " + found.name() + " for "
+                + (MscGeometryOverlay.DEFAULT_TICKS / 20) + " s: hitbox "
+                + String.format("%.2f x %.2f x %.2f", box.getWidthX(), box.getHeight(), box.getWidthZ())
+                + " blocks (red), " + found.joints().size() + " joints (cyan).");
+    }
+
     private void handleDebug(CommandSender sender, String[] args) {
         CommandMenu menu = new CommandMenu(sender);
         if (args.length > 1 && args[1].equalsIgnoreCase("help")) {
             menu.debugHelp();
+            return;
+        }
+        if (args.length > 1 && args[1].equalsIgnoreCase("geometry")) {
+            handleGeometry(sender, args.length > 2 ? args[2] : null);
             return;
         }
 
@@ -627,7 +712,10 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 case "attack" -> addMatching(completions, AttackCatalogue.names(), args[1]);
                 case "music" -> addMatching(completions, MUSIC_ACTIONS, args[1]);
                 case "dummy" -> addMatching(completions, DummyStudio.actionCompletions(), args[1]);
-                case "debug" -> addMatchingPlayers(completions, args[1]);
+                case "debug" -> {
+                    addMatching(completions, DEBUG_ACTIONS, args[1]);
+                    addMatchingPlayers(completions, args[1]);
+                }
                 case "dimtp", "cleanstands" -> addMatching(completions, worldNames(), args[1]);
                 default -> {
                 }
@@ -638,6 +726,8 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         if (args.length == 3) {
             if (subCommand.equals("kill")) {
                 addMatching(completions, KILL_RADII, args[2]);
+            } else if (subCommand.equals("debug") && args[1].equalsIgnoreCase("geometry")) {
+                addMatching(completions, GEOMETRY_TARGETS, args[2]);
             } else if (subCommand.equals("music")
                     && (args[1].equalsIgnoreCase("play") || args[1].equalsIgnoreCase("disc"))) {
                 addMatching(completions, plugin.getMusicManager().getSongNames(), args[2]);
