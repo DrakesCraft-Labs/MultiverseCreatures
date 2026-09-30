@@ -5,6 +5,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.seal.SealPlane;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.utils.MscText;
 import net.kyori.adventure.text.Component;
@@ -75,7 +76,7 @@ public class TriangleCallAttack extends BossAttackBase {
 
         for (int side = -1; side <= 1; side += 2) {
             Location sealLoc = center.clone().add(right.clone().multiply(side * 8));
-            spawnTriangleSeal(world, sealLoc, 100, MagicSealListener.Plane.YZ);
+            spawnTriangleSeal(world, sealLoc, 100, SealPlane.YZ);
 
             for (int i = 0; i < count; i++) {
                 Location spawnLoc = sealLoc.clone().add(0, 2 + i * 4, 0);
@@ -154,7 +155,7 @@ public class TriangleCallAttack extends BossAttackBase {
         for (int side = -1; side <= 1; side += 2) {
             Location sealLoc = groundCenter.clone().add(right.clone().multiply(side * 5));
             sealLoc.setY(groundY + 1);
-            spawnTriangleSeal(world, sealLoc, 100, MagicSealListener.Plane.YZ);
+            spawnTriangleSeal(world, sealLoc, 100, SealPlane.YZ);
 
             for (int i = 0; i < count; i++) {
                 Location spawnLoc = groundCenter.clone().add(right.clone().multiply(side * (5 + i * 4)));
@@ -193,7 +194,7 @@ public class TriangleCallAttack extends BossAttackBase {
         }
     }
 
-    private void spawnTriangleSeal(World world, Location loc, int durationTicks, MagicSealListener.Plane plane) {
+    private void spawnTriangleSeal(World world, Location loc, int durationTicks, SealPlane plane) {
         MagicSealListener listener = plugin.getMagicSealListener();
         if (listener == null) return;
         ArmorStand marker = (ArmorStand) world.spawnEntity(loc, EntityType.ARMOR_STAND);

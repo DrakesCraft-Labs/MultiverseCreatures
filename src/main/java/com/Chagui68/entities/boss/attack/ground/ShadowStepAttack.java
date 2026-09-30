@@ -4,6 +4,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.seal.SealPlane;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
@@ -81,7 +82,7 @@ public class ShadowStepAttack extends BossAttackBase {
                         world.playSound(center, Sound.BLOCK_SCULK_SPREAD, 1.0f, 0.7f);
                         if (plugin.getMagicSealListener() != null) {
                             plugin.getMagicSealListener().spawnPentagramSeal(center.clone().add(0, 0.2, 0), 50,
-                                    MagicSealListener.Plane.XZ);
+                                    SealPlane.XZ);
                         }
                     }
                 } else if (!moved) {
@@ -104,7 +105,7 @@ public class ShadowStepAttack extends BossAttackBase {
                     world.playSound(arrival, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0f, 1.4f);
                     if (plugin.getMagicSealListener() != null) {
                         plugin.getMagicSealListener().spawnPentagramSeal(arrival.clone().add(0, 0.2, 0), 45,
-                                MagicSealListener.Plane.XZ);
+                                SealPlane.XZ);
                     }
                 } else if (t < FADE_TICKS + SPIN_TICKS + 1) {
                     int spinTick = t - FADE_TICKS;

@@ -23,7 +23,12 @@ src/main/java/com/Chagui68/
 ├── entities/
 │   ├── boss/                          ArmorStandBoss + framework de ataques (EL CENTINELA DE OBSIDIANA)
 │   │   ├── ArmorStandBoss.java        Clase del jefe: spawn, fases, escudo, barra, ticker de IA, registro de ataques
-│   │   ├── MagicSealListener.java      Renderizado de sellos de partículas (NO es un Listener; lo consume el jefe)
+│   │   ├── MagicSealListener.java      Renderizado de sellos de partículas: recorre las formas de abajo y las pinta
+│   │   ├── seal/                       Geometría pura de sellos, testeada sin servidor
+│   │   │   ├── SealPlane.java               Dónde cae una forma plana: XZ se acuesta, XY/YZ se levantan
+│   │   │   ├── SealGeometry.java            Círculos, pentagramas, estrellas, radios y sus densidades
+│   │   │   ├── WingGeometry.java            Los dos perfiles de ala según pose y fotograma
+│   │   │   └── SealPoint.java / WingPoint.java  Puntos de plano y de mundo
 │   │   ├── BossInstance.java           Estructura de estado del jefe por instancia
 │   │   ├── AttackPreview.java          Marca que deja al dummy actuar ataques sin dañar
 │   │   └── attack/
@@ -163,6 +168,14 @@ Toda tarea repetida tiene una de dos formas, y `SchedulerHandleGuardTest` rompe 
 - **Un bucle de vida larga conserva su handle.** Un ticker que vive con el plugin (uno por mob propio, uno por aura de objeto, el recuento de población) se guarda en un campo `BukkitTask` y lo cancela `stopTasks()` desde `onDisable`. Arrancarlo dos veces cancela antes la tarea anterior: dos bucles recorriendo el mismo `Map` es el fallo que esta forma existe para hacer imposible.
 - **Un efecto corto se autocancela o se entrega.** Un ataque o una secuencia de sellos llama a `cancel()` dentro de su propio runnable cuando termina su temporizador, o devuelve el `BukkitRunnable` para que el jefe pueda cancelarlo antes (`BossInstance.flyTask`, `…shieldSealTask`). La guardia lee el handle a través de su declaración, incluido `instance.campo = new BukkitRunnable()` declarado en otra clase.
 - **Nunca un `new BukkitRunnable() { … }.runTaskTimer(…)` desnudo.** Bukkit cancela las tareas del plugin al desactivarlo, así que ninguna sobrevive para siempre; el problema es que el plugin ya no puede pararla — un reload o un segundo `startTicker()` dejarían dos bucles detrás, que es como aparecieron veinticuatro.
+
+### 9. Sellos mágicos — una forma pura, un pincel fino
+
+`MagicSealListener` pinta partículas; `entities/boss/seal/` decide dónde van. La división es estructural, y `SealOrchestrationGuardTest` la sostiene:
+
+- **La geometría es pura.** `SealPlane`, `SealPoint`, `SealGeometry` y `WingGeometry` nunca importan un tipo del servidor, así que un círculo, un pentagrama o un aleteo se prueban con números. Una forma tiene un invariante — longitud de cuerda, banda de radio, simetría especular — y los tests de sellos comprueban el invariante en vez de una captura.
+- **El listener recorre, no calcula.** Un único helper `repeat(...)` agenda todos los sellos y el archivo no hace trigonometría: añadir un sello es elegir una forma de `SealGeometry` y un color. La guardia falla ante un segundo punto de agenda o un `Math.cos` suelto.
+- **Las densidades viven con la forma.** Los conteos de muestras y las escalas (`pentagramSamples`, `celestialRadii`, el 1.3× vertical) son geometría, así un sello no puede perder en silencio el suelo que mantiene legible una estrella pequeña. Tres helpers que ningún sello llamaba (`drawOuterRing`, `baseY`, `spawnFlameAura`) y una cuerda duplicada del pentagrama desaparecieron con la división.
 
 ---
 

@@ -26,7 +26,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 55 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 59 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -304,6 +304,21 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Un segundo test demuestra que los handles no son decoración: todo handle de una tarea que no se autocancela tiene que cancelarse en algún punto del proyecto (`task.cancel()`, `instance.defenseTask.cancel()`), devolverse a quien lo pidió (`return task;` en los sellos que el jefe cancela antes) o entregarse a un nombre que a su vez se cancela (`instance.aiTask = ai;`).
 - Escrita contra el código tal como estaba, encontró veinticuatro bucles sin dueño: uno por mob propio (Head Slime tenía dos), uno por jefe, el pasivo de Excalibur, las auras de objeto (Wirt's Lantern, Mantis Claws, Frost Heart, Obsidian Bastion) y el recuento de población — todos guardan ya su `BukkitTask` y se paran con el nuevo `stopTasks()`.
 - Un tercer test mantiene el apagado honesto: `onDisable` tiene que llamar a `stopAll()`, `unloadBossDimension()` y a la parada de tickers, así un reload no puede dejar un bucle recorriendo estado que nadie lee.
+
+### `entities/boss/seal/SealPlaneTest` — Dónde aterriza un sello
+- El mapeo del plano es una isometría: un anillo llevado a XZ, XY o YZ conserva su radio, dos puntos cualesquiera conservan su distancia, un sello plano mantiene una altura y uno vertical mantiene un eje, y el desfase normal solo mueve el sello por su propia normal (XZ arriba, XY por Z, YZ por X). Esa es toda la diferencia entre un sello en el suelo y uno de pie en el aire.
+
+### `entities/boss/seal/SealGeometryTest` — Las formas y sus reglas
+- Un círculo conserva radio, número de muestras y espaciado; un pentagrama son cinco cuerdas que visitan cada vértice exactamente dos veces —el mensaje de fallo nombra la cuerda duplicada que el dibujo viejo tenía en su primera arista— y un triángulo reparte su presupuesto de muestras entre tres lados iguales. Un anillo estrellado zigzaguea doce veces entre el anillo exterior y el 55 % interior, cerrando sobre sí mismo, y una banda de runas mantiene cada punto entre sus dos radios y se reproduce desde un random con semilla.
+- Las reglas con números quedan fijadas: los suelos de muestras (60 líneas / 220 anillo), cantidad y radio del aura, el anillo envolvente 1.24, la escala celestial vertical 1.3×, la columna del escudo que nunca colapsa por debajo de medio bloque, la espiral que se queda dentro, y las bandas documentadas de los vagabundeos del vórtice, el seísmo, lo divino y el pulso de la cruz.
+
+### `entities/boss/seal/WingGeometryTest` — Las alas
+- Cada pluma va de su hombro a una punta dentro de `length + reach`, las dos alas se reflejan exactamente (aleteo incluido), un cuarto de vuelta rota toda la nube con el stand, y un aleteo rota cada pluma rígidamente en vez de estirarla.
+- Los perfiles se comprueban como datos: las alas ardientes son el par más largo, más lleno y más lento, y ningún perfil puede poner una constante a cero. La comprobación de NaN no es teórica —la última pluma evaluaba `Math.pow(sin(π + 0.1), 1.5)` sobre base negativa, que es NaN, así que la geometría recorta el seno antes de la potencia.
+
+### `entities/boss/seal/SealOrchestrationGuardTest` — El listener sigue siendo un pincel
+- El listener tiene exactamente un `.runTaskTimer(` (todos los sellos pasan por el bucle compartido), no contiene trigonometría, y el paquete puro no menciona ningún tipo del servidor: ni `org.bukkit`, ni `Particle`, ni `Location`.
+- También falla si el listener deja de delegar (menos de 20 llamadas a la geometría) o vuelve a crecer por encima de 700 líneas — el archivo queda en 573 tras la división, desde 1088 y sin cambio de comportamiento.
 
 ## 🗃️ Dónde se corren
 

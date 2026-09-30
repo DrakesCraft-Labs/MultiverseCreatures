@@ -23,7 +23,12 @@ src/main/java/com/Chagui68/
 ├── entities/
 │   ├── boss/                          ArmorStandBoss + attack framework (THE OBSIDIAN SENTINEL)
 │   │   ├── ArmorStandBoss.java        Boss class: spawn, phases, shield, bar, AI ticker, attack registry
-│   │   ├── MagicSealListener.java      Particle seal rendering (NOT a Listener; consumed by the boss)
+│   │   ├── MagicSealListener.java      Particle seal rendering: walks the shapes below and paints them
+│   │   ├── seal/                       Pure seal geometry, tested without a server
+│   │   │   ├── SealPlane.java               Where a flat shape lands: XZ lies down, XY/YZ stand
+│   │   │   ├── SealGeometry.java            Circles, pentagrams, stars, spokes and their densities
+│   │   │   ├── WingGeometry.java            The two wing profiles as a function of pose and frame
+│   │   │   └── SealPoint.java / WingPoint.java  Plane and world points
 │   │   ├── BossInstance.java           Per-instance boss state struct
 │   │   ├── AttackPreview.java          Marker that lets a dummy act out attacks without damaging
 │   │   └── attack/
@@ -163,6 +168,14 @@ Every repeating task is one of two shapes, and `SchedulerHandleGuardTest` fails 
 - **A long-lived loop keeps its handle.** A ticker that lives with the plugin (one per custom mob, one per item aura, the population recount) is stored in a `BukkitTask` field and cancelled by `stopTasks()` from `onDisable`. Starting one twice cancels the previous task first: two loops walking the same `Map` is the bug this shape exists to make impossible.
 - **A short-lived effect cancels itself or is handed over.** An attack or seal sequence calls `cancel()` inside its own runnable when its timer ends, or returns the `BukkitRunnable` so the boss can cancel it early (`BossInstance.flyTask`, `…shieldSealTask`). The guard reads the handle through its declaration, including `instance.field = new BukkitRunnable()` declared in another class.
 - **Never a bare `new BukkitRunnable() { … }.runTaskTimer(…)`.** Bukkit cancels a plugin's tasks on disable, so nothing survives forever; the problem is that the plugin itself can no longer stop it — a reload or a second `startTicker()` would leave two loops behind, which is how twenty-four of them were found.
+
+### 9. Magic seals — a pure shape, a thin brush
+
+`MagicSealListener` paints particles; `entities/boss/seal/` decides where they go. The split is load-bearing, and `SealOrchestrationGuardTest` holds it down:
+
+- **The geometry is pure.** `SealPlane`, `SealPoint`, `SealGeometry` and `WingGeometry` never import a server type, so a circle, a pentagram or a flap is tested with plain numbers. A shape has an invariant — a chord length, a radius band, a mirror symmetry — and the seal tests assert the invariant instead of a screenshot.
+- **The listener walks, it does not compute.** One shared `repeat(...)` helper schedules every seal and the file does no trigonometry at all: adding a seal is picking a shape from `SealGeometry` and a color. The guard fails on a second scheduling site or a stray `Math.cos`.
+- **Densities live with the shape.** Sample counts and scales (`pentagramSamples`, `celestialRadii`, the vertical 1.3×) are geometry, so a seal cannot quietly lose the floor that keeps a small star legible. Three helpers no seal called (`drawOuterRing`, `baseY`, `spawnFlameAura`) and a duplicated pentagram chord went away with the split.
 
 ---
 

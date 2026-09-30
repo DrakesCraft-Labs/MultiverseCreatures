@@ -4,6 +4,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.seal.SealPlane;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
@@ -96,7 +97,7 @@ public class EclipseFallAttack extends BossAttackBase {
                         world.playSound(center, Sound.ENTITY_PHANTOM_SWOOP, 1.2f, 0.6f);
                         if (plugin.getMagicSealListener() != null) {
                             plugin.getMagicSealListener().spawnLargePentagramSeal(
-                                    center.clone().add(0, DISC_HEIGHT + 1.2, 0), 120, 4.0, MagicSealListener.Plane.XZ);
+                                    center.clone().add(0, DISC_HEIGHT + 1.2, 0), 120, 4.0, SealPlane.XZ);
                         }
                     }
                 } else if (!dropped) {
@@ -142,7 +143,7 @@ public class EclipseFallAttack extends BossAttackBase {
                 new Particle.DustOptions(Color.fromRGB(0x1B0B2A), 2.2f));
         if (plugin.getMagicSealListener() != null) {
             plugin.getMagicSealListener().spawnLargePentagramSeal(center.clone().add(0, 0.3, 0), 100, 5.0,
-                    MagicSealListener.Plane.XZ);
+                    SealPlane.XZ);
         }
 
         for (Player p : boss.getValidPlayers(world)) {

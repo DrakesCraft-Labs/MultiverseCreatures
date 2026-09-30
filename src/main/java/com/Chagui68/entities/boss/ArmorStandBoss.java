@@ -2,6 +2,7 @@ package com.Chagui68.entities.boss;
 
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.seal.SealPlane;
 import com.Chagui68.entities.boss.attack.BossAttack;
 import com.Chagui68.items.components.SentinelCore;
 import com.Chagui68.entities.boss.attack.aerial.AerialRushAttack;
@@ -427,7 +428,7 @@ public class ArmorStandBoss implements Listener, BossHost {
                     stand.getLocation(),
                     SPAWN_SEAL_TICKS,
                     SPAWN_SEAL_RADIUS,
-                    MagicSealListener.Plane.XZ
+                    SealPlane.XZ
             );
 
             instance.wingTask = plugin.getMagicSealListener().spawnWingSeal2(stand);
@@ -485,7 +486,7 @@ public class ArmorStandBoss implements Listener, BossHost {
 
             Location above = player.getLocation().add(0, PENTAGRAM_HEIGHT, 0);
             instance.pentagramCenters.put(player.getUniqueId(), player.getLocation());
-            seals.spawnPentagramSeal(above, PENTAGRAM_DURATION, MagicSealListener.Plane.XZ);
+            seals.spawnPentagramSeal(above, PENTAGRAM_DURATION, SealPlane.XZ);
         }
 
         new BukkitRunnable() {
@@ -943,7 +944,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         }
 
         if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnLargePentagramSeal(loc.clone().add(0, 5, 0), 60, 8.0, MagicSealListener.Plane.XZ);
+            plugin.getMagicSealListener().spawnLargePentagramSeal(loc.clone().add(0, 5, 0), 60, 8.0, SealPlane.XZ);
         }
 
         new BukkitRunnable() {
@@ -1081,7 +1082,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         }
 
         if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnLargePentagramSeal(loc.clone().add(0, 5, 0), 100, 10.0, MagicSealListener.Plane.XZ);
+            plugin.getMagicSealListener().spawnLargePentagramSeal(loc.clone().add(0, 5, 0), 100, 10.0, SealPlane.XZ);
             plugin.getMagicSealListener().spawnVortexSeal(loc.clone().add(0, 2, 0), 80);
         }
 

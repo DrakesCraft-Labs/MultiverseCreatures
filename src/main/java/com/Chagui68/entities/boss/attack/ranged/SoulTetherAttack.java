@@ -4,6 +4,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.seal.SealPlane;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
@@ -61,7 +62,7 @@ public class SoulTetherAttack extends BossAttackBase {
 
         if (plugin.getMagicSealListener() != null) {
             plugin.getMagicSealListener().spawnPentagramSeal(stand.getLocation().clone().add(0, 0.2, 0), 100,
-                    MagicSealListener.Plane.XZ);
+                    SealPlane.XZ);
         }
 
         new BukkitRunnable() {

@@ -5,6 +5,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.seal.SealPlane;
 import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -33,7 +34,7 @@ public class NovaBurstAttack extends BossAttackBase {
         double groundY = boss.getGroundY(center, 40);
         Location boomLoc = new Location(world, center.getX(), groundY + 1.0, center.getZ());
         if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnLargePentagramSeal(boomLoc.clone().add(0, 0.5, 0), 50, 8.0, MagicSealListener.Plane.XZ);
+            plugin.getMagicSealListener().spawnLargePentagramSeal(boomLoc.clone().add(0, 0.5, 0), 50, 8.0, SealPlane.XZ);
         }
 
         new BukkitRunnable() {

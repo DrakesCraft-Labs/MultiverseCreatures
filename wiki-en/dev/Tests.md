@@ -26,7 +26,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 55 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 59 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -304,6 +304,21 @@ Covers the health math in `utils/MscEntityUtils`:
 - A second test proves the handles are not decoration: every handle on a task that does not cancel itself must be cancelled somewhere in the project (`task.cancel()`, `instance.defenseTask.cancel()`), returned to the caller (`return task;` for the seals the boss cancels early) or handed to a name that is cancelled in turn (`instance.aiTask = ai;`).
 - Written against the code as it was, it found twenty-four unowned loops: one per custom mob (Head Slime had two), one per boss, the Excalibur passive, the item auras (Wirt's Lantern, Mantis Claws, Frost Heart, Obsidian Bastion) and the population recount — all of them now hold their `BukkitTask` and stop through the new `stopTasks()`.
 - A third test keeps the shutdown honest: `onDisable` has to call `stopAll()`, `unloadBossDimension()` and the ticker stop, so a reload cannot leave a loop walking state nobody reads.
+
+### `entities/boss/seal/SealPlaneTest` — Where a seal lands
+- The plane mapping is an isometry: a ring mapped onto XZ, XY or YZ keeps its radius, any two points keep their distance, a flat seal keeps one height and a vertical one keeps one axis, and the normal offset only moves the seal along its own normal (XZ up, XY along Z, YZ along X). That is the entire difference between a seal on the floor and one standing in the air.
+
+### `entities/boss/seal/SealGeometryTest` — The shapes and their rules
+- A circle keeps its radius, its sample count and its spacing; a pentagram is five chords that visit every vertex exactly twice — the failure message names the double-drawn chord the old drawing had on its first edge — and a triangle divides its sample budget over three equal sides. A star ring zigs twelve times between the outer ring and the inner 55 %, closing on itself, and a rune band keeps every point between its two radii and reproduces itself from a seeded random.
+- The rules with numbers are pinned: sample floors (60 lines / 220 ring), aura count and radius, the 1.24 enclosing ring, the vertical 1.3× celestial scale, the shield column that never collapses below half a block, the spiral that stays inside it, and the documented bands of the vortex, quake, divine and cross-pulse wanderings.
+
+### `entities/boss/seal/WingGeometryTest` — The wings
+- Every feather runs from its shoulder to a tip inside `length + reach`, the two wings mirror each other exactly (flap included), a quarter turn rotates the whole cloud with the stand, and a flap rotates each feather rigidly instead of stretching it.
+- The profiles are checked as data: the burning wings are the longer, fuller, slower pair, and no profile may zero a constant. The NaN check is not theoretical — the last feather used to evaluate `Math.pow(sin(π + 0.1), 1.5)` on a negative base, which is NaN, so the geometry clamps the sine before the power.
+
+### `entities/boss/seal/SealOrchestrationGuardTest` — The listener stays a brush
+- The listener has exactly one `.runTaskTimer(` (every seal goes through the shared loop), it contains no trigonometry, and the pure package mentions no server type at all: no `org.bukkit`, no `Particle`, no `Location`.
+- It also fails if the listener stops delegating (fewer than 20 geometry calls) or grows back past 700 lines — the file is 573 after the split, down from 1088 with no behavior change.
 
 ## 🗃️ Where they run
 

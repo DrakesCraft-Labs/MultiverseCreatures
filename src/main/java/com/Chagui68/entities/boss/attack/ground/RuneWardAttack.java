@@ -4,6 +4,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.seal.SealPlane;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.utils.MscLog;
@@ -67,7 +68,7 @@ public class RuneWardAttack extends BossAttackBase {
 
         if (plugin.getMagicSealListener() != null) {
             plugin.getMagicSealListener().spawnLargePentagramSeal(origin.clone().add(0, 0.25, 0), 160, 5.0,
-                    MagicSealListener.Plane.XZ);
+                    SealPlane.XZ);
         }
 
         new BukkitRunnable() {

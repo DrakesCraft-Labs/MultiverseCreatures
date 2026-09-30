@@ -2,6 +2,7 @@ package com.Chagui68.commands;
 
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.seal.SealPlane;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -67,19 +68,19 @@ final class SealStudio {
             return;
         }
 
-        final MagicSealListener.Plane plane;
+        final SealPlane plane;
         if (args.length >= 3) {
             switch (args[2].toLowerCase()) {
-                case "vertical-north", "vertical", "v", "xy" -> plane = MagicSealListener.Plane.XY;
-                case "vertical-east", "ez", "yz" -> plane = MagicSealListener.Plane.YZ;
-                case "horizontal", "h", "xz" -> plane = MagicSealListener.Plane.XZ;
+                case "vertical-north", "vertical", "v", "xy" -> plane = SealPlane.XY;
+                case "vertical-east", "ez", "yz" -> plane = SealPlane.YZ;
+                case "horizontal", "h", "xz" -> plane = SealPlane.XZ;
                 default -> {
                     sender.sendMessage(RED + "Unknown plane. Use: horizontal, vertical-north, vertical-east");
                     return;
                 }
             }
         } else {
-            plane = MagicSealListener.Plane.XZ;
+            plane = SealPlane.XZ;
         }
 
         Location center = player.getLocation();
@@ -159,7 +160,7 @@ final class SealStudio {
     }
 
     private void drawSingleCircle(Location center, double radius, Color color, int samples, int ticks,
-                                  MagicSealListener.Plane plane) {
+                                  SealPlane plane) {
         new BukkitRunnable() {
             int t = 0;
 
@@ -208,7 +209,7 @@ final class SealStudio {
     }
 
     private void drawSixPointStar(Location center, double radius, Color color, int samples, int ticks,
-                                  MagicSealListener.Plane plane) {
+                                  SealPlane plane) {
         new BukkitRunnable() {
             int t = 0;
 

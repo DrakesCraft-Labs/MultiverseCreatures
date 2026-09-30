@@ -5,6 +5,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.ArmorStandBoss;
 import com.Chagui68.entities.boss.AttackPreview;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.seal.SealPlane;
 import com.Chagui68.utils.MscText;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
@@ -581,7 +582,7 @@ final class DummyStudio {
                 world.playSound(base, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.0f, 0.6f);
                 MagicSealListener seals = plugin.getMagicSealListener();
                 if (seals != null) {
-                    seals.spawnPentagramSeal(base.clone().add(0, 5, 0), 60, MagicSealListener.Plane.XZ);
+                    seals.spawnPentagramSeal(base.clone().add(0, 5, 0), 60, SealPlane.XZ);
                     player.sendMessage(GREEN + "Playing pentagram seal animation above dummy.");
                 } else {
                     player.sendMessage(RED + "MagicSealListener not available.");
@@ -597,7 +598,7 @@ final class DummyStudio {
                         marker.setGravity(false);
                         marker.setMarker(true);
                         marker.setCustomNameVisible(false);
-                        seals.spawnRunicTriangleSeal(marker, 80, MagicSealListener.Plane.YZ);
+                        seals.spawnRunicTriangleSeal(marker, 80, SealPlane.YZ);
                         Bukkit.getScheduler().runTaskLater(plugin, () -> {
                             if (marker.isValid()) marker.remove();
                         }, 85);
@@ -608,7 +609,7 @@ final class DummyStudio {
                             marker2.setGravity(false);
                             marker2.setMarker(true);
                             marker2.setCustomNameVisible(false);
-                            seals.spawnRunicTriangleSeal(marker2, 80, MagicSealListener.Plane.YZ);
+                            seals.spawnRunicTriangleSeal(marker2, 80, SealPlane.YZ);
                             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                                 if (marker2.isValid()) marker2.remove();
                             }, 85);

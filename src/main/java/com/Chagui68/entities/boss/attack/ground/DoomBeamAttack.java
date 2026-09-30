@@ -5,6 +5,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.seal.SealPlane;
 import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -31,7 +32,7 @@ public class DoomBeamAttack extends BossAttackBase {
         World world = stand.getWorld();
         Location center = stand.getLocation();
         if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnPentagramSeal(center.clone().add(0, 0.5, 0), 60, MagicSealListener.Plane.XZ);
+            plugin.getMagicSealListener().spawnPentagramSeal(center.clone().add(0, 0.5, 0), 60, SealPlane.XZ);
         }
 
         new BukkitRunnable() {

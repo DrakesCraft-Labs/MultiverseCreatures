@@ -5,6 +5,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.seal.SealPlane;
 import com.Chagui68.utils.MscEntityUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -31,7 +32,7 @@ public class ChainGrappleAttack extends BossAttackBase {
         World world = stand.getWorld();
         Location center = stand.getLocation();
         if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnPentagramSeal(center, 60, MagicSealListener.Plane.XZ);
+            plugin.getMagicSealListener().spawnPentagramSeal(center, 60, SealPlane.XZ);
         }
 
         new BukkitRunnable() {
