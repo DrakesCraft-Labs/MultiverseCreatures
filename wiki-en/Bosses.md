@@ -50,7 +50,7 @@ The ladder is data, not code: `armor-stand-boss.phase-thresholds` holds the heal
 - **Sky Pentagram** — per-player pentagram seals 30 blocks above, exploding in a column after 80 ticks — `seal-damage` (15) within 6-block radius + knockup.
 - **Shockwave Rings** — 10 expanding rings, ground damage falls off with distance, knockup, FallingBlock debris.
 
-### Attack registry — 45 attacks total
+### Attack registry — 55 attacks total
 
 All attacks are classes extending `BossAttackBase` under `entities/boss/attack/<aerial|ground|ranged|defensive>/`, registered in `ArmorStandBoss.initAttacks()` and dispatched polymorphically via `attackRegistry.get(name).execute(instance)`. Trigger any one manually:
 
@@ -58,9 +58,9 @@ All attacks are classes extending `BossAttackBase` under `entities/boss/attack/<
 /msc attack <attack-name> [range]
 ```
 
-All 45 names are listed by `/msc attack help` (four pages, one per category) and offered by tab completion. `/msc attack` also accepts the mechanics above (`flyup`, `land`, `heal`, `reset`, the four `phase*` transitions) plus `hoverbarrage`'s legacy alias `crossbarrage`.
+All 55 names are listed by `/msc attack help` (four pages, one per category) and offered by tab completion. `/msc attack` also accepts the mechanics above (`flyup`, `land`, `heal`, `reset`, the four `phase*` transitions) plus `hoverbarrage`'s legacy alias `crossbarrage`.
 
-| Ground (14) | Aerial (13) | Ranged (12) | Defensive (6) |
+| Ground (18) | Aerial (16) | Ranged (15) | Defensive (6) |
 |---|---|---|---|
 | groundslam | starfall | lancesnipe | stoneskin |
 | groundshatter | aerialrush | meteorstorm | reflectbarrier |
@@ -74,10 +74,33 @@ All 45 names are listed by `/msc attack help` (four pages, one per category) and
 | mirrorimage | heavenlyjudgment | voidrift |  |
 | doombeam | rainoflances | arcanemissiles |  |
 | lanceflurry | airslam | spiritbeam |  |
-| whirlwindslash | hoverbarrage (crossbarrage) |  |  |
-| executionsweep |  |  |  |
+| whirlwindslash | hoverbarrage (crossbarrage) | soultethers |  |
+| executionsweep | eclipsefall | plaguebrand |  |
+| obsidianspire | bladering | runemines |  |
+| earthmaw | obsidianwings |  |  |
+| shadowstep |  |  |  |
+| runeward |  |  |  |
 
 Additional `/msc attack` targets for **mechanics & phase transitions**: `flyup`, `land`, `heal`, `reset`, `phaserage`, `phasebarrier`, `phasestorm`, `phasedespair`.
+
+### Second wave — ten more attacks and how to read them
+
+Each of the ten additions is animated around one unmistakable tell, so a player can name the attack from the first second of the wind-up. Damage overrides live under `entities.armor-stand-boss.*-damage`.
+
+| Attack | Category | Animation signature | Damage key (default) |
+|---|---|---|---|
+| `obsidianspire` | Ground | Both arms rise straight overhead and the body leans back, then a line of volcanic pillars erupts one by one along the facing. Each pillar throws its victim **upwards**, and an Executioner Cross is drawn along the path. | `obsidian-spire-damage` (11) |
+| `earthmaw` | Ground | Kneeling crouch while two rows of teeth open over a 34° frontal cone, cracked ground from a Quake Seal, then the rows **snap shut** and drag everyone caught inside to the centre. | `earth-maw-damage` (9) |
+| `shadowstep` | Ground | He hunches with his arms crossed, a pentagram swallows him and he is **gone** — the only teleporting attack. He reappears 1.35 blocks behind the target through a second sigil and spins 360° into a backstab burst. | `shadow-step-damage` (15) |
+| `runeward` | Ground | A **kneeling cast** inside a large pentagram, then he plants an amethyst rune that stays behind. Every 25 ticks the rune throbs and pushes a ring of runes outward (Weakness + Slowness) for 150 ticks before shattering. | `rune-ward-damage` (4) |
+| `eclipsefall` | Aerial | Both arms lift straight up while a **dark disc** forms three blocks overhead, ringed by a pentagram. The disc then falls with a comet trail and detonates as a black shockwave that blinds everyone nearby. | `eclipse-fall-damage` (16) |
+| `bladering` | Aerial | Eight netherite lances materialise in a **visible ring orbiting his body** under a wing seal. He spins with the ring, then widens it and launches the lances one by one with homing flight. | `blade-ring-damage` (7) |
+| `obsidianwings` | Aerial | Four wing panels grow out of his shoulders and unfold. Three **wing beats** sweep the panels down and throw expanding rings of obsidian shards outward; the wings then snap shut and both slam down together into a shockwave. | `obsidian-wings-damage` (8), `obsidian-wings-slam-damage` (15) |
+| `soultethers` | Ranged | Both arms rise overhead and soul embers drain out of every nearby player into his chest. A glowing **tether stays drawn** from his chest to up to four players while they are dragged in and drained, and at the end it snaps taut and reels everyone in hard. | `soul-tether-damage` (3), `soul-tether-snap-damage` (13) |
+| `plaguebrand` | Ranged | He spreads both arms with the palms open and a sickly green circle closes on the chosen victim. The mark lands as a spore burst, drains its host every second and **jumps to anyone standing next to them**; his head keeps tracking the marked player after the hit. | `plague-brand-hit-damage` (9), `plague-brand-damage` (4) |
+| `runemines` | Ranged | A low arm sweep across the ground under a runic triangle, then six runes are **flung out around the target**. They arm for 25 ticks (dim, flat) before turning violet and pulsing, and burst upward when stepped on — or fade out on their own after 140 ticks. | `rune-mine-damage` (8) |
+
+The random rotations pick them up as well: `obsidianspire`, `earthmaw`, `shadowstep` and `runeward` in the ground tables, `eclipsefall`, `bladering` and `obsidianwings` in the aerial ones, and `soultethers`, `plaguebrand` and `runemines` in the ranged table. The three ranged attacks fire both on the ground and in the air; the seven others require the matching state.
 
 ### Drops
 

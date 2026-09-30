@@ -130,13 +130,26 @@ entities:
     ground-recovery-cooldown-ticks: 100  # minimum ticks between attempts (5 s)
 
     # Per-attack damage overrides (override code defaults)
+    blade-ring-damage: 7.0
     chain-grapple-damage: 2.0
+    earth-maw-damage: 9.0
+    eclipse-fall-damage: 16.0
     executioner-sweep-damage: 16.0
     gravity-well-min-damage: 3.0
     gravity-well-max-damage: 8.0
     lance-flurry-damage: 7.0
     mirror-image-damage: 6.0
+    obsidian-spire-damage: 11.0
+    obsidian-wings-damage: 8.0
+    obsidian-wings-slam-damage: 15.0
+    plague-brand-damage: 4.0
+    plague-brand-hit-damage: 9.0
+    rune-mine-damage: 8.0
+    rune-ward-damage: 4.0
+    shadow-step-damage: 15.0
     shield-bash-damage: 12.0
+    soul-tether-damage: 3.0
+    soul-tether-snap-damage: 13.0
     vortex-pull-tick-damage: 2.0
     vortex-pull-final-damage: 6.0
     war-stomp-damage: 8.0

@@ -50,7 +50,7 @@ La escalera es datos, no código: `armor-stand-boss.phase-thresholds` contiene l
 - **Pentagrama del Cielo** — sellos de pentagrama por jugador 30 bloques por encima, que explotan en una columna tras 80 ticks — `seal-damage` (15) en un radio de 6 bloques + empuje hacia arriba.
 - **Anillos de Onda Expansiva** — 10 anillos en expansión, daño de suelo que decae con la distancia, empuje hacia arriba, escombros de FallingBlock.
 
-### Registro de ataques — 45 ataques en total
+### Registro de ataques — 55 ataques en total
 
 Todos los ataques son clases que extienden `BossAttackBase` bajo `entities/boss/attack/<aerial|ground|ranged|defensive>/`, registrados en `ArmorStandBoss.initAttacks()` y despachados polimórficamente vía `attackRegistry.get(name).execute(instance)`. Activa cualquiera manualmente:
 
@@ -58,9 +58,9 @@ Todos los ataques son clases que extienden `BossAttackBase` bajo `entities/boss/
 /msc attack <nombre-del-ataque> [rango]
 ```
 
-Los 45 nombres los lista `/msc attack help` (cuatro páginas, una por categoría) y los ofrece el autocompletado. `/msc attack` también acepta las mecánicas de arriba (`flyup`, `land`, `heal`, `reset`, las cuatro transiciones `phase*`) y el alias heredado `crossbarrage` de `hoverbarrage`.
+Los 55 nombres los lista `/msc attack help` (cuatro páginas, una por categoría) y los ofrece el autocompletado. `/msc attack` también acepta las mecánicas de arriba (`flyup`, `land`, `heal`, `reset`, las cuatro transiciones `phase*`) y el alias heredado `crossbarrage` de `hoverbarrage`.
 
-| Suelo (14) | Aéreos (13) | A distancia (12) | Defensivos (6) |
+| Suelo (18) | Aéreos (16) | A distancia (15) | Defensivos (6) |
 |---|---|---|---|
 | groundslam | starfall | lancesnipe | stoneskin |
 | groundshatter | aerialrush | meteorstorm | reflectbarrier |
@@ -74,10 +74,33 @@ Los 45 nombres los lista `/msc attack help` (cuatro páginas, una por categoría
 | mirrorimage | heavenlyjudgment | voidrift |  |
 | doombeam | rainoflances | arcanemissiles |  |
 | lanceflurry | airslam | spiritbeam |  |
-| whirlwindslash | hoverbarrage (crossbarrage) |  |  |
-| executionsweep |  |  |  |
+| whirlwindslash | hoverbarrage (crossbarrage) | soultethers |  |
+| executionsweep | eclipsefall | plaguebrand |  |
+| obsidianspire | bladering | runemines |  |
+| earthmaw | obsidianwings |  |  |
+| shadowstep |  |  |  |
+| runeward |  |  |  |
 
 Objetivos adicionales de `/msc attack` para **mecánicas y transiciones de fase**: `flyup`, `land`, `heal`, `reset`, `phaserage`, `phasebarrier`, `phasestorm`, `phasedespair`.
+
+### Segunda tanda — diez ataques más y cómo reconocerlos
+
+Cada uno de los diez añadidos está animado alrededor de una seña inequívoca, para que el jugador pueda nombrar el ataque desde el primer segundo del preaviso. Los overrides de daño viven bajo `entities.armor-stand-boss.*-damage`.
+
+| Ataque | Categoría | Seña de la animación | Clave de daño (por defecto) |
+|---|---|---|---|
+| `obsidianspire` | Suelo | Los dos brazos suben rectos sobre la cabeza y el cuerpo se echa atrás, y luego una línea de pilares volcánicos erupciona uno a uno hacia delante. Cada pilar lanza a su víctima **hacia arriba**, y la Cruz del Verdugo se dibuja a lo largo del recorrido. | `obsidian-spire-damage` (11) |
+| `earthmaw` | Suelo | Se agacha mientras dos filas de dientes se abren sobre un cono frontal de 34°, el suelo se agrieta con un Sello de Seísmo y entonces las filas **se cierran de golpe** y arrastran al centro a todo el que pillan dentro. | `earth-maw-damage` (9) |
+| `shadowstep` | Suelo | Se encorva con los brazos cruzados, un pentagrama se lo traga y **desaparece** — el único ataque que se teletransporta. Reaparece 1,35 bloques por detrás del objetivo con un segundo sello y gira 360° para apuñalarlo. | `shadow-step-damage` (15) |
+| `runeward` | Suelo | Un **lanzamiento de rodillas** dentro de un pentagrama grande, y después planta una runa de amatista que se queda atrás. Cada 25 ticks la runa late y empuja un anillo de runas (Debilidad + Lentitud) durante 150 ticks antes de romperse. | `rune-ward-damage` (4) |
+| `eclipsefall` | Aéreos | Los dos brazos suben rectos mientras un **disco oscuro** se forma tres bloques por encima, rodeado por un pentagrama. El disco cae con estela de cometa y detona como una onda negra que ciega a los que están cerca. | `eclipse-fall-damage` (16) |
+| `bladering` | Aéreos | Ocho lanzas de netherita aparecen en un **anillo visible orbitando su cuerpo** bajo un sello de alas. Gira con el anillo, lo ensancha y lanza las lanzas una a una con vuelo teledirigido. | `blade-ring-damage` (7) |
+| `obsidianwings` | Aéreos | Cuatro paneles de alas le crecen en los hombros y se despliegan. Tres **aleteos** bajan los paneles y lanzan anillos de esquirlas de obsidiana hacia fuera; después las alas se pliegan y ambas golpean a la vez en una onda expansiva. | `obsidian-wings-damage` (8), `obsidian-wings-slam-damage` (15) |
+| `soultethers` | A distancia | Los brazos suben sobre la cabeza y las brasas de alma de todos los jugadores cercanos drenan hacia su pecho. Una **atadura luminosa queda dibujada** de su pecho hasta cuatro jugadores mientras los arrastra y los drena, y al final tira con fuerza y los reúne de golpe. | `soul-tether-damage` (3), `soul-tether-snap-damage` (13) |
+| `plaguebrand` | A distancia | Abre los brazos con las palmas hacia arriba y un círculo verde enfermizo se cierra sobre la víctima elegida. La marca cae como un estallido de esporas, drena a su huésped cada segundo y **salta a quien esté a su lado**; su cabeza sigue al jugador marcado tras el impacto. | `plague-brand-hit-damage` (9), `plague-brand-damage` (4) |
+| `runemines` | A distancia | Un barrido bajo del brazo por el suelo bajo un triángulo rúnico, y luego seis runas salen **lanzadas alrededor del objetivo**. Tardan 25 ticks en armarse (apagadas, planas), se vuelven violetas y laten, y estallan hacia arriba cuando alguien las pisa — o se apagan solas a los 140 ticks. | `rune-mine-damage` (8) |
+
+Las rotaciones aleatorias también los usan: `obsidianspire`, `earthmaw`, `shadowstep` y `runeward` en las tablas de suelo, `eclipsefall`, `bladering` y `obsidianwings` en las aéreas, y `soultethers`, `plaguebrand` y `runemines` en la de distancia. Los tres a distancia disparan tanto en suelo como en vuelo; los otros siete exigen el estado correspondiente.
 
 ### Drops
 

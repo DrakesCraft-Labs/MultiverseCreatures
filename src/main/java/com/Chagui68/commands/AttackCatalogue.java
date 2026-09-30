@@ -37,6 +37,10 @@ final class AttackCatalogue {
             new Entry("lanceflurry", "&7Three rapid lance thrusts in a frontal cone", 1),
             new Entry("whirlwindslash", "&7Spinning sweep that drags foes in, then a finishing cut", 1),
             new Entry("executionsweep", "&7Devastating wide-arc executioner strike", 1),
+            new Entry("obsidianspire", "&7Line of volcanic pillars shattering the ground ahead", 1),
+            new Entry("earthmaw", "&7Stone jaws closing on everything in front", 1),
+            new Entry("shadowstep", "&7Vanishes through a sigil to strike from behind", 1),
+            new Entry("runeward", "&7Plants a pulsing rune ward that outlives the cast", 1),
             // Aerial
             new Entry("starfall", "&7Calling celestial stars crashing down", 2),
             new Entry("aerialrush", "&7High-speed aerial homing strike", 2),
@@ -51,6 +55,9 @@ final class AttackCatalogue {
             new Entry("rainoflances", "&7Shower of holy lances from the sky", 2),
             new Entry("airslam", "&7Sky-dive slam pulverizing the landing zone", 2),
             new Entry("hoverbarrage", "&7Levitating volley of energy projectiles", 2),
+            new Entry("eclipsefall", "&7Black eclipse disc dropped on the landing zone", 2),
+            new Entry("bladering", "&7Orbiting lance ring fired out one by one", 2),
+            new Entry("obsidianwings", "&7Wing beats sweeping obsidian shards outward", 2),
             // Ranged / magic
             new Entry("lancesnipe", "&7High-velocity sniper lance projectile", 3),
             new Entry("meteorstorm", "&7Shower of flaming meteorites", 3),
@@ -64,6 +71,9 @@ final class AttackCatalogue {
             new Entry("voidrift", "&7Dimensional tear distorting spacetime", 3),
             new Entry("arcanemissiles", "&7Homing arcane bolts seeking players", 3),
             new Entry("spiritbeam", "&7Piercing spectral light beam", 3),
+            new Entry("soultethers", "&7Visible tethers hook players and reel them in", 3),
+            new Entry("plaguebrand", "&7Brands a player with a plague that spreads", 3),
+            new Entry("runemines", "&7Scatters armed runes that burst when stepped on", 3),
             // Defensive
             new Entry("stoneskin", "&7Hardens boss defense, reducing all damage", 4),
             new Entry("reflectbarrier", "&7Prismatic shield reflecting projectiles", 4),

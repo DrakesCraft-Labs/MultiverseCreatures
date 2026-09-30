@@ -21,7 +21,8 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * <p>Page 1 also gained the three ground attacks that only the wiki documented
  * ({@code lanceflurry}, {@code whirlwindslash}, {@code executionsweep}), so the help menu now
- * advertises all 45 registered attacks. Pages 2-4 are still the byte-for-byte legacy text.
+ * advertises all 55 registered attacks: the legacy pages plus the ten attacks of the second wave
+ * (four ground, three aerial, three ranged) appended to the page they belong to.
  */
 class AttackCatalogueTest {
 
@@ -43,7 +44,11 @@ class AttackCatalogueTest {
             " &e• doombeam &8- &7Focused demonic ground laser sweep",
             " &e• lanceflurry &8- &7Three rapid lance thrusts in a frontal cone",
             " &e• whirlwindslash &8- &7Spinning sweep that drags foes in, then a finishing cut",
-            " &e• executionsweep &8- &7Devastating wide-arc executioner strike");
+            " &e• executionsweep &8- &7Devastating wide-arc executioner strike",
+            " &e• obsidianspire &8- &7Line of volcanic pillars shattering the ground ahead",
+            " &e• earthmaw &8- &7Stone jaws closing on everything in front",
+            " &e• shadowstep &8- &7Vanishes through a sigil to strike from behind",
+            " &e• runeward &8- &7Plants a pulsing rune ward that outlives the cast");
 
     private static final List<String> LEGACY_PAGE_2 = List.of(
             " &e• starfall &8- &7Calling celestial stars crashing down",
@@ -58,7 +63,10 @@ class AttackCatalogueTest {
             " &e• heavenlyjudgment &8- &7Holy orbital beam strike",
             " &e• rainoflances &8- &7Shower of holy lances from the sky",
             " &e• airslam &8- &7Sky-dive slam pulverizing the landing zone",
-            " &e• hoverbarrage &8- &7Levitating volley of energy projectiles");
+            " &e• hoverbarrage &8- &7Levitating volley of energy projectiles",
+            " &e• eclipsefall &8- &7Black eclipse disc dropped on the landing zone",
+            " &e• bladering &8- &7Orbiting lance ring fired out one by one",
+            " &e• obsidianwings &8- &7Wing beats sweeping obsidian shards outward");
 
     private static final List<String> LEGACY_PAGE_3 = List.of(
             " &e• lancesnipe &8- &7High-velocity sniper lance projectile",
@@ -72,7 +80,10 @@ class AttackCatalogueTest {
             " &e• arcaneorb &8- &7Pulsing magical sphere of pure arcane power",
             " &e• voidrift &8- &7Dimensional tear distorting spacetime",
             " &e• arcanemissiles &8- &7Homing arcane bolts seeking players",
-            " &e• spiritbeam &8- &7Piercing spectral light beam");
+            " &e• spiritbeam &8- &7Piercing spectral light beam",
+            " &e• soultethers &8- &7Visible tethers hook players and reel them in",
+            " &e• plaguebrand &8- &7Brands a player with a plague that spreads",
+            " &e• runemines &8- &7Scatters armed runes that burst when stepped on");
 
     private static final List<String> LEGACY_PAGE_4 = List.of(
             " &e• stoneskin &8- &7Hardens boss defense, reducing all damage",
@@ -83,7 +94,7 @@ class AttackCatalogueTest {
             " &e• trianglecall &8- &7Sacred geometric barrier summoning reinforcements");
 
     @Test
-    @DisplayName("Help pages match the 45 registered attacks, pages 2-4 byte-for-byte")
+    @DisplayName("Help pages match the 55 registered attacks, pages 2-4 byte-for-byte")
     void helpPagesMatchLegacyText() {
         assertEquals(LEGACY_PAGE_1, AttackCatalogue.helpLines(1));
         assertEquals(LEGACY_PAGE_2, AttackCatalogue.helpLines(2));

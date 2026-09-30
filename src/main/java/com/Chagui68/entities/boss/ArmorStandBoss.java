@@ -6,13 +6,16 @@ import com.Chagui68.entities.boss.attack.BossAttack;
 import com.Chagui68.items.components.SentinelCore;
 import com.Chagui68.entities.boss.attack.aerial.AerialRushAttack;
 import com.Chagui68.entities.boss.attack.aerial.AirSlamAttack;
+import com.Chagui68.entities.boss.attack.aerial.BladeRingAttack;
 import com.Chagui68.entities.boss.attack.aerial.CrossSlashAttack;
 import com.Chagui68.entities.boss.attack.aerial.DarkOrbAttack;
+import com.Chagui68.entities.boss.attack.aerial.EclipseFallAttack;
 import com.Chagui68.entities.boss.attack.aerial.GravityWellAttack;
 import com.Chagui68.entities.boss.attack.aerial.HeavenlyJudgmentAttack;
 import com.Chagui68.entities.boss.attack.aerial.HoverBarrageAttack;
 import com.Chagui68.entities.boss.attack.aerial.LightningStormAttack;
 import com.Chagui68.entities.boss.attack.aerial.NovaBurstAttack;
+import com.Chagui68.entities.boss.attack.aerial.ObsidianWingsAttack;
 import com.Chagui68.entities.boss.attack.aerial.RainOfLancesAttack;
 import com.Chagui68.entities.boss.attack.aerial.SonicBoomAttack;
 import com.Chagui68.entities.boss.attack.aerial.StarfallAttack;
@@ -20,6 +23,7 @@ import com.Chagui68.entities.boss.attack.aerial.WindCutterAttack;
 import com.Chagui68.entities.boss.attack.ground.ArmorSpikesAttack;
 import com.Chagui68.entities.boss.attack.ground.ChainGrappleAttack;
 import com.Chagui68.entities.boss.attack.ground.DoomBeamAttack;
+import com.Chagui68.entities.boss.attack.ground.EarthMawAttack;
 import com.Chagui68.entities.boss.attack.ground.EarthPillarAttack;
 import com.Chagui68.entities.boss.attack.ground.ExecutionerSweepAttack;
 import com.Chagui68.entities.boss.attack.ground.GroundShatterAttack;
@@ -27,6 +31,9 @@ import com.Chagui68.entities.boss.attack.ground.GroundSlamAttack;
 import com.Chagui68.entities.boss.attack.ground.LanceFlurryAttack;
 import com.Chagui68.entities.boss.attack.ground.LanceStormAttack;
 import com.Chagui68.entities.boss.attack.ground.MirrorImageAttack;
+import com.Chagui68.entities.boss.attack.ground.ObsidianSpireAttack;
+import com.Chagui68.entities.boss.attack.ground.RuneWardAttack;
+import com.Chagui68.entities.boss.attack.ground.ShadowStepAttack;
 import com.Chagui68.entities.boss.attack.ground.ShieldBashAttack;
 import com.Chagui68.entities.boss.attack.ground.VortexPullAttack;
 import com.Chagui68.entities.boss.attack.ground.WarStompAttack;
@@ -39,7 +46,10 @@ import com.Chagui68.entities.boss.attack.ranged.FrostLanceAttack;
 import com.Chagui68.entities.boss.attack.ranged.LanceSnipeAttack;
 import com.Chagui68.entities.boss.attack.ranged.LightningSpearAttack;
 import com.Chagui68.entities.boss.attack.ranged.MeteorStormAttack;
+import com.Chagui68.entities.boss.attack.ranged.PlagueBrandAttack;
+import com.Chagui68.entities.boss.attack.ranged.RuneMineAttack;
 import com.Chagui68.entities.boss.attack.ranged.ShadowVolleyAttack;
+import com.Chagui68.entities.boss.attack.ranged.SoulTetherAttack;
 import com.Chagui68.entities.boss.attack.ranged.SpiritBeamAttack;
 import com.Chagui68.entities.boss.attack.ranged.VoidBeamAttack;
 import com.Chagui68.entities.boss.attack.ranged.VoidRiftAttack;
@@ -206,6 +216,9 @@ public class ArmorStandBoss implements Listener, BossHost {
         registerAttack(new RainOfLancesAttack(this));
         registerAttack(new AirSlamAttack(this));
         registerAttack(new HoverBarrageAttack(this));
+        registerAttack(new EclipseFallAttack(this));
+        registerAttack(new BladeRingAttack(this));
+        registerAttack(new ObsidianWingsAttack(this));
         // Ground
         registerAttack(new GroundSlamAttack(this));
         registerAttack(new GroundShatterAttack(this));
@@ -221,6 +234,10 @@ public class ArmorStandBoss implements Listener, BossHost {
         registerAttack(new LanceFlurryAttack(this));
         registerAttack(new WhirlwindSlashAttack(this));
         registerAttack(new ExecutionerSweepAttack(this));
+        registerAttack(new ObsidianSpireAttack(this));
+        registerAttack(new EarthMawAttack(this));
+        registerAttack(new ShadowStepAttack(this));
+        registerAttack(new RuneWardAttack(this));
         // Ranged
         registerAttack(new LanceSnipeAttack(this));
         registerAttack(new MeteorStormAttack(this));
@@ -234,6 +251,9 @@ public class ArmorStandBoss implements Listener, BossHost {
         registerAttack(new VoidRiftAttack(this));
         registerAttack(new ArcaneMissilesAttack(this));
         registerAttack(new SpiritBeamAttack(this));
+        registerAttack(new SoulTetherAttack(this));
+        registerAttack(new PlagueBrandAttack(this));
+        registerAttack(new RuneMineAttack(this));
         // Defensive
         registerAttack(new StoneSkinAttack(this));
         registerAttack(new ReflectBarrierAttack(this));
@@ -1428,11 +1448,11 @@ public class ArmorStandBoss implements Listener, BossHost {
         double nearestDist = getNearestPlayerDistance(stand.getLocation());
         String[] allAerial;
         if (nearestDist < 15) {
-            allAerial = new String[]{"aerialrush", "crossslash", "novaburst"};
+            allAerial = new String[]{"aerialrush", "crossslash", "novaburst", "obsidianwings", "bladering"};
         } else if (nearestDist < 35) {
-            allAerial = new String[]{"sonicboom", "windcutter", "gravitywell", "darkorb", "aerialrush"};
+            allAerial = new String[]{"sonicboom", "windcutter", "gravitywell", "darkorb", "aerialrush", "eclipsefall"};
         } else {
-            allAerial = new String[]{"starfall", "lightningstorm", "heavenlyjudgment", "darkorb"};
+            allAerial = new String[]{"starfall", "lightningstorm", "heavenlyjudgment", "darkorb", "eclipsefall"};
         }
 
         List<String> available = new ArrayList<>();
@@ -1457,10 +1477,10 @@ public class ArmorStandBoss implements Listener, BossHost {
         double nearestDist = getNearestPlayerDistance(stand.getLocation());
 
         String[] closeAttacks = {"shieldbash", "warstomp", "chaingrapple", "armorspikes", "mirrorimage", "vortexpull", "groundshatter",
-                "lanceflurry", "whirlwindslash", "executionsweep"};
+                "lanceflurry", "whirlwindslash", "executionsweep", "earthmaw", "shadowstep", "runeward"};
         String[] mediumAttacks = {"lancestorm", "earthpillar", "groundshatter", "groundshatter", "armorspikes", "vortexpull",
-                "lanceflurry", "whirlwindslash"};
-        String[] farAttacks = {"shieldbash"};
+                "lanceflurry", "whirlwindslash", "obsidianspire", "earthmaw", "runeward"};
+        String[] farAttacks = {"shieldbash", "obsidianspire"};
 
         String choice;
         if (nearestDist < DIST_CLOSE) {
@@ -1489,7 +1509,7 @@ public class ArmorStandBoss implements Listener, BossHost {
 
         String[] rangedAttacks = {"lancesnipe", "meteorstorm", "voidbeam", "frostlance", "lightningspear",
                 "shadowvolley", "chainlightning", "crystalbarrage", "arcaneorb", "voidrift",
-                "arcanemissiles", "spiritbeam"};
+                "arcanemissiles", "spiritbeam", "soultethers", "plaguebrand", "runemines"};
         String choice = rangedAttacks[random.nextInt(rangedAttacks.length)];
 
         BossAttack attack = attackRegistry.get(choice);
@@ -1597,12 +1617,6 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
 
-
-    // ============== NEW GROUND ATTACKS (10) ==============
-
-    // ============== NEW AERIAL ATTACKS (10) ==============
-
-    // ============== NEW RANGED ATTACKS (10) ==============
 
     public class XMark {
         final Location pos;
@@ -1991,13 +2005,14 @@ public class ArmorStandBoss implements Listener, BossHost {
     private static final java.util.Set<String> AERIAL_ATTACK_NAMES = java.util.Set.of(
             "starfall", "aerialrush", "sonicboom", "lightningstorm", "gravitywell",
             "crossslash", "novaburst", "darkorb", "windcutter", "heavenlyjudgment",
-            "rainoflances", "airslam", "hoverbarrage"
+            "rainoflances", "airslam", "hoverbarrage", "eclipsefall", "bladering", "obsidianwings"
     );
 
     private static final java.util.Set<String> GROUND_ATTACK_NAMES = java.util.Set.of(
             "groundslam", "groundshatter", "shieldbash", "lancestorm", "earthpillar",
             "chaingrapple", "warstomp", "armorspikes", "vortexpull", "mirrorimage", "doombeam",
-            "lanceflurry", "whirlwindslash", "executionsweep"
+            "lanceflurry", "whirlwindslash", "executionsweep", "obsidianspire", "earthmaw",
+            "shadowstep", "runeward"
     );
 
     private boolean isAerialAttackName(String name) {

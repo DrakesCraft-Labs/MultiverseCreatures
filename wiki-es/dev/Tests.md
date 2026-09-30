@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 34 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 35 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -67,6 +67,12 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 ### `commands/AttackCatalogueTest` — Tabla de datos de `/msc attack`
 - Las cuatro páginas de ayuda son, byte a byte, el texto que imprimía el comando antes.
 - Los nombres del autocompletado son los ataques documentados, únicos y en minúsculas; cada entrada está en una página existente y comparte el color de cuerpo `&7`.
+
+### `commands/AttackRegistryCoherenceTest` — las cinco listas de ataques siguen de acuerdo
+- Lee las fuentes de los ataques y `ArmorStandBoss` y comprueba que cada clase de ataque está registrada en `initAttacks()` y responde al nombre derivado de su clase (con las excepciones documentadas `executionsweep`, `soultethers`, `runemines`).
+- Los conjuntos aéreo/suelo coinciden con las carpetas donde viven las clases, ningún ataque está en ambos conjuntos, y los de distancia/defensivos no están en ninguno.
+- Todos los nombres citados por los arrays de rotación aleatoria son ataques registrados.
+- El catálogo de ayuda y las fuentes son el mismo conjunto de nombres, así que no se anuncia nada que no pueda ejecutarse ni queda oculto nada ejecutable.
 
 ### `commands/MscKillFilterTest` — Predicados de `/msc kill`
 - Las etiquetas de scoreboard con prefijo `MSC_` identifican a una entidad del plugin; los nombres legacy sin etiqueta (Mahoraga, Garou, Bone Shield, …) siguen contando; los mobs vanilla quedan intactos.

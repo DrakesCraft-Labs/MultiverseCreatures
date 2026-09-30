@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 34 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 35 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -67,6 +67,12 @@ Covers the health math in `utils/MscEntityUtils`:
 ### `commands/AttackCatalogueTest` — `/msc attack` data table
 - The four help pages are byte-for-byte the text the command printed before.
 - Tab completion names are the documented attacks, unique and lowercase; every entry sits on a page that exists and shares the `&7` body colour.
+
+### `commands/AttackRegistryCoherenceTest` — the five attack lists stay in agreement
+- Reads the attack sources and `ArmorStandBoss` and checks that every attack class is registered in `initAttacks()` and answers to the name derived from its class (with the documented exceptions `executionsweep`, `soultethers`, `runemines`).
+- The aerial/ground sets match the folders the classes live in, no attack sits in both sets, and the ranged/defensive ones stay in neither.
+- Every name quoted by the random rotation arrays is a registered attack.
+- The help catalogue and the sources are the same set of names, so nothing is advertised that cannot run and nothing runnable stays hidden.
 
 ### `commands/MscKillFilterTest` — `/msc kill` predicates
 - `MSC_`-prefixed scoreboard tags identify a plugin entity; the legacy untagged names (Mahoraga, Garou, Bone Shield, …) still count; vanilla mobs are left alone.
