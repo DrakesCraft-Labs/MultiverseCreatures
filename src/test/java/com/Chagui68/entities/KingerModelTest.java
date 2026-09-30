@@ -345,8 +345,12 @@ class KingerModelTest {
                 "piece transforms must be built as a rotation about the limb joint");
         assertFalse(source.contains("computeAnimQuat("),
                 "the old per-piece animation rotated every piece about its own anchor");
-        assertTrue(source.contains("setBaseValue(MODEL_HITBOX_SCALE)"),
-                "the hitbox scale must be the named, tested constant");
+        assertTrue(source.contains("entities.kinger.hitbox-scale"),
+                "the hitbox scale must be the configured knob, not a literal");
+        assertTrue(source.contains("MODEL_HITBOX_SCALE"),
+                "the tested constant must stay the shipped default of that knob");
+        assertTrue(source.contains("clampHitboxScale("),
+                "a broken scale in config.yml must not leave the boss impossible to hit");
     }
 
     private static float midTorso(char axis) {

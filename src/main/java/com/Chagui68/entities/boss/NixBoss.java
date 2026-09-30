@@ -289,6 +289,8 @@ public class NixBoss implements Listener {
     private double chainRange;
     /** Ceiling on a single hit, so no burst source can one-shot the boss. */
     private double maxDamagePerHit;
+    /** Size of the invisible stand the suit is hit through; {@link #MODEL_HITBOX_SCALE} is the default. */
+    private double hitboxScale = MODEL_HITBOX_SCALE;
     /**
      * Source and intended amount of the hit currently being applied, read back by the damage
      * listener so {@code /msc debug} can name the attack. Set and cleared by {@link #dealToPlayer}
@@ -320,6 +322,8 @@ public class NixBoss implements Listener {
         cleaveDamage = config.getDouble("entities.nix-executioner.cleave-damage", 22.0);
         chainRange = config.getDouble("entities.nix-executioner.chain-range", 24.0);
         maxDamagePerHit = config.getDouble("entities.nix-executioner.max-damage-per-hit", DEFAULT_MAX_DAMAGE_PER_HIT);
+        hitboxScale = MscEntityUtils.clampHitboxScale(
+                config.getDouble("entities.nix-executioner.hitbox-scale", MODEL_HITBOX_SCALE));
         meleeCooldownTicks = config.getInt("entities.nix-executioner.melee-cooldown-ticks", 24);
         chainCooldownTicks = config.getInt("entities.nix-executioner.chain-cooldown-ticks", 80);
         cleaveAnimTicks = config.getInt("entities.nix-executioner.cleave-anim-ticks", 16);
@@ -762,7 +766,7 @@ public class NixBoss implements Listener {
         MscEntityUtils.initVirtualHealth(stand, health);
 
         AttributeInstance scaleAttr = stand.getAttribute(Attribute.SCALE);
-        if (scaleAttr != null) scaleAttr.setBaseValue(MODEL_HITBOX_SCALE);
+        if (scaleAttr != null) scaleAttr.setBaseValue(hitboxScale);
 
         NixInstance inst = new NixInstance(stand);
         activeInstances.put(stand.getUniqueId(), inst);

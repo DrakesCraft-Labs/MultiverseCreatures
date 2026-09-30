@@ -214,6 +214,8 @@ public class JackStarBoss implements Listener {
     private String outgoingSource;
     private double outgoingIntended;
     private double dodgeChance;
+    /** Size of the invisible stand the suit is hit through; {@link #MODEL_HITBOX_SCALE} is the default. */
+    private double hitboxScale = MODEL_HITBOX_SCALE;
     private double packetLossChance;
 
     public JackStarBoss(MultiverseCreatures plugin) {
@@ -235,6 +237,8 @@ public class JackStarBoss implements Listener {
         slamDamage = config.getDouble("entities.jackstar-architect.slam-damage", 20.0);
         sigkillDamage = config.getDouble("entities.jackstar-architect.sigkill-damage", 35.0);
         dodgeChance = config.getDouble("entities.jackstar-architect.dodge-chance", 0.22);
+        hitboxScale = MscEntityUtils.clampHitboxScale(
+                config.getDouble("entities.jackstar-architect.hitbox-scale", MODEL_HITBOX_SCALE));
         packetLossChance = config.getDouble("entities.jackstar-architect.packet-loss-chance", 0.25);
     }
 
@@ -1311,7 +1315,7 @@ public class JackStarBoss implements Listener {
         // body is ~2.1 blocks tall: a vanilla stand stops at 1.975, leaving the head top and the
         // shoulder line outside the box. Scaling the stand up keeps the visible body hittable.
         AttributeInstance scale = stand.getAttribute(Attribute.SCALE);
-        if (scale != null) scale.setBaseValue(MODEL_HITBOX_SCALE);
+        if (scale != null) scale.setBaseValue(hitboxScale);
         stand.setInvulnerable(false);
         stand.setCollidable(true);
         stand.setCanPickupItems(false);

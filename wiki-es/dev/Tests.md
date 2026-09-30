@@ -226,6 +226,7 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Comprueba que los ajustes visibles para el jugador sigan sanos: los `phase-thresholds` del Centinela descienden dentro de `(0, 1]`, las duraciones de defensa duran al menos un tick, `no-player-despawn-ticks` admite `0`, y cada mob conmutable conserva su flag `enabled`.
 - Un autotest prueba que el escáner de literales reporta los literales con punto fuera de comentarios e ignora los que están dentro.
 - Verifica que `commands.subcommand-permissions` exista como **mapa vacío** por defecto: la puerta documentada no debe desaparecer en silencio, y la config que se envía no debe restringir nada por sorpresa.
+- Verifica que cada jefe vestido envíe **la escala de hitbox que su test de modelo demuestra correcta** (`kinger.hitbox-scale` 1.0, `nix-executioner.hitbox-scale` 1.9, `jackstar-architect.hitbox-scale` 1.2), dentro del rango 0.25–8 al que se acota un valor editado a mano — el ajuste y los tests de geometría deben coincidir de fábrica.
 
 ### `utils/LegacyNameApiGuardTest` — Guardia de la migración
 - Lee `src/main/java` y falla si algún archivo vuelve a las APIs String deprecadas de nombre (`setDisplayName`, `setLore`, `setItemName`, `setCustomName`, `getDisplayName`, `getCustomName`). Esos métodos siguen compilando y funcionando, así que un item escrito a la vieja usanza solo se notaría como un tooltip sutilmente mal.

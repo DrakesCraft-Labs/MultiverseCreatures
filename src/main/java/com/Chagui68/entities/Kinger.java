@@ -205,6 +205,8 @@ public class Kinger implements Listener {
     private int meleeAnimTicks = 12;
     private int rangedAnimTicks = 20;
     private double armorStandChance;
+    /** Size of the invisible stand the suit is hit through; {@link #MODEL_HITBOX_SCALE} is the default. */
+    private double hitboxScale = MODEL_HITBOX_SCALE;
 
     public Kinger(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -230,6 +232,8 @@ public class Kinger implements Listener {
         meleeAnimTicks = config.getInt("entities.kinger.melee-anim-ticks", 12);
         rangedAnimTicks = config.getInt("entities.kinger.ranged-anim-ticks", 20);
         armorStandChance = config.getDouble("entities.kinger.spawn-on-armorstand-chance", 0.01);
+        hitboxScale = MscEntityUtils.clampHitboxScale(
+                config.getDouble("entities.kinger.hitbox-scale", MODEL_HITBOX_SCALE));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -625,7 +629,7 @@ public class Kinger implements Listener {
         MscEntityUtils.initVirtualHealth(stand, health);
 
         AttributeInstance scaleAttr = stand.getAttribute(Attribute.SCALE);
-        if (scaleAttr != null) scaleAttr.setBaseValue(MODEL_HITBOX_SCALE);
+        if (scaleAttr != null) scaleAttr.setBaseValue(hitboxScale);
 
         KingerInstance inst = new KingerInstance(stand);
         activeKingers.put(stand.getUniqueId(), inst);

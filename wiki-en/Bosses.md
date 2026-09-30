@@ -148,6 +148,7 @@ A living chess king: an invisible ArmorStand dressed in a 15-piece ItemDisplay s
 | Stat | Default |
 |---|---|
 | Health | `kinger.health` (120) |
+| Hitbox | `kinger.hitbox-scale` (1.0) — size of the invisible stand the suit is hit through; 1.0 is a plain stand and already covers the whole model (clamped to 0.25–8) |
 | Aggro range | `kinger.aggro-range` (25 blocks) |
 | Move speed | `kinger.move-speed` (0.32) |
 | Melee range / radius / damage | `kinger.melee-range` (3) · `kinger.melee-radius` (3.5) · `kinger.melee-damage` (8) |
@@ -178,6 +179,7 @@ A towering, ruthless executioner constructed from a custom **27-piece ItemDispla
 | Stat | Default |
 |---|---|
 | Health | `nix-executioner.health` (450.0) |
+| Hitbox | `nix-executioner.hitbox-scale` (1.9) — size of the invisible stand the suit is hit through (clamped to 0.25–8) |
 | Aggro range | `nix-executioner.aggro-range` (28.0 blocks) |
 | Move speed | `nix-executioner.move-speed` (0.30) |
 | Melee range / Cleave damage | `nix-executioner.melee-range` (3.5) · `nix-executioner.cleave-damage` (22.0) |
@@ -214,6 +216,7 @@ Five phases, three lives and a body built out of eleven skin heads.
 | Field | Value |
 |---|---|
 | Health | `jackstar-architect.health` (700.0) |
+| Hitbox | `jackstar-architect.hitbox-scale` (1.2) — size of the invisible stand the suit is hit through (clamped to 0.25–8) |
 | Lives | 3 — the first two "deaths" run a **Watchdog** reboot that restores 50% HP, the last one 40% |
 | Phases | 1 >80% · 2 >60% · 3 >40% · 4 >20% · 5 (kernel panic) ≤20% |
 | Damage | `melee-damage` (16) · `slam-damage` (20) · `sigkill-damage` (35) |

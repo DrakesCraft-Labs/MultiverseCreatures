@@ -1,5 +1,9 @@
 package com.Chagui68;
 
+import com.Chagui68.entities.Kinger;
+import com.Chagui68.entities.boss.JackStarBoss;
+import com.Chagui68.entities.boss.NixBoss;
+import com.Chagui68.utils.MscEntityUtils;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -216,6 +220,28 @@ class ConfigFilesGuardTest {
         }
 
         @Test
+        @DisplayName("Each dressed boss ships the hitbox scale its geometry tests prove is right")
+        void hitboxScales() {
+            Map<String, Object> config = loadConfig();
+
+            // The scale is the size of the invisible stand the suit is hit through, so the shipped
+            // value is the one the model tests prove covers the model: change the knob and the fight
+            // changes, so the two must agree out of the box.
+            assertEquals(Kinger.MODEL_HITBOX_SCALE, number(config, "entities.kinger.hitbox-scale"), 1.0e-9,
+                    "Kinger ships a hitbox scale the model test does not cover");
+            assertEquals(NixBoss.MODEL_HITBOX_SCALE, number(config, "entities.nix-executioner.hitbox-scale"), 1.0e-9,
+                    "NIX ships a hitbox scale the model test does not cover");
+            assertEquals(JackStarBoss.MODEL_HITBOX_SCALE, number(config, "entities.jackstar-architect.hitbox-scale"), 1.0e-9,
+                    "Jack Star ships a hitbox scale the model test does not cover");
+
+            for (String boss : List.of("entities.kinger.", "entities.nix-executioner.", "entities.jackstar-architect.")) {
+                double scale = number(config, boss + "hitbox-scale");
+                assertTrue(scale >= MscEntityUtils.MIN_HITBOX_SCALE && scale <= MscEntityUtils.MAX_HITBOX_SCALE,
+                        boss + "hitbox-scale is outside the range the code clamps to: " + scale);
+            }
+        }
+
+        @Test
         @DisplayName("The Nullshear Edge keys the handler reads exist (regression)")
         void nullshearEdgeKeys() {
             Map<String, Object> config = loadConfig();
@@ -265,6 +291,12 @@ class ConfigFilesGuardTest {
             paths.add(path);
             flattenInto(entry.getValue(), path, paths);
         }
+    }
+
+    private static double number(Map<String, Object> config, String path) {
+        Object value = value(config, path);
+        assertInstanceOf(Number.class, value, path + " must be a number");
+        return ((Number) value).doubleValue();
     }
 
     /** Follows a dotted path and fails with a readable message when a segment is missing. */

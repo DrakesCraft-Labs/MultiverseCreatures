@@ -226,6 +226,7 @@ Covers the health math in `utils/MscEntityUtils`:
 - Checks the player-facing knobs stay sane: the Sentinels `phase-thresholds` descend inside `(0, 1]`, defence durations are at least one tick, `no-player-despawn-ticks` allows `0`, and every toggleable mob keeps its `enabled` flag.
 - A self-test proves the literal scanner reports dotted literals outside comments and ignores the ones inside them.
 - Asserts `commands.subcommand-permissions` exists as an **empty map** by default: the documented escape hatch must not disappear silently, and the shipped config must not restrict anything by surprise.
+- Asserts each dressed boss ships **the hitbox scale its model test proves is right** (`kinger.hitbox-scale` 1.0, `nix-executioner.hitbox-scale` 1.9, `jackstar-architect.hitbox-scale` 1.2), inside the 0.25–8 range a hand-edited value gets clamped to — the knob and the geometry tests have to agree out of the box.
 
 ### `utils/LegacyNameApiGuardTest` — Migration guard
 - Reads `src/main/java` and fails if any file goes back to the deprecated String name APIs (`setDisplayName`, `setLore`, `setItemName`, `setCustomName`, `getDisplayName`, `getCustomName`). Those methods still compile and still work, so an item written the old way would otherwise only show up as a subtly wrong tooltip.

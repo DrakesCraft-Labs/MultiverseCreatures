@@ -64,6 +64,23 @@ public final class MscEntityUtils {
         return Math.max(0.1, Math.min(physicalMax, ratio * physicalMax));
     }
 
+    /** Smallest and largest hitbox scale a boss may be configured with. */
+    public static final double MIN_HITBOX_SCALE = 0.25;
+    public static final double MAX_HITBOX_SCALE = 8.0;
+
+    /**
+     * Keeps a configured hitbox scale usable.
+     *
+     * <p>The scale is the size of the invisible armour stand a dressed boss is hit through. A zero, a
+     * negative or a NaN would leave the boss impossible to hit — a boss that cannot be killed is worse
+     * than any wrong number in a config file — and an absurdly large one would swallow the arena, so a
+     * broken value falls back to a plain stand instead of being trusted.
+     */
+    public static double clampHitboxScale(double requested) {
+        if (!Double.isFinite(requested)) return 1.0;
+        return Math.max(MIN_HITBOX_SCALE, Math.min(MAX_HITBOX_SCALE, requested));
+    }
+
     /**
      * Initializes the entity with virtual health tracking in its PersistentDataContainer,
      * while safely capping physical entity health within the server's attribute threshold.

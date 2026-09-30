@@ -148,6 +148,7 @@ Un rey de ajedrez viviente: un ArmorStand invisible vestido con un traje de 15 p
 | Estadística | Valor por defecto |
 |---|---|
 | Salud | `kinger.health` (120) |
+| Hitbox | `kinger.hitbox-scale` (1.0) — tamaño del stand invisible por el que se golpea el traje; 1.0 es un stand normal y ya cubre todo el modelo (acotado a 0.25–8) |
 | Rango de agresión | `kinger.aggro-range` (25 bloques) |
 | Velocidad de movimiento | `kinger.move-speed` (0.32) |
 | Rango / radio / daño cuerpo a cuerpo | `kinger.melee-range` (3) · `kinger.melee-radius` (3.5) · `kinger.melee-damage` (8) |
@@ -178,6 +179,7 @@ Un verdugo colosal e implacable construido a partir de un **modelo personalizado
 | Estadística | Valor por defecto |
 |---|---|
 | Salud | `nix-executioner.health` (450.0) |
+| Hitbox | `nix-executioner.hitbox-scale` (1.9) — tamaño del stand invisible por el que se golpea el traje (acotado a 0.25–8) |
 | Rango de agresión | `nix-executioner.aggro-range` (28.0 bloques) |
 | Velocidad de movimiento | `nix-executioner.move-speed` (0.30) |
 | Rango cuerpo a cuerpo / Daño de tajo | `nix-executioner.melee-range` (3.5) · `nix-executioner.cleave-damage` (22.0) |
@@ -214,6 +216,7 @@ Cinco fases, tres vidas y un cuerpo construido con once cabezas de skin.
 | Campo | Valor |
 |---|---|
 | Vida | `jackstar-architect.health` (700.0) |
+| Hitbox | `jackstar-architect.hitbox-scale` (1.2) — tamaño del stand invisible por el que se golpea el traje (acotado a 0.25–8) |
 | Vidas | 3 — las dos primeras "muertes" ejecutan un reinicio **Watchdog** que restaura el 50% de la vida, y la última el 40% |
 | Fases | 1 >80% · 2 >60% · 3 >40% · 4 >20% · 5 (kernel panic) ≤20% |
 | Daño | `melee-damage` (16) · `slam-damage` (20) · `sigkill-damage` (35) |

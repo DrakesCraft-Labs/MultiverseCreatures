@@ -214,6 +214,9 @@ entities:
     enabled: true
     spawn-on-armorstand-chance: 0.01
     health: 120.0
+    # Size of the invisible stand the suit is hit through. 1.0 is a plain stand, which already
+    # covers the whole model; raise it to make the chess piece easier to hit.
+    hitbox-scale: 1.0
     aggro-range: 25.0
     move-speed: 0.32
     melee-range: 3.0
@@ -237,6 +240,8 @@ entities:
   nix-executioner:
     enabled: true
     health: 450.0
+    # Size of the invisible stand the suit is hit through (1.9 covers the whole model).
+    hitbox-scale: 1.9
     aggro-range: 28.0
     move-speed: 0.30
     melee-range: 3.5
@@ -259,6 +264,8 @@ entities:
   jackstar-architect:
     enabled: true
     health: 600.0
+    # Size of the invisible stand the suit is hit through (1.2 covers the whole model).
+    hitbox-scale: 1.2
     aggro-range: 30.0
     move-speed: 0.32
     melee-range: 3.8
