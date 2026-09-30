@@ -180,3 +180,35 @@ A towering, ruthless executioner constructed from a custom **27-piece ItemDispla
 
 **Death:** Triggers lightning thunder, wither death sounds, a bloody particle explosion, drops 450 XP, and announces an execution end title to nearby players.
 
+---
+
+## 👨‍💻 JACK STAR — The System Architect
+
+Five phases, three lives and a body built out of eleven skin heads.
+
+### Boss stats
+
+| Field | Value |
+|---|---|
+| Health | `jackstar-architect.health` (700.0) |
+| Lives | 3 — the first two "deaths" run a **Watchdog** reboot that restores 50% HP, the last one 40% |
+| Phases | 1 >80% · 2 >60% · 3 >40% · 4 >20% · 5 (kernel panic) ≤20% |
+| Damage | `melee-damage` (16) · `slam-damage` (20) · `sigkill-damage` (35) |
+| Defences | `dodge-chance` (0.22) Ultra Instinct dodge · `packet-loss-chance` (0.25) discards projectiles · firewall, firejail and cobweb builds |
+| Aggro / speed / reach | `aggro-range` (32.0) · `move-speed` (0.32) · `melee-range` (3.8) |
+| Summon Ritual | **The System Architect** ritual in the Boss Dimension · `/msc spawn jack` (OP) |
+
+### Model
+
+Eleven skin heads (`ItemDisplay`, tag `msc_jackstar_part`) form the head, the torso and two segments per arm and leg. They follow an **invisible armour stand** (`msc_jackstar_boss`) that carries the real health pool and the hitbox, so the visible body is what players aim at while the stand keeps the bookkeeping. The joints live in `JackModel` (shoulders at x = ±0.35, hips at ∓0.12, neck at 1.87) and every limb swings around its own joint, with counter-rotations while walking. The parts are re-centred on the hitbox, which is why the body lines up with the stand instead of drifting most of a block to the side.
+
+### Subprocesses
+
+Three seconds after spawning, and again on every phase change — five times at most — Jack Star summons another boss 14 blocks away: Garou, Mahoraga, Chaos Mage, Obsidian Guard, Soul Reaper or NIX, drawn at random until one accepts. He stays on the field throughout: a subprocess is extra pressure, **never a shield**, so he keeps fighting and keeps taking damage while one is alive.
+
+### Damage taken
+
+Hits pass one door: the **Ultra Instinct** dodge first (0.22, raised to 0.45 in compressed form), then the **Load Balancer**, which leaves 65% on the boss and shares 35% among every non-creative player within 14 blocks. A landed hit always reaches the boss; `/msc debug` prints the intended hit, the split and the value applied.
+
+**Drops:** 950 XP and the `ArchitectKernel`, with a final title for every player within 60 blocks.
+

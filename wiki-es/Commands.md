@@ -298,5 +298,17 @@ Itera todos los mundos y elimina cada ArmorStand cuya etiqueta de scoreboard emp
 | Permiso | Por defecto | Descripción |
 |---|---|---|
 | `msc.admin` | Solo OP | Requerido para TODOS los subcomandos de `/msc` |
+| *tus propios nodos* | — | Puertas opcionales por subcomando, declaradas en `commands.subcommand-permissions` |
 
 Aún no hay permisos por objeto o por mob. Los administradores del servidor pueden restringir el comando detrás de un plugin de permisos (p. ej. LuckPerms) dando `msc.admin` solo al personal de confianza.
+
+`commands.subcommand-permissions` asigna a cada subcomando un nodo extra. Un subcomando listado ahí necesita ese nodo **además de** `msc.admin`; lo que no aparezca, o esté en blanco, queda abierto para quien haya pasado la puerta principal, así que el `{}` que se envía no cambia nada:
+
+```yaml
+commands:
+  permission: "msc.admin"
+  op-only: true
+  subcommand-permissions:
+    debug: msc.debug
+    attack: msc.attack
+```

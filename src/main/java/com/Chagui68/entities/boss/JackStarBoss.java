@@ -192,12 +192,13 @@ public class JackStarBoss implements Listener {
     private static final String CREATIVE_DISPLAY_TAG = "msc_jackstar_creative_display";
     private static final String OBSERVED_BOSS_TAG = "msc_jackstar_observed_boss";
 
-    public static final Vector3f PIVOT_SHOULDER_RIGHT = new Vector3f(0.35f, 1.40f, 0f);
-    public static final Vector3f PIVOT_SHOULDER_LEFT  = new Vector3f(-0.35f, 1.40f, 0f);
-    public static final Vector3f PIVOT_HIP_RIGHT       = new Vector3f(0.12f, 0.70f, 0f);
-    public static final Vector3f PIVOT_HIP_LEFT        = new Vector3f(-0.12f, 0.70f, 0f);
-    public static final Vector3f PIVOT_NECK            = new Vector3f(0.0f, 1.87f, 0f);
-    public static final Vector3f PIVOT_TORSO           = new Vector3f(0.0f, 1.25f, 0f);
+    /**
+     * Scale of the invisible armour stand that carries the hitbox: the model is about 2.1 blocks
+     * tall, so a vanilla 1.975-block stand leaves the top of the head and the shoulders unhittable.
+     */
+    public static final double MODEL_HITBOX_SCALE = 1.2;
+
+    /** Joints, rest pose and limb maths live in {@link JackModel}, testable without a server. */
 
     private final MultiverseCreatures plugin;
     private final Map<UUID, JackInstance> activeInstances = new HashMap<>();
@@ -305,11 +306,11 @@ public class JackStarBoss implements Listener {
             return;
         }
 
-        // During a creative-mode invocation JackStar is an observer, never a second
-        // attacker. The summoned boss remains a normal, killable plugin boss.
+        // A creative-mode invocation no longer freezes the fight: JackStar keeps fighting and keeps
+        // taking damage while the summoned subprocess is alive, instead of hovering out of reach
+        // behind an immunity flag.
         if (inst.observedBossId != null) {
             tickCreativeObservation(inst);
-            return;
         }
 
         double currentHealth = MscEntityUtils.getVirtualHealth(stand);
@@ -845,29 +846,27 @@ public class JackStarBoss implements Listener {
         attacker.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "⚡ ¡ESQUIVE INSTINTIVO! " + ChatColor.GRAY + "(Ultra Instinct)");
     }
 
-    private double applyLoadBalancer(JackInstance inst, double incomingDamage, Player attacker) {
-        ArmorStand stand = inst.stand;
+    /** The players counted as part of the fight: everyone in range that can still take damage. */
+    private List<Player> partyOf(ArmorStand stand) {
         List<Player> party = new ArrayList<>();
         for (Player p : stand.getWorld().getPlayers()) {
             if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) continue;
-            if (p.getLocation().distanceSquared(stand.getLocation()) <= 14 * 14) {
+            if (p.getLocation().distanceSquared(stand.getLocation())
+                    <= JackResilience.PARTY_RADIUS * JackResilience.PARTY_RADIUS) {
                 party.add(p);
             }
         }
+        return party;
+    }
 
-        if (party.size() > 1) {
-            double sharedPart = incomingDamage * 0.35;
-            double directPart = incomingDamage * 0.65;
-            double perPlayer = sharedPart / party.size();
-
-            for (Player p : party) {
-                dealToPlayer(stand, p, perPlayer, "Load Balancer");
-                p.spawnParticle(Particle.CRIT, p.getLocation().add(0, 1.0, 0), 5, 0.2, 0.2, 0.2, 0.05);
-                p.sendActionBar(ChatColor.GOLD + "[LOAD BALANCER] " + ChatColor.YELLOW + "Workload shared (-" + String.format("%.1f", perPlayer) + " HP)");
-            }
-            return directPart;
+    /** Makes the party pay its share of an incoming hit. The split itself lives in {@link JackResilience}. */
+    private void shareWithParty(ArmorStand stand, List<Player> party, JackResilience.Split split) {
+        if (party.size() <= 1) return;
+        for (Player p : party) {
+            dealToPlayer(stand, p, split.perPartyMember(), "Load Balancer");
+            p.spawnParticle(Particle.CRIT, p.getLocation().add(0, 1.0, 0), 5, 0.2, 0.2, 0.2, 0.05);
+            p.sendActionBar(ChatColor.GOLD + "[LOAD BALANCER] " + ChatColor.YELLOW + "Workload shared (-" + String.format("%.1f", split.perPartyMember()) + " HP)");
         }
-        return incomingDamage;
     }
 
     // --- BUILDER DEFENSE SYSTEM ---
@@ -1032,10 +1031,32 @@ public class JackStarBoss implements Listener {
                 display.teleport(root);
                 display.setTransformation(buildTransformation(part, inst));
             } else {
-                ItemDisplay display = spawnPart(root, part, inst.stand.getUniqueId());
-                inst.partDisplays.put(part, display.getUniqueId());
+                // A reload with the part's chunk unloaded hides it from restorePartDisplays; adopting
+                // the one still tagged for this boss avoids a second, overlapping body.
+                ItemDisplay adopted = findPartDisplay(inst, part);
+                if (adopted != null) {
+                    inst.partDisplays.put(part, adopted.getUniqueId());
+                } else {
+                    ItemDisplay display = spawnPart(root, part, inst.stand.getUniqueId());
+                    inst.partDisplays.put(part, display.getUniqueId());
+                }
             }
         }
+    }
+
+    /** Looks for this part of this boss near the stand, without loading anything new. */
+    private ItemDisplay findPartDisplay(JackInstance inst, JackPart part) {
+        Location loc = inst.stand.getLocation();
+        String ownerTag = partOwnerTag(inst.stand.getUniqueId());
+        String partTag = PART_TAG + "_" + part.name();
+        for (Entity e : inst.stand.getWorld().getNearbyEntities(loc, 6.0, 8.0, 6.0)) {
+            if (e instanceof ItemDisplay display
+                    && display.getScoreboardTags().contains(ownerTag)
+                    && display.getScoreboardTags().contains(partTag)) {
+                return display;
+            }
+        }
+        return null;
     }
 
     private void enterCreativeModeAndSummonBoss(JackInstance inst) {
@@ -1050,19 +1071,22 @@ public class JackStarBoss implements Listener {
             double angle = Math.toRadians(random.nextInt(360));
             Location spawn = origin.clone().add(Math.cos(angle) * 14.0, 0, Math.sin(angle) * 14.0);
             snapToGround(spawn);
-            Entity summoned = spawnObservedBoss(candidate, spawn);
-            if (summoned == null) continue;
+            ObservedSpawn result = spawnObservedBoss(candidate, spawn);
+            // Refused by its own density / world rules: nothing was created, try another candidate.
+            if (!result.created()) continue;
+            // Created but not found where it should be: summoning again would stack bosses.
+            if (result.entity() == null) return;
+            Entity summoned = result.entity();
 
             summoned.addScoreboardTag(OBSERVED_BOSS_TAG);
             inst.observedBossId = summoned.getUniqueId();
             inst.creativeInvocations++;
             inst.creativeTicks = 0;
-            stand.setGravity(false);
             spawnFloatingCommandBlocks(inst);
             broadcastToArena(inst, ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD
-                    + "[CREATIVE MODE] " + ChatColor.AQUA
-                    + "JackStar ha entrado en modo creativo. Ejecutando ritual de "
-                    + ChatColor.WHITE + summoned.getName() + ChatColor.AQUA + ".");
+                    + "[SUBPROCESO] " + ChatColor.AQUA
+                    + "JackStar despliega a " + ChatColor.WHITE + summoned.getName()
+                    + ChatColor.AQUA + ". El Arquitecto sigue en pie y sigue siendo golpeable.");
             world.playSound(origin, Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, 2.0f, 0.65f);
             for (int bolt = 0; bolt < 5; bolt++) {
                 double boltAngle = Math.toRadians(bolt * 72.0);
@@ -1073,9 +1097,13 @@ public class JackStarBoss implements Listener {
         }
     }
 
-    private Entity spawnObservedBoss(int candidate, Location spawn) {
+    /** One summon attempt: whether the call created anything, and the boss now standing there. */
+    private record ObservedSpawn(Entity entity, boolean created) {
+    }
+
+    private ObservedSpawn spawnObservedBoss(int candidate, Location spawn) {
         World world = spawn.getWorld();
-        if (world == null) return null;
+        if (world == null) return new ObservedSpawn(null, false);
         String tag = switch (candidate) {
             case 0 -> "MSC_Garou";
             case 1 -> "MSC_Mahoraga";
@@ -1092,11 +1120,14 @@ public class JackStarBoss implements Listener {
             case 4 -> plugin.getSoulReaper().trySpawn(spawn);
             default -> plugin.getNixBoss().trySpawn(spawn);
         };
-        if (!created) return null;
-        for (Entity entity : world.getNearbyEntities(spawn, 3.0, 4.0, 3.0)) {
-            if (entity.getScoreboardTags().contains(tag)) return entity;
+        if (!created) return new ObservedSpawn(null, false);
+        for (Entity entity : world.getNearbyEntities(spawn, 5.0, 6.0, 5.0)) {
+            if (entity.getScoreboardTags().contains(tag)) return new ObservedSpawn(entity, true);
         }
-        return null;
+        plugin.getLogger().warning("[JackStar] Subjefe invocado sin localizar junto a "
+                + spawn.getBlockX() + ", " + spawn.getBlockY() + ", " + spawn.getBlockZ()
+                + "; no se encadena otro ritual.");
+        return new ObservedSpawn(null, true);
     }
 
     private void tickCreativeObservation(JackInstance inst) {
@@ -1108,24 +1139,19 @@ public class JackStarBoss implements Listener {
         }
 
         inst.creativeTicks++;
-        double angle = inst.creativeTicks * 0.075;
-        Location center = observed.getLocation();
-        Location orbit = center.clone().add(Math.cos(angle) * 11.5, 2.2 + Math.sin(angle * 0.5) * 0.35, Math.sin(angle) * 11.5);
-        orbit.setDirection(center.toVector().subtract(orbit.toVector()));
-        stand.teleport(orbit);
-        inst.moving = true;
-        inst.animTicks += 0.28f;
-        updateCreativeDisplays(inst, orbit);
-        syncDisplays(inst);
+        // JackStar stays where the fight is: the ritual is extra pressure, not an escape. He never
+        // leaves the ground, so the subprocess can be cleared without losing the boss off-screen.
+        Location anchor = stand.getLocation().clone().add(0, inst.flightYOffset, 0);
+        updateCreativeDisplays(inst, anchor);
 
         if (inst.creativeTicks % 20 == 0) {
-            stand.getWorld().spawnParticle(Particle.ENCHANT, orbit.clone().add(0, 1.2, 0), 18, 0.55, 0.7, 0.55, 0.05);
-            stand.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, orbit.clone().add(0, 1.2, 0), 10, 0.4, 0.5, 0.4, 0.02);
+            stand.getWorld().spawnParticle(Particle.ENCHANT, anchor.clone().add(0, 1.2, 0), 18, 0.55, 0.7, 0.55, 0.05);
+            stand.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, anchor.clone().add(0, 1.2, 0), 10, 0.4, 0.5, 0.4, 0.02);
         }
         if (inst.creativeTicks % 100 == 0) {
             stand.getWorld().strikeLightningEffect(observed.getLocation());
             broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] " + ChatColor.GRAY
-                    + "JackStar observa. El subproceso debe terminar antes de reanudar el combate.");
+                    + "Subproceso activo: " + observed.getName() + ". JackStar sigue en ejecución.");
         }
     }
 
@@ -1163,10 +1189,9 @@ public class JackStarBoss implements Listener {
         }
         inst.creativeDisplays.clear();
         inst.observedBossId = null;
-        inst.stand.setGravity(true);
         inst.stand.getWorld().playSound(inst.stand.getLocation(), Sound.ENTITY_WARDEN_ROAR, 1.6f, 0.9f);
         broadcastToArena(inst, ChatColor.RED + "[SYS] " + ChatColor.GRAY
-                + "JackStar reanuda el combate directo. El sistema vuelve a ser hostil.");
+                + "Subproceso cerrado. JackStar vuelve a ejecutarse en solitario.");
     }
 
     private void throwScoobySnack(JackInstance inst, Player target) {
@@ -1198,23 +1223,38 @@ public class JackStarBoss implements Listener {
         }
     }
 
-    private ItemDisplay spawnPart(Location root, JackPart part, UUID ownerId) {
-        ItemStack head = createHead(part.profileName, part.texture);
-        ItemDisplay display = (ItemDisplay) root.getWorld().spawnEntity(root, EntityType.ITEM_DISPLAY);
-        display.setItemStack(head);
+    /**
+     * Applies everything a part needs, so a freshly spawned and an adopted part are identical.
+     *
+     * <p>Both interpolation durations are zero on purpose: the parts are placed on the stand's exact
+     * position every tick, and letting the client smooth a teleport the server already snapped made
+     * the body trail behind the invisible hitbox whenever JackStar moved or dashed.
+     */
+    private void configurePartDisplay(ItemDisplay display, JackPart part) {
+        display.setItemStack(createHead(part.profileName, part.texture));
         display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
         display.setBillboard(Display.Billboard.FIXED);
         display.setTransformation(buildTransformation(part, null));
-        display.setTeleportDuration(1);
-        display.setInterpolationDuration(2);
+        display.setTeleportDuration(0);
+        display.setInterpolationDuration(0);
         display.setInterpolationDelay(0);
         display.setBrightness(new Display.Brightness(15, 15));
+        // Zero size on purpose: a display's width/height double as its bounding box, and a part with
+        // a real box would be picked by the client instead of the armour stand. Display entities are
+        // not damageable, so that hit would simply be lost and the boss would look unkillable.
+        display.setDisplayWidth(0.0f);
+        display.setDisplayHeight(0.0f);
         display.setInvulnerable(false);
         display.setGravity(false);
         display.setSilent(true);
         display.setPersistent(true);
         display.addScoreboardTag(PART_TAG);
         display.addScoreboardTag(PART_TAG + "_" + part.name());
+    }
+
+    private ItemDisplay spawnPart(Location root, JackPart part, UUID ownerId) {
+        ItemDisplay display = (ItemDisplay) root.getWorld().spawnEntity(root, EntityType.ITEM_DISPLAY);
+        configurePartDisplay(display, part);
         display.addScoreboardTag(partOwnerTag(ownerId));
         return display;
     }
@@ -1243,34 +1283,7 @@ public class JackStarBoss implements Listener {
     public Transformation buildTransformation(JackPart part, JackInstance inst) {
         Quaternionf limbRot = (inst != null) ? computeLimbQuat(part.group, inst) : new Quaternionf();
         float currentScale = (inst != null) ? inst.currentScale : 1.0f;
-
-        Vector3f pivot = getPivot(part.group);
-        Vector3f localBase = new Vector3f(
-                part.offset.x - JackPart.CENTER.x,
-                part.offset.y,
-                part.offset.z - JackPart.CENTER.z
-        );
-
-        Vector3f relToPivot = new Vector3f(localBase).sub(pivot);
-        Vector3f rotatedRel = new Vector3f(relToPivot);
-        limbRot.transform(rotatedRel);
-
-        Vector3f finalTranslation = new Vector3f(pivot).add(rotatedRel).mul(currentScale);
-        Quaternionf finalRotation = new Quaternionf(limbRot).mul(part.rotation);
-        Vector3f finalScale = new Vector3f(part.scale).mul(currentScale);
-
-        return new Transformation(finalTranslation, finalRotation, finalScale, new Quaternionf());
-    }
-
-    private Vector3f getPivot(LimbGroup group) {
-        return switch (group) {
-            case ARM_RIGHT -> PIVOT_SHOULDER_RIGHT;
-            case ARM_LEFT -> PIVOT_SHOULDER_LEFT;
-            case LEG_RIGHT -> PIVOT_HIP_RIGHT;
-            case LEG_LEFT -> PIVOT_HIP_LEFT;
-            case HEAD -> PIVOT_NECK;
-            case TORSO_UPPER, TORSO_LOWER -> PIVOT_TORSO;
-        };
+        return JackModel.compose(part, limbRot, currentScale);
     }
 
     private Quaternionf computeLimbQuat(LimbGroup group, JackInstance inst) {
@@ -1349,6 +1362,11 @@ public class JackStarBoss implements Listener {
         stand.setBasePlate(false);
         stand.setArms(false);
         stand.setSmall(false);
+        // The stand is the only hitbox the model has (the displays must stay un-hittable), and the
+        // body is ~2.1 blocks tall: a vanilla stand stops at 1.975, leaving the head top and the
+        // shoulder line outside the box. Scaling the stand up keeps the visible body hittable.
+        AttributeInstance scale = stand.getAttribute(Attribute.SCALE);
+        if (scale != null) scale.setBaseValue(MODEL_HITBOX_SCALE);
         stand.setInvulnerable(false);
         stand.setCollidable(true);
         stand.setCanPickupItems(false);
@@ -1492,18 +1510,11 @@ public class JackStarBoss implements Listener {
             player = p;
         }
 
-        if (inst.observedBossId != null) {
-            event.setCancelled(true);
-            if (player != null && inst.creativeTicks % 40 == 0) {
-                player.sendMessage(ChatColor.LIGHT_PURPLE + "[CREATIVE MODE] " + ChatColor.GRAY
-                        + "JackStar es invulnerable mientras su invocación siga activa.");
-            }
-            return;
-        }
-
+        // A summoned subprocess is extra pressure, never a shield: hits land on JackStar even while
+        // one is alive, which is what makes the boss damageable at all times.
         // Projectile Packet Loss
         if (event.getDamager() instanceof Projectile projectile) {
-            double effPacketLoss = (inst.currentScale < 0.8f) ? 0.45 : packetLossChance;
+            double effPacketLoss = JackResilience.effectiveChance(packetLossChance, inst.currentScale);
             if (random.nextDouble() < effPacketLoss) {
                 event.setCancelled(true);
                 projectile.remove();
@@ -1528,14 +1539,17 @@ public class JackStarBoss implements Listener {
             event.setCancelled(true);
 
             double incoming = Math.max(1.0, event.getFinalDamage());
-            double effDodge = (inst.currentScale < 0.8f) ? 0.45 : dodgeChance;
-            if (random.nextDouble() < effDodge) {
+            List<Player> party = partyOf(stand);
+            JackResilience.Resolution hit = JackResilience.resolve(incoming, random.nextDouble(),
+                    JackResilience.effectiveChance(dodgeChance, inst.currentScale), party.size());
+            if (hit.dodged()) {
                 triggerMuiDodge(stand, player);
                 recordIncoming(player, incoming, 0.0, "ultra instinct dodge");
                 return;
             }
 
-            double damage = applyLoadBalancer(inst, incoming, player);
+            double damage = hit.toBoss();
+            shareWithParty(stand, party, hit.split());
             recordIncoming(player, incoming, damage,
                     damage < incoming ? "load balancer: " + (incoming - damage) + " shared" : "");
 
@@ -1562,13 +1576,17 @@ public class JackStarBoss implements Listener {
 
     /** Damages a player with this boss and remembers the attack so the listener can name it. */
     private void dealToPlayer(ArmorStand stand, Player target, double amount, String source) {
+        // Saved and restored rather than cleared: a hit can trigger a nested one (the reflect
+        // barrier hits back), and the outer call must find its own attack name again afterwards.
+        String previousSource = outgoingSource;
+        double previousIntended = outgoingIntended;
         outgoingSource = source;
         outgoingIntended = amount;
         try {
             target.damage(amount, stand);
         } finally {
-            outgoingSource = null;
-            outgoingIntended = 0.0;
+            outgoingSource = previousSource;
+            outgoingIntended = previousIntended;
         }
     }
 

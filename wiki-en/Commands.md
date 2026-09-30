@@ -298,5 +298,17 @@ Iterates all worlds and removes every ArmorStand whose scoreboard tag starts wit
 | Permission | Default | Description |
 |---|---|---|
 | `msc.admin` | OP only | Required for ALL `/msc` subcommands |
+| *your own nodes* | — | Optional per-subcommand gates, declared under `commands.subcommand-permissions` |
 
 There are no per-item or per-mob permissions yet. Server admins can gate the command behind a permission plugin (e.g. LuckPerms) by giving `msc.admin` only to trusted staff.
+
+`commands.subcommand-permissions` maps a subcommand to one extra node. A subcommand named there needs its node **on top of** `msc.admin`; anything absent or blank stays open to whoever passed the main gate, so the shipped `{}` changes nothing:
+
+```yaml
+commands:
+  permission: "msc.admin"
+  op-only: true
+  subcommand-permissions:
+    debug: msc.debug
+    attack: msc.attack
+```

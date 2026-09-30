@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 32 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 34 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -100,6 +100,18 @@ Covers the health math in `utils/MscEntityUtils`:
 - Players are tracked independently, `forget` clears one without touching another, and null records are ignored rather than throwing.
 - `forgetBoss` drops one boss's samples for every player in a single sweep and leaves the other bosses intact — the same call the log's own listener runs when a boss stand leaves the world.
 
+### `entities/boss/JackResilienceTest` — Jack Star incoming damage
+- Every hit resolves through one door: an explicit dodge takes nothing, anything else is split.
+- The split **conserves the hit** (`toBoss + sharedTotal == incoming`) across a sweep of damage values and party sizes, so a tuning change cannot quietly delete or duplicate damage.
+- A landed hit **always reaches the boss** whatever the party size, which is what keeps Jack Star damageable at all times; a roll exactly on the dodge chance still lands.
+- The compressed (demoted) form raises the configured chance to 0.45, and the boundary value keeps the configured one.
+
+### `entities/boss/JackModelTest` — Jack Star model geometry
+- The eleven parts are pinned against the **in-game reference model**: every part's height and depth match within a millimetre and all eleven sit on one shared X axis, so the body cannot drift apart one part at a time.
+- The model is **centred on the hitbox** (spine and `CENTER.x` at zero) instead of carrying the reference's whole-body X offset, with the head above the torso above the legs, the head top near two blocks and the feet off the ground.
+- Left and right limbs are mirrored, each **joint sits on the same side as the limb it drives** (a swapped hip used to swing a leg around the opposite hip), and a swinging limb keeps its X and never detaches from its joint.
+- A sweep proves no two parts share a place, that shape shifting scales translations and part scales together, and that every part stays inside the stand's hitbox.
+
 ### `entities/NixModelKinematicsTest` — NIX kinematic model (27 parts)
 - The model has **exactly 27** `ItemDisplay` parts (Blockbench export).
 - Rigid kinematic hierarchy: arms and legs with **6** segments each (so they rotate as rigid bodies around shoulder/hip joints), head, upper and lower torso with **1** each.
@@ -144,6 +156,7 @@ Covers the health math in `utils/MscEntityUtils`:
 - Holding `commands.permission` is enough to run `/msc`, with or without OP.
 - `commands.op-only: true` keeps operators working when they lack the node; setting it to `false` means only the node counts.
 - A plain player with no node and no OP is denied.
+- A subcommand with no configured node stays open to whoever passed the main gate, while one pinned under `commands.subcommand-permissions` needs its node on top of it.
 
 ### `entities/HeadSlimeImmunityTest` — Head Slime gelatin immunity
 - The immunity window is a deadline per player, so eating a second gelatin **extends** it instead of the older scheduled removal ending it early, and nothing outlives the window after a logout.
@@ -167,6 +180,7 @@ Covers the health math in `utils/MscEntityUtils`:
 - Asserts `plugin.yml` keeps the command, the `msc.admin` node (the same one `commands.permission` declares), the `msc.admin.bypass` node used by the boss-dimension handlers, and a `usage` line listing every sub-command.
 - Checks the player-facing knobs stay sane: the Sentinels `phase-thresholds` descend inside `(0, 1]`, defence durations are at least one tick, `no-player-despawn-ticks` allows `0`, and every toggleable mob keeps its `enabled` flag.
 - A self-test proves the literal scanner reports dotted literals outside comments and ignores the ones inside them.
+- Asserts `commands.subcommand-permissions` exists as an **empty map** by default: the documented escape hatch must not disappear silently, and the shipped config must not restrict anything by surprise.
 
 ### `utils/LegacyNameApiGuardTest` — Migration guard
 - Reads `src/main/java` and fails if any file goes back to the deprecated String name APIs (`setDisplayName`, `setLore`, `setItemName`, `setCustomName`, `getDisplayName`, `getCustomName`). Those methods still compile and still work, so an item written the old way would otherwise only show up as a subtly wrong tooltip.

@@ -41,4 +41,18 @@ class CommandPermissionTest {
         assertFalse(MSCCommand.canUseCommands(true, false, false));
         assertFalse(MSCCommand.canUseCommands(false, false, false));
     }
+
+    @Test
+    @DisplayName("Verify a subcommand with no configured node stays open to whoever passed the gate")
+    void testUnrestrictedSubCommandIsOpen() {
+        assertTrue(MSCCommand.canUseSubCommand(false, false));
+        assertTrue(MSCCommand.canUseSubCommand(false, true));
+    }
+
+    @Test
+    @DisplayName("Verify a subcommand pinned to its own node needs that node on top of the main one")
+    void testRestrictedSubCommandNeedsItsNode() {
+        assertTrue(MSCCommand.canUseSubCommand(true, true));
+        assertFalse(MSCCommand.canUseSubCommand(true, false));
+    }
 }

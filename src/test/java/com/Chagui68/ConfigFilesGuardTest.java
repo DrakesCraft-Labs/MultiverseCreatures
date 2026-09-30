@@ -88,6 +88,15 @@ class ConfigFilesGuardTest {
         assertTrue(permissions.containsKey("msc.admin"));
         assertTrue(permissions.containsKey("msc.admin.bypass"),
                 "msc.admin.bypass is checked by the boss dimension handlers and must be documented here");
+
+        // The per-subcommand gate reads commands.subcommand-permissions.<name>; the documented
+        // default is an empty map, which leaves every subcommand open to whoever passed the main
+        // gate. A missing key would make the escape hatch invisible in the shipped config.
+        Object subCommandPermissions = child(loadConfig(), "commands").get("subcommand-permissions");
+        assertInstanceOf(Map.class, subCommandPermissions,
+                "commands.subcommand-permissions must exist as a map in config.yml");
+        assertTrue(((Map<?, ?>) subCommandPermissions).isEmpty(),
+                "the shipped default must not restrict any subcommand");
     }
 
     @Test

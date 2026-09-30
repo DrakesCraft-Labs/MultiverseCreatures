@@ -94,6 +94,24 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         return opOnly && senderIsOp;
     }
 
+    /**
+     * Optional per-subcommand gate, configured under {@code commands.subcommand-permissions}. A
+     * server owner can pin a sensitive subcommand to its own node (e.g. {@code debug: msc.debug})
+     * without a code change; an absent or blank entry leaves the subcommand open to anyone who
+     * passed the main gate.
+     */
+    private boolean canUseSubCommand(CommandSender sender, String subCommand) {
+        String node = plugin.getConfig()
+                .getString("commands.subcommand-permissions." + subCommand.toLowerCase());
+        if (node == null || node.isBlank()) return canUseSubCommand(false, false);
+        return canUseSubCommand(true, sender.hasPermission(node.trim()));
+    }
+
+    /** Pure rule behind {@link #canUseSubCommand}, kept separate so it can be unit tested. */
+    static boolean canUseSubCommand(boolean restricted, boolean senderHasNode) {
+        return !restricted || senderHasNode;
+    }
+
     /** The configured permission node, falling back to the one declared in plugin.yml. */
     private String resolveCommandPermission() {
         String node = plugin.getConfig().getString("commands.permission", DEFAULT_COMMAND_PERMISSION);
@@ -105,6 +123,11 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!canUseCommands(sender)) {
             sender.sendMessage(RED + "You do not have permission to use this command.");
+            return true;
+        }
+
+        if (args.length > 0 && !canUseSubCommand(sender, args[0])) {
+            sender.sendMessage(RED + "You do not have permission to use /msc " + args[0].toLowerCase() + ".");
             return true;
         }
 

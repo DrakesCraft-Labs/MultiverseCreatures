@@ -178,4 +178,36 @@ Un verdugo colosal e implacable construido a partir de un **modelo personalizado
 
 **Persistencia:** Etiquetado `MSC_NixBoss` y `MSC_NixPart` — se restaura o limpia automáticamente en reinicios o recargas del servidor.
 
-**Muerte:** Desencadena truenos, sonido de muerte de wither, una explosión de partículas carmesí, suelta 450 XP y muestra un título de condena finalizada a los jugadores cercanos.
+**Muerte:** Desencadena truenos, sonido de muerte de wither, una explosión de partículas carmesí, suelta 450 XP y muestra un título de condena finalizada a los jugadores cercanos.
+
+---
+
+## 👨‍💻 JACK STAR — El Arquitecto del Sistema
+
+Cinco fases, tres vidas y un cuerpo construido con once cabezas de skin.
+
+### Estadísticas del jefe
+
+| Campo | Valor |
+|---|---|
+| Vida | `jackstar-architect.health` (700.0) |
+| Vidas | 3 — las dos primeras "muertes" ejecutan un reinicio **Watchdog** que restaura el 50% de la vida, y la última el 40% |
+| Fases | 1 >80% · 2 >60% · 3 >40% · 4 >20% · 5 (kernel panic) ≤20% |
+| Daño | `melee-damage` (16) · `slam-damage` (20) · `sigkill-damage` (35) |
+| Defensas | esquive Ultra Instinct `dodge-chance` (0.22) · `packet-loss-chance` (0.25) descarta proyectiles · muros cortafuegos, firejail y telarañas |
+| Agro / velocidad / alcance | `aggro-range` (32.0) · `move-speed` (0.32) · `melee-range` (3.8) |
+| Ritual de invocación | Ritual **The System Architect** en la Dimensión del Jefe · `/msc spawn jack` (OP) |
+
+### Modelo
+
+Once cabezas de skin (`ItemDisplay`, etiqueta `msc_jackstar_part`) forman la cabeza, el torso y dos segmentos por brazo y pierna. Siguen a un **ArmorStand invisible** (`msc_jackstar_boss`) que carga la vida real y la hitbox, así que el cuerpo visible es lo que apuntan los jugadores mientras el stand lleva la contabilidad. Las articulaciones viven en `JackModel` (hombros en x = ±0.35, caderas en ∓0.12, cuello en 1.87) y cada extremidad gira sobre su propia articulación, con contra-rotaciones al caminar. Las piezas se recentran sobre la hitbox, que es lo que hace que el cuerpo coincida con el stand en vez de desplazarse casi un bloque hacia un lado.
+
+### Subprocesos
+
+Tres segundos después de aparecer, y de nuevo en cada cambio de fase — cinco veces como máximo — Jack Star invoca a otro jefe a 14 bloques: Garou, Mahoraga, Chaos Mage, Obsidian Guard, Soul Reaper o NIX, elegido al azar hasta que uno acepte. Él se queda en el campo todo el tiempo: un subproceso es presión extra, **nunca un escudo**, así que sigue peleando y sigue recibiendo daño mientras esté vivo.
+
+### Daño recibido
+
+Los golpes pasan por una sola puerta: primero el esquive **Ultra Instinct** (0.22, elevado a 0.45 en forma comprimida) y después el **Load Balancer**, que deja el 65% en el jefe y reparte el 35% entre cada jugador no creativo en 14 bloques. Un golpe que acierta siempre llega al jefe; `/msc debug` imprime el golpe previsto, el reparto y el valor aplicado.
+
+**Botín:** 950 XP y el `ArchitectKernel`, con un título final para cada jugador en 60 bloques.

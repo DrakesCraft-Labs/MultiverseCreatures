@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 32 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 34 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -100,6 +100,18 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Los jugadores se siguen por separado, `forget` limpia uno sin tocar otro, y los registros nulos se ignoran en vez de lanzar.
 - `forgetBoss` elimina las muestras de un jefe para todos los jugadores en una sola pasada y deja intactos los otros jefes: es la misma llamada que hace el listener de la propia bitácora cuando el soporte de un jefe sale del mundo.
 
+### `entities/boss/JackResilienceTest` — Daño entrante de Jack Star
+- Cada golpe se resuelve por una sola puerta: un esquive explícito no quita nada, cualquier otro golpe se reparte.
+- El reparto **conserva el golpe** (`toBoss + sharedTotal == incoming`) en un barrido de valores y tamaños de grupo, así que un ajuste de balance no puede borrar ni duplicar daño en silencio.
+- Un golpe que acierta **siempre llega al jefe**, sea cual sea el tamaño del grupo: es lo que mantiene a Jack Star recibiendo daño en todo momento; una tirada exactamente en la probabilidad de esquive sigue acierta.
+- La forma comprimida (degradada) sube la probabilidad configurada a 0.45, y el valor límite conserva la configurada.
+
+### `entities/boss/JackModelTest` — Geometría del modelo de Jack Star
+- Las once piezas quedan fijadas contra el **modelo de referencia del juego**: la altura y la profundidad de cada pieza coinciden al milímetro y las once comparten un único eje X, así que el cuerpo no puede descolocarse pieza a pieza.
+- El modelo queda **centrado en la hitbox** (columna y `CENTER.x` a cero) en vez de arrastrar el desplazamiento global en X de la referencia, con la cabeza por encima del torso y este por encima de las piernas, la coronilla cerca de los dos bloques y los pies separados del suelo.
+- Las extremidades izquierda y derecha están espejadas, cada **articulación está del mismo lado que la extremidad que mueve** (una cadera intercambiada hacía girar una pierna sobre la cadera opuesta), y una extremidad que gira conserva su X y nunca se desprende de su articulación.
+- Un barrido demuestra que no hay dos piezas en el mismo sitio, que el cambio de escala escala a la vez traslaciones y escalas de pieza, y que cada pieza cabe dentro de la hitbox del stand.
+
 ### `entities/NixModelKinematicsTest` — Modelo cinemático de NIX (27 partes)
 - El modelo tiene **exactamente 27** partes `ItemDisplay` (export de Blockbench).
 - La jerarquía cinemática es rígida: brazos y piernas con **6** segmentos cada uno (para rotar como cuerpo rígido en hombro/cadera), cabeza, torso superior e inferior con **1**.
@@ -144,6 +156,7 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Tener `commands.permission` basta para usar `/msc`, con OP o sin él.
 - `commands.op-only: true` mantiene operativos a los operadores que no tienen el nodo; `false` hace que solo cuente el nodo.
 - Un jugador normal sin nodo y sin OP queda rechazado.
+- Un subcomando sin nodo configurado queda abierto para quien pasó la puerta principal, mientras que uno fijado en `commands.subcommand-permissions` necesita su nodo además de la principal.
 
 ### `entities/HeadSlimeImmunityTest` — Inmunidad de la gelatina
 - La ventana de inmunidad es una fecha límite por jugador, así que comer una segunda gelatina la **extiende** en vez de que el removal programado anterior la corte antes, y nada sobrevive a la ventana tras un logout.
@@ -167,6 +180,7 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Verifica que `plugin.yml` conserve el comando, el nodo `msc.admin` (el mismo que declara `commands.permission`), el nodo `msc.admin.bypass` que usan los handlers de la dimensión del jefe, y una línea `usage` que liste todos los subcomandos.
 - Comprueba que los ajustes visibles para el jugador sigan sanos: los `phase-thresholds` del Centinela descienden dentro de `(0, 1]`, las duraciones de defensa duran al menos un tick, `no-player-despawn-ticks` admite `0`, y cada mob conmutable conserva su flag `enabled`.
 - Un autotest prueba que el escáner de literales reporta los literales con punto fuera de comentarios e ignora los que están dentro.
+- Verifica que `commands.subcommand-permissions` exista como **mapa vacío** por defecto: la puerta documentada no debe desaparecer en silencio, y la config que se envía no debe restringir nada por sorpresa.
 
 ### `utils/LegacyNameApiGuardTest` — Guardia de la migración
 - Lee `src/main/java` y falla si algún archivo vuelve a las APIs String deprecadas de nombre (`setDisplayName`, `setLore`, `setItemName`, `setCustomName`, `getDisplayName`, `getCustomName`). Esos métodos siguen compilando y funcionando, así que un item escrito a la vieja usanza solo se notaría como un tooltip sutilmente mal.

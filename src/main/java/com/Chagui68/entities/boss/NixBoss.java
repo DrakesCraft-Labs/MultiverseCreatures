@@ -888,13 +888,17 @@ public class NixBoss implements Listener {
 
     /** Damages a player with this boss and remembers the attack so the listener can name it. */
     private void dealToPlayer(ArmorStand stand, Player target, double amount, String source) {
+        // Saved and restored rather than cleared: a hit can trigger a nested one, and the outer call
+        // must find its own attack name again afterwards.
+        String previousSource = outgoingSource;
+        double previousIntended = outgoingIntended;
         outgoingSource = source;
         outgoingIntended = amount;
         try {
             target.damage(amount, stand);
         } finally {
-            outgoingSource = null;
-            outgoingIntended = 0.0;
+            outgoingSource = previousSource;
+            outgoingIntended = previousIntended;
         }
     }
 

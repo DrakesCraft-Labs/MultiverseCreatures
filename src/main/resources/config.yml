@@ -55,6 +55,9 @@ commands:
   permission: "msc.admin"
   # If true, server operators can run /msc even when they lack the node above.
   op-only: true
+  # Optional per-subcommand nodes, e.g. `debug: msc.debug`. A subcommand listed here needs its node
+  # on top of the main one; anything absent or blank stays open to whoever passed the gate above.
+  subcommand-permissions: {}
 
 
 # =============================================================================

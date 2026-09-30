@@ -1,0 +1,199 @@
+package com.Chagui68.entities.boss;
+
+import org.bukkit.util.Transformation;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Guards the model itself: eleven parts, each in its own place, joints on the correct side and the
+ * whole body centred on the invisible armour stand that receives the hits.
+ *
+ * <p>The reference numbers are the passenger transforms of the model as built in game
+ * ({@code /summon block_display ... {Passengers:[item_display x11]}}). The plugin keeps the same
+ * shape with one difference: the reference data carries a global X offset for the whole body, and
+ * the code re-centres it so the visible body sits over the hitbox. These tests pin both halves of
+ * that contract.
+ */
+class JackModelTest {
+
+    /**
+     * Reference model, straight from the in-game passengers: one entry per part, in the order the
+     * game wrote them. Only the translation matters here; the full matrices live in JackPart.
+     */
+    private static final Map<JackStarBoss.JackPart, Vector3f> REFERENCE = new EnumMap<>(JackStarBoss.JackPart.class);
+
+    static {
+        REFERENCE.put(JackStarBoss.JackPart.HEAD, new Vector3f(-0.9301796875f, 1.872775625f, -0.016851575f));
+        REFERENCE.put(JackStarBoss.JackPart.TORSO_UPPER, new Vector3f(-0.9301796875f, 1.404275625f, -0.016851575f));
+        REFERENCE.put(JackStarBoss.JackPart.TORSO_LOWER, new Vector3f(-0.9301796875f, 1.170025625f, -0.016851575f));
+        REFERENCE.put(JackStarBoss.JackPart.LEG_R_UPPER, new Vector3f(-1.0473046875f, 0.701525625f, -0.016851575f));
+        REFERENCE.put(JackStarBoss.JackPart.LEG_R_LOWER, new Vector3f(-1.0473046875f, 0.467275625f, -0.016851575f));
+        REFERENCE.put(JackStarBoss.JackPart.LEG_L_UPPER, new Vector3f(-0.8130546875f, 0.701525625f, -0.016851575f));
+        REFERENCE.put(JackStarBoss.JackPart.LEG_L_LOWER, new Vector3f(-0.8130546875f, 0.467275625f, -0.016851575f));
+        REFERENCE.put(JackStarBoss.JackPart.ARM_R_UPPER, new Vector3f(-0.5823184375f, 1.404275625f, -0.0165821875f));
+        REFERENCE.put(JackStarBoss.JackPart.ARM_R_LOWER, new Vector3f(-0.586125f, 1.170025625f, -0.016875f));
+        REFERENCE.put(JackStarBoss.JackPart.ARM_L_UPPER, new Vector3f(-1.2815546875f, 1.404275625f, -0.016851575f));
+        REFERENCE.put(JackStarBoss.JackPart.ARM_L_LOWER, new Vector3f(-1.2815546875f, 1.170025625f, -0.016851575f));
+    }
+
+    @Test
+    @DisplayName("Every part still matches the in-game reference model, up to one shared X offset")
+    void partsMatchTheReferenceModel() {
+        assertEquals(JackStarBoss.JackPart.values().length, REFERENCE.size(),
+                "the reference table must cover every part");
+
+        Float sharedShift = null;
+        for (Map.Entry<JackStarBoss.JackPart, Vector3f> entry : REFERENCE.entrySet()) {
+            JackStarBoss.JackPart part = entry.getKey();
+            Vector3f reference = entry.getValue();
+
+            assertEquals(reference.y, part.offset.y, 0.001f, part + " drifted vertically from the model");
+            assertEquals(reference.z, part.offset.z, 0.001f, part + " drifted in depth from the model");
+
+            float shift = part.offset.x - reference.x;
+            if (sharedShift == null) {
+                sharedShift = shift;
+                assertTrue(Math.abs(shift) > 0.9f, "the reference body is offset as a whole: " + shift);
+            }
+            assertEquals(sharedShift, shift, 0.005f,
+                    part + " is not on the model's single shared X axis");
+        }
+    }
+
+    @Test
+    @DisplayName("The body is centred on the hitbox instead of a block away from it")
+    void modelIsCentredOnTheHitbox() {
+        assertEquals(0.0f, JackStarBoss.JackPart.CENTER.x, 0.005f,
+                "the body axis must sit where the invisible armour stand is");
+        assertEquals(0.0f, JackModel.baseTranslation(JackStarBoss.JackPart.HEAD).x, 0.01f);
+        assertEquals(0.0f, JackModel.baseTranslation(JackStarBoss.JackPart.TORSO_UPPER).x, 0.01f);
+    }
+
+    @Test
+    @DisplayName("Head sits above the torso, the torso above the legs, and the body is about two blocks tall")
+    void verticalLayoutIsAHumanoid() {
+        assertTrue(baseY(JackStarBoss.JackPart.HEAD) > baseY(JackStarBoss.JackPart.TORSO_UPPER) + 0.3f);
+        assertTrue(baseY(JackStarBoss.JackPart.TORSO_UPPER) > baseY(JackStarBoss.JackPart.TORSO_LOWER) + 0.2f);
+        assertTrue(baseY(JackStarBoss.JackPart.TORSO_LOWER) > baseY(JackStarBoss.JackPart.LEG_R_UPPER) + 0.4f);
+        assertTrue(baseY(JackStarBoss.JackPart.LEG_R_UPPER) > baseY(JackStarBoss.JackPart.LEG_R_LOWER) + 0.2f);
+
+        float headTop = baseY(JackStarBoss.JackPart.HEAD) + JackStarBoss.JackPart.HEAD.scale.y * 0.25f;
+        float feetBottom = baseY(JackStarBoss.JackPart.LEG_L_LOWER)
+                - JackStarBoss.JackPart.LEG_L_LOWER.scale.y * 0.25f;
+        assertTrue(headTop > 2.0f && headTop < 2.3f, "head top should be around two blocks: " + headTop);
+        assertTrue(feetBottom > 0.1f && feetBottom < 0.4f, "feet should clear the ground: " + feetBottom);
+    }
+
+    @Test
+    @DisplayName("Left and right limbs are mirrored around the body axis")
+    void limbsAreMirrored() {
+        assertMirrored(JackStarBoss.JackPart.LEG_R_UPPER, JackStarBoss.JackPart.LEG_L_UPPER);
+        assertMirrored(JackStarBoss.JackPart.LEG_R_LOWER, JackStarBoss.JackPart.LEG_L_LOWER);
+        assertMirrored(JackStarBoss.JackPart.ARM_R_UPPER, JackStarBoss.JackPart.ARM_L_UPPER);
+        assertMirrored(JackStarBoss.JackPart.ARM_R_LOWER, JackStarBoss.JackPart.ARM_L_LOWER);
+    }
+
+    @Test
+    @DisplayName("Every joint is on the same side as the limb it drives")
+    void jointsSitOnTheirOwnLimb() {
+        for (JackStarBoss.JackPart part : JackStarBoss.JackPart.values()) {
+            Vector3f base = JackModel.baseTranslation(part);
+            if (Math.abs(base.x) <= 0.05f) continue; // head and torso hang from the spine, not a side
+            float jointX = JackModel.pivot(part.group).x;
+            assertTrue(Math.signum(base.x) == Math.signum(jointX),
+                    part + " swings around a joint on the wrong side (part x=" + base.x + ", joint x=" + jointX + ")");
+        }
+    }
+
+    @Test
+    @DisplayName("A limb rotates about its joint instead of detaching from the body")
+    void limbsSwingAroundTheirJoints() {
+        Quaternionf swing = new Quaternionf().rotateX(0.32f);
+        for (JackStarBoss.JackPart part : JackStarBoss.JackPart.values()) {
+            Vector3f rest = JackModel.baseTranslation(part);
+            Vector3f moved = JackModel.compose(part, new Quaternionf(swing), 1.0f).getTranslation();
+
+            assertEquals(rest.x, moved.x, 1.0e-4f, part + " slid sideways while swinging");
+            assertTrue(rest.distance(moved) < 0.35f, part + " flew away from its joint: " + rest.distance(moved));
+        }
+    }
+
+    @Test
+    @DisplayName("The eleven parts keep their own place in the body")
+    void partsNeverCollapseOntoEachOther() {
+        List<JackStarBoss.JackPart> parts = new ArrayList<>(List.of(JackStarBoss.JackPart.values()));
+        for (int i = 0; i < parts.size(); i++) {
+            for (int j = i + 1; j < parts.size(); j++) {
+                float gap = JackModel.baseTranslation(parts.get(i)).distance(JackModel.baseTranslation(parts.get(j)));
+                assertTrue(gap > 0.02f, parts.get(i) + " and " + parts.get(j) + " sit on top of each other");
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Shape shifting scales the whole body and the stand stays inside the hitbox")
+    void shapeShiftScalesTheBody() {
+        JackStarBoss.JackPart part = JackStarBoss.JackPart.TORSO_UPPER;
+        Vector3f rest = JackModel.baseTranslation(part);
+
+        Transformation big = JackModel.compose(part, new Quaternionf(), 2.2f);
+        assertEquals(rest.x * 2.2f, big.getTranslation().x, 1.0e-3f);
+        assertEquals(rest.y * 2.2f, big.getTranslation().y, 1.0e-3f);
+        assertEquals(part.scale.y * 2.2f, big.getScale().y, 1.0e-3f);
+
+        for (JackStarBoss.JackPart p : JackStarBoss.JackPart.values()) {
+            Vector3f base = JackModel.baseTranslation(p);
+            assertTrue(base.y > 0.2f && base.y < 2.2f, p + " sits outside the stand's height: " + base.y);
+        }
+    }
+
+    @Test
+    @DisplayName("The invisible stand's hitbox covers the visible body")
+    void hitboxCoversTheBody() {
+        // The stand is the only hitbox the model has: the displays must stay un-hittable, so the
+        // swing has to land on the stand for the boss to take damage at all.
+        float halfWidth = 0.25f * (float) JackStarBoss.MODEL_HITBOX_SCALE;
+        float height = 1.975f * (float) JackStarBoss.MODEL_HITBOX_SCALE;
+
+        List<JackStarBoss.JackPart> spine = List.of(
+                JackStarBoss.JackPart.HEAD,
+                JackStarBoss.JackPart.TORSO_UPPER,
+                JackStarBoss.JackPart.TORSO_LOWER,
+                JackStarBoss.JackPart.LEG_R_UPPER,
+                JackStarBoss.JackPart.LEG_R_LOWER,
+                JackStarBoss.JackPart.LEG_L_UPPER,
+                JackStarBoss.JackPart.LEG_L_LOWER);
+        for (JackStarBoss.JackPart part : spine) {
+            Vector3f base = JackModel.baseTranslation(part);
+            assertTrue(Math.abs(base.x) + part.scale.x * 0.25f < halfWidth,
+                    part + " leans outside the hitbox, so a swing at it would miss the stand");
+            assertTrue(base.y < height, part + " sits above the hitbox: " + base.y);
+        }
+
+        float headTop = baseY(JackStarBoss.JackPart.HEAD) + JackStarBoss.JackPart.HEAD.scale.y * 0.25f;
+        assertTrue(headTop < height, "the head top must be inside the scaled hitbox: " + headTop);
+        assertTrue(headTop > 1.975f,
+                "the scaled stand is pointless unless a vanilla box would have missed the head: " + headTop);
+    }
+
+    private static float baseY(JackStarBoss.JackPart part) {
+        return JackModel.baseTranslation(part).y;
+    }
+
+    private static void assertMirrored(JackStarBoss.JackPart right, JackStarBoss.JackPart left) {
+        Vector3f r = JackModel.baseTranslation(right);
+        Vector3f l = JackModel.baseTranslation(left);
+        assertEquals(-r.x, l.x, 0.02f, right + " / " + left + " are not mirrored");
+        assertEquals(r.y, l.y, 0.02f, right + " / " + left + " are at different heights");
+        assertEquals(r.z, l.z, 0.02f, right + " / " + left + " are at different depths");
+    }
+}
