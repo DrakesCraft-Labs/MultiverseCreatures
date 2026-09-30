@@ -25,6 +25,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.lang.reflect.Field;
@@ -42,6 +43,8 @@ public class MantisClawsHandler implements Listener {
     private final Set<UUID> clingingPlayers = new HashSet<>();
     private final Set<UUID> mantisPlayers = new HashSet<>();
     private int rescanTick = 0;
+    /** The cling/scan loop; held so the plugin can end it on shutdown. */
+    private BukkitTask ticker;
     private static final double WALL_JUMP_VERTICAL = 0.55;
 
     public MantisClawsHandler(Plugin plugin) {
@@ -50,7 +53,8 @@ public class MantisClawsHandler implements Listener {
     }
 
     private void startClingTicker() {
-        new BukkitRunnable() {
+        if (ticker != null) ticker.cancel();
+        ticker = new BukkitRunnable() {
             @Override
             public void run() {
                 if (++rescanTick % 20 == 0) {
@@ -102,6 +106,14 @@ public class MantisClawsHandler implements Listener {
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L);
+    }
+
+    /** Stops the cling loop; the plugin calls this from its own {@code onDisable}. */
+    public void stopTasks() {
+        if (ticker != null) {
+            ticker.cancel();
+            ticker = null;
+        }
     }
 
     @EventHandler

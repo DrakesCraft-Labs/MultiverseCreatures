@@ -18,6 +18,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.Set;
 import java.util.UUID;
@@ -33,13 +34,23 @@ public class ObsidianBastionHandler implements Listener {
             new NamespacedKey("multiversecreatures", "obsidian_bastion_kb_modifier");
 
     private final Set<UUID> hasSetBonus = ConcurrentHashMap.newKeySet();
+    /** The set-bonus refresh loop; held so the plugin can end it on shutdown. */
+    private BukkitTask ticker;
 
     public ObsidianBastionHandler(JavaPlugin plugin) {
-        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        ticker = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 checkSetBonus(p);
             }
         }, 20L, 20L);
+    }
+
+    /** Stops the refresh loop; the plugin calls this from its own {@code onDisable}. */
+    public void stopTasks() {
+        if (ticker != null) {
+            ticker.cancel();
+            ticker = null;
+        }
     }
 
     private boolean isBastionPiece(ItemStack item, NamespacedKey key) {

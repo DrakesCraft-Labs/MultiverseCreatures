@@ -60,6 +60,7 @@ import com.Chagui68.ritual.BossDimensionManager;
 import com.Chagui68.ritual.RitualManager;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 public class MultiverseCreatures extends JavaPlugin {
 
@@ -93,6 +94,13 @@ public class MultiverseCreatures extends JavaPlugin {
     private DiscTrader discTrader;
     private Warlord warlord;
     private DiscJukeboxHandler discJukeboxHandler;
+    private ItemCombatHandler itemCombatHandler;
+    private WirtsLanternHandler wirtsLanternHandler;
+    private MantisClawsHandler mantisClawsHandler;
+    private ObsidianBastionHandler obsidianBastionHandler;
+    private FrostHeartOffhandHandler frostHeartOffhandHandler;
+    /** The population recount, the only task the plugin itself starts. */
+    private BukkitTask recountTask;
 
     /**
      * Returns whether a config feature (item/entity section) is enabled.
@@ -190,13 +198,16 @@ public class MultiverseCreatures extends JavaPlugin {
         getServer().getPluginManager().registerEvents(bossDamageLog, this);
         // El tope de poblacion se calcula aqui, fuera de CreatureSpawnEvent: contar
         // entidades dentro del evento rompe el iterador del mundo. Cada 5 s basta.
-        getServer().getScheduler().runTaskTimer(this, mobHandler::refrescarRecuento, 100L, 100L);
+        recountTask = getServer().getScheduler().runTaskTimer(this, mobHandler::refrescarRecuento, 100L, 100L);
         getServer().getPluginManager().registerEvents(new ItemFoodHandler(this), this);
         getServer().getPluginManager().registerEvents(new EntitiesIAHandler(), this);
-        getServer().getPluginManager().registerEvents(new ItemCombatHandler(this), this);
+        itemCombatHandler = new ItemCombatHandler(this);
+        getServer().getPluginManager().registerEvents(itemCombatHandler, this);
         getServer().getPluginManager().registerEvents(new IceCrownHandler(this), this);
-        getServer().getPluginManager().registerEvents(new WirtsLanternHandler(this), this);
-        getServer().getPluginManager().registerEvents(new MantisClawsHandler(this), this);
+        wirtsLanternHandler = new WirtsLanternHandler(this);
+        getServer().getPluginManager().registerEvents(wirtsLanternHandler, this);
+        mantisClawsHandler = new MantisClawsHandler(this);
+        getServer().getPluginManager().registerEvents(mantisClawsHandler, this);
         getServer().getPluginManager().registerEvents(new MineHandler(this), this);
         getServer().getPluginManager().registerEvents(new RecipeGuardListener(), this);
         getServer().getPluginManager().registerEvents(new BossDimensionCommandHandler(this), this);
@@ -211,8 +222,10 @@ public class MultiverseCreatures extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new VeilwalkerMantleHandler(this), this);
         getServer().getPluginManager().registerEvents(new SoulreapScytheHandler(this), this);
         getServer().getPluginManager().registerEvents(new MarrowAegisHandler(this), this);
-        getServer().getPluginManager().registerEvents(new ObsidianBastionHandler(this), this);
-        getServer().getPluginManager().registerEvents(new FrostHeartOffhandHandler(this), this);
+        obsidianBastionHandler = new ObsidianBastionHandler(this);
+        getServer().getPluginManager().registerEvents(obsidianBastionHandler, this);
+        frostHeartOffhandHandler = new FrostHeartOffhandHandler(this);
+        getServer().getPluginManager().registerEvents(frostHeartOffhandHandler, this);
         getServer().getPluginManager().registerEvents(new SkyfireTalismanHandler(this), this);
         getServer().getPluginManager().registerEvents(new NullshearEdgeHandler(this), this);
         getServer().getPluginManager().registerEvents(new EightHandledWheelHandler(this), this);
@@ -233,6 +246,10 @@ public class MultiverseCreatures extends JavaPlugin {
     @Override
     public void onDisable() {
         HeadSlime.clearAllImmunity();
+        // Every tick loop the plugin starts stops here. Bukkit would cancel them on its own, but
+        // only this side of the shutdown knows which subsystem was running; a handle nobody
+        // cancels is just a field (see SchedulerHandleGuardTest).
+        stopTasks();
         if (musicManager != null) {
             musicManager.stopAll();
         }
@@ -246,6 +263,36 @@ public class MultiverseCreatures extends JavaPlugin {
         if (bossDimensionManager != null) {
             bossDimensionManager.unloadBossDimension();
         }
+    }
+
+    /** Stops the tick loops that outlive a fight: the mobs, the item auras and the recount. */
+    private void stopTasks() {
+        if (recountTask != null) {
+            recountTask.cancel();
+            recountTask = null;
+        }
+        if (headSlime != null) headSlime.stopTasks();
+        if (zombieHorseTrap != null) zombieHorseTrap.stopTasks();
+        if (mahoraga != null) mahoraga.stopTasks();
+        if (shadowRogue != null) shadowRogue.stopTasks();
+        if (flameElemental != null) flameElemental.stopTasks();
+        if (frostGolem != null) frostGolem.stopTasks();
+        if (voidCrawler != null) voidCrawler.stopTasks();
+        if (stormCaller != null) stormCaller.stopTasks();
+        if (boneShield != null) boneShield.stopTasks();
+        if (venomWitch != null) venomWitch.stopTasks();
+        if (obsidianGuard != null) obsidianGuard.stopTasks();
+        if (soulReaper != null) soulReaper.stopTasks();
+        if (chaosMage != null) chaosMage.stopTasks();
+        if (enderKnight != null) enderKnight.stopTasks();
+        if (kinger != null) kinger.stopTasks();
+        if (nixBoss != null) nixBoss.stopTasks();
+        if (jackStarBoss != null) jackStarBoss.stopTasks();
+        if (itemCombatHandler != null) itemCombatHandler.stopTasks();
+        if (wirtsLanternHandler != null) wirtsLanternHandler.stopTasks();
+        if (mantisClawsHandler != null) mantisClawsHandler.stopTasks();
+        if (obsidianBastionHandler != null) obsidianBastionHandler.stopTasks();
+        if (frostHeartOffhandHandler != null) frostHeartOffhandHandler.stopTasks();
     }
 
     public CreeperJr getCreeperJr() {

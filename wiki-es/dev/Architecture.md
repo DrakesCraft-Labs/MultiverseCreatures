@@ -156,6 +156,14 @@ La dimensión del ritual la genera `ritual/terrain/`, y su forma es una función
 - **Nada se alza dentro de la arena.** Todo el espectáculo está en el pavimento y al otro lado de la muralla; las consultas de suelo de los jefes, la colocación del sello y el respaldo de recuperación de terreno se ajustaron sobre una llanura plana y vacía.
 - **Las ruinas también son por columna.** `ArenaLandmarks` decide desde un índice de celda, así que una ruina a caballo entre dos chunks la dibujan ambos sin saber nada el uno del otro, y el sumidero descarta la mitad que cae fuera.
 
+### 8. Tareas programadas — un handle, o un cancel propio
+
+Toda tarea repetida tiene una de dos formas, y `SchedulerHandleGuardTest` rompe el build ante una tercera:
+
+- **Un bucle de vida larga conserva su handle.** Un ticker que vive con el plugin (uno por mob propio, uno por aura de objeto, el recuento de población) se guarda en un campo `BukkitTask` y lo cancela `stopTasks()` desde `onDisable`. Arrancarlo dos veces cancela antes la tarea anterior: dos bucles recorriendo el mismo `Map` es el fallo que esta forma existe para hacer imposible.
+- **Un efecto corto se autocancela o se entrega.** Un ataque o una secuencia de sellos llama a `cancel()` dentro de su propio runnable cuando termina su temporizador, o devuelve el `BukkitRunnable` para que el jefe pueda cancelarlo antes (`BossInstance.flyTask`, `…shieldSealTask`). La guardia lee el handle a través de su declaración, incluido `instance.campo = new BukkitRunnable()` declarado en otra clase.
+- **Nunca un `new BukkitRunnable() { … }.runTaskTimer(…)` desnudo.** Bukkit cancela las tareas del plugin al desactivarlo, así que ninguna sobrevive para siempre; el problema es que el plugin ya no puede pararla — un reload o un segundo `startTicker()` dejarían dos bucles detrás, que es como aparecieron veinticuatro.
+
 ---
 
 ## Añadir contenido nuevo

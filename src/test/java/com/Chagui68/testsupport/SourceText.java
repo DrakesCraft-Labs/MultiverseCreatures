@@ -35,7 +35,12 @@ public final class SourceText {
         throw new AssertionError("the body of " + signature + " is not closed");
     }
 
-    /** The source with comments removed, so a javadoc that merely names a type is not a guard hit. */
+    /**
+     * The source with comments removed, so a javadoc that merely names a type is not a guard hit.
+     *
+     * <p>The line count survives the removal — a removed line becomes an empty one — so a guard can
+     * report the same line number the reader sees in the file.
+     */
     public static String codeOnly(String source) {
         StringBuilder code = new StringBuilder(source.length());
         boolean inBlockComment = false;
@@ -44,13 +49,17 @@ public final class SourceText {
             String trimmed = line.trim();
             if (inBlockComment) {
                 int end = trimmed.indexOf("*/");
-                if (end < 0) continue;
+                if (end < 0) {
+                    code.append('\n');
+                    continue;
+                }
                 inBlockComment = false;
                 line = trimmed.substring(end + 2);
                 trimmed = line.trim();
             }
             if (trimmed.startsWith("/*")) {
                 inBlockComment = !trimmed.contains("*/");
+                code.append('\n');
                 continue;
             }
             int comment = line.indexOf("//");

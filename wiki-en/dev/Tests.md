@@ -26,7 +26,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 54 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 55 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -297,6 +297,13 @@ Covers the health math in `utils/MscEntityUtils`:
 ### `utils/SilentCatchGuardTest` — No silent catch blocks
 - A source guard: it strips comments, strings and chars (keeping line numbers), finds every `catch` clause under `src/main/java` and **fails if any body is left blank**, with an empty allow-list and a floor of 40 catches so the scanner cannot pass vacuously.
 - It is what keeps the logging change from being undone one block at a time: a swallowed exception is invisible in review, a blank catch body is not.
+
+### `utils/SchedulerHandleGuardTest` — Every looping task can be stopped
+- A source guard: it strips comments, finds every `.runTaskTimer(` / `.scheduleSyncRepeatingTask(` under `src/main/java`, and demands each site be one of two shapes — a runnable whose own body calls `cancel()`, or a task whose handle survives the statement (a call made on a name: `task`, `instance.flyTask`; or an `x = new BukkitRunnable() { … }.runTaskTimer(…)` assignment). A floor of 100 sites keeps the scan on the whole project.
+- The scanner follows braces, not line order: it matches `new BukkitRunnable()` to its own closing brace (`org.bukkit.scheduler.BukkitRunnable` included), so a one-shot task nested inside a longer loop no longer hides that loop's `cancel()`, and it reads an `instance.<field>` receiver through its declaration.
+- A second test proves the handles are not decoration: every handle on a task that does not cancel itself must be cancelled somewhere in the project (`task.cancel()`, `instance.defenseTask.cancel()`), returned to the caller (`return task;` for the seals the boss cancels early) or handed to a name that is cancelled in turn (`instance.aiTask = ai;`).
+- Written against the code as it was, it found twenty-four unowned loops: one per custom mob (Head Slime had two), one per boss, the Excalibur passive, the item auras (Wirt's Lantern, Mantis Claws, Frost Heart, Obsidian Bastion) and the population recount — all of them now hold their `BukkitTask` and stop through the new `stopTasks()`.
+- A third test keeps the shutdown honest: `onDisable` has to call `stopAll()`, `unloadBossDimension()` and the ticker stop, so a reload cannot leave a loop walking state nobody reads.
 
 ## 🗃️ Where they run
 

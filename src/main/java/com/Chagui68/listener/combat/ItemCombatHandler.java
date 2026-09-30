@@ -22,6 +22,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.util.HashSet;
@@ -34,6 +35,8 @@ public class ItemCombatHandler implements Listener {
 
     private final Plugin plugin;
     private final FileConfiguration config;
+    /** The Excalibur passive ticker; held so the plugin can end it on shutdown. */
+    private BukkitTask passiveTask;
     private final Map<UUID, Long> solarFlareCooldowns = new ConcurrentHashMap<>();
     private static final long SOLAR_FLARE_COOLDOWN_MS = 15000;
 
@@ -53,7 +56,8 @@ public class ItemCombatHandler implements Listener {
                 config.getInt("items.excalibur.passive-effect.strength.duration-ticks", 80));
         long intervalTicks = Math.max(1L,
                 config.getLong("items.excalibur.passive-effect.interval-ticks", 20));
-        new BukkitRunnable() {
+        if (passiveTask != null) passiveTask.cancel();
+        passiveTask = new BukkitRunnable() {
             @Override
             public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) {
@@ -72,6 +76,14 @@ public class ItemCombatHandler implements Listener {
                 }
             }
         }.runTaskTimer(plugin, intervalTicks, intervalTicks);
+    }
+
+    /** Stops the passive ticker; the plugin calls this from its own {@code onDisable}. */
+    public void stopTasks() {
+        if (passiveTask != null) {
+            passiveTask.cancel();
+            passiveTask = null;
+        }
     }
 
     @EventHandler

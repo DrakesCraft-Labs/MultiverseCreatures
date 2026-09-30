@@ -26,7 +26,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 54 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 55 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -297,6 +297,13 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 ### `utils/SilentCatchGuardTest` — Sin bloques catch silenciosos
 - Guardia de fuentes: recorta comentarios, strings y chars (conservando las líneas), localiza cada cláusula `catch` bajo `src/main/java` y **falla si algún cuerpo queda en blanco**, con una lista de permitidos vacía y un suelo de 40 catches para que el escáner no pase de forma vacua.
 - Es lo que impide deshacer el cambio de logging bloque a bloque: una excepción tragada es invisible en una revisión, pero un cuerpo de `catch` vacío no.
+
+### `utils/SchedulerHandleGuardTest` — Toda tarea en bucle se puede parar
+- Guardia de fuentes: recorta comentarios, encuentra cada `.runTaskTimer(` / `.scheduleSyncRepeatingTask(` bajo `src/main/java` y exige que cada sitio sea una de dos formas — un runnable cuyo propio cuerpo llama a `cancel()`, o una tarea cuyo handle sobrevive al enunciado (una llamada sobre un nombre: `task`, `instance.flyTask`; o una asignación `x = new BukkitRunnable() { … }.runTaskTimer(…)`). Un suelo de 100 sitios mantiene el escaneo sobre todo el proyecto.
+- El escáner sigue las llaves, no el orden de las líneas: empareja `new BukkitRunnable()` con su propia llave de cierre (incluido `org.bukkit.scheduler.BukkitRunnable`), así una tarea de un solo uso anidada en un bucle mayor ya no esconde el `cancel()` de ese bucle, y lee un receptor `instance.<campo>` a través de su declaración.
+- Un segundo test demuestra que los handles no son decoración: todo handle de una tarea que no se autocancela tiene que cancelarse en algún punto del proyecto (`task.cancel()`, `instance.defenseTask.cancel()`), devolverse a quien lo pidió (`return task;` en los sellos que el jefe cancela antes) o entregarse a un nombre que a su vez se cancela (`instance.aiTask = ai;`).
+- Escrita contra el código tal como estaba, encontró veinticuatro bucles sin dueño: uno por mob propio (Head Slime tenía dos), uno por jefe, el pasivo de Excalibur, las auras de objeto (Wirt's Lantern, Mantis Claws, Frost Heart, Obsidian Bastion) y el recuento de población — todos guardan ya su `BukkitTask` y se paran con el nuevo `stopTasks()`.
+- Un tercer test mantiene el apagado honesto: `onDisable` tiene que llamar a `stopAll()`, `unloadBossDimension()` y a la parada de tickers, así un reload no puede dejar un bucle recorriendo estado que nadie lee.
 
 ## 🗃️ Dónde se corren
 

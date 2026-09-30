@@ -22,6 +22,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashSet;
 import java.util.Random;
@@ -39,6 +40,8 @@ public class WirtsLanternHandler implements Listener {
     private final double particleChance;
     private final double horizontalForce;
     private final double verticalForce;
+    /** The repel/aura loop; held so the plugin can end it on shutdown. */
+    private BukkitTask ticker;
 
     public WirtsLanternHandler(Plugin plugin) {
         this.plugin = plugin;
@@ -52,7 +55,8 @@ public class WirtsLanternHandler implements Listener {
     }
 
     private void startRepelTask() {
-        new BukkitRunnable() {
+        if (ticker != null) ticker.cancel();
+        ticker = new BukkitRunnable() {
             @Override
             public void run() {
                 for (UUID uuid : new HashSet<>(activeRepel)) {
@@ -66,6 +70,14 @@ public class WirtsLanternHandler implements Listener {
                 }
             }
         }.runTaskTimer(plugin, 0L, repelIntervalTicks);
+    }
+
+    /** Stops the repel loop; the plugin calls this from its own {@code onDisable}. */
+    public void stopTasks() {
+        if (ticker != null) {
+            ticker.cancel();
+            ticker = null;
+        }
     }
 
     private boolean hasLantern(Player p) {

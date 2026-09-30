@@ -38,6 +38,7 @@ import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.util.Map;
@@ -76,8 +77,16 @@ public class ZombieHorseTrap implements Listener {
         startTicker();
     }
 
+    /**
+     * The loop that walks this mob's instances. Held so {@link #stopTasks()} can end it: a task
+     * nobody holds cannot be cancelled, and a second start would leave two loops walking the same
+     * state.
+     */
+    private BukkitTask ticker;
+
     private void startTicker() {
-        new BukkitRunnable() {
+        if (ticker != null) ticker.cancel();
+        ticker = new BukkitRunnable() {
             @Override
             public void run() {
                 checkTrapActivation();
@@ -90,6 +99,14 @@ public class ZombieHorseTrap implements Listener {
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L);
+    }
+
+    /** Stops the tick loop; the plugin calls this from its own {@code onDisable}. */
+    public void stopTasks() {
+        if (ticker != null) {
+            ticker.cancel();
+            ticker = null;
+        }
     }
 
     public boolean trySpawn(Location location) {

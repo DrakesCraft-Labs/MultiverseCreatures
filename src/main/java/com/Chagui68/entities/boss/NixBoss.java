@@ -34,6 +34,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.Matrix4f;
@@ -389,8 +390,16 @@ public class NixBoss implements Listener {
         return PART_OWNER_TAG_PREFIX + ownerId.toString().replace("-", "");
     }
 
+    /**
+     * The loop that walks this boss's instances. Held so {@link #stopTasks()} can end it: a task
+     * nobody holds cannot be cancelled, and a second start would leave two loops walking the same
+     * state.
+     */
+    private BukkitTask ticker;
+
     private void startTicker() {
-        new BukkitRunnable() {
+        if (ticker != null) ticker.cancel();
+        ticker = new BukkitRunnable() {
             @Override
             public void run() {
                 for (NixInstance inst : new ArrayList<>(activeInstances.values())) {
@@ -398,6 +407,14 @@ public class NixBoss implements Listener {
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L);
+    }
+
+    /** Stops the tick loop; the plugin calls this from its own {@code onDisable}. */
+    public void stopTasks() {
+        if (ticker != null) {
+            ticker.cancel();
+            ticker = null;
+        }
     }
 
     private void tick(NixInstance inst) {

@@ -34,6 +34,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.util.HashMap;
@@ -175,8 +176,17 @@ public class HeadSlime implements Listener {
 
     private final Set<UUID> removeQueue = new HashSet<>();
 
+    /**
+     * The two loops the slime runs for the lifetime of the server: one walks its instances, the
+     * other paints immunity particles. Held so {@link #stopTasks()} can end them; without a handle
+     * a second start would leave two loops walking the same state.
+     */
+    private BukkitTask ticker;
+    private BukkitTask particleTicker;
+
     private void startTicker() {
-        new BukkitRunnable() {
+        if (ticker != null) ticker.cancel();
+        ticker = new BukkitRunnable() {
             @Override
             public void run() {
                 for (HeadSlimeInstance inst : activeSlimes.values()) {
@@ -196,7 +206,8 @@ public class HeadSlime implements Listener {
     }
 
     private void startParticleTask() {
-        new BukkitRunnable() {
+        if (particleTicker != null) particleTicker.cancel();
+        particleTicker = new BukkitRunnable() {
             @Override
             public void run() {
                 for (UUID id : immunePlayerIds()) {
@@ -212,6 +223,18 @@ public class HeadSlime implements Listener {
                 }
             }
         }.runTaskTimer(plugin, 0L, 10L);
+    }
+
+    /** Stops both slime loops; the plugin calls this from its own {@code onDisable}. */
+    public void stopTasks() {
+        if (ticker != null) {
+            ticker.cancel();
+            ticker = null;
+        }
+        if (particleTicker != null) {
+            particleTicker.cancel();
+            particleTicker = null;
+        }
     }
 
     private void markForRemoval(HeadSlimeInstance inst) {

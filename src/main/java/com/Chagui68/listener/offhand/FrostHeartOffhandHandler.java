@@ -16,6 +16,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 public class FrostHeartOffhandHandler implements Listener {
 
@@ -23,6 +24,8 @@ public class FrostHeartOffhandHandler implements Listener {
     private static final int FROST_WALKER_RADIUS = 1;
 
     private final org.bukkit.plugin.Plugin plugin;
+    /** The frost aura loop; held so the plugin can end it on shutdown. */
+    private BukkitTask ticker;
 
     public FrostHeartOffhandHandler(org.bukkit.plugin.Plugin plugin) {
         this.plugin = plugin;
@@ -30,7 +33,8 @@ public class FrostHeartOffhandHandler implements Listener {
     }
 
     private void startAuraTask() {
-        new BukkitRunnable() {
+        if (ticker != null) ticker.cancel();
+        ticker = new BukkitRunnable() {
             @Override
             public void run() {
                 for (Player p : Bukkit.getOnlinePlayers()) {
@@ -40,6 +44,14 @@ public class FrostHeartOffhandHandler implements Listener {
                 }
             }
         }.runTaskTimer(plugin, 0L, AURA_INTERVAL_TICKS);
+    }
+
+    /** Stops the aura loop; the plugin calls this from its own {@code onDisable}. */
+    public void stopTasks() {
+        if (ticker != null) {
+            ticker.cancel();
+            ticker = null;
+        }
     }
 
     private boolean isFrostHeart(ItemStack item) {
