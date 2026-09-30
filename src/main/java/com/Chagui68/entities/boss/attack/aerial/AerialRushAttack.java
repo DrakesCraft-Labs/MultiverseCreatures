@@ -263,7 +263,7 @@ public class AerialRushAttack extends BossAttackBase {
                     }
                 }
 
-                boss.spawnShockwaveWave(world, loc, SHOCKWAVE_RADIUS);
+                boss.spawnShockwaveWave(stand.entidad(), world, loc, SHOCKWAVE_RADIUS);
             }
         }.runTaskTimer(plugin, 0L, 1L);
     }

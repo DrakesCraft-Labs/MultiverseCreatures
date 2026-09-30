@@ -17,7 +17,7 @@ src/main/java/com/Chagui68/
 │   ├── SpawnCatalogue.java             Spawnable entities: aliases, messages, help pages
 │   ├── GiveCatalogue.java              Givable items: aliases, item factories, help pages
 │   ├── AttackCatalogue.java            Attack names + help pages
-│   ├── DummyStudio.java                Pose-dummy subsystem (spawn, poses, wings, animations)
+│   ├── DummyStudio.java                Pose-dummy subsystem (spawn, poses, wings, animations, attack preview)
 │   ├── SealStudio.java                 Particle-seal patterns, planes and hand-drawn shapes
 │   └── MscKillFilter.java              Pure "is this one of ours?" predicates for /msc kill
 ├── entities/
@@ -25,6 +25,7 @@ src/main/java/com/Chagui68/
 │   │   ├── ArmorStandBoss.java        Boss class: spawn, phases, shield, bar, AI ticker, attack registry
 │   │   ├── MagicSealListener.java      Particle seal rendering (NOT a Listener; consumed by the boss)
 │   │   ├── BossInstance.java           Per-instance boss state struct
+│   │   ├── AttackPreview.java          Marker that lets a dummy act out attacks without damaging
 │   │   └── attack/
 │   │       ├── BossAttack.java              Interface: execute(BossInstance), getName()
 │   │       ├── BossAttackBase.java          Abstract base: boss/plugin/random/sealDamage helpers

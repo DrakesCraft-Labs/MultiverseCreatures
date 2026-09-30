@@ -161,7 +161,7 @@ public class AirSlamAttack extends BossAttackBase {
                     new BukkitRunnable() {
                         @Override
                         public void run() {
-                            boss.spawnShockwaveWave(world, new Location(world, impactX, impactY, impactZ), ATTACK_RADIUS);
+                            boss.spawnShockwaveWave(stand.entidad(), world, new Location(world, impactX, impactY, impactZ), ATTACK_RADIUS);
                         }
                     }.runTask(plugin);
 

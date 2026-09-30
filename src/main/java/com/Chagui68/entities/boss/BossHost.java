@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -76,8 +77,14 @@ public interface BossHost {
     /** Boss target based on aggro range, or null. */
     Player detectTarget(BossPuppet stand);
 
-    /** Shockwave from a point. Shared by several ground attacks. */
-    void spawnShockwaveWave(World world, Location center, double maxRadius);
+    /**
+     * Shockwave from a point. Shared by several ground attacks.
+     *
+     * <p>{@code source} is the body that landed it, and the shockwave attributes its damage there:
+     * with more than one boss in a world the hit has to belong to the one that actually caused it,
+     * and a preview dummy acting out an attack must not hurt anyone.
+     */
+    void spawnShockwaveWave(LivingEntity source, World world, Location center, double maxRadius);
 
     /**
      * Seal and aerial barrage damage.

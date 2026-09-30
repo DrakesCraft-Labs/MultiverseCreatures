@@ -1,6 +1,7 @@
 package com.Chagui68.utils;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.entities.boss.AttackPreview;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -225,7 +226,15 @@ public final class MscEntityUtils {
      * difficulty scaling, no knockback, armor applies exactly like plain damage()).
      * Lets PlayerDeathEvent attribute the kill to the attacking mob.
      */
+    /**
+     * Deals damage, attributed to {@code attacker}.
+     *
+     * <p>This is the single door every attack damages through, which is also where an attack preview
+     * is stopped: a dummy acting out an attack for show is refused here, so the whole animation can
+     * play without anyone losing health.
+     */
     public static void damageBy(LivingEntity attacker, LivingEntity victim, double amount) {
+        if (AttackPreview.isActor(attacker)) return;
         victim.damage(amount, DamageSource.builder(DamageType.GENERIC)
                 .withDirectEntity(attacker)
                 .withCausingEntity(attacker)

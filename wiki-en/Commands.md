@@ -7,7 +7,7 @@ All commands use the **`/msc`** root. **Permission:** `msc.admin` (server OP by 
 /msc spawn <type>              Summon a mob, boss, military strike, etc. (/msc spawn help [1-3])
 /msc give <item> [amount] [player]  Give legendary weapons, armor or components (/msc give help [1-4])
 /msc seal <pattern> [plane]    Render a particle seal pattern
-/msc dummy ...                 Spawn / pose / animate ArmorStand dummies
+/msc dummy ...                 Spawn / pose / animate dummies, preview boss attacks
 /msc attack <name> [range]     Trigger an ArmorStandBoss attack/mechanic (/msc attack help [1-4])
 /msc music <play|stop|list|disc>  Play / stop NBS songs, get a jukebox disc
 /msc dimtp <world>             Teleport across worlds
@@ -192,8 +192,12 @@ Manipulates an ArmorStand dummy used for posing/content preview. Useful for desi
 |---|---|
 | `wings` / `wings2` / `nowings` | Toggle wing-pose presets |
 | `animate <anim>` | Play a named preset animation |
+| `attack <attack\|random>` | Preview a real Sentinel attack on the dummy |
+| `attack list [page]` | List every attack the dummy can perform |
 
 **Animations:** `flyup`, `land`, `airslam`, `shieldseal`, `healingcircle` (`heal`), `rain`, `pentagram`, `trianglecall` (`triangle`)
+
+**Attack preview:** `attack <attack|random>` makes the dummy perform a real Sentinel attack — the same attack object the boss runs, with its choreography, particles and seals — so an animation can be reviewed on a test server without starting a fight. Nothing the dummy lands can damage anyone: every attack damages through one helper, and a performing dummy is refused there. Effects and knockback still play, so watch from a step back. `attack list [page]` lists every name, and tab completion offers them too.
 
 ---
 

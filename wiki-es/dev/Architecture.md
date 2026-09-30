@@ -17,7 +17,7 @@ src/main/java/com/Chagui68/
 │   ├── SpawnCatalogue.java             Entidades spawneables: alias, mensajes, páginas de ayuda
 │   ├── GiveCatalogue.java              Ítems entregables: alias, fábricas de ítem, páginas de ayuda
 │   ├── AttackCatalogue.java            Nombres de ataques + páginas de ayuda
-│   ├── DummyStudio.java                Subsistema del muñeco de poses (spawn, poses, alas, animaciones)
+│   ├── DummyStudio.java                Subsistema del muñeco de poses (spawn, poses, alas, animaciones, previsualización de ataques)
 │   ├── SealStudio.java                 Patrones de sellos de partículas, planos y formas dibujadas a mano
 │   └── MscKillFilter.java              Predicados puros de "¿esto es nuestro?" para /msc kill
 ├── entities/
@@ -25,6 +25,7 @@ src/main/java/com/Chagui68/
 │   │   ├── ArmorStandBoss.java        Clase del jefe: spawn, fases, escudo, barra, ticker de IA, registro de ataques
 │   │   ├── MagicSealListener.java      Renderizado de sellos de partículas (NO es un Listener; lo consume el jefe)
 │   │   ├── BossInstance.java           Estructura de estado del jefe por instancia
+│   │   ├── AttackPreview.java          Marca que deja al dummy actuar ataques sin dañar
 │   │   └── attack/
 │   │       ├── BossAttack.java              Interfaz: execute(BossInstance), getName()
 │   │       ├── BossAttackBase.java          Base abstracta: helpers de boss/plugin/random/sealDamage

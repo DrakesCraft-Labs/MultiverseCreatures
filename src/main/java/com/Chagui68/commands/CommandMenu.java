@@ -198,6 +198,27 @@ final class CommandMenu {
         paginated("MSC DUMMY", "/msc dummy <action> [args]", DummyStudio.helpLines(), page, "dummy");
     }
 
+    /**
+     * Every attack the dummy can act out, under the dummy's own header: the preview is a dummy
+     * feature, so its names belong here, but the table behind them is the same one {@code /msc attack}
+     * documents, which is what keeps the two lists from drifting apart.
+     */
+    void dummyAttackHelp(int page) {
+        int totalPages = AttackCatalogue.pages();
+        page = clampPage(page, totalPages);
+        header("MSC DUMMY - ATTACK PREVIEW · " + AttackCatalogue.pageTitle(page));
+        line(" &7Usage: &e/msc dummy attack <attack|random>");
+        line("");
+        for (String helpLine : AttackCatalogue.helpLines(page)) {
+            line(helpLine);
+        }
+        footer();
+        if (totalPages > 1) {
+            String next = page < totalPages ? " &8· &7Next: &e/msc dummy attack list " + (page + 1) : "";
+            line(" &7Page &e" + page + "&7/&e" + totalPages + next);
+        }
+    }
+
     void musicHelp() {
         header("MSC MUSIC");
         line(" &7Usage: &e/msc music <play|stop|list|disc> [name] [loop]");

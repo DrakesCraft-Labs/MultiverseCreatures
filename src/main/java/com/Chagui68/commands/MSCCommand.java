@@ -647,6 +647,8 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                     addMatching(completions, DummyStudio.PARTS, args[2]);
                 } else if (action.equals("animate")) {
                     addMatching(completions, DummyStudio.ANIMATIONS, args[2]);
+                } else if (action.equals("attack")) {
+                    addMatching(completions, DummyStudio.attackCompletions(), args[2]);
                 } else if (DummyStudio.PARTS.contains(action)) {
                     addMatching(completions, DummyStudio.AXES, args[2]);
                 }

@@ -1,6 +1,9 @@
 package com.Chagui68.commands;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.entities.BossInstance;
+import com.Chagui68.entities.boss.ArmorStandBoss;
+import com.Chagui68.entities.boss.AttackPreview;
 import com.Chagui68.entities.boss.MagicSealListener;
 import com.Chagui68.utils.MscText;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -19,7 +22,9 @@ import org.bukkit.util.EulerAngle;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.bukkit.ChatColor.*;
@@ -36,7 +41,7 @@ final class DummyStudio {
 
     /** Actions accepted right after {@code /msc dummy}. */
     static final List<String> ACTIONS = List.of(
-            "spawn", "remove", "set", "wings", "wings2", "nowings", "animate");
+            "spawn", "remove", "set", "wings", "wings2", "nowings", "animate", "attack");
 
     /** Poses that can be set or nudged, in help and completion order. */
     static final List<String> PARTS = List.of(
@@ -50,6 +55,7 @@ final class DummyStudio {
             "flyup", "land", "airslam", "shieldseal", "healingcircle", "rain", "pentagram", "triangle");
 
     private final MultiverseCreatures plugin;
+    private final Random random = new Random();
     private final Map<UUID, ArmorStand> playerDummies = new HashMap<>();
     private final Map<UUID, BukkitRunnable> dummyWingTasks = new HashMap<>();
 
@@ -79,7 +85,12 @@ final class DummyStudio {
                 " &e&l/msc dummy wings|wings2|nowings",
                 "    &7Add gold/red wing seal or remove wing effects",
                 " &e&l/msc dummy animate <anim>",
-                "    &7Animations: flyup, land, airslam, shieldseal, healingcircle, rain, pentagram, triangle");
+                "    &7Animations: flyup, land, airslam, shieldseal, healingcircle, rain, pentagram, triangle",
+                " &e&l/msc dummy attack <attack|random>",
+                "    &7Make the dummy perform a real boss attack: full animation,",
+                "    &7particles and seals, but no damage to anyone",
+                " &e&l/msc dummy attack list [page]",
+                "    &7Browse every attack name &8· &7Ex: /msc dummy attack obsidianwings");
     }
 
     void handle(CommandSender sender, String[] args) {
@@ -107,6 +118,7 @@ final class DummyStudio {
             case "wings2" -> wings2(player);
             case "nowings" -> noWings(player);
             case "animate" -> animate(player, args);
+            case "attack" -> attackPreview(player, args);
             default -> adjustPose(player, args);
         }
     }
@@ -154,7 +166,7 @@ final class DummyStudio {
             equip.setItemInOffHand(shield);
         }
 
-        stand.addScoreboardTag("MSC_Dummy");
+        stand.addScoreboardTag(AttackPreview.TAG);
 
         playerDummies.put(player.getUniqueId(), stand);
         player.sendMessage(GREEN + "Spawned pose dummy at your location.");
@@ -224,6 +236,69 @@ final class DummyStudio {
             return null;
         }
         return stand;
+    }
+
+    /**
+     * {@code /msc dummy attack <attack|random|list> [page]}: the dummy acts out a real boss attack.
+     *
+     * <p>What plays is the attack the Sentinel runs in a fight — the same object, with its
+     * choreography, particles and seals — only the actor is the dummy, so nothing it lands can hurt
+     * anyone: {@link AttackPreview} refuses every hit an acting dummy deals.
+     */
+    private void attackPreview(Player player, String[] args) {
+        CommandMenu menu = new CommandMenu(player);
+        if (args.length < 3) {
+            player.sendMessage(RED + "Usage: /msc dummy attack <attack|random|list> [page]");
+            player.sendMessage(GRAY + "Names: /msc dummy attack list  ·  or /msc dummy attack random");
+            return;
+        }
+
+        if (args[2].equalsIgnoreCase("list")) {
+            menu.dummyAttackHelp(menu.parsePage(args, 3));
+            return;
+        }
+
+        ArmorStand stand = getOrDummy(player);
+        if (stand == null) return;
+
+        ArmorStandBoss boss = plugin.getArmorStandBoss();
+        if (boss == null) {
+            player.sendMessage(RED + "The Sentinel's attacks are not loaded, so there is nothing to preview.");
+            return;
+        }
+
+        String attack = attackFor(args[2], AttackCatalogue.names(), random);
+        if (attack == null) {
+            player.sendMessage(RED + "Unknown attack: " + args[2] + ". Use /msc dummy attack list.");
+            return;
+        }
+
+        // A fresh instance per preview keeps one attack's state out of the next one.
+        if (!boss.previewAttack(new BossInstance(stand), attack)) {
+            player.sendMessage(RED + "The Sentinel cannot run " + attack + ".");
+            return;
+        }
+        player.sendMessage(GREEN + "Previewing " + attack + " on your dummy — animation only, no damage.");
+    }
+
+    /**
+     * The attack a preview should run: the named one, or a random documented attack.
+     *
+     * <p>Pure, so every name the dummy accepts can be checked without a server. A {@code null}
+     * result means the name is not one the Sentinel knows.
+     */
+    static String attackFor(String requested, List<String> names, Random random) {
+        if (requested == null || names.isEmpty()) return null;
+        String key = requested.toLowerCase(Locale.ROOT);
+        if (key.equals("random")) return names.get(random.nextInt(names.size()));
+        return names.contains(key) ? key : null;
+    }
+
+    /** Attack names plus the two non-attack arguments, for tab completion. */
+    static List<String> attackCompletions() {
+        List<String> all = new ArrayList<>(List.of("random", "list"));
+        all.addAll(AttackCatalogue.names());
+        return all;
     }
 
     private void animate(Player player, String[] args) {

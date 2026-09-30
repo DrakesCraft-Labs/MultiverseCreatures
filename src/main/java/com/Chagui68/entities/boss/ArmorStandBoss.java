@@ -1530,7 +1530,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         return null;
     }
 
-    public void spawnShockwaveWave(World world, Location center, double maxRadius) {
+    public void spawnShockwaveWave(LivingEntity source, World world, Location center, double maxRadius) {
         final int ringCount = 10;
         final double ringSpacing = maxRadius / ringCount;
         final int ticksPerRing = 3;
@@ -1538,7 +1538,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         Location impactLoc = center.clone();
         impactLoc.setY(impactLoc.getY() + 0.1);
 
-        final ArmorStand stand = getBossStand(world);
+        final LivingEntity stand = source;
 
         for (int i = 0; i < ringCount; i++) {
             final int ringIndex = i;
@@ -1881,6 +1881,30 @@ public class ArmorStandBoss implements Listener, BossHost {
 
     public boolean isBossActive() {
         return !activeBosses.isEmpty();
+    }
+
+    /**
+     * Runs one registered attack on any instance, for the {@code /msc dummy attack} preview.
+     *
+     * <p>The attack is the same object the Sentinel runs, so the animation, particles, sounds and
+     * telegraphs are the real ones; the actor is a pose dummy, so {@link AttackPreview} refuses
+     * every hit it lands, and that is what makes the preview harmless.
+     *
+     * <p>A fight knows whether the boss is airborne, and over half the attacks read that before they
+     * aim, so the preview stages it here instead of demanding a flying dummy.
+     *
+     * @return true when the attack exists and has been started
+     */
+    public boolean previewAttack(BossInstance instance, String attackName) {
+        if (instance == null || attackName == null) return false;
+        String key = attackName.toLowerCase();
+        BossAttack attack = attackRegistry.get(key);
+        if (attack == null) return false;
+
+        instance.isFlying = isAerialAttackName(key);
+        instance.groundY = getGroundY(instance.stand.getLocation(), 80);
+        attack.execute(instance);
+        return true;
     }
 
     public boolean triggerAttack(UUID bossId, String attackName) {

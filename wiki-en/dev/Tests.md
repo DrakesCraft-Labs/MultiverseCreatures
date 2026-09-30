@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 38 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 39 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -77,6 +77,11 @@ Covers the health math in `utils/MscEntityUtils`:
 ### `commands/MscKillFilterTest` — `/msc kill` predicates
 - `MSC_`-prefixed scoreboard tags identify a plugin entity; the legacy untagged names (Mahoraga, Garou, Bone Shield, …) still count; vanilla mobs are left alone.
 - The type filter matches tags with `-`/`_` stripped and falls back to a name substring; `null`/blank types never match.
+
+### `commands/DummyAttackPreviewTest` — Dummy attack preview
+- Every attack documented in `AttackCatalogue` is one the dummy accepts, in any case, and an unknown name is refused instead of quietly running something else; `random` picks from that same list, reproducibly.
+- Tab completion and the dummy help both offer the preview, and every preview page renders exactly the attacks documented on it, driven through the real `CommandMenu` with a recording sender.
+- The promise itself: `MscEntityUtils.damageBy` refuses a hit from an entity tagged as a performing dummy — checked with a proxy victim that records the `damage` calls it receives — while an untagged attacker is not treated as a preview. The opposite direction cannot run headless, because `DamageType.GENERIC` only resolves against a live registry.
 
 ### `entities/boss/NixDamageCapTest` — NIX damage cap
 - Nix can never lose more than `entities.nix-executioner.max-damage-per-hit` (default **100**) from a single hit: anything above is clamped, anything below passes through untouched, and the cap never *inflates* a hit.

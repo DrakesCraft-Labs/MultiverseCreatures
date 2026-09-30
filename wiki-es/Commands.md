@@ -7,7 +7,7 @@ Todos los comandos usan la raíz **`/msc`**. **Permiso:** `msc.admin` (OP del se
 /msc spawn <tipo>              Invoca un mob, jefe, strike force militar, etc. (/msc spawn help [1-3])
 /msc give <objeto> [cantidad] [jugador]  Entrega armas legendarias, armaduras o componentes (/msc give help [1-4])
 /msc seal <patrón> [plano]     Renderiza un patrón de sello de partículas
-/msc dummy ...                 Invoca / posa / anima ArmorStands de prueba
+/msc dummy ...                 Invoca / posa / anima dummies y previsualiza ataques
 /msc attack <nombre> [rango]   Dispara un ataque o mecánica del ArmorStandBoss (/msc attack help [1-4])
 /msc music <play|stop|list|disc>  Reproduce / detiene canciones NBS, obtén un disco de jukebox
 /msc dimtp <mundo>             Teletransporta entre mundos
@@ -192,8 +192,12 @@ Manipula un ArmorStand de prueba usado para posar/vista previa de contenido. Út
 |---|---|
 | `wings` / `wings2` / `nowings` | Alterna presets de poses de alas |
 | `animate <anim>` | Reproduce una animación preset con nombre |
+| `attack <ataque\|random>` | Previsualiza un ataque real del Centinela en el dummy |
+| `attack list [page]` | Lista cada ataque que el dummy puede hacer |
 
 **Animaciones:** `flyup`, `land`, `airslam`, `shieldseal`, `healingcircle` (`heal`), `rain`, `pentagram`, `trianglecall` (`triangle`)
+
+**Previsualización de ataques:** `attack <ataque|random>` hace que el dummy ejecute un ataque real del Centinela — el mismo objeto de ataque que corre el jefe, con su coreografía, partículas y sellos — así se puede revisar una animación en un servidor de pruebas sin armar una pelea. Nada de lo que golpee el dummy puede dañar a nadie: todos los ataques dañan por un único helper, y ahí se rechaza a un dummy en actuación. Los efectos y el empuje siguen ocurriendo, así que mira desde un paso atrás. `attack list [page]` lista todos los nombres, y el autocompletado también los ofrece.
 
 ---
 

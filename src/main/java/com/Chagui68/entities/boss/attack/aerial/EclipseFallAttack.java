@@ -135,7 +135,7 @@ public class EclipseFallAttack extends BossAttackBase {
 
     /** The impact: black shockwave, blindness and damage inside the blast radius. */
     private void detonate(World world, Location center, LivingEntity attacker) {
-        boss.spawnShockwaveWave(world, center, BLAST_RADIUS * 0.8);
+        boss.spawnShockwaveWave(attacker, world, center, BLAST_RADIUS * 0.8);
         world.spawnParticle(Particle.EXPLOSION_EMITTER, center.clone().add(0, 0.4, 0), 2);
         world.spawnParticle(Particle.SCULK_SOUL, center.clone().add(0, 0.5, 0), 60, 2.0, 0.4, 2.0, 0.05);
         world.spawnParticle(Particle.DUST, center.clone().add(0, 0.3, 0), 80, 2.2, 0.2, 2.2, 0,

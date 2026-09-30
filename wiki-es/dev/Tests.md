@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 38 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 39 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -77,6 +77,11 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 ### `commands/MscKillFilterTest` — Predicados de `/msc kill`
 - Las etiquetas de scoreboard con prefijo `MSC_` identifican a una entidad del plugin; los nombres legacy sin etiqueta (Mahoraga, Garou, Bone Shield, …) siguen contando; los mobs vanilla quedan intactos.
 - El filtro por tipo compara etiquetas con `-`/`_` eliminados y cae al nombre como subcadena; un tipo `null` o vacío nunca coincide.
+
+### `commands/DummyAttackPreviewTest` — Previsualización de ataques en el dummy
+- Cada ataque documentado en `AttackCatalogue` es uno que el dummy acepta, en cualquier caso, y un nombre desconocido se rechaza en vez de ejecutar otra cosa en silencio; `random` elige de esa misma lista, de forma reproducible.
+- El autocompletado y la ayuda del dummy ofrecen la previsualización, y cada página de la vista previa renderiza exactamente los ataques documentados en ella, ejecutada por el `CommandMenu` real con un sender que graba.
+- La promesa en sí: `MscEntityUtils.damageBy` rechaza un golpe de una entidad marcada como dummy en actuación — comprobado con una víctima proxy que graba las llamadas a `damage` — mientras que un atacante sin marca no cuenta como previsualización. La dirección contraria no puede correr headless, porque `DamageType.GENERIC` solo resuelve contra un registro vivo.
 
 ### `entities/boss/NixDamageCapTest` — Cap de daño de NIX
 - Nix nunca puede perder más de `entities.nix-executioner.max-damage-per-hit` (por defecto **100**) en un solo golpe: lo que supera el cap se recorta, lo que queda por debajo pasa intacto y el cap nunca *infla* un golpe.

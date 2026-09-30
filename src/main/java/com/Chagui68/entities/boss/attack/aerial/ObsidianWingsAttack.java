@@ -265,7 +265,7 @@ public class ObsidianWingsAttack extends BossAttackBase {
                 Material.OBSIDIAN.createBlockData());
         world.spawnParticle(Particle.DUST, center.clone().add(0, 0.3, 0), 60, 2.0, 0.2, 2.0, 0,
                 new Particle.DustOptions(Color.fromRGB(0x1B0B2A), 2.2f));
-        boss.spawnShockwaveWave(world, center, SLAM_RADIUS);
+        boss.spawnShockwaveWave(attacker, world, center, SLAM_RADIUS);
 
         for (Player p : boss.getValidPlayers(world)) {
             if (p.getLocation().distanceSquared(center) > SLAM_RADIUS * SLAM_RADIUS) continue;
