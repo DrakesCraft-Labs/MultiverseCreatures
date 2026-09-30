@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 37 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 38 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -117,6 +117,13 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - El modelo queda **centrado en la hitbox** (columna y `CENTER.x` a cero) en vez de arrastrar el desplazamiento global en X de la referencia, con la cabeza por encima del torso y este por encima de las piernas, la coronilla cerca de los dos bloques y los pies separados del suelo.
 - Las extremidades izquierda y derecha están espejadas, cada **articulación está del mismo lado que la extremidad que mueve** (una cadera intercambiada hacía girar una pierna sobre la cadera opuesta), y una extremidad que gira conserva su X y nunca se desprende de su articulación.
 - Un barrido demuestra que no hay dos piezas en el mismo sitio, que el cambio de escala escala a la vez traslaciones y escalas de pieza, y que cada pieza cabe dentro de la hitbox del stand.
+
+### `entities/boss/NixModelTest` — Geometría del modelo de NIX
+- Las 27 piezas quedan fijadas contra el **modelo exportado**: cada traslación coincide y todo el cuerpo comparte un único eje X, así que ninguna pieza puede desviarse por su cuenta.
+- El modelo queda **centrado en la hitbox** (`NixModel.baseTranslation` deja la columna en cero en vez del `+0.066` del export), y `CENTER` es el **punto medio de los extremos exportados** y no la media de las 27 piezas, que cualquier pieza añadida o quitada arrastraría.
+- Las extremidades izquierda y derecha están espejadas, cada **articulación está del mismo lado que la extremidad que mueve** y sobre su propio eje, y una extremidad que gira conserva su X y nunca se desprende de su articulación.
+- Un barrido demuestra que no hay dos piezas en el mismo sitio, y el **test de la hitbox** mantiene `MODEL_HITBOX_SCALE` cubriendo toda la pose de reposo (0.95 de ancho, 3.75 de alto) sin alejarse más de 0.05 de la escala mínima que el modelo necesita — el literal `2.0` anterior dejaba 1.8 bloques de caja vacía sobre la cabeza.
+- Una guardia de fuentes impide que las piezas vuelvan a retrasarse (`setTeleportDuration`/`setInterpolationDuration`/`setDisplayWidth`/`setDisplayHeight` a cero, configurados en un solo sitio) y exige que un recargue **adopte** las piezas que ya tiene en vez de crear un segundo cuerpo superpuesto.
 
 ### `entities/NixModelKinematicsTest` — Modelo cinemático de NIX (27 partes)
 - El modelo tiene **exactamente 27** partes `ItemDisplay` (export de Blockbench).

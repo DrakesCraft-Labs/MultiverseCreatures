@@ -195,11 +195,11 @@ A towering, ruthless executioner constructed from a custom **27-piece ItemDispla
 - **Execution Frenzy (Passive):**
   When target player health drops below **25%**, Nix enters an execution frenzy: movement speed increases by +30%, eyes emit crimson dust particles, and walking stride tempo accelerates.
 - **Procedural Model Animations:**
-  All 27 pieces (Head, Upper Torso, Lower Pelvis, 6-part Right Arm, 6-part Left Arm, 6-part Right Leg, 6-part Left Leg) feature synchronized walking counter-rotations, attack windups, and player-tracking head pitch.
+  All 27 pieces (Head, Upper Torso, Lower Pelvis, 6-part Right Arm, 6-part Left Arm, 6-part Right Leg, 6-part Left Leg) feature synchronized walking counter-rotations, attack windups, and player-tracking head pitch. They follow an **invisible armour stand** (`MSC_NixBoss`) that carries the real health pool and the hitbox, and the joints live in `NixModel` (shoulders at x = ±0.3514, hips at ∓0.1171, neck at 1.650, torso at 1.171), so every limb swings around its own joint. The export sits 0.066 blocks off the spine, so the parts are re-centred on the hitbox, and the stand is scaled 1.9 so its box (0.95 wide, 3.75 tall) covers the whole model instead of leaving the head outside a vanilla box.
 
 **Boss bar:** Dark Red segmented bar displaying `NIX - The Executioner` with fog and darkened skies.
 
-**Persistence:** Tagged `MSC_NixBoss` and `MSC_NixPart` — automatically restored or cleaned up on server restart / reload.
+**Persistence:** Tagged `MSC_NixBoss` and `MSC_NixPart`, and every part also carries its own tag plus an owner tag for the stand it belongs to — a reload **adopts** the parts a live boss already has instead of building a second body on top, and orphans are cleaned up.
 
 **Death:** Triggers lightning thunder, wither death sounds, a bloody particle explosion, drops 450 XP, and announces an execution end title to nearby players.
 

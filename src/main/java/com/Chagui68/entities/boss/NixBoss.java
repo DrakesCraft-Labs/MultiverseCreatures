@@ -244,15 +244,19 @@ public class NixBoss implements Listener {
         public static final Vector3f CENTER;
 
         static {
-            Vector3f sum = new Vector3f();
-            NixPart[] parts = values();
-            for (NixPart p : parts) {
-                sum.x += p.offset.x;
-                sum.z += p.offset.z;
+            float minX = Float.POSITIVE_INFINITY, maxX = Float.NEGATIVE_INFINITY;
+            float minY = Float.POSITIVE_INFINITY, maxY = Float.NEGATIVE_INFINITY;
+            float minZ = Float.POSITIVE_INFINITY, maxZ = Float.NEGATIVE_INFINITY;
+
+            for (NixPart p : values()) {
+                minX = Math.min(minX, p.offset.x);
+                maxX = Math.max(maxX, p.offset.x);
+                minY = Math.min(minY, p.offset.y);
+                maxY = Math.max(maxY, p.offset.y);
+                minZ = Math.min(minZ, p.offset.z);
+                maxZ = Math.max(maxZ, p.offset.z);
             }
-            sum.x /= parts.length;
-            sum.z /= parts.length;
-            CENTER = sum;
+            CENTER = new Vector3f((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, (minZ + maxZ) * 0.5f);
         }
     }
 
@@ -262,13 +266,21 @@ public class NixBoss implements Listener {
     /** Default ceiling on a single hit taken by Nix. */
     public static final double DEFAULT_MAX_DAMAGE_PER_HIT = 100.0;
 
-    // Joint pivots relative to centered model
-    private static final Vector3f PIVOT_SHOULDER_RIGHT = new Vector3f(0.3514f, 1.405f, 0.0f);
-    private static final Vector3f PIVOT_SHOULDER_LEFT = new Vector3f(-0.3514f, 1.405f, 0.0f);
-    private static final Vector3f PIVOT_HIP_RIGHT = new Vector3f(-0.1171f, 0.702f, 0.0f);
-    private static final Vector3f PIVOT_HIP_LEFT = new Vector3f(0.1171f, 0.702f, 0.0f);
-    private static final Vector3f PIVOT_NECK = new Vector3f(0.0f, 1.650f, 0.0f);
-    private static final Vector3f PIVOT_TORSO = new Vector3f(0.0f, 1.171f, 0.0f);
+    /** Tags make display ownership survive a plugin reload without duplicating the model. */
+    static final String PART_OWNER_TAG_PREFIX = "MSC_NixOwner_";
+
+    /**
+     * Scale of the invisible armour stand that carries the hitbox.
+     *
+     * <p>The model reaches ±0.47 blocks around the spine and 2.11 blocks up, so a vanilla
+     * 1.975-block stand would leave the head and the swinging arms outside the box, where a swing
+     * aimed at them hits nothing. 1.9 is the smallest scale whose uniform box (0.95 wide, 3.75
+     * tall) covers the whole rest pose; the old literal 2.0 did too, but kept 1.8 blocks of empty
+     * box above the head.
+     */
+    public static final double MODEL_HITBOX_SCALE = 1.9;
+
+    /** Joints, rest pose and limb maths live in {@link NixModel}, testable without a server. */
 
     private final MultiverseCreatures plugin;
     private final Random random = new Random();
@@ -327,11 +339,20 @@ public class NixBoss implements Listener {
                     MscEntityUtils.initVirtualHealth(stand, health);
                 }
                 NixInstance inst = new NixInstance(stand);
+                restorePartDisplays(inst);
                 activeInstances.put(stand.getUniqueId(), inst);
                 setupBossBar(inst);
             }
             for (ItemDisplay display : world.getEntitiesByClass(ItemDisplay.class)) {
                 if (!display.getScoreboardTags().contains(PART_TAG)) continue;
+                boolean hasOwner = display.getScoreboardTags().stream()
+                        .anyMatch(tag -> tag.startsWith(PART_OWNER_TAG_PREFIX));
+                // Displays made by pre-ownership builds cannot safely be reattached.
+                // Removing only those untagged parts avoids a second overlapping body.
+                if (!hasOwner) {
+                    display.remove();
+                    continue;
+                }
                 boolean nearStand = false;
                 for (Entity e : display.getNearbyEntities(4, 4, 4)) {
                     if (e instanceof ArmorStand stand && stand.getScoreboardTags().contains(TAG)) {
@@ -342,6 +363,32 @@ public class NixBoss implements Listener {
                 if (!nearStand) display.remove();
             }
         }
+    }
+
+    /**
+     * Reattaches the parts a previous run already spawned for this stand, so enabling the plugin
+     * over a live Nix continues his body instead of building a second one on top.
+     */
+    private void restorePartDisplays(NixInstance inst) {
+        String ownerTag = partOwnerTag(inst.stand.getUniqueId());
+        for (ItemDisplay display : inst.stand.getWorld().getEntitiesByClass(ItemDisplay.class)) {
+            if (!display.getScoreboardTags().contains(PART_TAG) || !display.getScoreboardTags().contains(ownerTag)) continue;
+            for (NixPart part : NixPart.values()) {
+                if (display.getScoreboardTags().contains(partTag(part))) {
+                    inst.partDisplays.put(part, display.getUniqueId());
+                    break;
+                }
+            }
+        }
+    }
+
+    /** Every part of a boss carries its own tag, so an adoption can tell the parts apart. */
+    static String partTag(NixPart part) {
+        return PART_TAG + "_" + part.name();
+    }
+
+    static String partOwnerTag(UUID ownerId) {
+        return PART_OWNER_TAG_PREFIX + ownerId.toString().replace("-", "");
     }
 
     private void startTicker() {
@@ -547,28 +594,67 @@ public class NixBoss implements Listener {
                 display.teleport(root);
                 display.setTransformation(buildTransformation(part, inst));
             } else {
-                ItemDisplay display = spawnPart(root, part);
-                inst.partDisplays.put(part, display.getUniqueId());
+                // A reload with the part's chunk unloaded hides it from restorePartDisplays; adopting
+                // the one still tagged for this boss avoids a second, overlapping body.
+                ItemDisplay adopted = findPartDisplay(inst, part);
+                if (adopted != null) {
+                    inst.partDisplays.put(part, adopted.getUniqueId());
+                } else {
+                    ItemDisplay display = spawnPart(root, part, inst.stand.getUniqueId());
+                    inst.partDisplays.put(part, display.getUniqueId());
+                }
             }
         }
     }
 
-    private ItemDisplay spawnPart(Location root, NixPart part) {
-        ItemStack head = createHead(part.profileName, part.texture);
-        ItemDisplay display = (ItemDisplay) root.getWorld().spawnEntity(root, EntityType.ITEM_DISPLAY);
-        display.setItemStack(head);
+    /** Looks for this part of this boss near the stand, without loading anything new. */
+    private ItemDisplay findPartDisplay(NixInstance inst, NixPart part) {
+        Location loc = inst.stand.getLocation();
+        String ownerTag = partOwnerTag(inst.stand.getUniqueId());
+        String ownPartTag = partTag(part);
+        for (Entity e : inst.stand.getWorld().getNearbyEntities(loc, 6.0, 8.0, 6.0)) {
+            if (e instanceof ItemDisplay display
+                    && display.getScoreboardTags().contains(ownerTag)
+                    && display.getScoreboardTags().contains(ownPartTag)) {
+                return display;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Applies everything a part needs, so a freshly spawned and an adopted part are identical.
+     *
+     * <p>Both interpolation durations are zero on purpose: the parts are placed on the stand's exact
+     * position every tick, and letting the client smooth a teleport the server already snapped made
+     * the body trail behind the invisible hitbox whenever Nix moved or swung.
+     */
+    private void configurePartDisplay(ItemDisplay display, NixPart part, UUID ownerId) {
+        display.setItemStack(createHead(part.profileName, part.texture));
         display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
         display.setBillboard(Display.Billboard.FIXED);
         display.setTransformation(buildTransformation(part, null));
-        display.setTeleportDuration(1);
-        display.setInterpolationDuration(2);
+        display.setTeleportDuration(0);
+        display.setInterpolationDuration(0);
         display.setInterpolationDelay(0);
         display.setBrightness(new Display.Brightness(15, 15));
+        // Zero size on purpose: a display's width/height double as its bounding box, and a part with
+        // a real box would be picked by the client instead of the armour stand, so a swing aimed at
+        // the body could pass straight through it and feel like a miss.
+        display.setDisplayWidth(0.0f);
+        display.setDisplayHeight(0.0f);
         display.setInvulnerable(false);
         display.setGravity(false);
         display.setSilent(true);
         display.setPersistent(true);
         display.addScoreboardTag(PART_TAG);
+        display.addScoreboardTag(partTag(part));
+        display.addScoreboardTag(partOwnerTag(ownerId));
+    }
+
+    private ItemDisplay spawnPart(Location root, NixPart part, UUID ownerId) {
+        ItemDisplay display = (ItemDisplay) root.getWorld().spawnEntity(root, EntityType.ITEM_DISPLAY);
+        configurePartDisplay(display, part, ownerId);
         return display;
     }
 
@@ -593,38 +679,10 @@ public class NixBoss implements Listener {
         return head;
     }
 
-    /**
-     * Builds the transformation for a part using rigid-body rotation around its limb's anatomical joint pivot.
-     */
+    /** Builds the transformation for a part: rigid-body rotation around its limb's joint. */
     private Transformation buildTransformation(NixPart part, NixInstance inst) {
         Quaternionf limbRot = (inst != null) ? computeLimbQuat(part.group, inst) : new Quaternionf();
-
-        Vector3f pivot = getPivot(part.group);
-        Vector3f localBase = new Vector3f(
-                part.offset.x - NixPart.CENTER.x,
-                part.offset.y,
-                part.offset.z - NixPart.CENTER.z
-        );
-
-        Vector3f relToPivot = new Vector3f(localBase).sub(pivot);
-        Vector3f rotatedRel = new Vector3f(relToPivot);
-        limbRot.transform(rotatedRel);
-
-        Vector3f finalTranslation = new Vector3f(pivot).add(rotatedRel);
-        Quaternionf finalRotation = new Quaternionf(limbRot).mul(part.rotation);
-
-        return new Transformation(finalTranslation, finalRotation, part.scale, new Quaternionf());
-    }
-
-    private Vector3f getPivot(LimbGroup group) {
-        return switch (group) {
-            case ARM_RIGHT -> PIVOT_SHOULDER_RIGHT;
-            case ARM_LEFT -> PIVOT_SHOULDER_LEFT;
-            case LEG_RIGHT -> PIVOT_HIP_RIGHT;
-            case LEG_LEFT -> PIVOT_HIP_LEFT;
-            case HEAD -> PIVOT_NECK;
-            case TORSO_UPPER, TORSO_LOWER -> PIVOT_TORSO;
-        };
+        return NixModel.compose(part, limbRot);
     }
 
     /**
@@ -755,7 +813,7 @@ public class NixBoss implements Listener {
         MscEntityUtils.initVirtualHealth(stand, health);
 
         AttributeInstance scaleAttr = stand.getAttribute(Attribute.SCALE);
-        if (scaleAttr != null) scaleAttr.setBaseValue(2.0);
+        if (scaleAttr != null) scaleAttr.setBaseValue(MODEL_HITBOX_SCALE);
 
         NixInstance inst = new NixInstance(stand);
         activeInstances.put(stand.getUniqueId(), inst);
@@ -766,7 +824,7 @@ public class NixBoss implements Listener {
         root.setPitch(0);
 
         for (NixPart part : NixPart.values()) {
-            ItemDisplay display = spawnPart(root, part);
+            ItemDisplay display = spawnPart(root, part, stand.getUniqueId());
             inst.partDisplays.put(part, display.getUniqueId());
         }
 

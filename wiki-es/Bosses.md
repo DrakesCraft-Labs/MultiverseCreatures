@@ -195,11 +195,11 @@ Un verdugo colosal e implacable construido a partir de un **modelo personalizado
 - **Frenesí de Ejecución (Pasiva):**
   Cuando la salud del jugador objetivo cae por debajo del **25%**, Nix entra en frenesí de ejecución: su velocidad de movimiento aumenta un +30%, sus ojos emiten partículas de polvo carmesí y el compás de sus zancadas se acelera.
 - **Animaciones Procedurales del Modelo:**
-  Las 27 piezas (Cabeza, Torso Superior, Pelvis, Brazo Derecho de 6 piezas, Brazo Izquierdo de 6 piezas, Pierna Derecha de 6 piezas, Pierna Izquierda de 6 piezas) cuentan con contra-rotaciones de marcha sincronizadas, preparación de ataques y seguimiento del cabeceo de la mirada del jugador.
+  Las 27 piezas (Cabeza, Torso Superior, Pelvis, Brazo Derecho de 6 piezas, Brazo Izquierdo de 6 piezas, Pierna Derecha de 6 piezas, Pierna Izquierda de 6 piezas) cuentan con contra-rotaciones de marcha sincronizadas, preparación de ataques y seguimiento del cabeceo de la mirada del jugador. Siguen a un **ArmorStand invisible** (`MSC_NixBoss`) que carga la vida real y la hitbox, y las articulaciones viven en `NixModel` (hombros en x = ±0.3514, caderas en ∓0.1171, cuello en 1.650, torso en 1.171), así que cada extremidad gira sobre su propia articulación. El export queda 0.066 bloques fuera de la columna, así que las piezas se recentran sobre la hitbox, y el stand se escala 1.9 para que su caja (0.95 de ancho, 3.75 de alto) cubra todo el modelo en vez de dejar la cabeza fuera de una caja vanilla.
 
 **Barra de jefe:** Barra segmentada de color rojo oscuro que muestra `NIX - El Verdugo` con niebla y cielo oscurecido.
 
-**Persistencia:** Etiquetado `MSC_NixBoss` y `MSC_NixPart` — se restaura o limpia automáticamente en reinicios o recargas del servidor.
+**Persistencia:** Etiquetado `MSC_NixBoss` y `MSC_NixPart`, y cada pieza lleva además su propia etiqueta más una de propietario del stand al que pertenece — una recarga **adopta** las piezas que el jefe vivo ya tiene en vez de crear un segundo cuerpo encima, y las huérfanas se limpian.
 
 **Muerte:** Desencadena truenos, sonido de muerte de wither, una explosión de partículas carmesí, suelta 450 XP y muestra un título de condena finalizada a los jugadores cercanos.
 

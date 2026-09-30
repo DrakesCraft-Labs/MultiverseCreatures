@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 37 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 38 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -117,6 +117,13 @@ Covers the health math in `utils/MscEntityUtils`:
 - The model is **centred on the hitbox** (spine and `CENTER.x` at zero) instead of carrying the reference's whole-body X offset, with the head above the torso above the legs, the head top near two blocks and the feet off the ground.
 - Left and right limbs are mirrored, each **joint sits on the same side as the limb it drives** (a swapped hip used to swing a leg around the opposite hip), and a swinging limb keeps its X and never detaches from its joint.
 - A sweep proves no two parts share a place, that shape shifting scales translations and part scales together, and that every part stays inside the stand's hitbox.
+
+### `entities/boss/NixModelTest` — NIX model geometry
+- The 27 parts are pinned against the **exported model**: every translation matches and the whole body shares one X axis, so no part can drift on its own.
+- The model is **centred on the hitbox** (`NixModel.baseTranslation` puts the spine at zero instead of the export's `+0.066`), and `CENTER` is the **midpoint of the exported extents** rather than the mean of the 27 parts, which any part added or removed would pull around.
+- Left and right limbs are mirrored, each **joint sits on the same side as the limb it drives** and on that limb's own axis, and a swinging limb keeps its X and never detaches from its joint.
+- A sweep proves no two parts share a place, and the **hitbox test** keeps `MODEL_HITBOX_SCALE` covering the whole rest pose (0.95 wide, 3.75 tall) while staying within 0.05 of the smallest scale the model needs — the old literal `2.0` kept 1.8 blocks of empty box above the head.
+- A source guard keeps the parts from lagging again (`setTeleportDuration`/`setInterpolationDuration`/`setDisplayWidth`/`setDisplayHeight` all zero, configured in one place) and requires a reload to **adopt** the parts it already has instead of spawning a second, overlapping body.
 
 ### `entities/NixModelKinematicsTest` — NIX kinematic model (27 parts)
 - The model has **exactly 27** `ItemDisplay` parts (Blockbench export).
