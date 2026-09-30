@@ -1,5 +1,7 @@
 # Compiled Java class files
 *.class
+.idea
+.vscode
 
 # Maven / Java build output
 target/
