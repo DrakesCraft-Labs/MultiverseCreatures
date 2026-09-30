@@ -3,6 +3,7 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.MilitaryComponent;
 import com.Chagui68.utils.MscEntityUtils;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -397,7 +398,7 @@ public class ZombieHorseTrap implements Listener {
 
         EntityEquipment eq = lancer.getEquipment();
         if (eq != null) {
-            eq.setItemInMainHand(createLance(Material.IRON_SPEAR, "Iron Lance"));
+            eq.setItemInMainHand(createLance(Material.IRON_SPEAR, Component.text("Iron Lance")));
             eq.setItemInMainHandDropChance(0);
         }
 
@@ -449,7 +450,7 @@ public class ZombieHorseTrap implements Listener {
 
             EntityEquipment eq = zombie.getEquipment();
             if (eq != null) {
-                eq.setItemInMainHand(createLance(Material.DIAMOND_SPEAR, "Diamond Lance"));
+                eq.setItemInMainHand(createLance(Material.DIAMOND_SPEAR, Component.text("Diamond Lance")));
                 eq.setItemInMainHandDropChance(0);
             }
 
@@ -519,7 +520,7 @@ public class ZombieHorseTrap implements Listener {
             if (bowMeta != null) {
                 bowMeta.addEnchant(Enchantment.POWER, 5, true);
                 bowMeta.addEnchant(Enchantment.INFINITY, 1, true);
-                bowMeta.setItemName("Sniper Bow");
+                bowMeta.itemName(Component.text("Sniper Bow"));
                 bow.setItemMeta(bowMeta);
             }
             eq.setItemInMainHand(bow);
@@ -769,11 +770,11 @@ public class ZombieHorseTrap implements Listener {
         eq.setHelmetDropChance(0);
     }
 
-    private ItemStack createLance(Material material, String name) {
+    private ItemStack createLance(Material material, Component name) {
         ItemStack lance = new ItemStack(material);
         ItemMeta meta = lance.getItemMeta();
         if (meta != null) {
-            meta.setItemName(name);
+            meta.itemName(name);
             meta.setUnbreakable(true);
             lance.setItemMeta(meta);
         }
@@ -797,7 +798,7 @@ public class ZombieHorseTrap implements Listener {
         if (meta != null) {
             meta.addEnchant(Enchantment.SHARPNESS, 3, true);
             meta.addEnchant(Enchantment.KNOCKBACK, 2, true);
-            meta.setItemName("Duelist Sword");
+            meta.itemName(Component.text("Duelist Sword"));
             sword.setItemMeta(meta);
         }
         return sword;

@@ -3,6 +3,7 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.EnderFragment;
 import com.Chagui68.utils.MscEntityUtils;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
@@ -88,7 +89,7 @@ public class EnderKnight implements Listener {
             if (meta != null) {
                 meta.addEnchant(Enchantment.SHARPNESS, 5, true);
                 meta.addEnchant(Enchantment.KNOCKBACK, 2, true);
-                meta.setItemName("Ender Blade");
+                meta.itemName(Component.text("Ender Blade"));
                 sword.setItemMeta(meta);
             }
             eq.setItemInMainHand(sword);

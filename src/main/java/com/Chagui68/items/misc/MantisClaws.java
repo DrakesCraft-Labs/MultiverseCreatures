@@ -1,6 +1,8 @@
 package com.Chagui68.items.misc;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -18,20 +20,20 @@ public class MantisClaws {
     static {
         ItemMeta meta = MANTIS_CLAWS_ITEM.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.GOLD + "" + ChatColor.BOLD + "Mantis Claws");
+            meta.displayName(MscText.title(GOLD, "Mantis Claws"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "Claws forged from the silk and iron");
-            lore.add(ChatColor.GRAY + "of Deepnest.");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Abilities:");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Shift to cling to walls");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Space to leap upward");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"The mantis lords watch from above.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Hallownest" + ChatColor.DARK_GRAY + " ✦");
-            meta.setLore(lore);
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "Claws forged from the silk and iron"));
+            lore.add(MscText.line(GRAY, "of Deepnest."));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Abilities:"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Shift to cling to walls"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Space to leap upward"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"The mantis lords watch from above.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Hallownest"));
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(MANTIS_CLAWS_KEY, PersistentDataType.INTEGER, 1);
             meta.setUnbreakable(true);
             meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE);

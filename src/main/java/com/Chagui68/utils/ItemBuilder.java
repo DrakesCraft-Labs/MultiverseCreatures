@@ -1,5 +1,6 @@
 package com.Chagui68.utils;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
@@ -9,19 +10,22 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Fluent builder for MSC ItemStacks. Eliminates the repetitive
- * new ItemStack -> getItemMeta -> setDisplayName -> setLore -> PDC.set -> setItemMeta
+ * new ItemStack -> getItemMeta -> displayName -> lore -> PDC.set -> setItemMeta
  * boilerplate duplicated across the {@code items.*} packages.
+ *
+ * Name and lore are {@link Component}s (see {@link MscText}): the builder never touches the
+ * deprecated String variants of the item meta API.
  */
 public final class ItemBuilder {
 
     private final ItemStack item;
     private final ItemMeta meta;
-    private final List<String> lore = new ArrayList<>();
+    private final List<Component> lore = new ArrayList<>();
 
     private ItemBuilder(Material material) {
         this.item = new ItemStack(material);
@@ -32,17 +36,17 @@ public final class ItemBuilder {
         return new ItemBuilder(material);
     }
 
-    public ItemBuilder name(String displayName) {
-        if (meta != null) meta.setDisplayName(displayName);
+    public ItemBuilder name(Component displayName) {
+        if (meta != null) meta.displayName(displayName);
         return this;
     }
 
-    public ItemBuilder lore(String... lines) {
-        lore.addAll(Arrays.asList(lines));
+    public ItemBuilder lore(Component... lines) {
+        Collections.addAll(lore, lines);
         return this;
     }
 
-    public ItemBuilder lore(List<String> lines) {
+    public ItemBuilder lore(List<Component> lines) {
         lore.addAll(lines);
         return this;
     }
@@ -81,7 +85,7 @@ public final class ItemBuilder {
 
     public ItemStack build() {
         if (meta != null) {
-            if (!lore.isEmpty()) meta.setLore(lore);
+            if (!lore.isEmpty()) meta.lore(lore);
             item.setItemMeta(meta);
         }
         return item;

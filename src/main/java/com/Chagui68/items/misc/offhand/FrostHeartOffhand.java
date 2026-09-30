@@ -1,6 +1,8 @@
 package com.Chagui68.items.misc.offhand;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -23,25 +25,25 @@ public class FrostHeartOffhand {
     static {
         ItemMeta meta = FROST_HEART_OFFHAND.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.AQUA + "" + ChatColor.BOLD + "Frost Heart");
+            meta.displayName(MscText.title(AQUA, "Frost Heart"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A frozen core pulsed from a Frost");
-            lore.add(ChatColor.GRAY + "Golem's chest. Only the off-hand");
-            lore.add(ChatColor.GRAY + "can steady its endless chill.");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Passive Effects (off-hand only):");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Melee attackers are chilled:");
-            lore.add(ChatColor.GRAY + "    Slowness II and Weakness I for 3s");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Enemies within " + ChatColor.AQUA + "4 blocks" + ChatColor.GRAY + " are slowed");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Wielder gains " + ChatColor.AQUA + "Frost Walker I" + ChatColor.GRAY + " while held");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"It beats once a century,");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "and winter follows.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A frozen core pulsed from a Frost"));
+            lore.add(MscText.line(GRAY, "Golem's chest. Only the off-hand"));
+            lore.add(MscText.line(GRAY, "can steady its endless chill."));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Passive Effects (off-hand only):"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Melee attackers are chilled:"));
+            lore.add(MscText.line(GRAY, "    Slowness II and Weakness I for 3s"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Enemies within ", AQUA, "4 blocks", GRAY, " are slowed"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Wielder gains ", AQUA, "Frost Walker I", GRAY, " while held"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"It beats once a century,"));
+            lore.add(MscText.quote(DARK_PURPLE, "and winter follows.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Multiverse"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(FROST_KEY, PersistentDataType.INTEGER, 1);
             FROST_HEART_OFFHAND.setItemMeta(meta);
         }

@@ -16,15 +16,18 @@
 # ---------------------------------------------------------------------------
 general:
   debug: false
-  locale: "en"
   # Global multiplier applied to every entity spawn chance (0.5 = half spawns)
   spawn-rate-multiplier: 0.5
   # Cap of live MSC creatures per world. 0 disables the limit.
   max-alive-per-world: 500
   # If true, natural-spawn mobs stay persistent when players move away
   natural-spawn-persistent: false
-  # Worlds where the plugin is allowed to operate. [] = all worlds.
+  # Worlds where the plugin is allowed to operate. Empty list = every world.
+  # The plugin's own worlds (boss_dimension, drakes_bosses) are always allowed.
   allowed-creature-worlds: []
+  # If true, MSC creatures found in a world outside the allowlist are deleted. Off by default:
+  # this removes live entities, so it only runs when an operator asks for it.
+  purge-disallowed-creatures: false
 
 
 # ---------------------------------------------------------------------------
@@ -46,8 +49,11 @@ boss-arena:
 # ---------------------------------------------------------------------------
 # Commands
 # ---------------------------------------------------------------------------
+# Commands
 commands:
+  # Permission node required to run /msc.
   permission: "msc.admin"
+  # If true, server operators can run /msc even when they lack the node above.
   op-only: true
 
 
@@ -96,6 +102,12 @@ entities:
     hover-barrage-cooldown-variance-ticks: 120
     ground-attack-cooldown-base-ticks: 40
     ground-attack-cooldown-variance-ticks: 40
+
+    # Ground recovery. A grounded boss only attacks while it has solid ground under it, so if it
+    # ends up over a void, water or a hole it teleports to the nearest column with ground.
+    ground-recovery-grace-ticks: 40      # ticks without a floor before relocating (~2 s)
+    ground-recovery-search-radius: 12    # rings of blocks probed around the boss
+    ground-recovery-cooldown-ticks: 100  # minimum ticks between attempts (5 s)
 
     # Per-attack damage overrides (override code defaults)
     chain-grapple-damage: 2.0

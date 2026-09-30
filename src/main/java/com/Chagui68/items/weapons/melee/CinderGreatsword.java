@@ -1,6 +1,8 @@
 package com.Chagui68.items.weapons.melee;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -23,28 +25,28 @@ public class CinderGreatsword {
     static {
         ItemMeta meta = CINDER_GREATSWORD.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.GOLD + "" + ChatColor.BOLD + "Cinder Greatsword");
+            meta.displayName(MscText.title(GOLD, "Cinder Greatsword"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A massive blade forged from the heart");
-            lore.add(ChatColor.GRAY + "of a Flame Elemental. Too heavy to");
-            lore.add(ChatColor.GRAY + "wield alongside a second weapon.");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Passive Effects:");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Two-handed: cannot pair with off-hand items");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Sets struck foes ablaze (Fire Aspect II)");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Wielder gains " + ChatColor.GOLD + "Fire Resistance" + ChatColor.GRAY + " while held");
-            lore.add("");
-            lore.add(ChatColor.AQUA + "Item Ability: " + ChatColor.WHITE + "Cinder Slam " + ChatColor.GRAY + "(Right-Click)");
-            lore.add(ChatColor.GRAY + "  Channel flame into the blade and slam");
-            lore.add(ChatColor.GRAY + "  the ground, igniting all enemies in a");
-            lore.add(ChatColor.GRAY + "  " + ChatColor.GOLD + "5-block" + ChatColor.GRAY + " radius. Cooldown: " + ChatColor.GOLD + "10s");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"Where it falls, the world burns.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A massive blade forged from the heart"));
+            lore.add(MscText.line(GRAY, "of a Flame Elemental. Too heavy to"));
+            lore.add(MscText.line(GRAY, "wield alongside a second weapon."));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Passive Effects:"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Two-handed: cannot pair with off-hand items"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Sets struck foes ablaze (Fire Aspect II)"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Wielder gains ", GOLD, "Fire Resistance", GRAY, " while held"));
+            lore.add(MscText.blank());
+            lore.add(MscText.rich(AQUA, "Item Ability: ", WHITE, "Cinder Slam ", GRAY, "(Right-Click)"));
+            lore.add(MscText.line(GRAY, "  Channel flame into the blade and slam"));
+            lore.add(MscText.line(GRAY, "  the ground, igniting all enemies in a"));
+            lore.add(MscText.rich(GRAY, "  ", GOLD, "5-block", GRAY, " radius. Cooldown: ", GOLD, "10s"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"Where it falls, the world burns.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Multiverse"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(CINDER_KEY, PersistentDataType.INTEGER, 1);
             meta.setUnbreakable(true);
             CINDER_GREATSWORD.setItemMeta(meta);

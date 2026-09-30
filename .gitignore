@@ -31,3 +31,6 @@ Thumbs.db
 # Other build tools
 build/
 .gradle/
+
+# Agent/IDE scratch files
+.freebuff/

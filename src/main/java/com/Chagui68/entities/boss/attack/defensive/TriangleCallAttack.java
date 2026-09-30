@@ -6,6 +6,7 @@ import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.MagicSealListener;
 import com.Chagui68.MultiverseCreatures;
+import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -125,7 +126,7 @@ public class TriangleCallAttack extends BossAttackBase {
                             if (bowMeta != null) {
                                 bowMeta.addEnchant(org.bukkit.enchantments.Enchantment.POWER, 5, true);
                                 bowMeta.addEnchant(org.bukkit.enchantments.Enchantment.INFINITY, 1, true);
-                                bowMeta.setItemName("Sniper Bow");
+                                bowMeta.itemName(Component.text("Sniper Bow"));
                                 bow.setItemMeta(bowMeta);
                             }
                             eq.setItemInMainHand(bow);

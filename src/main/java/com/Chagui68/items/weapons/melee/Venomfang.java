@@ -1,6 +1,8 @@
 package com.Chagui68.items.weapons.melee;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -21,22 +23,22 @@ public class Venomfang {
     static {
         ItemMeta meta = VENOMFANG.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Venomfang");
+            meta.displayName(MscText.title(DARK_GREEN, "Venomfang"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A blade distilled from the corrosive");
-            lore.add(ChatColor.GRAY + "venom of a Venom Witch.");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Passive Effects:");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Each strike applies " + ChatColor.DARK_GREEN + "Poison I " + ChatColor.GRAY + "for " + ChatColor.GOLD + "5 seconds");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Each strike applies " + ChatColor.DARK_GRAY + "Wither I " + ChatColor.GRAY + "for " + ChatColor.GOLD + "4 seconds");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"One drop can dissolve");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "a man's resolve...\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A blade distilled from the corrosive"));
+            lore.add(MscText.line(GRAY, "venom of a Venom Witch."));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Passive Effects:"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Each strike applies ", DARK_GREEN, "Poison I ", GRAY, "for ", GOLD, "5 seconds"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Each strike applies ", DARK_GRAY, "Wither I ", GRAY, "for ", GOLD, "4 seconds"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"One drop can dissolve"));
+            lore.add(MscText.quote(DARK_PURPLE, "a man's resolve...\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Multiverse"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(VENOMFANG_KEY, PersistentDataType.INTEGER, 1);
             meta.setUnbreakable(true);
             VENOMFANG.setItemMeta(meta);

@@ -24,7 +24,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 12 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 18 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -80,8 +80,30 @@ Covers the health math in `utils/MscEntityUtils`:
 - **`hitInThisRing` (deduplication)**: several adjacent ring particles fall inside the player's impact radius, but with deduplication the player takes damage **exactly once per ring**.
 - **NIX throttling**: stationary syncs every 3 ticks (30 of 90); during a cleave or chain animation it syncs every tick (90 of 90).
 
+### `entities/boss/BossArenaGroundRecoveryTest` — Ground recovery
+- `findFloorY` returns the floor altitude, and **`NaN`** — not the boss's own Y — when the scan reaches nothing. That distinction is the fix: the old convenience method made "standing on the floor" and "nothing underneath" the same value, so a grounded boss stopped attacking forever.
+- `getGroundY` keeps its documented fallback of returning the current Y, pinned down so the two behaviours cannot drift back together.
+- `ringOffsets` starts at the origin, contains every offset within the radius exactly once and never goes back towards the origin — the nearest usable column must always win.
+- `findUsableColumn` prefers the boss's column, walks outward when it is void, respects the search radius and reports `null` when nothing is usable so the caller can try the target column and then the world spawn.
+
+### `utils/MscWorldPolicyTest` — World allowlist
+- An **empty (or missing) allowlist means every world**, which is what `config.yml` documents. The implementation used to treat it as a hardcoded list of five world names, so a server with a custom world name silently got no conversions — and its periodic recount deleted any MSC creature it found there.
+- A populated list restricts, with case and surrounding blanks normalized.
+- The plugin's own worlds (`boss_dimension`, `drakes_bosses`) stay allowed even behind an explicit allowlist.
+
+### `commands/CommandPermissionTest` — `/msc` permission rule
+- Holding `commands.permission` is enough to run `/msc`, with or without OP.
+- `commands.op-only: true` keeps operators working when they lack the node; setting it to `false` means only the node counts.
+- A plain player with no node and no OP is denied.
+
+### `entities/HeadSlimeImmunityTest` — Head Slime gelatin immunity
+- The immunity window is a deadline per player, so eating a second gelatin **extends** it instead of the older scheduled removal ending it early, and nothing outlives the window after a logout.
+- An expired window is dropped on access, and `clearAllImmunity()` is called from `onDisable`.
+
 ## 🗃️ Where they run
 
 Tests execute during Maven's **`test` phase** (Surefire). They need no server or network: just the JDK 21 and the dependencies declared in `pom.xml`.
+
+They also run in CI: `.github/workflows/verify.yml` runs `mvn verify` on every push to `main` and on every pull request. Publishing to Modrinth (`modrinth-publish.yml`) waits for that job, because its own build step uses `-DskipTests`.
 
 > When touching health/boss logic, ritual structures, or the NIX/Kinger kinematic models, run the full suite with `mvn test` to make sure you are not introducing regressions.

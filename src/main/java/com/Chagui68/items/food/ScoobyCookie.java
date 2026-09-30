@@ -1,6 +1,7 @@
 package com.Chagui68.items.food;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -10,6 +11,8 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.ArrayList;
 import java.util.List;
 
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+
 public class ScoobyCookie {
 
     public static final NamespacedKey COOKIE_KEY = new NamespacedKey("multiversecreatures", "msc_scooby_cookie");
@@ -18,25 +21,25 @@ public class ScoobyCookie {
     static {
         ItemMeta meta = SCOOBY_COOKIE.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.GOLD + "" + ChatColor.BOLD + "Scooby Cookie");
+            meta.displayName(MscText.title(GOLD, "Scooby Cookie"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A mysterious cookie pulsating");
-            lore.add(ChatColor.GRAY + "with otherworldly energy.");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Effect on Consume:");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Resistance VI " + ChatColor.DARK_GRAY + "(10 seconds)");
-            lore.add("");
-            lore.add(ChatColor.AQUA + "Food: " + ChatColor.WHITE + "2 " + ChatColor.AQUA + "Saturation: " + ChatColor.WHITE + "0.4");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"Scooby-Dooby-Doo...\"");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"This tastes like courage!\"");
-            lore.add("");
-            lore.add(ChatColor.GOLD + "✦ " + ChatColor.YELLOW + "Special" + ChatColor.GOLD + " ✦");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Mystery Inc." + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A mysterious cookie pulsating"));
+            lore.add(MscText.line(GRAY, "with otherworldly energy."));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Effect on Consume:"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Resistance VI ", DARK_GRAY, "(10 seconds)"));
+            lore.add(MscText.blank());
+            lore.add(MscText.rich(AQUA, "Food: ", WHITE, "2 ", AQUA, "Saturation: ", WHITE, "0.4"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"Scooby-Dooby-Doo...\""));
+            lore.add(MscText.quote(DARK_PURPLE, "\"This tastes like courage!\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.rich(GOLD, "✦ ", YELLOW, "Special", GOLD, " ✦"));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Mystery Inc."));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(COOKIE_KEY, PersistentDataType.INTEGER, 1);
             SCOOBY_COOKIE.setItemMeta(meta);
         }

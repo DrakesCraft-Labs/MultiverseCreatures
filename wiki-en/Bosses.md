@@ -31,6 +31,7 @@ A gigantic 7.5×-scale animated ArmorStand. The climax of the plugin.
 - **Ground mode** chooses between HealingCircle (<40% HP, 25%), FlyUp (15%), ShieldSeal (35%), GroundAttack (55%), HoverBarrage (default).
 - **Flying mode** executes random aerial attacks every 80 ticks; lands via AirSlam when ≥10 unique attacks have been performed.
 - **Defense states** (random, only below 50% HP, on ground): **Stone Skin** (×0.5 dmg taken), **Reflect Barrier** (×0.7 dmg + 30% reflect), **Absorb Shield** (100-HP absorber that visually shifts blue → red).
+- **Ground recovery** — a grounded boss only attacks while `isOnGround` is true. If it ends up with no solid block under it (void, water, a hole, a cliff edge), it hovers silently forever. After `ground-recovery-grace-ticks` (40) without ground it teleports to the nearest column with a floor and headroom, preferring the area around its current target and falling back to the world spawn, then resumes attacking with its cooldowns reset.
 
 ### Special mechanics
 
@@ -45,31 +46,32 @@ A gigantic 7.5×-scale animated ArmorStand. The climax of the plugin.
 - **Sky Pentagram** — per-player pentagram seals 30 blocks above, exploding in a column after 80 ticks — `seal-damage` (15) within 6-block radius + knockup.
 - **Shockwave Rings** — 10 expanding rings, ground damage falls off with distance, knockup, FallingBlock debris.
 
-### Attack registry — 33 attacks total
+### Attack registry — 45 attacks total
 
-All attacks are classes extending `BossAttackBase` under `entities/boss/attack/<aerial|ground|ranged>/`, registered in `ArmorStandBoss.initAttacks()` and dispatched polymorphically via `attackRegistry.get(name).execute(instance)`. Trigger any one manually:
+All attacks are classes extending `BossAttackBase` under `entities/boss/attack/<aerial|ground|ranged|defensive>/`, registered in `ArmorStandBoss.initAttacks()` and dispatched polymorphically via `attackRegistry.get(name).execute(instance)`. Trigger any one manually:
 
 ```
 /msc attack <attack-name> [range]
 ```
 
-| Ground (11) | Aerial (13) | Ranged (12) |
-|---|---|---|
-| groundslam | starfall | lancesnipe |
-| groundshatter | aerialrush | meteorstorm |
-| shieldbash | sonicboom | voidbeam |
-| lancestorm | lightningstorm | frostlance |
-| earthpillar | gravitywell | lightningspear |
-| chaingrapple | crossslash | shadowvolley |
-| warstomp | novaburst | chainlightning |
-| armorspikes | darkorb | crystalbarrage |
-| vortexpull | windcutter | arcaneorb |
-| mirrorimage | heavenlyjudgment | voidrift |
-| doombeam | rainoflances | arcanemissiles |
-|  | airslam | spiritbeam |
-|  | hoverbarrage (crossbarrage) |  |
+| Ground (14) | Aerial (13) | Ranged (12) | Defensive (6) |
+|---|---|---|---|
+| groundslam | starfall | lancesnipe | stoneskin |
+| groundshatter | aerialrush | meteorstorm | reflectbarrier |
+| shieldbash | sonicboom | voidbeam | absorbshield |
+| lancestorm | lightningstorm | frostlance | shieldseal |
+| earthpillar | gravitywell | lightningspear | healingcircle |
+| chaingrapple | crossslash | shadowvolley | trianglecall |
+| warstomp | novaburst | chainlightning |  |
+| armorspikes | darkorb | crystalbarrage |  |
+| vortexpull | windcutter | arcaneorb |  |
+| mirrorimage | heavenlyjudgment | voidrift |  |
+| doombeam | rainoflances | arcanemissiles |  |
+| lanceflurry | airslam | spiritbeam |  |
+| whirlwindslash | hoverbarrage (crossbarrage) |  |  |
+| executionsweep |  |  |  |
 
-Additional `/msc attack` targets for **mechanics & phase transitions**: `trianglecall`, `flyup`, `land`, `shieldseal`, `heal`, `reset`, `phaserage`, `phasebarrier`, `phasestorm`, `phasedespair`, `stoneskin`, `reflectbarrier`, `absorbshield`.
+Additional `/msc attack` targets for **mechanics & phase transitions**: `flyup`, `land`, `heal`, `reset`, `phaserage`, `phasebarrier`, `phasestorm`, `phasedespair`.
 
 ### Drops
 

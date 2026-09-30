@@ -1,6 +1,8 @@
 package com.Chagui68.items.weapons.magic;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -25,28 +27,28 @@ public class SkyfireTalisman {
     static {
         ItemMeta meta = SKYFIRE_TALISMAN.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "Skyfire Talisman");
+            meta.displayName(MscText.title(YELLOW, "Skyfire Talisman"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "An amulet of weathered copper, humming");
-            lore.add(ChatColor.GRAY + "with the lingering rage of a Storm Caller.");
-            lore.add("");
-            lore.add(ChatColor.AQUA + "Item Ability: " + ChatColor.WHITE + "Skyfire Strike " + ChatColor.GRAY + "(Right-Click Block)");
-            lore.add(ChatColor.GRAY + "  Call down a lightning bolt on the block");
-            lore.add(ChatColor.GRAY + "  you are looking at, up to " + ChatColor.GOLD + "50 blocks" + ChatColor.GRAY + " away.");
-            lore.add(ChatColor.GRAY + "  Enemies within " + ChatColor.GOLD + "3 blocks" + ChatColor.GRAY + " of impact take");
-            lore.add(ChatColor.GRAY + "  " + ChatColor.RED + "8 damage" + ChatColor.GRAY + " and are briefly stunned.");
-            lore.add(ChatColor.GRAY + "  Cooldown: " + ChatColor.GOLD + "10 seconds");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Passive Effect:");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Wielder is immune to lightning damage while held");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"The storm answers,");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "even when the sky is silent.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "An amulet of weathered copper, humming"));
+            lore.add(MscText.line(GRAY, "with the lingering rage of a Storm Caller."));
+            lore.add(MscText.blank());
+            lore.add(MscText.rich(AQUA, "Item Ability: ", WHITE, "Skyfire Strike ", GRAY, "(Right-Click Block)"));
+            lore.add(MscText.line(GRAY, "  Call down a lightning bolt on the block"));
+            lore.add(MscText.rich(GRAY, "  you are looking at, up to ", GOLD, "50 blocks", GRAY, " away."));
+            lore.add(MscText.rich(GRAY, "  Enemies within ", GOLD, "3 blocks", GRAY, " of impact take"));
+            lore.add(MscText.rich(GRAY, "  ", RED, "8 damage", GRAY, " and are briefly stunned."));
+            lore.add(MscText.rich(GRAY, "  Cooldown: ", GOLD, "10 seconds"));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Passive Effect:"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Wielder is immune to lightning damage while held"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"The storm answers,"));
+            lore.add(MscText.quote(DARK_PURPLE, "even when the sky is silent.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Multiverse"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(TALISMAN_KEY, PersistentDataType.INTEGER, 1);
             SKYFIRE_TALISMAN.setItemMeta(meta);
         }

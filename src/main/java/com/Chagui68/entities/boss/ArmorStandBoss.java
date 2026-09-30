@@ -104,6 +104,14 @@ public class ArmorStandBoss implements Listener, BossHost {
     private static final double FLY_HEIGHT = 15.0;
     private static final double DIST_CLOSE = 5.0;
     private static final double DIST_MEDIUM = 15.0;
+    /** How far down the boss scans for a floor before declaring it has none. */
+    private static final double GROUND_SCAN_RANGE = 80.0;
+    /** Default ticks airborne without a floor before teleporting to a grounded spot (~2 s). */
+    private static final int FLOOR_LOST_GRACE_TICKS = 40;
+    /** Default rings of columns probed around the boss when looking for a place to stand. */
+    private static final int GROUND_SEARCH_RADIUS = 12;
+    /** Default minimum ticks between grounding attempts (5 s). */
+    private static final int GROUND_SEARCH_COOLDOWN_TICKS = 100;
 
     private double sealDamage;
     private double hoverBarrageDamage;
@@ -131,6 +139,9 @@ public class ArmorStandBoss implements Listener, BossHost {
     private int groundAttackCooldownVarianceTicks;
     private double phaseTransitionSlamDamage;
     private List<Integer> shieldRetrieveDelays;
+    private int groundRecoveryGraceTicks;
+    private int groundRecoverySearchRadius;
+    private int groundRecoveryCooldownTicks;
 
     public ArmorStandBoss(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -221,6 +232,13 @@ public class ArmorStandBoss implements Listener, BossHost {
         this.hoverBarrageCooldownVarianceTicks = plugin.getConfig().getInt("entities.armor-stand-boss.hover-barrage-cooldown-variance-ticks", 120);
         this.groundAttackCooldownBaseTicks = plugin.getConfig().getInt("entities.armor-stand-boss.ground-attack-cooldown-base-ticks", 40);
         this.groundAttackCooldownVarianceTicks = plugin.getConfig().getInt("entities.armor-stand-boss.ground-attack-cooldown-variance-ticks", 40);
+        // Clamped: a grace of 0 or a cooldown of 0 would run the terrain scan every tick.
+        this.groundRecoveryGraceTicks = Math.max(1, plugin.getConfig().getInt(
+                "entities.armor-stand-boss.ground-recovery-grace-ticks", FLOOR_LOST_GRACE_TICKS));
+        this.groundRecoverySearchRadius = Math.max(0, plugin.getConfig().getInt(
+                "entities.armor-stand-boss.ground-recovery-search-radius", GROUND_SEARCH_RADIUS));
+        this.groundRecoveryCooldownTicks = Math.max(20, plugin.getConfig().getInt(
+                "entities.armor-stand-boss.ground-recovery-cooldown-ticks", GROUND_SEARCH_COOLDOWN_TICKS));
         this.phaseTransitionSlamDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.phase-transition-slam-damage", 10.0);
         List<Integer> delays = plugin.getConfig().getIntegerList("entities.armor-stand-boss.shield-retrieve-delays");
         this.shieldRetrieveDelays = delays.isEmpty() ? List.of(80, 90, 100, 110, 120) : delays;
@@ -641,15 +659,32 @@ public class ArmorStandBoss implements Listener, BossHost {
                     } else if (!isOnGround(stand)) {
                         if (instance.flyTask == null && !instance.hoverBarrageActive) {
                             Location loc = stand.getLocation();
-                            double groundY = getGroundY(loc, 80);
-                            if (loc.getY() - groundY > 0.3) {
-                                loc.setY(Math.max(groundY, loc.getY() - 0.8));
-                                stand.teleport(loc);
-                                stand.getWorld().spawnParticle(Particle.CLOUD, loc, 2, 0.5, 0.1, 0.5, 0.02);
+                            double floorY = BossArena.findFloorY(loc, GROUND_SCAN_RANGE);
+                            if (Double.isNaN(floorY)) {
+                                // No solid block below within range. The convenience getGroundY here
+                                // returned the boss's own Y, so the teleport was a no-op every tick:
+                                // the stand hovered and the ground-attack branch below never ran.
+                                instance.floorLostTicks++;
+                                if (instance.groundSearchCooldown > 0) {
+                                    instance.groundSearchCooldown--;
+                                }
+                                if (instance.floorLostTicks >= groundRecoveryGraceTicks
+                                        && instance.groundSearchCooldown <= 0) {
+                                    groundBoss(instance);
+                                }
                             } else {
-                                loc.setY(groundY);
-                                stand.teleport(loc);
+                                instance.floorLostTicks = 0;
+                                if (loc.getY() - floorY > 0.3) {
+                                    loc.setY(Math.max(floorY, loc.getY() - 0.8));
+                                    stand.teleport(loc);
+                                    stand.getWorld().spawnParticle(Particle.CLOUD, loc, 2, 0.5, 0.1, 0.5, 0.02);
+                                } else {
+                                    loc.setY(floorY);
+                                    stand.teleport(loc);
+                                }
                             }
+                        } else {
+                            instance.floorLostTicks = 0;
                         }
                     } else if (instance.shieldState == ShieldState.NORMAL) {
                         instance.hoverBarrageCooldown++;
@@ -742,6 +777,61 @@ public class ArmorStandBoss implements Listener, BossHost {
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L);
+    }
+
+    /**
+     * Last-resort recovery for a grounded boss that ended up with no floor under it.
+     *
+     * Looks for the nearest column with solid ground and headroom, preferring the area around the
+     * current target so the fight continues where the players are, then the world spawn. Cancels
+     * any flight state and resets the attack cooldowns so combat resumes immediately instead of
+     * waiting out timers that only advanced while the boss was idling.
+     */
+    private void groundBoss(BossInstance instance) {
+        BossPuppet stand = instance.stand;
+        if (stand.isDead() || !stand.isValid()) return;
+
+        Location current = stand.getLocation();
+        World world = stand.getWorld();
+        instance.floorLostTicks = 0;
+        instance.groundSearchCooldown = groundRecoveryCooldownTicks;
+
+        Location destination = BossArena.findGroundRestingPlace(
+                current, groundRecoverySearchRadius, GROUND_SCAN_RANGE);
+
+        if (destination == null) {
+            Player target = detectTarget(stand);
+            if (target != null) {
+                destination = BossArena.findGroundRestingPlace(
+                        target.getLocation(), groundRecoverySearchRadius, GROUND_SCAN_RANGE);
+            }
+        }
+        if (destination == null) {
+            Location spawn = world.getSpawnLocation();
+            destination = BossArena.findGroundRestingPlace(
+                    spawn, groundRecoverySearchRadius, GROUND_SCAN_RANGE);
+            if (destination == null) {
+                destination = spawn;
+            }
+        }
+
+        if (instance.flyTask != null) {
+            instance.flyTask.cancel();
+            instance.flyTask = null;
+        }
+        instance.isFlying = false;
+        instance.flyingTimer = 0;
+        instance.airStuckTicks = 0;
+        instance.groundAttackCooldown = 0;
+        instance.hoverBarrageCooldown = 0;
+
+        world.spawnParticle(Particle.CLOUD, current, 30, 1.5, 1.5, 1.5, 0.1);
+        world.playSound(current, Sound.ENTITY_ENDERMAN_TELEPORT, 1.2f, 0.6f);
+        stand.teleport(destination);
+        world.spawnParticle(Particle.CLOUD, destination, 30, 1.5, 1.5, 1.5, 0.1);
+        world.playSound(destination, Sound.ENTITY_ENDER_DRAGON_FLAP, 1.2f, 0.7f);
+        resetBossPose(instance);
+        plugin.getLogger().fine("[ArmorStandBoss] no floor below the boss; relocated to " + destination);
     }
 
     public void resetBossPose(BossInstance instance) {

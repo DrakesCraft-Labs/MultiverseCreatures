@@ -1,0 +1,54 @@
+# Verificacion obligatoria del addon.
+#
+# QUE HACE
+#   Compila el proyecto y ejecuta la suite de tests en cada push a main y en cada PR.
+#
+# POR QUE EXISTE
+#   El workflow de publicacion a Modrinth compila con `-DskipTests`, asi que hasta ahora nada
+#   ejecutaba los tests en CI: un cambio podia llegar a main (y publicarse) sin que la suite
+#   hubiera corrido nunca. Este job es el que convierte los tests en una garantia real.
+name: Verificar
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - '.github/workflows/verify.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compilar-y-testear:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Compilar y ejecutar los tests
+        run: mvn -B -ntp verify
+
+      - name: Guardar el informe de tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: ignore

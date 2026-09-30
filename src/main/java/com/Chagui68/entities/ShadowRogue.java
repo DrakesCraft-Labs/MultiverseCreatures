@@ -3,6 +3,7 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ShadowCloak;
 import com.Chagui68.utils.MscEntityUtils;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
@@ -87,7 +88,7 @@ public class ShadowRogue implements Listener {
             if (meta != null) {
                 meta.addEnchant(Enchantment.SHARPNESS, 4, true);
                 meta.addEnchant(Enchantment.KNOCKBACK, 1, true);
-                meta.setItemName("Shadow Blade");
+                meta.itemName(Component.text("Shadow Blade"));
                 sword.setItemMeta(meta);
             }
             eq.setItemInMainHand(sword);

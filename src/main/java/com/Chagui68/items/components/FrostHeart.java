@@ -1,7 +1,8 @@
 package com.Chagui68.items.components;
 
 import com.Chagui68.utils.ItemBuilder;
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -10,17 +11,17 @@ public class FrostHeart {
 
     public static final NamespacedKey KEY = new NamespacedKey("multiversecreatures", "msc_frost_heart");
     public static final ItemStack FROST_HEART = ItemBuilder.of(Material.BLUE_ICE)
-            .name(ChatColor.AQUA + "" + ChatColor.BOLD + "Frost Heart")
+            .name(MscText.title(AQUA, "Frost Heart"))
             .lore(
-                    ChatColor.GRAY + "A frozen core that never melts,",
-                    ChatColor.GRAY + "shattered from the chest of a Frost Golem.",
-                    "",
-                    ChatColor.WHITE + "Crafting Ingredient",
-                    "",
-                    ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"It beats once a century,",
-                    ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "and winter follows.\"",
-                    "",
-                    ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦"
+                    MscText.line(GRAY, "A frozen core that never melts,"),
+                    MscText.line(GRAY, "shattered from the chest of a Frost Golem."),
+                    MscText.blank(),
+                    MscText.line(WHITE, "Crafting Ingredient"),
+                    MscText.blank(),
+                    MscText.quote(DARK_PURPLE, "\"It beats once a century,"),
+                    MscText.quote(DARK_PURPLE, "and winter follows.\""),
+                    MscText.blank(),
+                    MscText.footer("Multiverse")
             )
             .tagged(KEY)
             .build();

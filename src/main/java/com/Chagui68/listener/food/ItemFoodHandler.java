@@ -3,14 +3,12 @@ package com.Chagui68.listener.food;
 import com.Chagui68.items.food.HeadSlimeGelatin;
 import com.Chagui68.items.food.ScoobyCookie;
 import com.Chagui68.entities.HeadSlime;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -18,9 +16,11 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.Material;
 
 public class ItemFoodHandler implements Listener {
+
+    /** How long a gelatin keeps Head Slimes off the player (10 s). */
+    private static final long GELATIN_IMMUNITY_TICKS = 200L;
 
     private final Plugin plugin;
 
@@ -54,13 +54,11 @@ public class ItemFoodHandler implements Listener {
 
         event.setCancelled(true);
         Player player = event.getPlayer();
-        HeadSlime.immunePlayers.add(player.getUniqueId());
+        // Refreshing window: no scheduled removal, so a second gelatin extends the first instead
+        // of the older timer ending it early.
+        HeadSlime.grantImmunity(player.getUniqueId(), GELATIN_IMMUNITY_TICKS);
 
         item.setAmount(item.getAmount() - 1);
         player.updateInventory();
-
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            HeadSlime.immunePlayers.remove(player.getUniqueId());
-        }, 200L);
     }
 }

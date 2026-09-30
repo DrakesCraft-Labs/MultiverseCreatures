@@ -1,6 +1,7 @@
 package com.Chagui68.music;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -11,6 +12,8 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 /**
  * A custom music disc. Each disc is bound to one NBS song (stored in the
@@ -28,11 +31,11 @@ public final class MusicDisc {
         String title = music.getSongTitle(songKey);
         ItemStack disc = new ItemStack(Material.MUSIC_DISC_13);
         ItemMeta meta = disc.getItemMeta();
-        meta.setDisplayName(ChatColor.AQUA + "Music Disc" + ChatColor.WHITE + " - " + title);
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.GRAY + "Song: " + title);
-        lore.add(ChatColor.DARK_GRAY + "Jukebox use only.");
-        meta.setLore(lore);
+        meta.displayName(MscText.rich(AQUA, "Music Disc", WHITE, " - " + title));
+        List<Component> lore = new ArrayList<>();
+        lore.add(MscText.line(GRAY, "Song: " + title));
+        lore.add(MscText.line(DARK_GRAY, "Jukebox use only."));
+        meta.lore(lore);
         meta.getPersistentDataContainer().set(SONG_KEY, PersistentDataType.STRING, songKey.toLowerCase());
         disc.setItemMeta(meta);
         disc.unsetData(DataComponentTypes.JUKEBOX_PLAYABLE);

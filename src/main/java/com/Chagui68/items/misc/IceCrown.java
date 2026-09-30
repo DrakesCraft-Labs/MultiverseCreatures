@@ -1,6 +1,8 @@
 package com.Chagui68.items.misc;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -18,21 +20,21 @@ public class IceCrown {
     static {
         ItemMeta meta = ICE_CROWN.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.AQUA + "" + ChatColor.BOLD + "Ice King's Crown");
+            meta.displayName(MscText.title(AQUA, "Ice King's Crown"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A crown of eternal winter...");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Abilities:");
-            lore.add(ChatColor.AQUA + "  ▸ " + ChatColor.WHITE + "Right-Click: " + ChatColor.GRAY + "Launch targeted snow/ice block");
-            lore.add(ChatColor.AQUA + "  ▸ " + ChatColor.WHITE + "Shift + Right-Click: " + ChatColor.GRAY + "Blizzard (AoE)");
-            lore.add(ChatColor.AQUA + "  ▸ " + ChatColor.WHITE + "Left-Click: " + ChatColor.GRAY + "Toggle Ice Path");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"Gunter, why you gotta be like that?\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Ooo" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A crown of eternal winter..."));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Abilities:"));
+            lore.add(MscText.rich(AQUA, "  ▸ ", WHITE, "Right-Click: ", GRAY, "Launch targeted snow/ice block"));
+            lore.add(MscText.rich(AQUA, "  ▸ ", WHITE, "Shift + Right-Click: ", GRAY, "Blizzard (AoE)"));
+            lore.add(MscText.rich(AQUA, "  ▸ ", WHITE, "Left-Click: ", GRAY, "Toggle Ice Path"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"Gunter, why you gotta be like that?\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Ooo"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(ICE_CROWN_KEY, PersistentDataType.INTEGER, 1);
             ICE_CROWN.setItemMeta(meta);
         }

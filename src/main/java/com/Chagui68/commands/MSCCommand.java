@@ -96,6 +96,9 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     private final Map<UUID, ArmorStand> playerDummies = new HashMap<>();
     private final Map<UUID, BukkitRunnable> dummyWingTasks = new HashMap<>();
 
+    /** Permission node that gates every /msc subcommand when commands.permission is unset. */
+    private static final String DEFAULT_COMMAND_PERMISSION = "msc.admin";
+
     private static final List<String> SPAWNABLE_ENTITIES = Arrays.asList(
             "armorstand", "merchant", "creeperjr", "headslime", "zombietrap", "tank",
             "duelist", "lancer", "camel", "sniper", "mahoraga", "garou", "shadowrogue", "flameelemental",
@@ -109,9 +112,37 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         this.mobHandler = mobHandler;
     }
 
+    /**
+     * Permission gate for /msc, driven by the config instead of a bare isOp() check.
+     *
+     * {@code commands.permission} is the node required to run the command, and
+     * {@code commands.op-only} keeps server operators working when they lack that node. Both keys
+     * used to be documented in config.yml and read by nobody, while plugin.yml declared a node
+     * that the executor never consulted.
+     */
+    private boolean canUseCommands(CommandSender sender) {
+        return canUseCommands(
+                plugin.getConfig().getBoolean("commands.op-only", true),
+                sender.isOp(),
+                sender.hasPermission(resolveCommandPermission()));
+    }
+
+    /** Pure decision behind {@link #canUseCommands}, kept separate so it can be unit tested. */
+    static boolean canUseCommands(boolean opOnly, boolean senderIsOp, boolean senderHasNode) {
+        if (senderHasNode) return true;
+        return opOnly && senderIsOp;
+    }
+
+    /** The configured permission node, falling back to the one declared in plugin.yml. */
+    private String resolveCommandPermission() {
+        String node = plugin.getConfig().getString("commands.permission", DEFAULT_COMMAND_PERMISSION);
+        if (node == null || node.isBlank()) return DEFAULT_COMMAND_PERMISSION;
+        return node.trim();
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.isOp()) {
+        if (!canUseCommands(sender)) {
             sender.sendMessage(RED + "You do not have permission to use this command.");
             return true;
         }
@@ -1912,7 +1943,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> completions = new ArrayList<>();
 
-        if (!sender.isOp()) {
+        if (!canUseCommands(sender)) {
             return completions;
         }
 

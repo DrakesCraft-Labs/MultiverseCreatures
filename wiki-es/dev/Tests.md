@@ -24,7 +24,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 12 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 18 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -80,8 +80,30 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - **`hitInThisRing` (deduplicación)**: varios alts de partículas adyacentes del mismo anillo caen dentro del radio de impacto del jugador, pero con la deduplicación el jugador recibe daño **exactamente una vez por anillo**.
 - **Throttling de NIX**: parado sincroniza cada 3 ticks (30 de 90); durante el cleave o las cadenas sincroniza a cada tick (90 de 90).
 
+### `entities/boss/BossArenaGroundRecoveryTest` — Recuperación de suelo
+- `findFloorY` devuelve la altura del piso, y **`NaN`** — no la `Y` propia del jefe — cuando el escaneo no alcanza nada. Esa distinción es el arreglo: antes "estar apoyado en el piso" y "no haber nada debajo" eran el mismo valor, así que un jefe en modo suelo dejaba de atacar para siempre.
+- `getGroundY` conserva su comportamiento documentado de devolver la `Y` actual, fijado por test para que los dos comportamientos no vuelvan a confundirse.
+- `ringOffsets` empieza en el origen, contiene cada desplazamiento del radio exactamente una vez y nunca retrocede hacia el origen: la columna usable más cercana debe ganar siempre.
+- `findUsableColumn` prefiere la columna del propio jefe, camina hacia fuera si está vacía, respeta el radio de búsqueda y devuelve `null` cuando no hay nada usable, para que el llamante pueda probar la columna del objetivo y después el spawn del mundo.
+
+### `utils/MscWorldPolicyTest` — Lista blanca de mundos
+- Una lista **vacía (o ausente) significa todos los mundos**, que es lo que documenta `config.yml`. La implementación la trataba como una lista fija de cinco nombres, así que un servidor con un mundo de nombre propio no tenía conversiones — y su recuento periódico borraba cualquier criatura MSC que encontrara ahí.
+- Una lista con contenido restringe, normalizando mayúsculas y espacios sobrantes.
+- Los mundos propios del plugin (`boss_dimension`, `drakes_bosses`) siguen permitidos incluso con una lista explícita.
+
+### `commands/CommandPermissionTest` — Regla de permisos de `/msc`
+- Tener `commands.permission` basta para usar `/msc`, con OP o sin él.
+- `commands.op-only: true` mantiene operativos a los operadores que no tienen el nodo; `false` hace que solo cuente el nodo.
+- Un jugador normal sin nodo y sin OP queda rechazado.
+
+### `entities/HeadSlimeImmunityTest` — Inmunidad de la gelatina
+- La ventana de inmunidad es una fecha límite por jugador, así que comer una segunda gelatina la **extiende** en vez de que el removal programado anterior la corte antes, y nada sobrevive a la ventana tras un logout.
+- Una ventana expirada se descarta al consultarla, y `clearAllImmunity()` se invoca desde `onDisable`.
+
 ## 🗃️ Dónde se corren
 
 Los tests se ejecutan en la **fase `test` de Maven** (Surefire). No requieren servidor ni red: solo el JDK 21 y las dependencias del `pom.xml`.
+
+También corren en CI: `.github/workflows/verify.yml` ejecuta `mvn verify` en cada push a `main` y en cada pull request. La publicación a Modrinth (`modrinth-publish.yml`) espera a ese job, porque su propio paso de compilación usa `-DskipTests`.
 
 > Al tocar código relacionado con salud/jefes, estructuras de ritual o el modelo cinemático de NIX/Kinger, ejecuta la suite completa con `mvn test` para asegurarte de no introducir regresiones.

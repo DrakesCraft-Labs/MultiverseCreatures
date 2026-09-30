@@ -1,6 +1,8 @@
 package com.Chagui68.items.weapons.melee;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -26,27 +28,27 @@ public class SoulreapScythe {
     static {
         ItemMeta meta = SOULREAP_SCYTHE.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.BLACK + "" + ChatColor.BOLD + "Soulreap Scythe");
+            meta.displayName(MscText.title(BLACK, "Soulreap Scythe"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A curved void-steel blade humming");
-            lore.add(ChatColor.GRAY + "with the lament of the unreaped.");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Passive Effects:");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Each strike drains " + ChatColor.RED + "4 HP" + ChatColor.GRAY + " and heals the wielder " + ChatColor.GREEN + "2 HP");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Each strike collects a soul");
-            lore.add("");
-            lore.add(ChatColor.AQUA + "Item Ability: " + ChatColor.WHITE + "Reap " + ChatColor.GRAY + "(Passive)");
-            lore.add(ChatColor.GRAY + "  After collecting " + ChatColor.GOLD + "10 souls" + ChatColor.GRAY + ", enter Reap for");
-            lore.add(ChatColor.GRAY + "  " + ChatColor.GOLD + "10 seconds" + ChatColor.GRAY + ": double damage, improved");
-            lore.add(ChatColor.GRAY + "  lifesteal, and aura of gathered souls.");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"Each soul makes the blade heavier,");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "yet the wielder lighter.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A curved void-steel blade humming"));
+            lore.add(MscText.line(GRAY, "with the lament of the unreaped."));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Passive Effects:"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Each strike drains ", RED, "4 HP", GRAY, " and heals the wielder ", GREEN, "2 HP"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Each strike collects a soul"));
+            lore.add(MscText.blank());
+            lore.add(MscText.rich(AQUA, "Item Ability: ", WHITE, "Reap ", GRAY, "(Passive)"));
+            lore.add(MscText.rich(GRAY, "  After collecting ", GOLD, "10 souls", GRAY, ", enter Reap for"));
+            lore.add(MscText.rich(GRAY, "  ", GOLD, "10 seconds", GRAY, ": double damage, improved"));
+            lore.add(MscText.line(GRAY, "  lifesteal, and aura of gathered souls."));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"Each soul makes the blade heavier,"));
+            lore.add(MscText.quote(DARK_PURPLE, "yet the wielder lighter.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Multiverse"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(SCYTHE_KEY, PersistentDataType.INTEGER, 1);
             meta.setUnbreakable(true);
             SOULREAP_SCYTHE.setItemMeta(meta);

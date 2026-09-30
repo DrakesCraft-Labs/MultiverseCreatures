@@ -62,7 +62,57 @@ public class HeadSlime implements Listener {
     private boolean targetEntities;
     private int skeletonBurstCooldown;
     private boolean debug;
-    public static final Set<UUID> immunePlayers = ConcurrentHashMap.newKeySet();
+    /**
+     * Head Slime immunity deadlines in epoch milliseconds, keyed by player.
+     *
+     * A deadline instead of a bare set: eating a second gelatin refreshes the window instead of a
+     * pre-scheduled removal cutting the first one short, and nothing can leave a permanent entry
+     * behind (a player who logs out mid-immunity used to keep the slot until the timer fired).
+     */
+    private static final Map<UUID, Long> immuneUntil = new ConcurrentHashMap<>();
+
+    /** Grants Head Slime immunity for the given number of ticks, refreshing any active window. */
+    public static void grantImmunity(UUID playerId, long ticks) {
+        if (playerId == null) return;
+        immuneUntil.put(playerId, System.currentTimeMillis() + Math.max(0L, ticks) * 50L);
+    }
+
+    /** Removes immunity immediately. */
+    public static void clearImmunity(UUID playerId) {
+        if (playerId != null) immuneUntil.remove(playerId);
+    }
+
+    /** Whether the player is currently immune to Head Slimes. */
+    public static boolean isImmune(UUID playerId) {
+        return isImmune(playerId, System.currentTimeMillis());
+    }
+
+    /** Pure expiry check, kept separate so the rule can be unit tested without a wall clock. */
+    static boolean isImmune(UUID playerId, long now) {
+        if (playerId == null) return false;
+        Long until = immuneUntil.get(playerId);
+        if (until == null) return false;
+        if (now >= until) {
+            immuneUntil.remove(playerId);
+            return false;
+        }
+        return true;
+    }
+
+    /** Drops every immunity window, called when the plugin is disabled. */
+    public static void clearAllImmunity() {
+        immuneUntil.clear();
+    }
+
+    /** Player IDs with a window that has not expired yet, used by the aura particle task. */
+    private static Set<UUID> immunePlayerIds() {
+        long now = System.currentTimeMillis();
+        Set<UUID> active = new HashSet<>();
+        for (UUID id : immuneUntil.keySet()) {
+            if (isImmune(id, now)) active.add(id);
+        }
+        return active;
+    }
     private static final String TAG = "MSC_HeadSlime";
     private static final Set<String> MSC_ENTITY_TAGS = Set.of(
             "MSC_SoulReaper", "MSC_BoneShield", "MSC_ObsidianGuard",
@@ -145,7 +195,7 @@ public class HeadSlime implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                for (UUID id : immunePlayers) {
+                for (UUID id : immunePlayerIds()) {
                     Player p = Bukkit.getPlayer(id);
                     if (p == null || !p.isOnline()) continue;
                     Location loc = p.getLocation().add(0, 1, 0);
@@ -229,7 +279,7 @@ public class HeadSlime implements Listener {
         }
 
         // The player consumed gelatin mid-chase: drop the target and pick another.
-        if (target instanceof Player p && immunePlayers.contains(p.getUniqueId())) {
+        if (target instanceof Player p && isImmune(p.getUniqueId())) {
             inst.targetId = findNearestTarget(slime);
             return;
         }
@@ -262,7 +312,7 @@ public class HeadSlime implements Listener {
                 && target.getPassengers().isEmpty()
                 && !target.isDead()
                 && target.isValid()
-                && (!(target instanceof Player p) || !immunePlayers.contains(p.getUniqueId()));
+                && (!(target instanceof Player p) || !isImmune(p.getUniqueId()));
     }
 
     private void tickAttached(HeadSlimeInstance inst) {
@@ -287,7 +337,7 @@ public class HeadSlime implements Listener {
     private void tickAttachedPlayer(HeadSlimeInstance inst, Player player) {
         Slime slime = inst.slime;
 
-        if (immunePlayers.contains(player.getUniqueId())) {
+        if (isImmune(player.getUniqueId())) {
             detach(inst, player);
             return;
         }
@@ -486,7 +536,7 @@ public class HeadSlime implements Listener {
                     && p.getGameMode() != GameMode.SPECTATOR
                     && !p.isDead()
                     && p.isOnline()
-                    && !immunePlayers.contains(p.getUniqueId());
+                    && !isImmune(p.getUniqueId());
 
             if (!isTarget && targetEntities && entity instanceof Monster) {
                 Set<String> tags = entity.getScoreboardTags();

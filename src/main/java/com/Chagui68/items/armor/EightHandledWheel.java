@@ -1,6 +1,8 @@
 package com.Chagui68.items.armor;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -27,29 +29,29 @@ public class EightHandledWheel {
     static {
         ItemMeta meta = EIGHT_HANDLED_WHEEL.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.WHITE + "" + ChatColor.BOLD + "Eight-Handled Wheel");
+            meta.displayName(MscText.title(WHITE, "Eight-Handled Wheel"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A crown carved from a fragment of the");
-            lore.add(ChatColor.GRAY + "Eight-Handled Wheel that once turned");
-            lore.add(ChatColor.GRAY + "against all harm.");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Passive Effects:");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Holds up to " + ChatColor.GOLD + "8 charges");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Each charge regenerates over " + ChatColor.GOLD + "15 seconds");
-            lore.add("");
-            lore.add(ChatColor.AQUA + "Item Ability: " + ChatColor.WHITE + "Adaptation " + ChatColor.GRAY + "(Passive)");
-            lore.add(ChatColor.GRAY + "  On receiving damage, consume " + ChatColor.GOLD + "1 charge " + ChatColor.GRAY + "to become");
-            lore.add(ChatColor.GRAY + "  immune to that damage type for " + ChatColor.GOLD + "8 seconds" + ChatColor.GRAY + ".");
-            lore.add(ChatColor.GRAY + "  Multiple types in the same tick each spawn");
-            lore.add(ChatColor.GRAY + "  separate immunity effects.");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"That which adapts cannot break,");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "that which breaks cannot return.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A crown carved from a fragment of the"));
+            lore.add(MscText.line(GRAY, "Eight-Handled Wheel that once turned"));
+            lore.add(MscText.line(GRAY, "against all harm."));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Passive Effects:"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Holds up to ", GOLD, "8 charges"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Each charge regenerates over ", GOLD, "15 seconds"));
+            lore.add(MscText.blank());
+            lore.add(MscText.rich(AQUA, "Item Ability: ", WHITE, "Adaptation ", GRAY, "(Passive)"));
+            lore.add(MscText.rich(GRAY, "  On receiving damage, consume ", GOLD, "1 charge ", GRAY, "to become"));
+            lore.add(MscText.rich(GRAY, "  immune to that damage type for ", GOLD, "8 seconds", GRAY, "."));
+            lore.add(MscText.line(GRAY, "  Multiple types in the same tick each spawn"));
+            lore.add(MscText.line(GRAY, "  separate immunity effects."));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"That which adapts cannot break,"));
+            lore.add(MscText.quote(DARK_PURPLE, "that which breaks cannot return.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Multiverse"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(WHEEL_KEY, PersistentDataType.INTEGER, 1);
             meta.setUnbreakable(true);
             EIGHT_HANDLED_WHEEL.setItemMeta(meta);

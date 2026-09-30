@@ -176,7 +176,6 @@ Un yunque portátil imbuido de entropía. No puede crear — solo retorcer lo qu
 | Activa | **Re-forjar** — Click derecho con la Forja en la mano secundaria y el objeto encantado en la mano principal |
 | Efecto | Cada encantamiento existente del objetivo sube **+1 nivel** (máx. 30) |
 | Restricciones | Solo objetos que ya tengan encantamientos · cada objeto solo puede re-forjarse una vez (marca PDC `msc_chaos_reforged`) · consume **1 Orbe del Caos** del inventario |
-| Marca de re-forja | Añade `§4§o⟡ Reforged by Chaos ⟡` al lore del objetivo |
 | Partículas / Sonidos | ENCHANT, BLOCK_ENCHANTMENT_TABLE_USE |
 
 - **Give:** `/msc give chaosforge`

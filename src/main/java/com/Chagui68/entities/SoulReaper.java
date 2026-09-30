@@ -3,6 +3,7 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ReaperEssence;
 import com.Chagui68.utils.MscEntityUtils;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
@@ -90,7 +91,7 @@ public class SoulReaper implements Listener {
             if (meta != null) {
                 meta.addEnchant(Enchantment.SHARPNESS, 5, true);
                 meta.addEnchant(Enchantment.FIRE_ASPECT, 2, true);
-                meta.setItemName("Soul Reaper's Scythe");
+                meta.itemName(Component.text("Soul Reaper's Scythe"));
                 axe.setItemMeta(meta);
             }
             eq.setItemInMainHand(axe);

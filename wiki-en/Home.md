@@ -10,7 +10,7 @@ Welcome to the **MultiverseCreatures** wiki! This is the complete documentation 
 
 A Paper/Purpur/Spigot **1.21+** plugin that adds:
 
-- 1 final boss with 5 phases and 33 attacks
+- 1 final boss with 5 phases and 45 attacks
 - 2 minibosses (Mahoraga, Kinger)
 - 14 themed creatures that replace natural spawns
 - 1 rare Full-Moon military army trap

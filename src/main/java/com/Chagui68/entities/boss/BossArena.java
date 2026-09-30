@@ -6,6 +6,7 @@ import java.util.List;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 
@@ -125,19 +126,171 @@ public final class BossArena {
         p.setVelocity(p.getVelocity().setY(y));
     }
 
-    /** The Y altitude of the first solid block below, or the current Y if none found. */
-    public static double getGroundY(Location loc, double maxScan) {
+    /** Probes one vertical column of blocks. */
+    @FunctionalInterface
+    public interface VerticalProbe {
+        boolean isSolidAt(int y);
+    }
+
+    /** Probes whole columns of terrain, used to find somewhere safe to stand. */
+    @FunctionalInterface
+    public interface ColumnProbe {
+        /** Y of the highest solid block with headroom in this column, or {@link Double#NaN}. */
+        double floorY(int x, int z);
+    }
+
+    /**
+     * The Y altitude of the first solid block below, or {@link Double#NaN} when none was found.
+     *
+     * The NaN is the whole point of this method existing next to {@link #getGroundY}: the
+     * convenience version cannot tell "standing on the floor" apart from "nothing underneath",
+     * and a grounded boss that mistakes the second for the first stops attacking forever.
+     */
+    public static double findFloorY(Location loc, double maxScan) {
+        if (loc == null || loc.getWorld() == null) {
+            return Double.NaN;
+        }
+        World world = loc.getWorld();
+        int x = loc.getBlockX();
+        int z = loc.getBlockZ();
+        return findFloorY(loc.getY(), maxScan, y -> {
+            Block block = world.getBlockAt(x, y, z);
+            return block != null && block.getType().isSolid();
+        });
+    }
+
+    /**
+     * Pure version of {@link #findFloorY(Location, double)}: no server required, so the rule can be
+     * tested directly.
+     */
+    public static double findFloorY(double startY, double maxScan, VerticalProbe probe) {
+        if (probe == null) {
+            return Double.NaN;
+        }
         for (double dy = 1; dy <= maxScan; dy++) {
-            if (loc.clone().subtract(0, dy, 0).getBlock().getType().isSolid()) {
-                return loc.getY() - dy + 1;
+            if (probe.isSolidAt((int) Math.floor(startY - dy))) {
+                return startY - dy + 1;
             }
         }
-        return loc.getY();
+        return Double.NaN;
+    }
+
+    /** The Y altitude of the first solid block below, or the current Y if none found. */
+    public static double getGroundY(Location loc, double maxScan) {
+        double floorY = findFloorY(loc, maxScan);
+        if (Double.isNaN(floorY)) {
+            return loc == null ? 0 : loc.getY();
+        }
+        return floorY;
+    }
+
+    /** Whether a solid block exists below the location within the scan range. */
+    public static boolean hasFloorBelow(Location loc, double maxScan) {
+        return !Double.isNaN(findFloorY(loc, maxScan));
     }
 
     /** Checks whether the entity is standing on a solid block. */
     public static boolean isOnGround(BossPuppet stand) {
         return stand.getLocation().subtract(0, 0.1, 0).getBlock().getType().isSolid();
+    }
+
+    /**
+     * Column offsets ordered by distance from the origin: the origin first, then expanding rings.
+     *
+     * Deterministic order is the contract: a boss looking for a place to stand always picks the
+     * nearest usable column, so the same terrain produces the same landing spot on every run.
+     * Within a ring the offsets are sorted by distance too, otherwise the boss could walk past a
+     * closer column just because it was iterated later.
+     */
+    public static List<int[]> ringOffsets(int maxRadius) {
+        List<int[]> offsets = new ArrayList<>();
+        offsets.add(new int[]{0, 0});
+        for (int radius = 1; radius <= maxRadius; radius++) {
+            int outerSq = radius * radius;
+            int innerSq = (radius - 1) * (radius - 1);
+            List<int[]> ring = new ArrayList<>();
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    int distSq = dx * dx + dz * dz;
+                    if (distSq > innerSq && distSq <= outerSq) {
+                        ring.add(new int[]{dx, dz});
+                    }
+                }
+            }
+            ring.sort((a, b) -> {
+                int byDistance = Integer.compare(a[0] * a[0] + a[1] * a[1], b[0] * b[0] + b[1] * b[1]);
+                if (byDistance != 0) return byDistance;
+                int byX = Integer.compare(a[0], b[0]);
+                return byX != 0 ? byX : Integer.compare(a[1], b[1]);
+            });
+            offsets.addAll(ring);
+        }
+        return offsets;
+    }
+
+    /**
+     * Nearest standing spot with solid ground, for a boss that ended up with no floor under it.
+     *
+     * Probes columns outward from {@code from} and returns the first block that is solid and has
+     * two free blocks above it, so the boss does not land inside terrain. Returns null when no
+     * column within the radius qualifies; the caller decides what to try next (usually the target
+     * column and then the world spawn).
+     */
+    public static Location findGroundRestingPlace(Location from, int horizontalRadius, double maxScan) {
+        if (from == null || from.getWorld() == null) {
+            return null;
+        }
+        World world = from.getWorld();
+        int topY = (int) Math.floor(from.getY());
+        int scan = (int) Math.max(1, maxScan);
+        int[] column = findUsableColumn(from.getBlockX(), from.getBlockZ(), horizontalRadius,
+                (x, z) -> usableFloorY(world, x, z, topY, scan));
+        if (column == null) {
+            return null;
+        }
+        return new Location(world, column[0] + 0.5, column[1] + 1.0, column[2] + 0.5);
+    }
+
+    /**
+     * Pure column search over {@link #ringOffsets}: the first usable column as
+     * {@code {x, floorY, z}}, or null when every probed column is unusable.
+     */
+    public static int[] findUsableColumn(int originX, int originZ, int horizontalRadius, ColumnProbe probe) {
+        if (probe == null) {
+            return null;
+        }
+        for (int[] offset : ringOffsets(horizontalRadius)) {
+            int x = originX + offset[0];
+            int z = originZ + offset[1];
+            double floorY = probe.floorY(x, z);
+            if (!Double.isNaN(floorY)) {
+                return new int[]{x, (int) Math.floor(floorY), z};
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Y of the highest solid block with two free blocks above it in one column, or NaN.
+     *
+     * A solid block without headroom makes the whole column unusable: anything below it is covered
+     * by it, so there is no point scanning deeper.
+     */
+    private static double usableFloorY(World world, int x, int z, int topY, int scan) {
+        for (int y = topY; y > topY - scan; y--) {
+            Block block = world.getBlockAt(x, y, z);
+            if (block == null || !block.getType().isSolid()) {
+                continue;
+            }
+            Block above = world.getBlockAt(x, y + 1, z);
+            Block above2 = world.getBlockAt(x, y + 2, z);
+            if (above != null && above2 != null
+                    && !above.getType().isSolid() && !above2.getType().isSolid()) {
+                return y;
+            }
+            return Double.NaN;
+        }
+        return Double.NaN;
     }
 
     /** Returns the nearest valid player within the boss aggro range, or null. */

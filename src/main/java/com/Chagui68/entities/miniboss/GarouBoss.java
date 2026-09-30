@@ -2,6 +2,8 @@ package com.Chagui68.entities.miniboss;
 
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.utils.MscEntityUtils;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -20,6 +22,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 /**
  * Garou - Hero Hunter and Cosmic Warrior.
@@ -251,10 +255,10 @@ public class GarouBoss implements Listener {
             ItemStack core = new ItemStack(Material.NETHER_STAR);
             var meta = core.getItemMeta();
             if (meta != null) {
-                meta.setDisplayName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Garou Cosmic Core");
-                meta.setLore(List.of(
-                        ChatColor.GRAY + "Fragment of primordial martial arts power.",
-                        ChatColor.LIGHT_PURPLE + "Relic of the DrakesCraft Gods."
+                meta.displayName(MscText.title(DARK_PURPLE, "Garou Cosmic Core"));
+                meta.lore(List.of(
+                        MscText.line(GRAY, "Fragment of primordial martial arts power."),
+                        MscText.line(LIGHT_PURPLE, "Relic of the DrakesCraft Gods.")
                 ));
                 core.setItemMeta(meta);
             }

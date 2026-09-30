@@ -10,7 +10,7 @@ Bienvenido a la wiki de **MultiverseCreatures**! Esta es la documentación compl
 
 Un plugin para servidores **Paper/Purpur/Spigot 1.21+** que añade:
 
-- 1 jefe final con 5 fases y 33 ataques
+- 1 jefe final con 5 fases y 45 ataques
 - 2 minijefes (Mahoraga, Kinger)
 - 14 criaturas temáticas que reemplazan los spawns naturales
 - 1 raro evento de ejército militar en Luna Llena

@@ -70,6 +70,13 @@ public class MobHandler implements Listener {
     private double venomWitchRaidChance;
     private double chaosMageRaidChance;
     private boolean debug;
+    /**
+     * Opt-in cleanup of MSC creatures in worlds outside the allowlist.
+     *
+     * Off by default: it deletes live entities, and it used to run silently every five seconds.
+     * An operator who narrows the allowlist on purpose can turn it on knowingly.
+     */
+    private boolean purgeOutsideAllowlist;
 
     /** Maximum living MSC creatures per world. 0 or negative disables the cap. */
     private int maxAlivePerWorld;
@@ -113,6 +120,7 @@ public class MobHandler implements Listener {
         chaosMageRaidChance = config.getDouble("entities.chaos-mage.raid-spawn-chance", 0.5) * spawnRateMultiplier;
         zombieHorseTrapChance = config.getDouble("entities.zombie-horse-trap.spawn-chance", 0.001);
         debug = config.getBoolean("general.debug", false);
+        purgeOutsideAllowlist = config.getBoolean("general.purge-disallowed-creatures", false);
         if (debug) {
             plugin.getLogger().info("[MobHandler] spawnRateMultiplier=" + spawnRateMultiplier
                     + " warlordRaidChance=" + warlordRaidChance
@@ -224,7 +232,9 @@ public class MobHandler implements Listener {
         for (World world : Bukkit.getWorlds()) {
             try {
                 if (!MscWorldPolicy.isAllowed(plugin, world)) {
-                    purgeDisallowedCreatures(world);
+                    if (purgeOutsideAllowlist) {
+                        purgeDisallowedCreatures(world);
+                    }
                     recuento.remove(world.getName());
                     continue;
                 }

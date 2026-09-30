@@ -3,6 +3,7 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ReinforcedBone;
 import com.Chagui68.utils.MscEntityUtils;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.*;
@@ -86,7 +87,7 @@ public class BoneShield implements Listener {
             ItemMeta shieldMeta = shield.getItemMeta();
             if (shieldMeta != null) {
                 shieldMeta.setUnbreakable(true);
-                shieldMeta.setItemName("Bone Wall");
+                shieldMeta.itemName(Component.text("Bone Wall"));
                 shield.setItemMeta(shieldMeta);
             }
             eq.setItemInOffHand(shield);

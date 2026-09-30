@@ -63,6 +63,15 @@ public class BossInstance {
     public int hoverBarrageTicks = 0;
     public int airStuckTicks = 0;
     public double lastAirY = Double.MAX_VALUE;
+    /**
+     * Ticks spent airborne with no solid block below.
+     *
+     * A grounded boss only attacks while {@code isOnGround} is true. Without this counter the run
+     * would silently stop attacking when the terrain under it disappears (void, water, a hole).
+     */
+    public int floorLostTicks = 0;
+    /** Cooldown between grounding attempts, so the column search cannot run every tick. */
+    public int groundSearchCooldown = 0;
     public final Map<UUID, Location> pentagramCenters = new HashMap<>();
     public final Set<UUID> bossMusicListeners = new HashSet<>();
     public int bossMusicTick = 0;

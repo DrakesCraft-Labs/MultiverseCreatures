@@ -215,6 +215,7 @@ public class MultiverseCreatures extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        HeadSlime.clearAllImmunity();
         if (musicManager != null) {
             musicManager.stopAll();
         }

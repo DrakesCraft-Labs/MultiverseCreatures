@@ -1,7 +1,8 @@
 package com.Chagui68.items.components;
 
 import com.Chagui68.utils.ItemBuilder;
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -10,18 +11,18 @@ public class StarCore {
 
     public static final NamespacedKey STAR_CORE_KEY = new NamespacedKey("multiversecreatures", "msc_star_core");
     public static final ItemStack STAR_CORE = ItemBuilder.of(Material.NETHER_STAR)
-            .name(ChatColor.YELLOW + "" + ChatColor.BOLD + "Star Core")
+            .name(MscText.title(YELLOW, "Star Core"))
             .lore(
-                    ChatColor.GRAY + "The strongest of this world, mixed with",
-                    ChatColor.GRAY + "the strongest of another, forged around",
-                    ChatColor.GRAY + "the heart of a superior entity.",
-                    "",
-                    ChatColor.WHITE + "Crafting Ingredient",
-                    "",
-                    ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "The heart of a fallen star,",
-                    ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "beating with ancient power.",
-                    "",
-                    ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦"
+                    MscText.line(GRAY, "The strongest of this world, mixed with"),
+                    MscText.line(GRAY, "the strongest of another, forged around"),
+                    MscText.line(GRAY, "the heart of a superior entity."),
+                    MscText.blank(),
+                    MscText.line(WHITE, "Crafting Ingredient"),
+                    MscText.blank(),
+                    MscText.quote(DARK_PURPLE, "The heart of a fallen star,"),
+                    MscText.quote(DARK_PURPLE, "beating with ancient power."),
+                    MscText.blank(),
+                    MscText.footer("Multiverse")
             )
             .tagged(STAR_CORE_KEY)
             .build();

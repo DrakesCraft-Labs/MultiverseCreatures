@@ -1,6 +1,8 @@
 package com.Chagui68.items.armor;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
@@ -36,24 +38,24 @@ public class ObsidianBastion {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_GRAY + "" + ChatColor.BOLD + "Obsidian Bastion " + pieceName);
+            meta.displayName(MscText.title(DARK_GRAY, "Obsidian Bastion " + pieceName));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "Forged from obsidian stripped of an");
-            lore.add(ChatColor.GRAY + "Obsidian Guard. Heavy. Nigh-unbreakable.");
-            lore.add("");
-            lore.add(ChatColor.AQUA + "Set Bonus (full set):");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "+" + ChatColor.GREEN + "40% Max Health");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Full " + ChatColor.BLUE + "Knockback Resistance");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Immunity to fire and lava");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Movement Speed " + ChatColor.RED + "-20%");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"Blacker than night,");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "harder than resolve.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "Forged from obsidian stripped of an"));
+            lore.add(MscText.line(GRAY, "Obsidian Guard. Heavy. Nigh-unbreakable."));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(AQUA, "Set Bonus (full set):"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "+", GREEN, "40% Max Health"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Full ", BLUE, "Knockback Resistance"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Immunity to fire and lava"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Movement Speed ", RED, "-20%"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"Blacker than night,"));
+            lore.add(MscText.quote(DARK_PURPLE, "harder than resolve.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Multiverse"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, 1);
             meta.setUnbreakable(true);
             meta.addEnchant(Enchantment.PROTECTION, 4, true);

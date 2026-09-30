@@ -1,7 +1,8 @@
 package com.Chagui68.items.components;
 
 import com.Chagui68.utils.ItemBuilder;
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -10,18 +11,18 @@ public class ChaosFragment {
 
     public static final NamespacedKey CHAOS_FRAGMENT_KEY = new NamespacedKey("multiversecreatures", "msc_chaos_fragment");
     public static final ItemStack CHAOS_FRAGMENT = ItemBuilder.of(Material.AMETHYST_SHARD)
-            .name(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Chaos Fragment")
+            .name(MscText.title(LIGHT_PURPLE, "Chaos Fragment"))
             .lore(
-                    ChatColor.GRAY + "Crystallized shards of compressed chaos,",
-                    ChatColor.GRAY + "far more potent than the dust",
-                    ChatColor.GRAY + "they were born from.",
-                    "",
-                    ChatColor.WHITE + "Crafting Ingredient",
-                    "",
-                    ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "Every fragment",
-                    ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "screams in a single voice.",
-                    "",
-                    ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦"
+                    MscText.line(GRAY, "Crystallized shards of compressed chaos,"),
+                    MscText.line(GRAY, "far more potent than the dust"),
+                    MscText.line(GRAY, "they were born from."),
+                    MscText.blank(),
+                    MscText.line(WHITE, "Crafting Ingredient"),
+                    MscText.blank(),
+                    MscText.quote(DARK_PURPLE, "Every fragment"),
+                    MscText.quote(DARK_PURPLE, "screams in a single voice."),
+                    MscText.blank(),
+                    MscText.footer("Multiverse")
             )
             .tagged(CHAOS_FRAGMENT_KEY)
             .build();

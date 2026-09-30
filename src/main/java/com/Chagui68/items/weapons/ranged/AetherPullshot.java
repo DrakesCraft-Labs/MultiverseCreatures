@@ -1,6 +1,8 @@
 package com.Chagui68.items.weapons.ranged;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
@@ -28,26 +30,26 @@ public class AetherPullshot {
     static {
         ItemMeta meta = AETHER_PULLSHOT.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "Aether Pullshot");
+            meta.displayName(MscText.title(DARK_AQUA, "Aether Pullshot"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A trident forged from an Ender");
-            lore.add(ChatColor.GRAY + "Fragment, strung with a leash of");
-            lore.add(ChatColor.GRAY + "threadbare space.");
-            lore.add("");
-            lore.add(ChatColor.AQUA + "Item Ability: " + ChatColor.WHITE + "Aether Pull " + ChatColor.GRAY + "(Right-Click Entity)");
-            lore.add(ChatColor.GRAY + "  Strike a target up to " + ChatColor.GOLD + "40 blocks " + ChatColor.GRAY + "away.");
-            lore.add(ChatColor.GRAY + "  The struck enemy is " + ChatColor.BLUE + "pulled toward you " + ChatColor.GRAY + "over");
-            lore.add(ChatColor.GRAY + "  " + ChatColor.GOLD + "3 seconds" + ChatColor.GRAY + ", taking " + ChatColor.RED + "6 initial damage");
-            lore.add(ChatColor.GRAY + "  and " + ChatColor.RED + "10 damage " + ChatColor.GRAY + "if pulled all the way in.");
-            lore.add(ChatColor.GRAY + "  Cooldown: " + ChatColor.GOLD + "30 seconds");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"A leash not of rope,");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "but of distance denied.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A trident forged from an Ender"));
+            lore.add(MscText.line(GRAY, "Fragment, strung with a leash of"));
+            lore.add(MscText.line(GRAY, "threadbare space."));
+            lore.add(MscText.blank());
+            lore.add(MscText.rich(AQUA, "Item Ability: ", WHITE, "Aether Pull ", GRAY, "(Right-Click Entity)"));
+            lore.add(MscText.rich(GRAY, "  Strike a target up to ", GOLD, "40 blocks ", GRAY, "away."));
+            lore.add(MscText.rich(GRAY, "  The struck enemy is ", BLUE, "pulled toward you ", GRAY, "over"));
+            lore.add(MscText.rich(GRAY, "  ", GOLD, "3 seconds", GRAY, ", taking ", RED, "6 initial damage"));
+            lore.add(MscText.rich(GRAY, "  and ", RED, "10 damage ", GRAY, "if pulled all the way in."));
+            lore.add(MscText.rich(GRAY, "  Cooldown: ", GOLD, "30 seconds"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"A leash not of rope,"));
+            lore.add(MscText.quote(DARK_PURPLE, "but of distance denied.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Multiverse"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(PULLSHOT_KEY, PersistentDataType.INTEGER, 1);
             meta.addEnchant(Enchantment.LOYALTY, 3, true);
             meta.setUnbreakable(true);

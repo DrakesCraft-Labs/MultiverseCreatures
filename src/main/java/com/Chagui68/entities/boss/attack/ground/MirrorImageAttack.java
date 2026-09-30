@@ -5,6 +5,7 @@ import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
 import com.Chagui68.utils.MscEntityUtils;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -92,7 +93,7 @@ public class MirrorImageAttack extends BossAttackBase {
                             ItemMeta sm = sword.getItemMeta();
                             if (sm != null) {
                                 sm.setUnbreakable(true);
-                                sm.setItemName("Mirror Blade");
+                                sm.itemName(Component.text("Mirror Blade"));
                                 sword.setItemMeta(sm);
                             }
                             EntityEquipment eq = mirror.getEquipment();

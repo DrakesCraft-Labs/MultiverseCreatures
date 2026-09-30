@@ -1,6 +1,8 @@
 package com.Chagui68.items.misc;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -18,19 +20,19 @@ public class WirtsLantern {
     static {
         ItemMeta meta = WIRTS_LANTERN.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Wirt's Lantern");
+            meta.displayName(MscText.title(DARK_PURPLE, "Wirt's Lantern"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A lantern that holds a lost soul.");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Passive:");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Repels hostile mobs in a radius");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"The flame knows no winter.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Khand" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A lantern that holds a lost soul."));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Passive:"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Repels hostile mobs in a radius"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"The flame knows no winter.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Khand"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(WIRTS_LANTERN_KEY, PersistentDataType.INTEGER, 1);
             WIRTS_LANTERN.setItemMeta(meta);
         }

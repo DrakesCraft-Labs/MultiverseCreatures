@@ -3,6 +3,7 @@ package com.Chagui68.entities;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ObsidianShard;
 import com.Chagui68.utils.MscEntityUtils;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
@@ -101,7 +102,7 @@ public class ObsidianGuard implements Listener {
             if (meta != null) {
                 meta.addEnchant(Enchantment.SHARPNESS, 3, true);
                 meta.addEnchant(Enchantment.KNOCKBACK, 2, true);
-                meta.setItemName("Obsidian Blade");
+                meta.itemName(Component.text("Obsidian Blade"));
                 sword.setItemMeta(meta);
             }
             eq.setItemInMainHand(sword);

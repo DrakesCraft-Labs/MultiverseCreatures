@@ -14,6 +14,11 @@ updates:
         dependency-type: "development"
         update-types: ["patch", "minor"]
     ignore:
+      # Netty must match the version the server ships. Dependabot treats the 4.1 -> 4.2 jump as a
+      # minor bump, but compiling against classes the runtime does not have only fails at runtime.
+      # Bump it by hand next to the server version.
+      - dependency-name: "io.netty:*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "com.github.drakescraft_labs:*"
       - dependency-name: "io.papermc.paper:paper-api"
       - dependency-name: "org.spigotmc:spigot-api"

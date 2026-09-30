@@ -4,7 +4,9 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.BlocksAttacks;
 import io.papermc.paper.datacomponent.item.blocksattacks.DamageReduction;
 import io.papermc.paper.datacomponent.item.blocksattacks.ItemDamageFunction;
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -34,25 +36,25 @@ public class MarrowAegis {
     static {
         ItemMeta meta = MARROW_AEGIS.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.WHITE + "" + ChatColor.BOLD + "Marrow Aegis");
+            meta.displayName(MscText.title(WHITE, "Marrow Aegis"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A shield carved from reinforced bone,");
-            lore.add(ChatColor.GRAY + "imbued with the marrowguard's resolve.");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Passive Effects:");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Blocking absorbs " + ChatColor.RED + "50% " + ChatColor.GRAY + "of incoming");
-            lore.add(ChatColor.GRAY + "    damage and reflects the " + ChatColor.DARK_RED + "full hit back");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "On a successful block, grants " + ChatColor.GOLD + "Resistance II");
-            lore.add(ChatColor.GRAY + "    and " + ChatColor.GOLD + "Strength I " + ChatColor.GRAY + "for " + ChatColor.GOLD + "7 seconds");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "Effect cooldown: " + ChatColor.GOLD + "15 seconds");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"Death's architecture,");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "preserved in marrow.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A shield carved from reinforced bone,"));
+            lore.add(MscText.line(GRAY, "imbued with the marrowguard's resolve."));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Passive Effects:"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Blocking absorbs ", RED, "50% ", GRAY, "of incoming"));
+            lore.add(MscText.rich(GRAY, "    damage and reflects the ", DARK_RED, "full hit back"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "On a successful block, grants ", GOLD, "Resistance II"));
+            lore.add(MscText.rich(GRAY, "    and ", GOLD, "Strength I ", GRAY, "for ", GOLD, "7 seconds"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Effect cooldown: ", GOLD, "15 seconds"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"Death's architecture,"));
+            lore.add(MscText.quote(DARK_PURPLE, "preserved in marrow.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Multiverse"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(MARROW_KEY, PersistentDataType.INTEGER, 1);
             meta.setUnbreakable(true);
             MARROW_AEGIS.setItemMeta(meta);

@@ -1,6 +1,8 @@
 package com.Chagui68.items.misc;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -18,17 +20,17 @@ public class MilitaryMine {
     static {
         ItemMeta meta = MILITARY_MINE.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.RED + "" + ChatColor.BOLD + "Military Mine");
+            meta.displayName(MscText.title(RED, "Military Mine"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A crafted explosive device");
-            lore.add(ChatColor.GRAY + "used for battlefield traps.");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"One step is all it takes.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Military" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A crafted explosive device"));
+            lore.add(MscText.line(GRAY, "used for battlefield traps."));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"One step is all it takes.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Military"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(MINE_KEY, PersistentDataType.INTEGER, 1);
             MILITARY_MINE.setItemMeta(meta);
         }

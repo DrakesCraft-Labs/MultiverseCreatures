@@ -176,7 +176,6 @@ A portable anvil laced with entropy. It cannot create — only twist what is alr
 | Active | **Reforge** — Right-Click with Forge in off-hand, enchanted item in main hand |
 | Effect | Each existing enchantment on the target rises by **+1 level** (cap 30) |
 | Restrictions | Only items that already have enchantments · each item can only be reforged once (marks `msc_chaos_reforged` PDC) · consumes **1 Chaos Orb** from inventory |
-| Reforge tag | Appends `§4§o⟡ Reforged by Chaos ⟡` to the target's lore |
 | Particles / Sounds | ENCHANT, BLOCK_ENCHANTMENT_TABLE_USE |
 
 - **Give:** `/msc give chaosforge`

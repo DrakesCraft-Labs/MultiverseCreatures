@@ -41,7 +41,9 @@ MultiverseCreatures is a content plugin for **Minecraft 1.21+** that turns a ser
 
 ### ✨ Core Highlights
 
-- **🛡️ One Final Boss** — *THE OBSIDIAN SENTINEL*, a fully animated 5-phase ArmorStand boss with **33 unique attacks** (13 aerial · 11 ground · 12 ranged), boss bar, megalovania music, magic seals, summoned reinforcements, and defensive states.
+- **🛡️ THE OBSIDIAN SENTINEL** — fully animated 5-phase ArmorStand final boss with **45 attacks** (13 aerial · 14 ground · 12 ranged · 6 defensive), boss bar, megalovania music, magic seals, summoned reinforcements, defensive states — and a ground-recovery fallback that keeps it fighting instead of idling when the floor under it disappears.
+- **👑 NIX** — the third boss, with its own invocation ritual, phased fight and private arena.
+- **🤖 JACK STAR** — *The System Architect*: 5 phases, 3 lives, ritual invocation and builder defence.
 - **🧠 Adaptive Bosses** — *Mahoraga* reads your **full inventory every tick** and evolves its stats in real time (Sharpness → Resistance, Protection → Strength, Knockback → knockback immunity, distance → Speed).
 - **🥋 Primordial Martial Bosses** — *Garou [Hero Hunter]* with Water Stream Rock Smashing Fist, cosmic approach blink, counter-attacks, and the *Cosmic Core* relic drop.
 - **⚔️ Legendary Weapons** — *Excalibur*, *Cinder Greatsword*, *Nullshear Edge*, *Soulreap Scythe*, *Aether Pullshot*, *Skyfire Talisman* — each with passive + active abilities, cooldowns, and themed lore.
@@ -61,24 +63,24 @@ MultiverseCreatures is a content plugin for **Minecraft 1.21+** that turns a ser
 
 The project has a complete documentation site built into the repository. It covers every boss, mob, item, command and config knob in detail — all generated from the source code.
 
-**🔗 Browse the full wiki on GitHub:** https://github.com/Chagui68/MultiverseCreatures/tree/main/wiki
+**🔗 Browse the full wiki on GitHub:** https://github.com/Chagui68/MultiverseCreatures/tree/main/wiki-en
 
 | Page | Topic |
 |------|-------|
 | [Home](wiki-en/Home.md) | Overview + featured themes |
-| [Bosses](wiki-en/Bosses.md) | THE OBSIDIAN SENTINEL · Mahoraga |
+| [Bosses](wiki-en/Bosses.md) | THE OBSIDIAN SENTINEL · NIX · Jack Star · Mahoraga · Garou |
 | [Creatures](wiki-en/Creatures.md) | 14 natural-spawn replacement mobs + ZombieHorseTrap army |
 | [Weapons](wiki-en/Weapons.md) | Excalibur, Cinder Greatsword, Nullshear Edge, Soulreap Scythe, Aether Pullshot, Skyfire Talisman, Chaos Forge |
 | [Armor-and-Relics](wiki-en/Armor-and-Relics.md) | Eight-Handled Wheel, Obsidian Bastion set, off-hand relics (Marrow Aegis, Veilwalker Mantle, Frost Heart) |
 | [Items](wiki-en/Items.md) | Ice King's Crown, Mantis Claws, Wirt's Lantern, Military Mine, Scooby Cookie, Head Slime Gelatin |
 | [Components](wiki-en/Components.md) | The 16 mob-drop crafting ingredients + the loot → item chains |
 | [Commands](wiki-en/Commands.md) | Full `/msc` reference (spawn, give, seal, dummy, attack, music, dimtp, cleanstands) |
-| [Architecture](wiki-en/Architecture.md) | Code structure, conventions and how to extend the plugin |
+| [Architecture](wiki-en/dev/Architecture.md) | Code structure, conventions and how to extend the plugin |
 | [Installation](wiki-en/Installation.md) | Step-by-step install, config.yml guide, troubleshooting |
 
 ---
 
-## 🧩 Extending: reusing the 42 boss attacks
+## 🧩 Extending: reusing the 45 boss attacks
 
 The boss attacks live behind a small interface so they are **not tied to one boss**.
 
@@ -93,10 +95,9 @@ public interface BossHost {
 }
 ```
 
-Any boss that implements `BossHost` can reuse the attack classes as they are. **39 of the 42 are
-host-agnostic**; the remaining three reach for something only THE OBSIDIAN SENTINEL has — the
-netherite lance, the shield timings and the sky pentagram — and cast explicitly, with a comment
-saying so.
+Any boss that implements `BossHost` can reuse the attack classes as they are. **All but three are
+host-agnostic**; those three reach for something only THE OBSIDIAN SENTINEL has — the netherite
+lance, the shield timings and the sky pentagram — and cast explicitly, with a comment saying so.
 
 Terrain and player queries live in `BossArena` as stateless helpers, so they can be called from
 anywhere and tested on their own. The "is this player a valid target?" rule (skip dead, creative
@@ -163,7 +164,7 @@ src/main/java/com/Chagui68/
 ├── commands/                     
 ├── entities/
 │   ├── boss/                    
-│   │   ├── attack/{aerial,ground,ranged}/  
+│   │   ├── attack/{aerial,ground,ranged,defensive}/  
 │   │   └── MagicSealListener / BossInstance
 │   ├── miniboss/                
 │   └── handler/               
@@ -177,7 +178,7 @@ src/main/java/com/Chagui68/
 ├── ritual/                       
 └── utils/                      
 
-wiki/                             
+wiki-en/  wiki-es/                 (English / Spanish docs)
 ├── Home.md
 ├── Bosses.md
 ├── Creatures.md
@@ -186,11 +187,12 @@ wiki/
 ├── Items.md
 ├── Components.md
 ├── Commands.md
-├── Architecture.md
-└── Installation.md
+├── Installation.md
+└── dev/Architecture.md
 ```
 
-The `wiki/` folder is **pure Markdown documentation** and is excluded from the Maven build — it lives only on GitHub for reference and is never bundled into the plugin JAR.
+The `wiki-en/` and `wiki-es/` folders are **pure Markdown documentation** and are excluded from the
+Maven build — they live only on GitHub for reference and are never bundled into the plugin JAR.
 
 ---
 
@@ -208,12 +210,11 @@ If you enjoy the plugin, leave a ⭐ on GitHub and a ❤ on [Modrinth](https://m
 
 </div>
 
-## ⚖️ Upstream Attribution & License / Licencia y Créditos
+## ⚖️ License & Credits / Licencia y Créditos
 
-- **Original Project / Upstream**: Slimefun4 Community Addon.
-- **Port & Maintenance**: DrakesCraft Labs team (Compatibility for Paper / Purpur 1.21.11).
-- **License**: GPL-3.0 / MIT.
-- **Source Code**: [GitHub Repository](https://github.com/DrakesCraft-Labs/MultiverseCreatures)
-- **Support & Issues**: [GitHub Issues](https://github.com/DrakesCraft-Labs/MultiverseCreatures/issues) | [Discord](https://discord.gg/rv3vtXZTk7)
+- **Author & Maintainer**: [Chagui68](https://github.com/Chagui68), for the DrakesCraft network.
+- **License**: GPL-3.0 only — see [`LICENSE`](./LICENSE).
+- **Source Code**: [GitHub Repository](https://github.com/Chagui68/MultiverseCreatures)
+- **Support & Issues**: [GitHub Issues](https://github.com/Chagui68/MultiverseCreatures/issues) | [Discord](https://discord.gg/rv3vtXZTk7)
 
-*This project is an open-source derivative work maintained by DrakesCraft Labs under the terms of its original license. All original assets and concepts belong to their respective creators.*
+*All original assets and concepts referenced by this plugin belong to their respective creators.*

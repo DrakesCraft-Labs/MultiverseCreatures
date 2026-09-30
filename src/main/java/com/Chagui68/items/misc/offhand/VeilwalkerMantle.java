@@ -1,6 +1,8 @@
 package com.Chagui68.items.misc.offhand;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -24,27 +26,27 @@ public class VeilwalkerMantle {
     static {
         ItemMeta meta = VEILWALKER_MANTLE.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_GRAY + "" + ChatColor.BOLD + "Veilwalker Mantle");
+            meta.displayName(MscText.title(DARK_GRAY, "Veilwalker Mantle"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A chronomantic pocket-watch torn");
-            lore.add(ChatColor.GRAY + "from the shadow of a Rogue. Its");
-            lore.add(ChatColor.GRAY + "ticking bends both light and time.");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Item Ability: " + ChatColor.AQUA + "Step Through " + ChatColor.GRAY + "(Right-Click Air)");
-            lore.add(ChatColor.GRAY + "  Conceal the wearer for " + ChatColor.GOLD + "10 seconds" + ChatColor.GRAY + ",");
-            lore.add(ChatColor.GRAY + "  granting Invisibility and Speed I.");
-            lore.add(ChatColor.GRAY + "  Cooldown: " + ChatColor.GOLD + "30s");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Passive Effect:");
-            lore.add(ChatColor.YELLOW + "  ▸ " + ChatColor.GRAY + "First strike from stealth deals " + ChatColor.RED + "+50% damage");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"Time stops where I tread,");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "and the world forgets my name.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A chronomantic pocket-watch torn"));
+            lore.add(MscText.line(GRAY, "from the shadow of a Rogue. Its"));
+            lore.add(MscText.line(GRAY, "ticking bends both light and time."));
+            lore.add(MscText.blank());
+            lore.add(MscText.rich(WHITE, "Item Ability: ", AQUA, "Step Through ", GRAY, "(Right-Click Air)"));
+            lore.add(MscText.rich(GRAY, "  Conceal the wearer for ", GOLD, "10 seconds", GRAY, ","));
+            lore.add(MscText.line(GRAY, "  granting Invisibility and Speed I."));
+            lore.add(MscText.rich(GRAY, "  Cooldown: ", GOLD, "30s"));
+            lore.add(MscText.blank());
+            lore.add(MscText.line(WHITE, "Passive Effect:"));
+            lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "First strike from stealth deals ", RED, "+50% damage"));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"Time stops where I tread,"));
+            lore.add(MscText.quote(DARK_PURPLE, "and the world forgets my name.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Multiverse"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(VEIL_KEY, PersistentDataType.INTEGER, 1);
             VEILWALKER_MANTLE.setItemMeta(meta);
         }

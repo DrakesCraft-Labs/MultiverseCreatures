@@ -1,6 +1,8 @@
 package com.Chagui68.items.weapons.magic;
 
-import org.bukkit.ChatColor;
+import com.Chagui68.utils.MscText;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -75,32 +77,32 @@ public class SentinelGrimoire {
     static {
         ItemMeta meta = GRIMOIRE.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "Sentinel Grimoire");
+            meta.displayName(MscText.title(YELLOW, "Sentinel Grimoire"));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "A forbidden tome bound with the");
-            lore.add(ChatColor.GRAY + "leather of a fallen Sentinel.");
-            lore.add(ChatColor.GRAY + "It burns with multiversal power.");
-            lore.add("");
-            lore.add(ChatColor.AQUA + "Spells " + ChatColor.WHITE + "(Right-Click to cast)");
-            lore.add(ChatColor.GRAY + "  1. " + ChatColor.RED + "Blazing Pentagram");
-            lore.add(ChatColor.GRAY + "  2. " + ChatColor.YELLOW + "Lance Rain");
-            lore.add(ChatColor.GRAY + "  3. " + ChatColor.GOLD + "Divine Judgment");
-            lore.add(ChatColor.GRAY + "  4. " + ChatColor.DARK_RED + "Executioner's Mark");
-            lore.add(ChatColor.GRAY + "  5. " + ChatColor.LIGHT_PURPLE + "Singular Vortex");
-            lore.add(ChatColor.GRAY + "  6. " + ChatColor.GOLD + "Earthquake");
-            lore.add(ChatColor.GRAY + "  7. " + ChatColor.AQUA + "Celestial Bulwark");
-            lore.add(ChatColor.GRAY + "  8. " + ChatColor.YELLOW + "Sentinel Aura");
-            lore.add("");
-            lore.add(ChatColor.WHITE + "Shift + Right-Click: " + ChatColor.GRAY + "change spell page");
-            lore.add(ChatColor.GRAY + "The action bar shows the selected page.");
-            lore.add("");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "\"Every universe answers");
-            lore.add(ChatColor.DARK_PURPLE + "" + ChatColor.ITALIC + "to the one who reads.\"");
-            lore.add("");
-            lore.add(ChatColor.DARK_GRAY + "✦ " + ChatColor.GRAY + "Multiverse" + ChatColor.DARK_GRAY + " ✦");
+            List<Component> lore = new ArrayList<>();
+            lore.add(MscText.line(GRAY, "A forbidden tome bound with the"));
+            lore.add(MscText.line(GRAY, "leather of a fallen Sentinel."));
+            lore.add(MscText.line(GRAY, "It burns with multiversal power."));
+            lore.add(MscText.blank());
+            lore.add(MscText.rich(AQUA, "Spells ", WHITE, "(Right-Click to cast)"));
+            lore.add(MscText.rich(GRAY, "  1. ", RED, "Blazing Pentagram"));
+            lore.add(MscText.rich(GRAY, "  2. ", YELLOW, "Lance Rain"));
+            lore.add(MscText.rich(GRAY, "  3. ", GOLD, "Divine Judgment"));
+            lore.add(MscText.rich(GRAY, "  4. ", DARK_RED, "Executioner's Mark"));
+            lore.add(MscText.rich(GRAY, "  5. ", LIGHT_PURPLE, "Singular Vortex"));
+            lore.add(MscText.rich(GRAY, "  6. ", GOLD, "Earthquake"));
+            lore.add(MscText.rich(GRAY, "  7. ", AQUA, "Celestial Bulwark"));
+            lore.add(MscText.rich(GRAY, "  8. ", YELLOW, "Sentinel Aura"));
+            lore.add(MscText.blank());
+            lore.add(MscText.rich(WHITE, "Shift + Right-Click: ", GRAY, "change spell page"));
+            lore.add(MscText.line(GRAY, "The action bar shows the selected page."));
+            lore.add(MscText.blank());
+            lore.add(MscText.quote(DARK_PURPLE, "\"Every universe answers"));
+            lore.add(MscText.quote(DARK_PURPLE, "to the one who reads.\""));
+            lore.add(MscText.blank());
+            lore.add(MscText.footer("Multiverse"));
 
-            meta.setLore(lore);
+            meta.lore(lore);
             meta.getPersistentDataContainer().set(GRIMOIRE_KEY, PersistentDataType.INTEGER, 1);
             GRIMOIRE.setItemMeta(meta);
         }

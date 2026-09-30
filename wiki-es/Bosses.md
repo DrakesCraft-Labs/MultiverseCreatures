@@ -31,6 +31,7 @@ Un ArmorStand animado gigante de escala 7.5×. El clímax del plugin.
 - **Modo suelo** elige entre Círculo de Curación (<40% HP, 25%), Vuelo (15%), Sello de Escudo (35%), Ataque de Suelo (55%), Bombardeo Flotante (por defecto).
 - **Modo vuelo** ejecuta ataques aéreos aleatorios cada 80 ticks; aterriza con AirSlam cuando se han realizado ≥10 ataques únicos.
 - **Estados defensivos** (aleatorios, solo por debajo del 50% de HP, en el suelo): **Piel de Piedra** (×0.5 daño recibido), **Barrera Reflectante** (×0.7 daño + 30% reflejado), **Escudo Absorbente** (absorbedor de 100 HP que visualmente cambia de azul a rojo).
+- **Recuperación de suelo** — un jefe en modo suelo solo ataca mientras `isOnGround` es cierto. Si se queda sin bloque sólido debajo (vacío, agua, un agujero, un borde), flotaba en silencio para siempre. Tras `ground-recovery-grace-ticks` (40) ticks sin suelo se teletransporta a la columna más cercana con piso y espacio libre, prefiriendo la zona de su objetivo actual y recurriendo al spawn del mundo si no encuentra nada, y reanuda el ataque con los cooldowns reiniciados.
 
 ### Mecánicas especiales
 
@@ -45,31 +46,32 @@ Un ArmorStand animado gigante de escala 7.5×. El clímax del plugin.
 - **Pentagrama del Cielo** — sellos de pentagrama por jugador 30 bloques por encima, que explotan en una columna tras 80 ticks — `seal-damage` (15) en un radio de 6 bloques + empuje hacia arriba.
 - **Anillos de Onda Expansiva** — 10 anillos en expansión, daño de suelo que decae con la distancia, empuje hacia arriba, escombros de FallingBlock.
 
-### Registro de ataques — 33 ataques en total
+### Registro de ataques — 45 ataques en total
 
-Todos los ataques son clases que extienden `BossAttackBase` bajo `entities/boss/attack/<aerial|ground|ranged>/`, registrados en `ArmorStandBoss.initAttacks()` y despachados polimórficamente vía `attackRegistry.get(name).execute(instance)`. Activa cualquiera manualmente:
+Todos los ataques son clases que extienden `BossAttackBase` bajo `entities/boss/attack/<aerial|ground|ranged|defensive>/`, registrados en `ArmorStandBoss.initAttacks()` y despachados polimórficamente vía `attackRegistry.get(name).execute(instance)`. Activa cualquiera manualmente:
 
 ```
 /msc attack <nombre-del-ataque> [rango]
 ```
 
-| Suelo (11) | Aéreos (13) | A distancia (12) |
-|---|---|---|
-| groundslam | starfall | lancesnipe |
-| groundshatter | aerialrush | meteorstorm |
-| shieldbash | sonicboom | voidbeam |
-| lancestorm | lightningstorm | frostlance |
-| earthpillar | gravitywell | lightningspear |
-| chaingrapple | crossslash | shadowvolley |
-| warstomp | novaburst | chainlightning |
-| armorspikes | darkorb | crystalbarrage |
-| vortexpull | windcutter | arcaneorb |
-| mirrorimage | heavenlyjudgment | voidrift |
-| doombeam | rainoflances | arcanemissiles |
-|  | airslam | spiritbeam |
-|  | hoverbarrage (crossbarrage) |  |
+| Suelo (14) | Aéreos (13) | A distancia (12) | Defensivos (6) |
+|---|---|---|---|
+| groundslam | starfall | lancesnipe | stoneskin |
+| groundshatter | aerialrush | meteorstorm | reflectbarrier |
+| shieldbash | sonicboom | voidbeam | absorbshield |
+| lancestorm | lightningstorm | frostlance | shieldseal |
+| earthpillar | gravitywell | lightningspear | healingcircle |
+| chaingrapple | crossslash | shadowvolley | trianglecall |
+| warstomp | novaburst | chainlightning |  |
+| armorspikes | darkorb | crystalbarrage |  |
+| vortexpull | windcutter | arcaneorb |  |
+| mirrorimage | heavenlyjudgment | voidrift |  |
+| doombeam | rainoflances | arcanemissiles |  |
+| lanceflurry | airslam | spiritbeam |  |
+| whirlwindslash | hoverbarrage (crossbarrage) |  |  |
+| executionsweep |  |  |  |
 
-Objetivos adicionales de `/msc attack` para **mecánicas y transiciones de fase**: `trianglecall`, `flyup`, `land`, `shieldseal`, `heal`, `reset`, `phaserage`, `phasebarrier`, `phasestorm`, `phasedespair`, `stoneskin`, `reflectbarrier`, `absorbshield`.
+Objetivos adicionales de `/msc attack` para **mecánicas y transiciones de fase**: `flyup`, `land`, `heal`, `reset`, `phaserage`, `phasebarrier`, `phasestorm`, `phasedespair`.
 
 ### Drops
 
