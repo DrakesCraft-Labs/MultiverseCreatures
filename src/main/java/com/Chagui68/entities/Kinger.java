@@ -52,14 +52,20 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 
 public class Kinger implements Listener {
+
+    /**
+     * A rigid limb: every piece in a group revolves around that group's one joint, so a shin follows
+     * its thigh and a boot plate follows its leg instead of each piece swinging from its own anchor.
+     */
+    public enum LimbGroup {
+        HEAD, TORSO_UPPER, TORSO_LOWER, ARM_RIGHT, ARM_LEFT, LEG_RIGHT, LEG_LEFT
+    }
 
     public enum KingerPart {
         BASE_LEFT("StormStormy",
@@ -108,6 +114,22 @@ public class Kinger implements Listener {
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4NTI2OTQ3MTY2NSwKICAicHJvZmlsZUlkIiA6ICIzMzU3MWJiY2UyMDE0MTRiYmNkMDYyMjEyZTI4MjBlMyIsCiAgInByb2ZpbGVOYW1lIiA6ICJUaGFkb21JbmF0b3I0NzgiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjcyMjQ5NDc3ODNlYjNkMjA3ZTZlZjM2M2JiOTAyMmU5ZmYwMWZjNDc5ZDg4NDRjZDQ4MmIwNjc5MWNkNTczYyIKICAgIH0KICB9Cn0=",
                 new float[]{0.2338185397f, 0.0370332185f, 0.0199053226f, 0.4335964318f, -0.035613916f, 0.2360094161f, -0.0132786824f, 1.4631640625f, -0.0333698349f, 0.0154059474f, 0.2325232711f, 0.34375f, 0f, 0f, 0f, 1f});
 
+        /**
+         * The limb this piece belongs to. The head is its own group so it can pitch at a player;
+         * the belt, collar and shoulder ornament ride the trunk; each boot plate rides its leg.
+         */
+        public LimbGroup group() {
+            return switch (this) {
+                case HEAD -> LimbGroup.HEAD;
+                case TORSO_UPPER, NECK, BELT, COLLAR, ORNAMENT_RIGHT -> LimbGroup.TORSO_UPPER;
+                case TORSO_LOWER -> LimbGroup.TORSO_LOWER;
+                case ARM_RIGHT -> LimbGroup.ARM_RIGHT;
+                case ARM_LEFT -> LimbGroup.ARM_LEFT;
+                case LEG_RIGHT_UPPER, LEG_RIGHT_LOWER, BASE_RIGHT -> LimbGroup.LEG_RIGHT;
+                case LEG_LEFT_UPPER, LEG_LEFT_LOWER, BASE_LEFT -> LimbGroup.LEG_LEFT;
+            };
+        }
+
         public final String profileName;
         public final String texture;
         public final float[] matrix;
@@ -137,21 +159,39 @@ public class Kinger implements Listener {
         }
 
         public static final Vector3f CENTER;
+
         static {
-            Vector3f sum = new Vector3f();
-            KingerPart[] parts = values();
-            for (KingerPart p : parts) {
-                sum.x += p.offset.x;
-                sum.z += p.offset.z;
-            }
-            sum.x /= parts.length;
-            sum.z /= parts.length;
-            CENTER = sum;
+            // The torso is the axis the whole suit hangs from: both torso pieces, the four leg pieces
+            // and the head share its x/z to within a millimetre, so centring on it is what puts the
+            // visible body over the invisible armour stand that carries the hitbox. The old average
+            // of all fifteen anchors was dragged 0.03 blocks forward by the arms, and the bounding-box
+            // midpoint 0.08, because both of those sit well in front of the trunk.
+            Vector3f axis = new Vector3f(TORSO_UPPER.offset).add(TORSO_LOWER.offset).mul(0.5f);
+            CENTER = new Vector3f(axis.x, 0f, axis.z);
         }
     }
 
     public static final String TAG = "MSC_Kinger";
     public static final String PART_TAG = "MSC_KingerPart";
+
+    /**
+     * Part ownership, so a reload continues the suit it already has instead of building a second,
+     * overlapping one: every piece carries its own name tag plus the tag of its stand.
+     */
+    static final String PART_OWNER_TAG_PREFIX = "MSC_KingerOwner_";
+
+    /**
+     * Scale of the invisible armour stand that carries the hitbox.
+     *
+     * <p>The suit reaches 0.22 blocks from the torso axis and 1.86 blocks up, so a plain unscaled
+     * armour stand (0.5 wide, 1.975 tall) already covers the whole rest pose; 0.94 is the smallest
+     * scale that would. The old literal 2.0 doubled the box in every direction, so a swing aimed a
+     * block clear of the chess piece still landed on it; 1.0 keeps the hitbox on the body it is
+     * meant to stand for. Pieces that swing outside the box are not unclickable: their damage
+     * routes to the stand through {@link #onEntityDamageByEntity}.
+     */
+    public static final double MODEL_HITBOX_SCALE = 1.0;
+
     private static final String BAR_TITLE = ChatColor.DARK_PURPLE + "Kinger";
     private static final String BULLET_TAG = "MSC_KingerBullet";
 
@@ -211,17 +251,25 @@ public class Kinger implements Listener {
     }
 
     private void reloadExisting() {
-        Set<UUID> validStands = new HashSet<>();
         for (World world : Bukkit.getWorlds()) {
             for (ArmorStand stand : world.getEntitiesByClass(ArmorStand.class)) {
                 if (!stand.getScoreboardTags().contains(TAG)) continue;
-                activeKingers.put(stand.getUniqueId(), new KingerInstance(stand));
-                validStands.add(stand.getUniqueId());
+                KingerInstance inst = new KingerInstance(stand);
+                restorePartDisplays(inst);
+                activeKingers.put(stand.getUniqueId(), inst);
             }
             for (ItemDisplay display : world.getEntitiesByClass(ItemDisplay.class)) {
                 if (!display.getScoreboardTags().contains(PART_TAG)) continue;
+                boolean hasOwner = display.getScoreboardTags().stream()
+                        .anyMatch(tag -> tag.startsWith(PART_OWNER_TAG_PREFIX));
+                // Pieces made by pre-ownership builds cannot be reattached to a stand, so removing
+                // them is the only way to avoid a second suit standing next to the real one.
+                if (!hasOwner) {
+                    display.remove();
+                    continue;
+                }
                 boolean nearStand = false;
-                for (Entity e : display.getNearbyEntities(3, 3, 3)) {
+                for (Entity e : display.getNearbyEntities(4, 4, 4)) {
                     if (e instanceof ArmorStand stand && stand.getScoreboardTags().contains(TAG)) {
                         nearStand = true;
                         break;
@@ -230,6 +278,33 @@ public class Kinger implements Listener {
                 if (!nearStand) display.remove();
             }
         }
+    }
+
+    /**
+     * Reattaches the pieces a previous run already spawned for this stand, so enabling the plugin
+     * over a live Kinger continues his suit instead of building a second one on top of it.
+     */
+    private void restorePartDisplays(KingerInstance inst) {
+        String ownerTag = partOwnerTag(inst.stand.getUniqueId());
+        for (ItemDisplay display : inst.stand.getWorld().getEntitiesByClass(ItemDisplay.class)) {
+            if (!display.getScoreboardTags().contains(PART_TAG)
+                    || !display.getScoreboardTags().contains(ownerTag)) continue;
+            for (KingerPart part : KingerPart.values()) {
+                if (display.getScoreboardTags().contains(partTag(part))) {
+                    inst.partDisplays.put(part, display.getUniqueId());
+                    break;
+                }
+            }
+        }
+    }
+
+    /** Every piece carries its own tag, so an adoption can tell the pieces apart. */
+    static String partTag(KingerPart part) {
+        return PART_TAG + "_" + part.name();
+    }
+
+    static String partOwnerTag(UUID ownerId) {
+        return PART_OWNER_TAG_PREFIX + ownerId.toString().replace("-", "");
     }
 
     private void startTicker() {
@@ -392,44 +467,95 @@ public class Kinger implements Listener {
 
     private void syncDisplays(KingerInstance inst) {
         ArmorStand stand = inst.stand;
+        Location root = standRoot(stand);
         for (KingerPart part : KingerPart.values()) {
             UUID id = inst.partDisplays.get(part);
-            Entity e = (id != null && stand != null) ? stand.getWorld().getEntity(id) : null;
+            Entity e = (id != null) ? root.getWorld().getEntity(id) : null;
             if (e instanceof ItemDisplay display && display.isValid()) {
-                display.teleport(partWorldLocation(stand, part));
+                display.teleport(root);
                 display.setTransformation(buildTransformation(part, inst));
             } else {
-                ItemDisplay display = spawnPart(stand, part);
-                inst.partDisplays.put(part, display.getUniqueId());
+                // A reload with the piece's chunk unloaded hides it from restorePartDisplays;
+                // adopting the piece still tagged for this stand avoids a second, overlapping suit.
+                ItemDisplay adopted = findPartDisplay(inst, part);
+                if (adopted != null) {
+                    inst.partDisplays.put(part, adopted.getUniqueId());
+                } else {
+                    ItemDisplay display = spawnPart(root, part, stand.getUniqueId());
+                    inst.partDisplays.put(part, display.getUniqueId());
+                }
             }
         }
     }
 
+    /** The spot every piece hangs from: the stand's own location, facing the stand's own heading. */
+    private Location standRoot(ArmorStand stand) {
+        Location loc = stand.getLocation().clone();
+        loc.setYaw(stand.getLocation().getYaw() + 180);
+        loc.setPitch(0);
+        return loc;
+    }
+
+    /** Looks for this piece of this boss near the stand, without loading anything new. */
+    private ItemDisplay findPartDisplay(KingerInstance inst, KingerPart part) {
+        Location loc = inst.stand.getLocation();
+        String ownerTag = partOwnerTag(inst.stand.getUniqueId());
+        String ownPartTag = partTag(part);
+        for (Entity e : inst.stand.getWorld().getNearbyEntities(loc, 4.0, 6.0, 4.0)) {
+            if (e instanceof ItemDisplay display
+                    && display.getScoreboardTags().contains(ownerTag)
+                    && display.getScoreboardTags().contains(ownPartTag)) {
+                return display;
+            }
+        }
+        return null;
+    }
+
+    /** The world point one piece's anchor rests at, used to fire the right hand's bullet. */
     private Location partWorldLocation(ArmorStand stand, KingerPart part) {
-        Location base = stand.getLocation().clone();
-        base.setYaw(stand.getLocation().getYaw() + 180);
-        base.setPitch(0);
+        Location base = standRoot(stand);
         double yawRad = Math.toRadians(base.getYaw());
         double cos = Math.cos(yawRad);
         double sin = Math.sin(yawRad);
-        Vector3f off = centered(part.offset);
+        Vector3f off = KingerModel.baseTranslation(part);
         base.add(off.x * cos - off.z * sin, off.y, off.x * sin + off.z * cos);
         return base;
     }
 
-    private ItemDisplay spawnPart(ArmorStand stand, KingerPart part) {
-        ItemStack head = createHead(part.profileName, part.texture);
-        ItemDisplay display = (ItemDisplay) stand.getWorld().spawnEntity(stand.getLocation(), EntityType.ITEM_DISPLAY);
-        display.setItemStack(head);
+    /**
+     * Applies everything a piece needs, so a freshly spawned and an adopted piece end up identical.
+     *
+     * <p>Every interpolation value is zero because the pieces are placed on the stand's exact
+     * position every tick: letting the client smooth a teleport the server already snapped is what
+     * made the suit trail behind the invisible hitbox whenever Kinger walked or attacked.
+     *
+     * <p>Both display dimensions are zero because a display's width and height double as its
+     * bounding box, and a piece with a real box is picked by the client instead of the armour stand:
+     * a swing landing on the visible arm could then pass straight through and feel like a miss.
+     */
+    private void configurePartDisplay(ItemDisplay display, KingerPart part, UUID ownerId) {
+        display.setItemStack(createHead(part.profileName, part.texture));
         display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
         display.setBillboard(Display.Billboard.FIXED);
-        display.setTransformation(toTransformation(part));
+        display.setTransformation(buildTransformation(part, null));
+        display.setTeleportDuration(0);
+        display.setInterpolationDuration(0);
+        display.setInterpolationDelay(0);
         display.setBrightness(new Display.Brightness(15, 15));
+        display.setDisplayWidth(0.0f);
+        display.setDisplayHeight(0.0f);
         display.setInvulnerable(false);
         display.setGravity(false);
         display.setSilent(true);
         display.setPersistent(true);
         display.addScoreboardTag(PART_TAG);
+        display.addScoreboardTag(partTag(part));
+        display.addScoreboardTag(partOwnerTag(ownerId));
+    }
+
+    private ItemDisplay spawnPart(Location root, KingerPart part, UUID ownerId) {
+        ItemDisplay display = (ItemDisplay) root.getWorld().spawnEntity(root, EntityType.ITEM_DISPLAY);
+        configurePartDisplay(display, part, ownerId);
         return display;
     }
 
@@ -454,37 +580,24 @@ public class Kinger implements Listener {
         return head;
     }
 
-    private Transformation toTransformation(KingerPart part) {
-        return new Transformation(new Vector3f(), part.rotation, part.scale, new Quaternionf());
-    }
-
+    /** Builds the transform of one piece: a rigid rotation about its limb's joint. */
     private Transformation buildTransformation(KingerPart part, KingerInstance inst) {
-        Quaternionf anim = computeAnimQuat(part, inst);
-        if (anim.x == 0 && anim.y == 0 && anim.z == 0) {
-            return new Transformation(new Vector3f(), part.rotation, part.scale, new Quaternionf());
-        }
-        Quaternionf left = new Quaternionf(anim).mul(part.rotation);
-        return new Transformation(new Vector3f(), left, part.scale, new Quaternionf());
+        Quaternionf limbRot = (inst != null) ? computeLimbQuat(part.group(), inst) : new Quaternionf();
+        return KingerModel.compose(part, limbRot);
     }
 
-    private Vector3f centered(Vector3f offset) {
-        return new Vector3f(offset.x - KingerPart.CENTER.x, offset.y, offset.z - KingerPart.CENTER.z);
-    }
-
-    private Quaternionf computeAnimQuat(KingerPart part, KingerInstance inst) {
+    private Quaternionf computeLimbQuat(LimbGroup group, KingerInstance inst) {
         Quaternionf q = new Quaternionf();
         float s = inst.animTicks;
         boolean walking = inst.moving;
-        switch (part) {
-            case LEG_RIGHT_UPPER:
-            case LEG_RIGHT_LOWER:
+        switch (group) {
+            case LEG_RIGHT -> {
                 if (walking) q.rotateX((float) (Math.sin(s) * 0.3));
-                break;
-            case LEG_LEFT_UPPER:
-            case LEG_LEFT_LOWER:
+            }
+            case LEG_LEFT -> {
                 if (walking) q.rotateX((float) (Math.sin(s) * -0.3));
-                break;
-            case ARM_RIGHT:
+            }
+            case ARM_RIGHT -> {
                 if (inst.meleeAnim > 0) {
                     float prog = 1f - (float) inst.meleeAnim / meleeAnimTicks;
                     q.rotateX((float) (Math.sin(prog * Math.PI) * -3.0));
@@ -493,8 +606,8 @@ public class Kinger implements Listener {
                 } else if (walking) {
                     q.rotateX((float) (Math.sin(s) * -0.35));
                 }
-                break;
-            case ARM_LEFT:
+            }
+            case ARM_LEFT -> {
                 if (inst.meleeAnim > 0) {
                     float prog = 1f - (float) inst.meleeAnim / meleeAnimTicks;
                     q.rotateX((float) (Math.sin(prog * Math.PI) * 3.0));
@@ -503,12 +616,8 @@ public class Kinger implements Listener {
                 } else if (walking) {
                     q.rotateX((float) (Math.sin(s) * 0.35));
                 }
-                break;
-            case TORSO_UPPER:
-            case TORSO_LOWER:
-            case NECK:
-            case BELT:
-            case COLLAR:
+            }
+            case TORSO_UPPER, TORSO_LOWER -> {
                 if (inst.meleeAnim > 0) {
                     float prog = 1f - (float) inst.meleeAnim / meleeAnimTicks;
                     q.rotateX((float) (Math.sin(prog * Math.PI) * -0.5));
@@ -517,8 +626,8 @@ public class Kinger implements Listener {
                 } else if (walking) {
                     q.rotateX((float) (Math.sin(s) * 0.05));
                 }
-                break;
-            case HEAD:
+            }
+            case HEAD -> {
                 Player target = inst.targetId != null ? Bukkit.getPlayer(inst.targetId) : null;
                 if (inst.meleeAnim > 0) {
                     q.rotateX((float) Math.toRadians(-15));
@@ -533,7 +642,7 @@ public class Kinger implements Listener {
                         q.rotateX((float) Math.toRadians(pitch));
                     }
                 }
-                break;
+            }
         }
         return q;
     }
@@ -561,14 +670,15 @@ public class Kinger implements Listener {
         MscEntityUtils.initVirtualHealth(stand, health);
 
         AttributeInstance scaleAttr = stand.getAttribute(Attribute.SCALE);
-        if (scaleAttr != null) scaleAttr.setBaseValue(2.0);
+        if (scaleAttr != null) scaleAttr.setBaseValue(MODEL_HITBOX_SCALE);
 
         KingerInstance inst = new KingerInstance(stand);
         activeKingers.put(stand.getUniqueId(), inst);
         setupBossBar(inst);
 
+        Location root = standRoot(stand);
         for (KingerPart part : KingerPart.values()) {
-            ItemDisplay display = spawnPart(stand, part);
+            ItemDisplay display = spawnPart(root, part, stand.getUniqueId());
             inst.partDisplays.put(part, display.getUniqueId());
         }
 

@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 39 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 40 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -139,6 +139,13 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 ### `entities/KingerOptimizationAndKinematicsTest` — Modelo de Kinger + optimización
 - **15** partes (spec de Blockbench) con las mismas garantías de integridad de matrices (16 floats, offset/scale/quaternion finitos) y `CENTER` finito.
 - **Throttling de sync de displays**: parado y sin animación sincroniza cada 3 ticks (**30** de 90, ~66% menos); moviéndose o en animación sincroniza **a cada tick** (90 de 90). Esto valida la regla `!isIdle || tickCount % 3 == 0`.
+
+### `entities/KingerModelTest` — Geometría del modelo de Kinger
+- Las quince piezas del traje quedan fijadas contra el **modelo exportado**: cada traslación coincide, el tronco y las piernas comparten un único eje Z, y cada mitad de pierna está apilada sobre su propio eje X, así que una pierna que gira no puede partirse de lado.
+- `CENTER` es el **eje del torso** (el punto medio de las dos piezas del torso) y no la media de las quince anclas ni el punto medio del bbox, que los brazos arrastran 0.03 y 0.08 bloques hacia delante; el tronco, las piernas y la cabeza quedan sobre ese eje, y el recentrado nunca toca una altura.
+- Cada pieza pertenece a un **grupo de extremidad rígido** con una única articulación: la espinilla gira con el muslo en vez de hacerlo sobre su propia rodilla, las piezas de un grupo conservan sus distancias al girar, ninguna se desliza de lado ni se desprende de su articulación, y no hay dos piezas en el mismo sitio.
+- El **test de la hitbox** mantiene `MODEL_HITBOX_SCALE` cubriendo toda la pose de reposo (0.5 de ancho, 1.975 de alto) sin alejarse más de 0.1 de la escala 0.94 que la geometría necesita — el literal `2.0` anterior duplicaba la caja en todas direcciones y se tragaba golpes al aire.
+- La etiqueta de cada pieza es única y lleva su propietario, así que una adopción no puede confundir dos piezas; una guardia de fuentes impide que las piezas vuelvan a retrasarse (`setTeleportDuration`/`setInterpolationDuration`/`setInterpolationDelay`/`setDisplayWidth`/`setDisplayHeight` a cero, configurados en un solo sitio), exige que un recargue **adopte** el traje que ya tiene en vez de crear un segundo superpuesto, y mantiene la animación pasando por `KingerModel.compose` en lugar de una transformación por pieza.
 
 ### `listener/bossdimension/BossDimensionGuardLogicTest` — Guardia de la dimensión del jefe
 - Los manejadores de eventos hacen **short-circuit**: en mundos que no son la `boss_dimension` nunca se evalúa la comprobación de permiso (solo se evalúa dentro del mundo del jefe).

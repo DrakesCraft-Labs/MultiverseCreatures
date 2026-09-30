@@ -25,7 +25,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 39 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 40 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -139,6 +139,13 @@ Covers the health math in `utils/MscEntityUtils`:
 ### `entities/KingerOptimizationAndKinematicsTest` — Kinger model + optimization
 - **15** parts (Blockbench spec) with the same matrix-integrity guarantees (16 floats, finite offset/scale/quaternion) and a finite `CENTER`.
 - **Display sync throttling**: stationary with no animation syncs every 3 ticks (**30** of 90, ~66% reduction); while moving or animating it syncs **every tick** (90 of 90). This validates the `!isIdle || tickCount % 3 == 0` rule.
+
+### `entities/KingerModelTest` — Kinger model geometry
+- The fifteen suit pieces are pinned against the **exported model**: every translation matches, the trunk and the legs share one Z axis, and each half of a leg is stacked on its own X so a swinging leg cannot split sideways.
+- `CENTER` is the **torso axis** (the midpoint of the two torso pieces) instead of the mean of the fifteen anchors or the bounding-box midpoint, which the arms pull 0.03 and 0.08 blocks forward; the trunk, the legs and the head all sit on that axis, and re-centring never touches a height.
+- Every piece belongs to a **rigid limb group** with one joint: the shin swings with the thigh instead of turning on its own knee, the pieces of a group keep their distances while swinging, no piece slides sideways or flies off its joint, and no two pieces share a place.
+- The **hitbox test** keeps `MODEL_HITBOX_SCALE` covering the whole rest pose (0.5 wide, 1.975 tall) while staying within 0.1 of the 0.94 the geometry strictly needs — the old literal `2.0` doubled the box in every direction and swallowed swings at thin air.
+- Every piece's tag is unique and carries its owner, so an adoption cannot mix two pieces up; a source guard keeps the pieces from lagging (`setTeleportDuration`/`setInterpolationDuration`/`setInterpolationDelay`/`setDisplayWidth`/`setDisplayHeight` all zero, configured in one place), requires a reload to **adopt** the suit it already has instead of spawning a second, overlapping one, and keeps the animation going through `KingerModel.compose` rather than a per-piece transform.
 
 ### `listener/bossdimension/BossDimensionGuardLogicTest` — Boss dimension guard
 - Event handlers **short-circuit**: events outside the `boss_dimension` world never evaluate the permission check (it is only evaluated inside the boss world).

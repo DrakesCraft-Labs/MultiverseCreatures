@@ -143,7 +143,7 @@ Atuendo: casco de vidrio blanco + armadura de cuero blanca (irrompible).
 
 ## ♟️ Kinger — Minijefe (The Amazing Digital Circus)
 
-Un rey de ajedrez viviente: un ArmorStand invisible de escala 2.0 vestido con un traje de 15 piezas ItemDisplay (base, piernas, torso, cuello, cinturón, brazos, cabeza y adorno) que camina, pelea y persigue jugadores como una pieza de ajedrez cobrada vida.
+Un rey de ajedrez viviente: un ArmorStand invisible vestido con un traje de 15 piezas ItemDisplay (base, piernas, torso, cuello, cinturón, brazos, cabeza y adorno) que camina, pelea y persigue jugadores como una pieza de ajedrez cobrada vida. El stand no lleva escala — una hitbox normal de 0.5 × 1.975 bloques, ajustada al traje en vez de la doblada anterior — y las piezas se agrupan en extremidades rígidas, así que una pierna gira desde su cadera y la espinilla sigue al muslo en lugar de girar cada pieza sobre su propia ancla.
 
 | Estadística | Valor por defecto |
 |---|---|
@@ -161,11 +161,11 @@ Un rey de ajedrez viviente: un ArmorStand invisible de escala 2.0 vestido con un
 - **Persigue** al jugador más cercano dentro del rango de agresión (camina a `move-speed`, se ancla al suelo) y **mira** al objetivo mientras sigue su inclinación de cabeza.
 - **Cuerpo a cuerpo** (≤3 bloques): ráfaga de partículas púrpuras + humo, `melee-damage` a todos los jugadores dentro del radio cuerpo a cuerpo, con knockback de velocidad 1.3.
 - **A distancia** (>3 y ≤30 bloques): dispara una **ShulkerBullet** desde la mano derecha (`MSC_KingerBullet`) con sonido de disparo de shulker.
-- **Animaciones**: balanceo al caminar, preparación de golpe cuerpo a cuerpo y poses de lanzamiento a distancia en las piezas del traje.
+- **Animaciones**: balanceo al caminar, preparación de golpe cuerpo a cuerpo y poses de lanzamiento a distancia en las piezas del traje. Cada pieza pertenece a un grupo de extremidad rígido que gira alrededor de una única articulación (cadera, hombro, cintura o cuello), así que el traje no se desmonta al moverse.
 
 **Barra de jefe:** barra púrpura "Kinger", siempre actualizada con la salud actual.
 
-**Persistencia:** etiquetado `MSC_Kinger`, por lo que sobrevive a recargas del plugin y se retoma al iniciar.
+**Persistencia:** etiquetado `MSC_Kinger`, por lo que sobrevive a recargas del plugin y se retoma al iniciar — al recargar se vuelven a enganchar las piezas que ya había creado, en vez de construir un segundo cuerpo superpuesto.
 
 **Muerte:** elimina todos los displays del traje y transmite uno de los `kinger.death-messages` temáticos de ajedrez ("checked by the King", "knocked off the board", "lost the game"...).
 

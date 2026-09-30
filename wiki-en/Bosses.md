@@ -143,7 +143,7 @@ Outfit: white stained-glass helmet + white leather armor (unbreakable).
 
 ## ♟️ Kinger — Miniboss (The Amazing Digital Circus)
 
-A living chess king: an invisible 2.0-scale ArmorStand dressed in a 15-piece ItemDisplay suit (base, legs, torso, collar, belt, arms, head and ornament) that walks, fights and tracks players like a chess piece come to life.
+A living chess king: an invisible ArmorStand dressed in a 15-piece ItemDisplay suit (base, legs, torso, collar, belt, arms, head and ornament) that walks, fights and tracks players like a chess piece come to life. The stand is unscaled — a plain 0.5 × 1.975-block hitbox, sized to the suit instead of the old doubled one — and the pieces are grouped into rigid limbs, so a leg swings from its hip and the shin follows the thigh rather than every piece turning on its own anchor.
 
 | Stat | Default |
 |---|---|
@@ -161,11 +161,11 @@ A living chess king: an invisible 2.0-scale ArmorStand dressed in a 15-piece Ite
 - **Chases** the nearest player within aggro range (walks at `move-speed`, snaps to the ground) and **faces** the target while tracking its head pitch.
 - **Melee** (≤3 blocks): purple dust + smoke burst, `melee-damage` to all players within the melee radius, with a 1.3-velocity knockback.
 - **Ranged** (>3 and ≤30 blocks): fires a **ShulkerBullet** from the right hand (`MSC_KingerBullet`) with a shulker shoot sound.
-- **Animations**: walking sway, melee wind-up and ranged cast poses on the suit parts.
+- **Animations**: walking sway, melee wind-up and ranged cast poses on the suit parts. Each piece belongs to a rigid limb group that revolves around one joint (hip, shoulder, waist or neck), so the suit stays in one piece while it moves.
 
 **Boss bar:** purple "Kinger" bar, always updated with current health.
 
-**Persistence:** tagged `MSC_Kinger`, so it survives plugin reloads and is picked up again on startup.
+**Persistence:** tagged `MSC_Kinger`, so it survives plugin reloads and is picked up again on startup — a reload reattaches the suit it already spawned instead of building a second, overlapping body.
 
 **Death:** removes all suit displays and broadcasts one of the chess-themed `kinger.death-messages` ("checked by the King", "knocked off the board", "lost the game"...).
 
