@@ -62,4 +62,33 @@ class MscEntityUtilsHealthTest {
         double result = MscEntityUtils.calculateScaledPhysicalHealth(current, max, physicalMax);
         assertEquals(expected, result, 1e-9);
     }
+
+    @ParameterizedTest(name = "Requested hitbox scale {0} clamps to {1}")
+    @CsvSource({
+            "1.0,   1.0",   // Kinger's stand: a plain invisible suit stand
+            "7.5,   7.5",   // Sentinel: the boss's own scaled body
+            "0.25,  0.25",  // the lower bound itself stays usable
+            "8.0,   8.0",   // the upper bound itself stays usable
+            "0.0,   0.25",  // a zero scale would make the boss unhittable
+            "-3.0,  0.25",  // negative input protection
+            "99.0,  8.0",   // a huge scale would push the model past the render limit
+            "NaN,   1.0",   // a broken config file must fall back to the normal stand
+            "Infinity, 1.0", // an unset value parses as a number but is not usable
+            "-Infinity, 1.0"
+    })
+    @DisplayName("Verify clampHitboxScale keeps every requested scale inside the usable range")
+    void testClampHitboxScale(double requested, double expected) {
+        assertEquals(expected, MscEntityUtils.clampHitboxScale(requested), 1e-9,
+                "A scale outside [" + MscEntityUtils.MIN_HITBOX_SCALE + ", "
+                        + MscEntityUtils.MAX_HITBOX_SCALE + "] must be clamped, not passed through");
+    }
+
+    @Test
+    @DisplayName("Verify the clamped range keeps the shipped boss scales exactly as authored")
+    void testShippedBossScalesSurviveTheClamp() {
+        for (double scale : new double[]{1.0, 1.2, 1.9, 7.5}) {
+            assertEquals(scale, MscEntityUtils.clampHitboxScale(scale), 1e-9,
+                    scale + " is a scale a boss ships with and must not be trimmed by the clamp");
+        }
+    }
 }

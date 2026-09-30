@@ -539,10 +539,23 @@ public class Kinger implements Listener {
         return new DisplaySuit.SuitTags(PART_TAG, partTag(part), partOwnerTag(ownerId));
     }
 
-    /** Builds the transform of one piece: a rigid rotation about its limb's joint. */
+    /**
+     * Builds the transform of one piece: a rigid rotation about its limb's joint and, for a piece
+     * below the knee, the fold of that joint on top of it.
+     */
     private Transformation buildTransformation(KingerPart part, KingerInstance inst) {
         Quaternionf limbRot = (inst != null) ? computeLimbQuat(part.group(), inst) : new Quaternionf();
-        return KingerModel.compose(part, limbRot);
+        Quaternionf lowerRot = (inst != null) ? computeLowerQuat(part, inst) : new Quaternionf();
+        return KingerModel.compose(part, limbRot, lowerRot);
+    }
+
+    /**
+     * The rotation of the segment below a limb's joint. Only a walking limb folds: the knee follows
+     * the step, and a limb holding a pose (a swing, a raised arm) keeps the pose it was given.
+     */
+    private Quaternionf computeLowerQuat(KingerPart part, KingerInstance inst) {
+        if (!inst.moving) return new Quaternionf();
+        return KingerModel.lowerRotation(part, inst.animTicks);
     }
 
     private Quaternionf computeLimbQuat(LimbGroup group, KingerInstance inst) {
@@ -550,11 +563,8 @@ public class Kinger implements Listener {
         float s = inst.animTicks;
         boolean walking = inst.moving;
         switch (group) {
-            case LEG_RIGHT -> {
-                if (walking) q.rotateX((float) (Math.sin(s) * 0.3));
-            }
-            case LEG_LEFT -> {
-                if (walking) q.rotateX((float) (Math.sin(s) * -0.3));
+            case LEG_RIGHT, LEG_LEFT -> {
+                if (walking) q.rotateX(KingerModel.walkSwing(group, s));
             }
             case ARM_RIGHT -> {
                 if (inst.meleeAnim > 0) {
@@ -563,7 +573,7 @@ public class Kinger implements Listener {
                 } else if (inst.rangedAnim > 0) {
                     q.rotateX(3.0f);
                 } else if (walking) {
-                    q.rotateX((float) (Math.sin(s) * -0.35));
+                    q.rotateX(KingerModel.walkSwing(group, s));
                 }
             }
             case ARM_LEFT -> {
@@ -573,7 +583,7 @@ public class Kinger implements Listener {
                 } else if (inst.rangedAnim > 0) {
                     q.rotateX(3.0f);
                 } else if (walking) {
-                    q.rotateX((float) (Math.sin(s) * 0.35));
+                    q.rotateX(KingerModel.walkSwing(group, s));
                 }
             }
             case TORSO_UPPER, TORSO_LOWER -> {

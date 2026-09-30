@@ -9,6 +9,7 @@ Esta página documenta **cómo se prueban** los cambios del plugin y **qué veri
 - **Java 21** — mismo compilador que el código principal.
 - **Headless**: no se arranca un servidor Paper/Purpur. Las clases de Bukkit que se tocan (p. ej. `World`) se simulan con `java.lang.reflect.Proxy` o se usan objetos `Location` con mundo `null` para ejercitar solo la aritmética.
 - **SnakeYAML** (viene con `purpur-api`) parsea `config.yml` y `plugin.yml` en `ConfigFilesGuardTest`, así una indentación inválida falla en la suite y no al arrancar el servidor.
+- El **soporte de tests** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`) es el arnés que comparten las guardias: encuentra el proyecto subiendo desde el directorio de trabajo (una guardia de fuentes leía `src/main/java` desde donde se lanzara Maven, no encontraba nada y pasaba de forma vacua), nombra un archivo por segmentos con un único modo de fallo, y lee la segunda articulación de una extremidad del propio export en vez de fiarse del código que la fija.
 
 Comandos:
 
@@ -25,18 +26,19 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 44 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 47 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - **`calculateSafeHealth`** — Ajusta la salud pedida al límite del servidor (cap de atributo, por defecto 1024 en Paper) evitando `IllegalArgumentException`. Verifica casos de jefes reales: ArmorStandBoss (3200), NIX (450), Frost Golem (200); clampa a mínimo **0.1** (evita muerte instantánea al aparecer) y protege de entradas negativas.
 - **`calculateVirtualProgress`** — Clampa el progreso de la boss bar entre 0.0 y 1.0 (incluye `0/0` = 0).
 - **`calculateScaledPhysicalHealth`** — Convierte la salud **virtual** (p. ej. 3200) a la salud física real almacenada en la entidad (escalada a su máximo físico), con 0 → muerte.
+- **`clampHitboxScale`** — La escala del stand de cada jefe se acota a `0.25`–`8.0`: los bordes siguen siendo usables, `0`, negativos, `NaN` y ambos infinitos caen a un stand normal (`1.0`), un valor enorme se corta en `8.0`, y las cuatro escalas que envían los jefes (`1.0`, `1.2`, `1.9`, `7.5`) pasan intactas.
 
 ### `utils/MscGeometryOverlayTest` — Geometría dibujada en el mundo
 - El overlay de la hitbox se dibuja por las **doce aristas** de la caja: cada arista corre por un único eje, suman cuatro de cada lado y se encuentran en exactamente las ocho esquinas — un contorno al que le falta una arista escondería justo el hueco que la auditoría busca. Una caja degenerada (vacía) también se dibuja en vez de lanzar excepción.
 - Una articulación se coloca en el **mismo marco que usan las piezas del display** (`yaw + 180`): un stand mirando al norte refleja el punto del modelo, un cuarto de vuelta lo lleva al otro eje, y ninguna rotación cambia su altura ni su distancia al stand.
-- Las articulaciones que el comando entrega de verdad (las constantes reales de Kinger, NIX y Jack Star) quedan dentro de un cuerpo: dentro de la altura del stand, cerca del eje del cuerpo y sobre su propio plano.
+- Las articulaciones que el comando entrega de verdad (las constantes reales de Kinger, NIX y Jack Star, **codos y rodillas incluidos**) quedan dentro de un cuerpo: dentro de la altura del stand, cerca del eje del cuerpo y sobre su propio plano.
 
 ### `utils/DisplaySuitTest` — El traje que viste cada jefe
 - Una adopción reconoce una pieza solo cuando coinciden sus **etiquetas de traje, pieza y propietario**: una pieza de otro jefe, otra pieza del mismo traje, o la etiqueta de traje sin las demás nunca se adoptan.
@@ -52,6 +54,11 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Una barra de jefe es un paquete por jugador, no un objeto del mundo, así que la lista de espectadores hay que revisarla: el jugador que **entra más tarde** recibe la barra y al que ya la tenía no se le añade dos veces.
 - El espectador que **se desconecta** o se va a otro mundo deja de verla; una barra limitada por distancia (la de Jack Star) cambia sus espectadores por los jugadores dentro del rango en vez de acumularlos.
 - Una barra, un mundo o una localización ausentes se ignoran en vez de lanzar excepción, para que una barra entregada a medias no pueda romper el ticker.
+
+### `utils/MscLimbTest` — La segunda articulación de una extremidad
+- La articulación entre dos segmentos del export está **a medio camino entre sus centros**, así no hay que suponer el tamaño de ninguna pieza y un reexport mueve la articulación con ella; una extremidad quieta queda exactamente donde la deja el export, segunda articulación incluida.
+- En todo el rango que alcanza un paso, el segmento inferior conserva su distancia exacta a la segunda articulación — no puede desprenderse de la extremidad — y se queda por debajo de esa articulación en vez de plegarse a través del muslo.
+- Una **rodilla** se dobla solo en la mitad trasera del balanceo y un **codo** solo en la delantera, ambos por una fracción documentada del balanceo del padre (`1.5×`, con tope en `1.2` rad ≈ 69°) y siempre en la dirección en la que ya va la extremidad, así la articulación suma al balanceo en vez de adelantarlo o cancelarlo.
 
 ### `ritual/RitualStructureTest` — Ritual de entrada (overworld, 7×7)
 - Centro del ritual en `(3, 0, 3)` con radio 5.
@@ -142,6 +149,7 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - El modelo queda **centrado en la hitbox** (columna y `CENTER.x` a cero) en vez de arrastrar el desplazamiento global en X de la referencia, con la cabeza por encima del torso y este por encima de las piernas, la coronilla cerca de los dos bloques y los pies separados del suelo.
 - Las extremidades izquierda y derecha están espejadas, cada **articulación está del mismo lado que la extremidad que mueve** (una cadera intercambiada hacía girar una pierna sobre la cadera opuesta), y una extremidad que gira conserva su X y nunca se desprende de su articulación.
 - Un barrido demuestra que no hay dos piezas en el mismo sitio, que el cambio de escala escala a la vez traslaciones y escalas de pieza, y que cada pieza cabe dentro de la hitbox del stand.
+- Los dos brazos y las dos piernas se exportaron en dos segmentos, así que el modelo los pliega: cada **codo y rodilla queda donde el export deja el hueco mayor entre los dos segmentos** (la articulación del código se compara con esa otra derivada de forma independiente), solo la mitad inferior de la extremidad sigue esa articulación mientras la superior queda rígida, y **todo el ciclo de caminar cabe dentro de la hitbox del stand**.
 
 ### `entities/boss/NixModelTest` — Geometría del modelo de NIX
 - Las 27 piezas quedan fijadas contra el **modelo exportado**: cada traslación coincide y todo el cuerpo comparte un único eje X, así que ninguna pieza puede desviarse por su cuenta.
@@ -149,6 +157,7 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Las extremidades izquierda y derecha están espejadas, cada **articulación está del mismo lado que la extremidad que mueve** y sobre su propio eje, y una extremidad que gira conserva su X y nunca se desprende de su articulación.
 - Un barrido demuestra que no hay dos piezas en el mismo sitio, y el **test de la hitbox** mantiene `MODEL_HITBOX_SCALE` cubriendo toda la pose de reposo (0.95 de ancho, 3.75 de alto) sin alejarse más de 0.05 de la escala mínima que el modelo necesita — el literal `2.0` anterior dejaba 1.8 bloques de caja vacía sobre la cabeza.
 - Una guardia de fuentes impide que las piezas vuelvan a retrasarse (`setTeleportDuration`/`setInterpolationDuration`/`setDisplayWidth`/`setDisplayHeight` a cero, configurados en un solo sitio) y exige que un recargue **adopte** las piezas que ya tiene en vez de crear un segundo cuerpo superpuesto.
+- Las piezas numeradas **no** están en orden de apilado, así que cada **codo y rodilla se compara con el corte que el export muestra de verdad**: la única pieza `_4` queda por encima de la articulación, las otras cinco se pliegan por debajo, y la articulación está donde está el hueco — la respuesta del código nunca se da por buena. Después, todo el ciclo de caminar, con codos incluidos, tiene que caber dentro de la hitbox del stand.
 
 ### `entities/NixModelKinematicsTest` — Modelo cinemático de NIX (27 partes)
 - El modelo tiene **exactamente 27** partes `ItemDisplay` (export de Blockbench).
@@ -163,8 +172,10 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 ### `entities/KingerModelTest` — Geometría del modelo de Kinger
 - Las quince piezas del traje quedan fijadas contra el **modelo exportado**: cada traslación coincide, el tronco y las piernas comparten un único eje Z, y cada mitad de pierna está apilada sobre su propio eje X, así que una pierna que gira no puede partirse de lado.
 - `CENTER` es el **eje del torso** (el punto medio de las dos piezas del torso) y no la media de las quince anclas ni el punto medio del bbox, que los brazos arrastran 0.03 y 0.08 bloques hacia delante; el tronco, las piernas y la cabeza quedan sobre ese eje, y el recentrado nunca toca una altura.
-- Cada pieza pertenece a un **grupo de extremidad rígido** con una única articulación: la espinilla gira con el muslo en vez de hacerlo sobre su propia rodilla, las piezas de un grupo conservan sus distancias al girar, ninguna se desliza de lado ni se desprende de su articulación, y no hay dos piezas en el mismo sitio.
+- Cada pieza pertenece a un **grupo de extremidad**: las piezas de un grupo conservan sus distancias al girar, ninguna se desliza de lado ni se desprende de su articulación, y no hay dos piezas en el mismo sitio.
+- Una extremidad tiene **dos articulaciones donde el export tiene dos segmentos y una donde no**: la espinilla se pliega en la rodilla que el export deja entre el muslo y la espinilla (comparada con el hueco mayor de la geometría de esa pierna), el muslo y la placa de la bota quedan rígidos, los brazos de una sola pieza de Kinger no exponen ninguna segunda articulación, y un jefe quieto (o cuyo balanceo está en la mitad delantera del paso) no pliega nada.
 - El **test de la hitbox** mantiene `MODEL_HITBOX_SCALE` cubriendo toda la pose de reposo (0.5 de ancho, 1.975 de alto) sin alejarse más de 0.1 de la escala 0.94 que la geometría necesita — el literal `2.0` anterior duplicaba la caja en todas direcciones y se tragaba golpes al aire.
+- Un segundo test de hitbox **recorre toda la forma de caminar**: un paso dobla la rodilla y lleva la espinilla más lejos del eje que la pose de reposo, así que cada pieza se comprueba en un ciclo completo de `walkSwing`. El paso más profundo lleva la espinilla unos cuatro centímetros fuera de la caja de 0.5 del stand, que es el precio documentado de una rodilla que se dobla lo suficiente para verse; ese margen queda fijado para que no crezca sin que se note.
 - La etiqueta de cada pieza es única y lleva su propietario, así que una adopción no puede confundir dos piezas; una guardia de fuentes impide que las piezas vuelvan a retrasarse (`setTeleportDuration`/`setInterpolationDuration`/`setInterpolationDelay`/`setDisplayWidth`/`setDisplayHeight` a cero, configurados en un solo sitio), exige que un recargue **adopte** el traje que ya tiene en vez de crear un segundo superpuesto y que **reconstruya la barra de jefe** de ese jefe (con la salud virtual de la que se lee su progreso), y mantiene la animación pasando por `KingerModel.compose` en lugar de una transformación por pieza.
 
 ### `listener/bossdimension/BossDimensionGuardLogicTest` — Guardia de la dimensión del jefe
@@ -213,6 +224,12 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Los títulos generados de la barra de jefe se afirman **byte a byte** contra los cinco strings que tenía el switch, para las cinco fases por defecto y para una escalera reescalada de tres fases — incluyendo que una fase más allá del final no puede emitir cuadrados negativos.
 - Los colores de la barra siguen a las fases, y una escalera más larga reusa el último color de la paleta en vez de caer a rojo.
 
+### `entities/boss/SentinelHitboxTest` — El propio stand del Centinela de Obsidiana
+- El Centinela no es un traje sobre un stand invisible: **es** el stand escalado, así que un único número es a la vez el tamaño del modelo y la caja que golpean los jugadores: `MODEL_HITBOX_SCALE` queda fijado en `7.5` (un guerrero de unos catorce bloques), dentro del rango que permite el acotado y lo bastante ancho para poder ser golpeado.
+- La escala se lee de `armor-stand-boss.hitbox-scale` y se **acota**, nunca vuelve a ser un literal dentro de `trySpawn` — que el código la fije desde un `7.5` suelto es un fallo del test.
+- Los dos números del pentagrama de llegada (su duración y su radio) son constantes con nombre que la llamada del sello pasa, así el tiempo y el tamaño de la arena no quedan enterrados en un punto de llamada.
+- El stand por el que se golpea la pelea se configura en **exactamente un sitio**: brazos activados, sin placa base, sin gravedad, invulnerable desactivado, persistente, con nombre y etiqueta — se verifica que cada uno aparece una sola vez en el código, porque un segundo camino de spawn que olvidara uno produciría un jefe contra el que no se puede ganar la pelea.
+
 ### `utils/MscTextTest` — Paridad de nombres de items y mobs
 - Cada helper que arma nombres de items, lore, frases de sabor y los pies `✦ … ✦` se serializa de vuelta con `LegacyComponentSerializer.legacySection()` y se compara con el string `ChatColor` exacto al que reemplazó, así la migración no puede mover un espacio, un código de color ni una negrita sin que se note.
 - Cubre los cambios de color a mitad de línea (`rich`), las líneas vacías separadoras (`blank`), los nombres sin color (`plain`) y la validación de argumentos de `rich`.
@@ -226,7 +243,7 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Comprueba que los ajustes visibles para el jugador sigan sanos: los `phase-thresholds` del Centinela descienden dentro de `(0, 1]`, las duraciones de defensa duran al menos un tick, `no-player-despawn-ticks` admite `0`, y cada mob conmutable conserva su flag `enabled`.
 - Un autotest prueba que el escáner de literales reporta los literales con punto fuera de comentarios e ignora los que están dentro.
 - Verifica que `commands.subcommand-permissions` exista como **mapa vacío** por defecto: la puerta documentada no debe desaparecer en silencio, y la config que se envía no debe restringir nada por sorpresa.
-- Verifica que cada jefe vestido envíe **la escala de hitbox que su test de modelo demuestra correcta** (`kinger.hitbox-scale` 1.0, `nix-executioner.hitbox-scale` 1.9, `jackstar-architect.hitbox-scale` 1.2), dentro del rango 0.25–8 al que se acota un valor editado a mano — el ajuste y los tests de geometría deben coincidir de fábrica.
+- Verifica que **todos** los jefes envíen la escala de hitbox que su test de geometría demuestra correcta (`kinger.hitbox-scale` 1.0, `nix-executioner.hitbox-scale` 1.9, `jackstar-architect.hitbox-scale` 1.2, `armor-stand-boss.hitbox-scale` 7.5 — el propio cuerpo del Centinela), dentro del rango 0.25–8 al que se acota un valor editado a mano — el ajuste y los tests de geometría deben coincidir de fábrica.
 
 ### `utils/LegacyNameApiGuardTest` — Guardia de la migración
 - Lee `src/main/java` y falla si algún archivo vuelve a las APIs String deprecadas de nombre (`setDisplayName`, `setLore`, `setItemName`, `setCustomName`, `getDisplayName`, `getCustomName`). Esos métodos siguen compilando y funcionando, así que un item escrito a la vieja usanza solo se notaría como un tooltip sutilmente mal.

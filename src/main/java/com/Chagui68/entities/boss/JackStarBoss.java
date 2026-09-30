@@ -1231,8 +1231,24 @@ public class JackStarBoss implements Listener {
 
     public Transformation buildTransformation(JackPart part, JackInstance inst) {
         Quaternionf limbRot = (inst != null) ? computeLimbQuat(part.group, inst) : new Quaternionf();
+        Quaternionf lowerRot = (inst != null) ? computeLowerQuat(part, inst) : new Quaternionf();
         float currentScale = (inst != null) ? inst.currentScale : 1.0f;
-        return JackModel.compose(part, limbRot, currentScale);
+        return JackModel.compose(part, limbRot, lowerRot, currentScale);
+    }
+
+    /**
+     * The rotation of the segment below a limb's joint. Only a walking limb folds, and never during a
+     * slash: the elbow and knee follow the step, not a pose the boss was put into.
+     */
+    private Quaternionf computeLowerQuat(JackPart part, JackInstance inst) {
+        if (!inst.moving) return new Quaternionf();
+        boolean posing = isArm(part.group) && inst.slashAnimTicks > 0;
+        if (posing) return new Quaternionf();
+        return JackModel.lowerRotation(part, inst.animTicks);
+    }
+
+    private static boolean isArm(LimbGroup group) {
+        return group == LimbGroup.ARM_RIGHT || group == LimbGroup.ARM_LEFT;
     }
 
     private Quaternionf computeLimbQuat(LimbGroup group, JackInstance inst) {
@@ -1241,16 +1257,9 @@ public class JackStarBoss implements Listener {
         boolean walking = inst.moving;
 
         switch (group) {
-            case LEG_RIGHT -> {
+            case LEG_RIGHT, LEG_LEFT -> {
                 if (walking) {
-                    float angle = (float) (Math.sin(s) * 0.32);
-                    q.rotateX(angle);
-                }
-            }
-            case LEG_LEFT -> {
-                if (walking) {
-                    float angle = (float) (Math.sin(s) * -0.32);
-                    q.rotateX(angle);
+                    q.rotateX(JackModel.walkSwing(group, s));
                 }
             }
             case ARM_RIGHT -> {
@@ -1259,7 +1268,7 @@ public class JackStarBoss implements Listener {
                     q.rotateY((float) (-Math.sin(prog * Math.PI) * 1.6));
                     q.rotateZ((float) (Math.sin(prog * Math.PI) * 0.5));
                 } else if (walking) {
-                    q.rotateX((float) (Math.sin(s) * -0.28));
+                    q.rotateX(JackModel.walkSwing(group, s));
                 }
             }
             case ARM_LEFT -> {
@@ -1268,7 +1277,7 @@ public class JackStarBoss implements Listener {
                     q.rotateY((float) (Math.sin(prog * Math.PI) * 1.6));
                     q.rotateZ((float) (-Math.sin(prog * Math.PI) * 0.5));
                 } else if (walking) {
-                    q.rotateX((float) (Math.sin(s) * 0.28));
+                    q.rotateX(JackModel.walkSwing(group, s));
                 }
             }
             case HEAD -> {

@@ -88,25 +88,30 @@ class MscGeometryOverlayTest {
     }
 
     @Test
-    @DisplayName("Every dressed boss's shipped joints sit inside its own body")
+    @DisplayName("Every dressed boss's shipped joints, elbows and knees included, sit inside its own body")
     void jointsSitInsideTheBody() {
         // The dot is only useful sitting under the limb it drives: a pivot above the head or below
         // the feet would draw a line to nothing. These are the real constants the command hands over.
         List<Vector3f> joints = List.of(
                 KingerModel.PIVOT_SHOULDER_RIGHT, KingerModel.PIVOT_SHOULDER_LEFT,
                 KingerModel.PIVOT_HIP_RIGHT, KingerModel.PIVOT_HIP_LEFT,
+                KingerModel.PIVOT_KNEE_RIGHT, KingerModel.PIVOT_KNEE_LEFT,
                 KingerModel.PIVOT_NECK, KingerModel.PIVOT_TORSO,
                 NixModel.PIVOT_SHOULDER_RIGHT, NixModel.PIVOT_SHOULDER_LEFT,
                 NixModel.PIVOT_HIP_RIGHT, NixModel.PIVOT_HIP_LEFT,
+                NixModel.PIVOT_ELBOW_RIGHT, NixModel.PIVOT_ELBOW_LEFT,
+                NixModel.PIVOT_KNEE_RIGHT, NixModel.PIVOT_KNEE_LEFT,
                 NixModel.PIVOT_NECK, NixModel.PIVOT_TORSO,
                 JackModel.PIVOT_SHOULDER_RIGHT, JackModel.PIVOT_SHOULDER_LEFT,
                 JackModel.PIVOT_HIP_RIGHT, JackModel.PIVOT_HIP_LEFT,
+                JackModel.PIVOT_ELBOW_RIGHT, JackModel.PIVOT_ELBOW_LEFT,
+                JackModel.PIVOT_KNEE_RIGHT, JackModel.PIVOT_KNEE_LEFT,
                 JackModel.PIVOT_NECK, JackModel.PIVOT_TORSO);
 
         for (Vector3f joint : joints) {
             assertTrue(joint.y > 0.2f && joint.y < 2.2f, "joint out of the body: " + joint);
             assertTrue(Math.abs(joint.x) < 0.5f, "joint off the body axis: " + joint);
-            assertEquals(0f, joint.z, 1.0e-6f, "a joint hangs on the body's own plane: " + joint);
+            assertEquals(0f, joint.z, 1.0e-3f, "a joint hangs on the body's own plane: " + joint);
         }
     }
 

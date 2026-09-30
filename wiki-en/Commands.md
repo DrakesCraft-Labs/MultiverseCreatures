@@ -276,12 +276,12 @@ Sections with nothing recorded are skipped; if no boss has touched the player ye
 Draws a boss's **real hitbox** and the **joints its limbs swing around** in the world for ten seconds, following it as it moves. It targets the nearest boss of that kind within 32 blocks (omit the name for any dressed boss); the geometry is drawn with particles, so nothing is spawned and nothing is left behind.
 
 - **Red** traces the twelve edges of the armour stand's bounding box — the box that actually takes the hits. Every visible piece has to be **inside** it, or a swing at that piece misses.
-- **Cyan** marks each joint: shoulder, hip, waist and neck. A limb has to hang from its dot, and the limb's far end has to stay the same distance from it while it swings.
+- **Cyan** marks each joint: shoulder, hip, waist, neck and — for NIX and Jack Star, whose arms and legs were exported in two segments — the **elbows and knees**. A limb has to hang from its dot, and the limb's far end has to stay the same distance from it while it swings.
 
 The Sentinel has no joints of its own (it wears its armour on the stand), so it only draws the box. This is the in-game counterpart of the model tests: it exists so a model can be checked next to the boss instead of through a throwaway unit test.
 
 ```
-Drawing kinger for 10 s: hitbox 0.50 x 1.98 x 0.50 blocks (red), 6 joints (cyan).
+Drawing kinger for 10 s: hitbox 0.50 x 1.98 x 0.50 blocks (red), 8 joints (cyan).
 ```
 
 ---

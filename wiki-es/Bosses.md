@@ -6,11 +6,12 @@ MultiverseCreatures incluye **un jefe final** y múltiples y formidables **minij
 
 ## 🛡️ EL CENTINELA DE OBSIDIANA — Jefe final
 
-Un ArmorStand animado gigante de escala 7.5×. El clímax del plugin.
+Un ArmorStand animado gigante de escala 7.5×. El clímax del plugin. A diferencia de los jefes vestidos, el Centinela **es** el stand, así que su escala es a la vez el tamaño del modelo y la caja que golpean los jugadores.
 
 | Estadística | Valor por defecto |
 |---|---|
 | Salud | `armor-stand-boss.health` (por defecto 3200) |
+| Hitbox | `armor-stand-boss.hitbox-scale` (7.5) — escala del propio stand del jefe: tamaño del modelo y hitbox a la vez, unos catorce bloques de guerrero (acotado a 0.25–8) |
 | Barra de jefe | `SEGMENTED_6`, roja → azul a lo largo de las fases (ver `phase-thresholds`) |
 | Música | `Undertale — Megalovania` (radio de 60 bloques, se detiene al morir) |
 | Equipamiento | Netherita completa (trim Amatista/Silencio) + Lanza de Netherita + Escudo irrompible |
@@ -143,7 +144,7 @@ Atuendo: casco de vidrio blanco + armadura de cuero blanca (irrompible).
 
 ## ♟️ Kinger — Minijefe (The Amazing Digital Circus)
 
-Un rey de ajedrez viviente: un ArmorStand invisible vestido con un traje de 15 piezas ItemDisplay (base, piernas, torso, cuello, cinturón, brazos, cabeza y adorno) que camina, pelea y persigue jugadores como una pieza de ajedrez cobrada vida. El stand no lleva escala — una hitbox normal de 0.5 × 1.975 bloques, ajustada al traje en vez de la doblada anterior — y las piezas se agrupan en extremidades rígidas, así que una pierna gira desde su cadera y la espinilla sigue al muslo en lugar de girar cada pieza sobre su propia ancla.
+Un rey de ajedrez viviente: un ArmorStand invisible vestido con un traje de 15 piezas ItemDisplay (base, piernas, torso, cuello, cinturón, brazos, cabeza y adorno) que camina, pelea y persigue jugadores como una pieza de ajedrez cobrada vida. El stand no lleva escala — una hitbox normal de 0.5 × 1.975 bloques, ajustada al traje en vez de la doblada anterior — y las piezas se agrupan en extremidades, así que una pierna gira desde su cadera y la espinilla sigue al muslo en lugar de girar cada pieza sobre su propia ancla — y la **rodilla se dobla con el paso**, porque la espinilla articula sobre una segunda articulación a medio camino entre el muslo y la espinilla exportados en vez de quedarse congelada contra el muslo.
 
 | Estadística | Valor por defecto |
 |---|---|
@@ -197,7 +198,7 @@ Un verdugo colosal e implacable construido a partir de un **modelo personalizado
 - **Frenesí de Ejecución (Pasiva):**
   Cuando la salud del jugador objetivo cae por debajo del **25%**, Nix entra en frenesí de ejecución: su velocidad de movimiento aumenta un +30%, sus ojos emiten partículas de polvo carmesí y el compás de sus zancadas se acelera.
 - **Animaciones Procedurales del Modelo:**
-  Las 27 piezas (Cabeza, Torso Superior, Pelvis, Brazo Derecho de 6 piezas, Brazo Izquierdo de 6 piezas, Pierna Derecha de 6 piezas, Pierna Izquierda de 6 piezas) cuentan con contra-rotaciones de marcha sincronizadas, preparación de ataques y seguimiento del cabeceo de la mirada del jugador. Siguen a un **ArmorStand invisible** (`MSC_NixBoss`) que carga la vida real y la hitbox, y las articulaciones viven en `NixModel` (hombros en x = ±0.3514, caderas en ∓0.1171, cuello en 1.650, torso en 1.171), así que cada extremidad gira sobre su propia articulación. El export queda 0.066 bloques fuera de la columna, así que las piezas se recentran sobre la hitbox, y el stand se escala 1.9 para que su caja (0.95 de ancho, 3.75 de alto) cubra todo el modelo en vez de dejar la cabeza fuera de una caja vanilla.
+  Las 27 piezas (Cabeza, Torso Superior, Pelvis, Brazo Derecho de 6 piezas, Brazo Izquierdo de 6 piezas, Pierna Derecha de 6 piezas, Pierna Izquierda de 6 piezas) cuentan con contra-rotaciones de marcha sincronizadas, preparación de ataques y seguimiento del cabeceo de la mirada del jugador. Siguen a un **ArmorStand invisible** (`MSC_NixBoss`) que carga la vida real y la hitbox, y las articulaciones viven en `NixModel` (hombros en x = ±0.3514, caderas en ∓0.1171, cuello en 1.650, torso en 1.171), así que cada extremidad gira sobre su propia articulación. Cada brazo y cada pierna es una pila de dos segmentos, así que los **codos y las rodillas también se pliegan**: la pieza `_4` lleva la articulación y las cinco piezas de debajo articulan sobre ella al caminar (nunca durante un cleave, donde la pose es deliberada). El export queda 0.066 bloques fuera de la columna, así que las piezas se recentran sobre la hitbox, y el stand se escala 1.9 para que su caja (0.95 de ancho, 3.75 de alto) cubra todo el modelo en vez de dejar la cabeza fuera de una caja vanilla.
 
 **Barra de jefe:** Barra segmentada de color rojo oscuro que muestra `NIX - El Verdugo` con niebla y cielo oscurecido.
 
@@ -226,7 +227,7 @@ Cinco fases, tres vidas y un cuerpo construido con once cabezas de skin.
 
 ### Modelo
 
-Once cabezas de skin (`ItemDisplay`, etiqueta `msc_jackstar_part`) forman la cabeza, el torso y dos segmentos por brazo y pierna. Siguen a un **ArmorStand invisible** (`msc_jackstar_boss`) que carga la vida real y la hitbox, así que el cuerpo visible es lo que apuntan los jugadores mientras el stand lleva la contabilidad. Las articulaciones viven en `JackModel` (hombros en x = ±0.35, caderas en ∓0.12, cuello en 1.87) y cada extremidad gira sobre su propia articulación, con contra-rotaciones al caminar. Las piezas se recentran sobre la hitbox, que es lo que hace que el cuerpo coincida con el stand en vez de desplazarse casi un bloque hacia un lado.
+Once cabezas de skin (`ItemDisplay`, etiqueta `msc_jackstar_part`) forman la cabeza, el torso y dos segmentos por brazo y pierna. Siguen a un **ArmorStand invisible** (`msc_jackstar_boss`) que carga la vida real y la hitbox, así que el cuerpo visible es lo que apuntan los jugadores mientras el stand lleva la contabilidad. Las articulaciones viven en `JackModel` (hombros en x = ±0.35, caderas en ∓0.12, cuello en 1.87) y cada extremidad gira sobre su propia articulación, con contra-rotaciones al caminar. Los dos brazos y las dos piernas se exportaron en dos segmentos, así que los **codos y las rodillas se pliegan además de ese balanceo**: el antebrazo y la espinilla articulan sobre su propia articulación al caminar, y el codo queda rígido durante un tajo. Las piezas se recentran sobre la hitbox, que es lo que hace que el cuerpo coincida con el stand en vez de desplazarse casi un bloque hacia un lado.
 
 ### Subprocesos
 

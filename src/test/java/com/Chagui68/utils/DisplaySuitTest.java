@@ -1,5 +1,6 @@
 package com.Chagui68.utils;
 
+import com.Chagui68.testsupport.ProjectPaths;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -9,8 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Proxy;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
@@ -61,7 +60,7 @@ class DisplaySuitTest {
     @DisplayName("The suit is built in one place, not copied into every dressed boss")
     void theSuitIsNotCopiedPerBoss() throws IOException {
         for (String boss : List.of("entities/Kinger.java", "entities/boss/NixBoss.java", "entities/boss/JackStarBoss.java")) {
-            String source = Files.readString(Path.of("src", "main", "java", "com", "Chagui68", boss));
+            String source = ProjectPaths.read(ProjectPaths.source("com", "Chagui68", boss));
             assertTrue(source.contains("DisplaySuit."), boss + " must wear the shared suit");
             assertFalse(source.contains("Base64.getDecoder()"),
                     boss + " must not build its own head from the skin texture");

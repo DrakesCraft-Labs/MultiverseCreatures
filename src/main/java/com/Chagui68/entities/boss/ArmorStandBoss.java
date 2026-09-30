@@ -135,6 +135,17 @@ public class ArmorStandBoss implements Listener, BossHost {
      * remaining 80% of its reduction.
      */
     static final double RESISTANCE_PIERCE = 0.2;
+    /**
+     * Scale of the stand the Sentinel itself is. Unlike the three dressed bosses this is not an
+     * invisible suit stand: the visible, scaled stand is the boss, so the number is at once the size
+     * of its model and the box players hit. At 7.5 the warrior it renders stands about fourteen
+     * blocks tall, which is what the fight was tuned around.
+     */
+    public static final double MODEL_HITBOX_SCALE = 7.5;
+    /** Default ticks the pentagram drawn under the boss when it arrives stays up (~4 s). */
+    private static final int SPAWN_SEAL_TICKS = 80;
+    /** Default radius of that arrival pentagram, in blocks. */
+    private static final double SPAWN_SEAL_RADIUS = 12.0;
     private static final double FLY_HEIGHT = 15.0;
     private static final double DIST_CLOSE = 5.0;
     private static final double DIST_MEDIUM = 15.0;
@@ -189,6 +200,8 @@ public class ArmorStandBoss implements Listener, BossHost {
     private int defenseReflectBarrierTicks;
     private int defenseAbsorbShieldTicks;
     private int noPlayerDespawnTicks;
+    /** Scale of the boss's own stand: model size and hitbox at once. */
+    private double hitboxScale = MODEL_HITBOX_SCALE;
 
     public ArmorStandBoss(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -312,6 +325,8 @@ public class ArmorStandBoss implements Listener, BossHost {
         // 0 means "despawn as soon as nobody is in range".
         this.noPlayerDespawnTicks = Math.max(0, plugin.getConfig().getInt(
                 "entities.armor-stand-boss.no-player-despawn-ticks", NO_PLAYER_DESPAWN_TICKS));
+        this.hitboxScale = MscEntityUtils.clampHitboxScale(plugin.getConfig().getDouble(
+                "entities.armor-stand-boss.hitbox-scale", MODEL_HITBOX_SCALE));
         List<Integer> delays = plugin.getConfig().getIntegerList("entities.armor-stand-boss.shield-retrieve-delays");
         this.shieldRetrieveDelays = delays.isEmpty() ? List.of(80, 90, 100, 110, 120) : delays;
     }
@@ -377,8 +392,10 @@ public class ArmorStandBoss implements Listener, BossHost {
         stand.setBasePlate(false);
         stand.setGravity(false);
 
+        // The boss's own hitbox: one settable number, clamped so a stray small value cannot shrink
+        // the fight into an unhittable sliver and a huge one cannot grow it past the render limit.
         AttributeInstance scaleAttr = stand.getAttribute(Attribute.SCALE);
-        if (scaleAttr != null) scaleAttr.setBaseValue(7.5);
+        if (scaleAttr != null) scaleAttr.setBaseValue(hitboxScale);
 
         stand.setMaximumNoDamageTicks(0);
         stand.addScoreboardTag(TAG);
@@ -408,8 +425,8 @@ public class ArmorStandBoss implements Listener, BossHost {
         if (plugin.getMagicSealListener() != null) {
             plugin.getMagicSealListener().spawnLargePentagramSeal(
                     stand.getLocation(),
-                    80,
-                    12.0,
+                    SPAWN_SEAL_TICKS,
+                    SPAWN_SEAL_RADIUS,
                     MagicSealListener.Plane.XZ
             );
 

@@ -6,11 +6,12 @@ MultiverseCreatures includes **one final boss** and multiple formidable **minibo
 
 ## 🛡️ THE OBSIDIAN SENTINEL — Final Boss
 
-A gigantic 7.5×-scale animated ArmorStand. The climax of the plugin.
+A gigantic 7.5×-scale animated ArmorStand. The climax of the plugin. Unlike the dressed bosses, the Sentinel **is** the stand, so its scale is at once the size of the model and the box players hit.
 
 | Stat | Default |
 |---|---|
 | Health | `armor-stand-boss.health` (default 3200) |
+| Hitbox | `armor-stand-boss.hitbox-scale` (7.5) — scale of the boss's own stand: model size and hitbox at once, about fourteen blocks of warrior (clamped to 0.25–8) |
 | Boss bar | `SEGMENTED_6`, red → blue across the phases (see `phase-thresholds`) |
 | Music | `Undertale — Megalovania` (60-block range, stops on death) |
 | Equipment | Full Netherite (Amethyst/Silence trim) + Netherite Lance + unbreakable Shield |
@@ -143,7 +144,7 @@ Outfit: white stained-glass helmet + white leather armor (unbreakable).
 
 ## ♟️ Kinger — Miniboss (The Amazing Digital Circus)
 
-A living chess king: an invisible ArmorStand dressed in a 15-piece ItemDisplay suit (base, legs, torso, collar, belt, arms, head and ornament) that walks, fights and tracks players like a chess piece come to life. The stand is unscaled — a plain 0.5 × 1.975-block hitbox, sized to the suit instead of the old doubled one — and the pieces are grouped into rigid limbs, so a leg swings from its hip and the shin follows the thigh rather than every piece turning on its own anchor.
+A living chess king: an invisible ArmorStand dressed in a 15-piece ItemDisplay suit (base, legs, torso, collar, belt, arms, head and ornament) that walks, fights and tracks players like a chess piece come to life. The stand is unscaled — a plain 0.5 × 1.975-block hitbox, sized to the suit instead of the old doubled one — and the pieces are grouped into limbs, so a leg swings from its hip and the shin follows the thigh rather than every piece turning on its own anchor — and the **knee bends with the step**, because the shin hinges on a second joint halfway between the exported thigh and shin instead of staying frozen against the thigh.
 
 | Stat | Default |
 |---|---|
@@ -197,7 +198,7 @@ A towering, ruthless executioner constructed from a custom **27-piece ItemDispla
 - **Execution Frenzy (Passive):**
   When target player health drops below **25%**, Nix enters an execution frenzy: movement speed increases by +30%, eyes emit crimson dust particles, and walking stride tempo accelerates.
 - **Procedural Model Animations:**
-  All 27 pieces (Head, Upper Torso, Lower Pelvis, 6-part Right Arm, 6-part Left Arm, 6-part Right Leg, 6-part Left Leg) feature synchronized walking counter-rotations, attack windups, and player-tracking head pitch. They follow an **invisible armour stand** (`MSC_NixBoss`) that carries the real health pool and the hitbox, and the joints live in `NixModel` (shoulders at x = ±0.3514, hips at ∓0.1171, neck at 1.650, torso at 1.171), so every limb swings around its own joint. The export sits 0.066 blocks off the spine, so the parts are re-centred on the hitbox, and the stand is scaled 1.9 so its box (0.95 wide, 3.75 tall) covers the whole model instead of leaving the head outside a vanilla box.
+  All 27 pieces (Head, Upper Torso, Lower Pelvis, 6-part Right Arm, 6-part Left Arm, 6-part Right Leg, 6-part Left Leg) feature synchronized walking counter-rotations, attack windups, and player-tracking head pitch. They follow an **invisible armour stand** (`MSC_NixBoss`) that carries the real health pool and the hitbox, and the joints live in `NixModel` (shoulders at x = ±0.3514, hips at ∓0.1171, neck at 1.650, torso at 1.171), so every limb swings around its own joint. Each arm and leg is a stack of two segments, so the **elbows and knees fold as well**: the `_4` piece carries the joint and the five pieces below it hinge on it while walking (never during a cleave, where the pose is deliberate). The export sits 0.066 blocks off the spine, so the parts are re-centred on the hitbox, and the stand is scaled 1.9 so its box (0.95 wide, 3.75 tall) covers the whole model instead of leaving the head outside a vanilla box.
 
 **Boss bar:** Dark Red segmented bar displaying `NIX - The Executioner` with fog and darkened skies.
 
@@ -226,7 +227,7 @@ Five phases, three lives and a body built out of eleven skin heads.
 
 ### Model
 
-Eleven skin heads (`ItemDisplay`, tag `msc_jackstar_part`) form the head, the torso and two segments per arm and leg. They follow an **invisible armour stand** (`msc_jackstar_boss`) that carries the real health pool and the hitbox, so the visible body is what players aim at while the stand keeps the bookkeeping. The joints live in `JackModel` (shoulders at x = ±0.35, hips at ∓0.12, neck at 1.87) and every limb swings around its own joint, with counter-rotations while walking. The parts are re-centred on the hitbox, which is why the body lines up with the stand instead of drifting most of a block to the side.
+Eleven skin heads (`ItemDisplay`, tag `msc_jackstar_part`) form the head, the torso and two segments per arm and leg. They follow an **invisible armour stand** (`msc_jackstar_boss`) that carries the real health pool and the hitbox, so the visible body is what players aim at while the stand keeps the bookkeeping. The joints live in `JackModel` (shoulders at x = ±0.35, hips at ∓0.12, neck at 1.87) and every limb swings around its own joint, with counter-rotations while walking. Both arms and both legs are exported in two segments, so the **elbows and knees fold on top of that swing**: the forearm and shin hinge on their own joint while walking, and the elbow stays rigid during a slash. The parts are re-centred on the hitbox, which is why the body lines up with the stand instead of drifting most of a block to the side.
 
 ### Subprocesses
 

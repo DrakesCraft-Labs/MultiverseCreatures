@@ -71,6 +71,10 @@ entities:
   armor-stand-boss:
     enabled: true
     health: 3200.0
+    # Scale of the boss's own stand. Unlike the dressed bosses below, the Sentinel *is* the stand:
+    # its scale is both the size of the model and the box players hit. 7.5 is what the fight was
+    # tuned for; the value is clamped to 0.25-8.0 so a typo cannot make it unhittable or oversized.
+    hitbox-scale: 7.5
     aggro-range: 50.0
     seal-damage: 15.0
     hover-barrage-damage: 12.0

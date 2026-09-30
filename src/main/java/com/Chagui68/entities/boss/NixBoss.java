@@ -632,10 +632,29 @@ public class NixBoss implements Listener {
         return new DisplaySuit.SuitTags(PART_TAG, partTag(part), partOwnerTag(ownerId));
     }
 
-    /** Builds the transformation for a part: rigid-body rotation around its limb's joint. */
+    /**
+     * Builds the transformation for a part: rigid-body rotation around its limb's joint and, for a
+     * part below the elbow or knee, the fold of that joint on top of it.
+     */
     private Transformation buildTransformation(NixPart part, NixInstance inst) {
         Quaternionf limbRot = (inst != null) ? computeLimbQuat(part.group, inst) : new Quaternionf();
-        return NixModel.compose(part, limbRot);
+        Quaternionf lowerRot = (inst != null) ? computeLowerQuat(part, inst) : new Quaternionf();
+        return NixModel.compose(part, limbRot, lowerRot);
+    }
+
+    /**
+     * The rotation of the segment below a limb's joint. Only a walking limb folds, and never during
+     * a cleave or a chain pull: the knee follows the step, not a pose the boss was put into.
+     */
+    private Quaternionf computeLowerQuat(NixPart part, NixInstance inst) {
+        if (!inst.moving) return new Quaternionf();
+        boolean posing = isArm(part.group) && (inst.cleaveAnim > 0 || inst.chainAnim > 0);
+        if (posing) return new Quaternionf();
+        return NixModel.lowerRotation(part, inst.animTicks);
+    }
+
+    private static boolean isArm(LimbGroup group) {
+        return group == LimbGroup.ARM_RIGHT || group == LimbGroup.ARM_LEFT;
     }
 
     /**
@@ -647,16 +666,10 @@ public class NixBoss implements Listener {
         boolean walking = inst.moving;
 
         switch (group) {
-            case LEG_RIGHT -> {
+            case LEG_RIGHT, LEG_LEFT -> {
                 if (walking) {
-                    float angle = (float) (Math.sin(s) * 0.32); // natural ~18 deg stride
-                    q.rotateX(angle);
-                }
-            }
-            case LEG_LEFT -> {
-                if (walking) {
-                    float angle = (float) (Math.sin(s) * -0.32);
-                    q.rotateX(angle);
+                    // Natural stride: the angle lives in the model so the knee below it can follow it.
+                    q.rotateX(NixModel.walkSwing(group, s));
                 }
             }
             case ARM_RIGHT -> {
@@ -682,8 +695,7 @@ public class NixBoss implements Listener {
                     float angle = (float) (Math.sin(p * Math.PI) * 1.0);
                     q.rotateX(angle);
                 } else if (walking) {
-                    float angle = (float) (Math.sin(s) * -0.25);
-                    q.rotateX(angle);
+                    q.rotateX(NixModel.walkSwing(group, s));
                 }
             }
             case ARM_LEFT -> {
@@ -702,8 +714,7 @@ public class NixBoss implements Listener {
                     }
                     q.rotateX(angle);
                 } else if (walking) {
-                    float angle = (float) (Math.sin(s) * 0.25);
-                    q.rotateX(angle);
+                    q.rotateX(NixModel.walkSwing(group, s));
                 }
             }
             case TORSO_UPPER, TORSO_LOWER -> {

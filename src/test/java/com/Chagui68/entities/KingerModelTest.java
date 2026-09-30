@@ -1,13 +1,14 @@
 package com.Chagui68.entities;
 
+import com.Chagui68.testsupport.LimbGeometry;
+import com.Chagui68.testsupport.ProjectPaths;
+import com.Chagui68.utils.MscLimb;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
@@ -239,6 +240,85 @@ class KingerModelTest {
     }
 
     @Test
+    @DisplayName("Each knee sits where the export splits the leg, and only the shin hangs from it")
+    void theKneeSitsWhereTheExportSplitsTheLeg() {
+        for (Kinger.LimbGroup group : List.of(Kinger.LimbGroup.LEG_RIGHT, Kinger.LimbGroup.LEG_LEFT)) {
+            List<Kinger.KingerPart> leg = membersOf(group);
+            LimbGeometry.Split<Kinger.KingerPart> split =
+                    LimbGeometry.largestGap(leg, part -> base(part).y);
+
+            for (Kinger.KingerPart part : leg) {
+                assertEquals(split.lower().contains(part), KingerModel.hangsFromSecondJoint(part),
+                        part + " is on the wrong side of its knee, so the walk would fold the wrong piece");
+            }
+
+            Vector3f knee = KingerModel.secondJoint(group);
+            assertNotNull(knee, group + " must expose the knee its shin folds about");
+            assertEquals(split.joint(), knee.y, 0.01,
+                    "the knee is not where the export leaves the gap between the thigh and the shin");
+            assertEquals(KingerModel.pivot(group).x, knee.x, 1.0e-3f, "a knee must sit on its leg's own axis");
+            assertEquals(0f, knee.z, 1.0e-3f, "a knee must sit on the body's own plane");
+        }
+
+        // One piece per arm and one per body part: there is no second segment to fold.
+        for (Kinger.LimbGroup group : List.of(Kinger.LimbGroup.ARM_RIGHT, Kinger.LimbGroup.ARM_LEFT,
+                Kinger.LimbGroup.HEAD, Kinger.LimbGroup.TORSO_UPPER, Kinger.LimbGroup.TORSO_LOWER)) {
+            assertNull(KingerModel.secondJoint(group), group + " has no second segment");
+        }
+    }
+
+    @Test
+    @DisplayName("A fold follows the step: the knee bends with the walk and stays dead while the boss stands")
+    void theKneeFollowsTheWalk() {
+        float backSwing = (float) (-Math.PI / 2);
+
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.1f) {
+            for (Kinger.KingerPart shin : List.of(Kinger.KingerPart.LEG_RIGHT_LOWER, Kinger.KingerPart.LEG_LEFT_LOWER)) {
+                float swing = KingerModel.walkSwing(shin.group(), phase);
+                Quaternionf expected = swing < 0f ? MscLimb.knee(swing) : new Quaternionf();
+                assertEquals(expected, KingerModel.lowerRotation(shin, phase),
+                        shin + " must fold by exactly the knee its own swing calls for at phase " + phase);
+            }
+        }
+
+        // Everything above the knee rides the hip and never bends, whatever the step is doing.
+        for (Kinger.KingerPart rigid : Kinger.KingerPart.values()) {
+            if (KingerModel.hangsFromSecondJoint(rigid)) continue;
+            assertEquals(new Quaternionf(), KingerModel.lowerRotation(rigid, backSwing),
+                    rigid + " is not below a knee and must stay rigid");
+        }
+    }
+
+    @Test
+    @DisplayName("The whole walk keeps the body over the stand's hitbox")
+    void theWalkStaysOverTheHitbox() {
+        float halfWidth = (float) (0.25 * Kinger.MODEL_HITBOX_SCALE);
+
+        // A step bends the knee, which carries the shin further from the axis than the rest pose does,
+        // so the rest-pose coverage above is not enough on its own: the whole cycle has to fit too.
+        //
+        // The deepest step does carry the shin about four centimetres past the stand's 0.5-wide box,
+        // which is the price of a knee that bends enough to be visible: an unscaled stand is what the
+        // rest pose needs, and widening it to cover the walk would swallow the swings at the air the
+        // comment above the hitbox test refuses to grow the box for. That slack is pinned here so it
+        // cannot grow unnoticed.
+        float walkSlack = 0.05f;
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.2f) {
+            for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
+                Vector3f moved = KingerModel.compose(part, new Quaternionf().rotateX(KingerModel.walkSwing(part.group(), phase)),
+                        KingerModel.lowerRotation(part, phase)).getTranslation();
+
+                assertTrue(Math.abs(moved.x) < halfWidth + walkSlack,
+                        part + " swung far out of the hitbox sideways at phase " + phase);
+                assertTrue(Math.abs(moved.z) < halfWidth + walkSlack,
+                        part + " swung far out of the hitbox front or back at phase " + phase + ": z=" + moved.z);
+                assertTrue(moved.y > 0f && moved.y < (float) (1.975 * Kinger.MODEL_HITBOX_SCALE),
+                        part + " left the hitbox vertically at phase " + phase);
+            }
+        }
+    }
+
+    @Test
     @DisplayName("The fifteen pieces keep their own place in the body")
     void partsNeverCollapseOntoEachOther() {
         List<Kinger.KingerPart> parts = List.of(Kinger.KingerPart.values());
@@ -305,9 +385,9 @@ class KingerModelTest {
     @Test
     @DisplayName("A piece never lags, and a reload reattaches the suit and its boss bar instead of duplicating them")
     void partDisplaysFollowTheStandExactly() throws IOException {
-        String source = Files.readString(Path.of("src", "main", "java",
+        String source = ProjectPaths.read(ProjectPaths.source(
                 "com", "Chagui68", "entities", "Kinger.java"));
-        String suit = Files.readString(Path.of("src", "main", "java",
+        String suit = ProjectPaths.read(ProjectPaths.source(
                 "com", "Chagui68", "utils", "DisplaySuit.java"));
 
         // The pieces are placed on the stand's exact position every tick, so any interpolation would

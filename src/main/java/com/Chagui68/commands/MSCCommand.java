@@ -529,12 +529,6 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
 
     // ------------------------------------------------------------------ debug
 
-    /**
-     * Prints the bosses' last damage samples for a player, so an admin can see why the numbers came
-     * out the way they did: what each boss dealt to them and what it took back. The target defaults
-     * to the player the executor is looking at; a name can be passed explicitly, which is also the
-     * only way to use it from the console.
-     */
     /** One boss the overlay knows how to draw: a tag to find it by and the joints it swings around. */
     private record GeometryTarget(String name, String tag, List<Vector3f> joints) {
     }
@@ -544,14 +538,19 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 new GeometryTarget("kinger", Kinger.TAG, List.of(
                         KingerModel.PIVOT_SHOULDER_RIGHT, KingerModel.PIVOT_SHOULDER_LEFT,
                         KingerModel.PIVOT_HIP_RIGHT, KingerModel.PIVOT_HIP_LEFT,
+                        KingerModel.PIVOT_KNEE_RIGHT, KingerModel.PIVOT_KNEE_LEFT,
                         KingerModel.PIVOT_NECK, KingerModel.PIVOT_TORSO)),
                 new GeometryTarget("nix", NixBoss.TAG, List.of(
                         NixModel.PIVOT_SHOULDER_RIGHT, NixModel.PIVOT_SHOULDER_LEFT,
                         NixModel.PIVOT_HIP_RIGHT, NixModel.PIVOT_HIP_LEFT,
+                        NixModel.PIVOT_ELBOW_RIGHT, NixModel.PIVOT_ELBOW_LEFT,
+                        NixModel.PIVOT_KNEE_RIGHT, NixModel.PIVOT_KNEE_LEFT,
                         NixModel.PIVOT_NECK, NixModel.PIVOT_TORSO)),
                 new GeometryTarget("jack", JackStarBoss.TAG, List.of(
                         JackModel.PIVOT_SHOULDER_RIGHT, JackModel.PIVOT_SHOULDER_LEFT,
                         JackModel.PIVOT_HIP_RIGHT, JackModel.PIVOT_HIP_LEFT,
+                        JackModel.PIVOT_ELBOW_RIGHT, JackModel.PIVOT_ELBOW_LEFT,
+                        JackModel.PIVOT_KNEE_RIGHT, JackModel.PIVOT_KNEE_LEFT,
                         JackModel.PIVOT_NECK, JackModel.PIVOT_TORSO)),
                 // The Sentinel wears its armour on the stand itself, so it has no joints of its own.
                 new GeometryTarget("sentinel", ArmorStandBoss.TAG, List.of()));
@@ -601,6 +600,12 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
                 + " blocks (red), " + found.joints().size() + " joints (cyan).");
     }
 
+    /**
+     * Prints the bosses' last damage samples for a player, so an admin can see why the numbers came
+     * out the way they did: what each boss dealt to them and what it took back. The target defaults
+     * to the player the executor is looking at; a name can be passed explicitly, which is also the
+     * only way to use it from the console.
+     */
     private void handleDebug(CommandSender sender, String[] args) {
         CommandMenu menu = new CommandMenu(sender);
         if (args.length > 1 && args[1].equalsIgnoreCase("help")) {

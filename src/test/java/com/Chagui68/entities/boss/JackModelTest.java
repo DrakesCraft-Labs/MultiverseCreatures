@@ -1,5 +1,7 @@
 package com.Chagui68.entities.boss;
 
+import com.Chagui68.testsupport.LimbGeometry;
+import com.Chagui68.utils.MscLimb;
 import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -128,6 +130,77 @@ class JackModelTest {
     }
 
     @Test
+    @DisplayName("Each elbow and knee sits where the export splits its limb, and only the lower half hangs from it")
+    void theJointsSitWhereTheExportSplitsEachLimb() {
+        for (JackStarBoss.LimbGroup group : List.of(JackStarBoss.LimbGroup.LEG_RIGHT, JackStarBoss.LimbGroup.LEG_LEFT,
+                JackStarBoss.LimbGroup.ARM_RIGHT, JackStarBoss.LimbGroup.ARM_LEFT)) {
+            List<JackStarBoss.JackPart> limb = partsIn(group);
+            LimbGeometry.Split<JackStarBoss.JackPart> split =
+                    LimbGeometry.largestGap(limb, part -> JackModel.baseTranslation(part).y);
+
+            for (JackStarBoss.JackPart part : limb) {
+                assertEquals(split.lower().contains(part), JackModel.hangsFromSecondJoint(part),
+                        part + " is on the wrong side of its joint, so the walk would fold the wrong piece");
+            }
+
+            Vector3f joint = JackModel.secondJoint(group);
+            assertNotNull(joint, group + " must expose the joint its lower segment folds about");
+            assertEquals(split.joint(), joint.y, 0.01,
+                    group + "'s joint is not where the export leaves the gap between its two segments");
+            assertEquals(JackModel.pivot(group).x, joint.x, 0.01f, "a joint must sit on its limb's own axis");
+        }
+
+        for (JackStarBoss.LimbGroup group : List.of(JackStarBoss.LimbGroup.HEAD, JackStarBoss.LimbGroup.TORSO_UPPER,
+                JackStarBoss.LimbGroup.TORSO_LOWER)) {
+            assertNull(JackModel.secondJoint(group), group + " has no second segment");
+        }
+    }
+
+    @Test
+    @DisplayName("Only the lower half of a limb folds, and it folds by the angle the limb itself walks with")
+    void onlyTheLowerHalfFolds() {
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.1f) {
+            for (JackStarBoss.JackPart part : JackStarBoss.JackPart.values()) {
+                Quaternionf folded = JackModel.lowerRotation(part, phase);
+                if (!JackModel.hangsFromSecondJoint(part)) {
+                    assertEquals(new Quaternionf(), folded, part + " is above the joint and must stay rigid");
+                    continue;
+                }
+                float swing = JackModel.walkSwing(part.group, phase);
+                Quaternionf expected = part.group == JackStarBoss.LimbGroup.ARM_RIGHT
+                        || part.group == JackStarBoss.LimbGroup.ARM_LEFT
+                        ? MscLimb.elbow(swing) : MscLimb.knee(swing);
+                assertEquals(expected, folded, part + " does not follow its own limb's swing at phase " + phase);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("The whole walk keeps the body over the stand's hitbox")
+    void theWalkStaysOverTheHitbox() {
+        float halfWidth = 0.25f * (float) JackStarBoss.MODEL_HITBOX_SCALE;
+
+        // A step bends the knees, which carries the shins further from the axis than the rest pose
+        // does, so the rest-pose coverage above is not enough on its own. Only the parts the box is
+        // meant to cover are checked: the arms sit outside it by design, as the hitbox test above says.
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.2f) {
+            for (JackStarBoss.JackPart part : List.of(JackStarBoss.JackPart.HEAD, JackStarBoss.JackPart.TORSO_UPPER,
+                    JackStarBoss.JackPart.TORSO_LOWER, JackStarBoss.JackPart.LEG_R_UPPER,
+                    JackStarBoss.JackPart.LEG_R_LOWER, JackStarBoss.JackPart.LEG_L_UPPER,
+                    JackStarBoss.JackPart.LEG_L_LOWER)) {
+                float swing = JackModel.walkSwing(part.group, phase);
+                Vector3f moved = JackModel.compose(part, new Quaternionf().rotateX(swing),
+                        JackModel.lowerRotation(part, phase), 1.0f).getTranslation();
+
+                assertTrue(Math.abs(moved.x) < halfWidth,
+                        part + " swung out of the hitbox sideways at phase " + phase);
+                assertTrue(Math.abs(moved.z) < halfWidth,
+                        part + " swung out of the hitbox front or back at phase " + phase + ": z=" + moved.z);
+            }
+        }
+    }
+
+    @Test
     @DisplayName("The eleven parts keep their own place in the body")
     void partsNeverCollapseOntoEachOther() {
         List<JackStarBoss.JackPart> parts = new ArrayList<>(List.of(JackStarBoss.JackPart.values()));
@@ -187,6 +260,14 @@ class JackModelTest {
 
     private static float baseY(JackStarBoss.JackPart part) {
         return JackModel.baseTranslation(part).y;
+    }
+
+    private static List<JackStarBoss.JackPart> partsIn(JackStarBoss.LimbGroup group) {
+        List<JackStarBoss.JackPart> members = new ArrayList<>();
+        for (JackStarBoss.JackPart part : JackStarBoss.JackPart.values()) {
+            if (part.group == group) members.add(part);
+        }
+        return members;
     }
 
     private static void assertMirrored(JackStarBoss.JackPart right, JackStarBoss.JackPart left) {

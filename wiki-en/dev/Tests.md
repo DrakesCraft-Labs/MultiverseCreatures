@@ -9,6 +9,7 @@ This page documents **how plugin changes are tested** and **what each suite veri
 - **Java 21** — same compiler as the main code.
 - **Headless**: no Paper/Purpur server is booted. Bukkit classes that get touched (e.g. `World`) are simulated with `java.lang.reflect.Proxy`, or `Location` objects with a `null` world are used to exercise only the arithmetic.
 - **SnakeYAML** (shipped with `purpur-api`) parses `config.yml` and `plugin.yml` in `ConfigFilesGuardTest`, so an invalid indent fails the suite instead of the server start.
+- **Test support** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`) is the harness the guards share: it finds the project by walking up from the working directory (a source-reading guard used to read `src/main/java` from wherever Maven was started, which found nothing and passed vacuously), names a file by path segments with one failure mode, and reads a limb's second joint out of the export instead of trusting the code that hardcodes it.
 
 Commands:
 
@@ -25,18 +26,19 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 44 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 47 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
 - **`calculateSafeHealth`** — Clamps the requested health to the server limit (attribute cap, default 1024 on Paper) to avoid `IllegalArgumentException`. Verifies real boss cases: ArmorStandBoss (3200), NIX (450), Frost Golem (200); clamps to a minimum of **0.1** (prevents instant death on spawn) and protects against negative input.
 - **`calculateVirtualProgress`** — Clamps the boss-bar progress to [0.0, 1.0] (including `0/0` = 0).
 - **`calculateScaledPhysicalHealth`** — Converts **virtual** health (e.g. 3200) into the real physical health stored on the entity (scaled to its physical max), with 0 → death.
+- **`clampHitboxScale`** — Every boss's stand scale is clamped to `0.25`–`8.0`: the boundaries themselves stay usable, `0`, negatives, `NaN` and both infinities fall back to a plain stand (`1.0`), a huge value caps at `8.0`, and the four scales the bosses actually ship (`1.0`, `1.2`, `1.9`, `7.5`) pass through untouched.
 
 ### `utils/MscGeometryOverlayTest` — Geometry drawn in the world
 - The hitbox overlay is drawn along the **twelve edges** of the box: each edge runs on exactly one axis, they add up to four of each side length and they meet at exactly the eight corners — an outline missing an edge would hide the gap the audit is looking for. A degenerate (empty) box still draws instead of throwing.
 - A joint is placed in the **same frame the display pieces use** (`yaw + 180`): a stand facing north mirrors the model point, a quarter turn maps it onto the other axis, and no rotation ever changes its height or its distance from the stand.
-- The joints the command actually hands over (Kinger's, NIX's and Jack Star's real pivot constants) all sit inside a body: within the stand's height, near the body axis and on its own plane.
+- The joints the command actually hands over (Kinger's, NIX's and Jack Star's real pivot constants, **elbows and knees included**) all sit inside a body: within the stand's height, near the body axis and on its own plane.
 
 ### `utils/DisplaySuitTest` — The suit every dressed boss wears
 - An adoption recognises a piece only when its **suit, piece and owner tags all agree**: a piece of another boss, another piece of the same suit, or a suit tag without the rest is never taken.
@@ -52,6 +54,11 @@ Covers the health math in `utils/MscEntityUtils`:
 - A boss bar is a packet per player, not a world object, so the viewer list has to be revisited: a player who **logs in later** gets the bar and one who already had it is never added twice.
 - A viewer who **logs out** or moves to another world stops seeing the bar; a distance-limited bar (Jack Star's) swaps its viewers for the players inside the range instead of accumulating them.
 - A missing bar, world or location is ignored instead of throwing, so a bar handed over mid-teardown cannot break the ticker.
+
+### `utils/MscLimbTest` — The second joint of a limb
+- The joint between two export segments is **halfway between their centres**, so nothing has to be assumed about how big a piece is and a re-export moves the joint with it; a still limb rests exactly where the export puts it, second joint and all.
+- Over the whole range a walk can reach, the lower segment keeps its exact distance from the second joint — it cannot come away from the limb — and stays below that joint instead of folding up through the thigh.
+- A **knee** folds only on the back half of the swing and an **elbow** only on the forward half, both by a documented share of the parent's swing (`1.5×`, capped at `1.2` rad ≈ 69°) and always in the direction the limb is already going, so a joint adds to the swing instead of leading or cancelling it.
 
 ### `ritual/RitualStructureTest` — Entry ritual (overworld, 7×7)
 - Ritual center at `(3, 0, 3)` with radius 5.
@@ -142,6 +149,7 @@ Covers the health math in `utils/MscEntityUtils`:
 - The model is **centred on the hitbox** (spine and `CENTER.x` at zero) instead of carrying the reference's whole-body X offset, with the head above the torso above the legs, the head top near two blocks and the feet off the ground.
 - Left and right limbs are mirrored, each **joint sits on the same side as the limb it drives** (a swapped hip used to swing a leg around the opposite hip), and a swinging limb keeps its X and never detaches from its joint.
 - A sweep proves no two parts share a place, that shape shifting scales translations and part scales together, and that every part stays inside the stand's hitbox.
+- Both arms and both legs were exported in two segments, so the model folds them: each **elbow and knee sits where the export leaves the biggest gap between the two segments** (the code's joint is compared against that independently derived one), only the lower half of a limb follows that joint while the upper half stays rigid, and the **whole walk stays inside the stand's hitbox**.
 
 ### `entities/boss/NixModelTest` — NIX model geometry
 - The 27 parts are pinned against the **exported model**: every translation matches and the whole body shares one X axis, so no part can drift on its own.
@@ -149,6 +157,7 @@ Covers the health math in `utils/MscEntityUtils`:
 - Left and right limbs are mirrored, each **joint sits on the same side as the limb it drives** and on that limb's own axis, and a swinging limb keeps its X and never detaches from its joint.
 - A sweep proves no two parts share a place, and the **hitbox test** keeps `MODEL_HITBOX_SCALE` covering the whole rest pose (0.95 wide, 3.75 tall) while staying within 0.05 of the smallest scale the model needs — the old literal `2.0` kept 1.8 blocks of empty box above the head.
 - A source guard keeps the parts from lagging again (`setTeleportDuration`/`setInterpolationDuration`/`setDisplayWidth`/`setDisplayHeight` all zero, configured in one place) and requires a reload to **adopt** the parts it already has instead of spawning a second, overlapping body.
+- The numbered pieces are **not** in stacking order, so each **elbow and knee is compared against the split the export actually shows**: the single `_4` piece sits above the joint, the other five fold below it, and the joint itself is where the gap is — the code's answer is never taken on trust. The whole walk, elbows bending included, then has to stay inside the stand's hitbox.
 
 ### `entities/NixModelKinematicsTest` — NIX kinematic model (27 parts)
 - The model has **exactly 27** `ItemDisplay` parts (Blockbench export).
@@ -163,8 +172,10 @@ Covers the health math in `utils/MscEntityUtils`:
 ### `entities/KingerModelTest` — Kinger model geometry
 - The fifteen suit pieces are pinned against the **exported model**: every translation matches, the trunk and the legs share one Z axis, and each half of a leg is stacked on its own X so a swinging leg cannot split sideways.
 - `CENTER` is the **torso axis** (the midpoint of the two torso pieces) instead of the mean of the fifteen anchors or the bounding-box midpoint, which the arms pull 0.03 and 0.08 blocks forward; the trunk, the legs and the head all sit on that axis, and re-centring never touches a height.
-- Every piece belongs to a **rigid limb group** with one joint: the shin swings with the thigh instead of turning on its own knee, the pieces of a group keep their distances while swinging, no piece slides sideways or flies off its joint, and no two pieces share a place.
+- Every piece belongs to a **limb group**: the pieces of a group keep their distances while swinging, no piece slides sideways or flies off its joint, and no two pieces share a place.
+- A limb has **two joints where the export has two segments and one where it does not**: the shin folds at the knee the export leaves between the thigh and the shin (compared against the biggest gap in the leg's own geometry), the thigh and the boot plate stay rigid, Kinger's one-piece arms expose no second joint at all, and a still boss (or one whose swing is on the forward half of the step) folds nothing.
 - The **hitbox test** keeps `MODEL_HITBOX_SCALE` covering the whole rest pose (0.5 wide, 1.975 tall) while staying within 0.1 of the 0.94 the geometry strictly needs — the old literal `2.0` doubled the box in every direction and swallowed swings at thin air.
+- A second hitbox test **walks the whole gait**: a step bends the knee and carries the shin further from the axis than the rest pose does, so every piece is checked over a full cycle of `walkSwing`. The deepest step takes the shin about four centimetres past the stand's 0.5-wide box, which is the documented price of a knee that bends enough to be visible; that slack is pinned so it cannot grow unnoticed.
 - Every piece's tag is unique and carries its owner, so an adoption cannot mix two pieces up; a source guard keeps the pieces from lagging (`setTeleportDuration`/`setInterpolationDuration`/`setInterpolationDelay`/`setDisplayWidth`/`setDisplayHeight` all zero, configured in one place), requires a reload to **adopt** the suit it already has instead of spawning a second, overlapping one and to **rebuild that boss's boss bar** (with the virtual health its progress is read from), and keeps the animation going through `KingerModel.compose` rather than a per-piece transform.
 
 ### `listener/bossdimension/BossDimensionGuardLogicTest` — Boss dimension guard
@@ -213,6 +224,12 @@ Covers the health math in `utils/MscEntityUtils`:
 - The generated boss bar titles are asserted **byte for byte** against the five strings the old switch held, for the default five phases and for a rescaled three-phase ladder — including that a phase past the end cannot emit a negative number of squares.
 - Bar colours follow the phases, and a longer ladder reuses the last colour of the palette instead of falling back to red.
 
+### `entities/boss/SentinelHitboxTest` — The Obsidian Sentinel's own stand
+- The Sentinel is not a suit on an invisible stand, it **is** the scaled stand, so one number is at once the size of the model and the box players hit: `MODEL_HITBOX_SCALE` is pinned at `7.5` (about fourteen blocks of warrior), inside the range the clamp allows and wide enough to be hit.
+- The scale is read from `armor-stand-boss.hitbox-scale` and **clamped**, never a literal inside `trySpawn` again — the code that sets it from a bare `7.5` is a failure.
+- The two numbers of the arrival pentagram (its duration and its radius) are named constants the seal call passes, so the timing and the arena size are not buried in a call site.
+- The stand the fight is hit through is configured in **exactly one place**: arms on, no base plate, no gravity, invulnerable off, persistent, named and tagged — each of those is asserted to appear once in the source, because a second spawn path forgetting one would produce a boss the fight cannot be won against.
+
 ### `utils/MscTextTest` — Item and mob name parity
 - Every helper that builds item names, lore, flavour quotes and the `✦ … ✦` footers is serialised back with `LegacyComponentSerializer.legacySection()` and compared to the exact `ChatColor` string it replaced, so the migration cannot shift a space, a colour code or a bold flag unnoticed.
 - Covers the mid-sentence colour switches (`rich`), the empty spacer lines (`blank`), the colourless names (`plain`) and the argument validation of `rich`.
@@ -226,7 +243,7 @@ Covers the health math in `utils/MscEntityUtils`:
 - Checks the player-facing knobs stay sane: the Sentinels `phase-thresholds` descend inside `(0, 1]`, defence durations are at least one tick, `no-player-despawn-ticks` allows `0`, and every toggleable mob keeps its `enabled` flag.
 - A self-test proves the literal scanner reports dotted literals outside comments and ignores the ones inside them.
 - Asserts `commands.subcommand-permissions` exists as an **empty map** by default: the documented escape hatch must not disappear silently, and the shipped config must not restrict anything by surprise.
-- Asserts each dressed boss ships **the hitbox scale its model test proves is right** (`kinger.hitbox-scale` 1.0, `nix-executioner.hitbox-scale` 1.9, `jackstar-architect.hitbox-scale` 1.2), inside the 0.25–8 range a hand-edited value gets clamped to — the knob and the geometry tests have to agree out of the box.
+- Asserts **every** boss ships the hitbox scale its geometry test proves is right (`kinger.hitbox-scale` 1.0, `nix-executioner.hitbox-scale` 1.9, `jackstar-architect.hitbox-scale` 1.2, `armor-stand-boss.hitbox-scale` 7.5 — the Sentinel's own body), inside the 0.25–8 range a hand-edited value gets clamped to — the knob and the geometry tests have to agree out of the box.
 
 ### `utils/LegacyNameApiGuardTest` — Migration guard
 - Reads `src/main/java` and fails if any file goes back to the deprecated String name APIs (`setDisplayName`, `setLore`, `setItemName`, `setCustomName`, `getDisplayName`, `getCustomName`). Those methods still compile and still work, so an item written the old way would otherwise only show up as a subtly wrong tooltip.

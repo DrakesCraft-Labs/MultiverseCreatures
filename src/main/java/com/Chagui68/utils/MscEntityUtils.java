@@ -71,10 +71,11 @@ public final class MscEntityUtils {
     /**
      * Keeps a configured hitbox scale usable.
      *
-     * <p>The scale is the size of the invisible armour stand a dressed boss is hit through. A zero, a
-     * negative or a NaN would leave the boss impossible to hit — a boss that cannot be killed is worse
-     * than any wrong number in a config file — and an absurdly large one would swallow the arena, so a
-     * broken value falls back to a plain stand instead of being trusted.
+     * <p>The scale is the size of the stand a boss is hit through: the invisible suit stand for the
+     * three dressed bosses, and the Sentinel's own visible body. A zero, a negative or a NaN would
+     * leave the boss impossible to hit — a boss that cannot be killed is worse than any wrong number
+     * in a config file — and an absurdly large one would swallow the arena, so a broken value falls
+     * back to a plain stand instead of being trusted.
      */
     public static double clampHitboxScale(double requested) {
         if (!Double.isFinite(requested)) return 1.0;

@@ -1,15 +1,12 @@
 package com.Chagui68.utils;
 
+import com.Chagui68.testsupport.ProjectPaths;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class SilentCatchGuardTest {
 
-    private static final Path SOURCES = Path.of("src", "main", "java");
+    private static final Path SOURCES = ProjectPaths.mainJava();
 
     /**
      * Catches that are allowed to stay silent. Keep it empty: a failure worth catching but not worth
@@ -45,7 +42,7 @@ class SilentCatchGuardTest {
         int total = 0;
 
         for (Path file : sources()) {
-            String source = withoutCommentsAndStrings(read(file));
+            String source = withoutCommentsAndStrings(ProjectPaths.read(file));
             int index = 0;
             while ((index = source.indexOf("catch", index)) >= 0) {
                 if (!isKeyword(source, index)) {
@@ -60,7 +57,7 @@ class SilentCatchGuardTest {
                 total++;
                 String body = source.substring(open + 1, close);
                 if (body.isBlank()) {
-                    String where = SOURCES.relativize(file) + ":" + lineOf(source, index);
+                    String where = ProjectPaths.relative(file) + ":" + lineOf(source, index);
                     if (!ALLOWED.contains(where)) silent.add(where);
                 }
                 index = close;
@@ -76,19 +73,7 @@ class SilentCatchGuardTest {
     // ------------------------------------------------------------------ helpers
 
     private static List<Path> sources() {
-        try (Stream<Path> walk = Files.walk(SOURCES)) {
-            return walk.filter(path -> path.toString().endsWith(".java")).sorted().toList();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private static String read(Path path) {
-        try {
-            return Files.readString(path);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return ProjectPaths.javaFiles(SOURCES);
     }
 
     /** {@code catch} is only a catch clause when it stands alone in front of its parentheses. */

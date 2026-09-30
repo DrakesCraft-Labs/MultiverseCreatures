@@ -1,5 +1,8 @@
 package com.Chagui68.entities.boss;
 
+import com.Chagui68.testsupport.LimbGeometry;
+import com.Chagui68.testsupport.ProjectPaths;
+import com.Chagui68.utils.MscLimb;
 import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -7,8 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -165,6 +166,76 @@ class NixModelTest {
     }
 
     @Test
+    @DisplayName("Each elbow and knee sits where the export splits its limb, and only the stack below hangs from it")
+    void theJointsSitWhereTheExportSplitsEachLimb() {
+        for (NixBoss.LimbGroup group : List.of(NixBoss.LimbGroup.LEG_RIGHT, NixBoss.LimbGroup.LEG_LEFT,
+                NixBoss.LimbGroup.ARM_RIGHT, NixBoss.LimbGroup.ARM_LEFT)) {
+            List<NixBoss.NixPart> limb = partsIn(group);
+            LimbGeometry.Split<NixBoss.NixPart> split =
+                    LimbGeometry.largestGap(limb, part -> NixModel.baseTranslation(part).y);
+
+            // The numbered pieces are not in stacking order, so the split is worth proving: the pieces
+            // below the export's biggest gap are exactly the ones the code folds.
+            assertEquals(1, split.upper().size(), group + " should have a single piece at the joint");
+            for (NixBoss.NixPart part : limb) {
+                assertEquals(split.lower().contains(part), NixModel.hangsFromSecondJoint(part),
+                        part + " is on the wrong side of its joint, so the walk would fold the wrong piece");
+            }
+
+            Vector3f joint = NixModel.secondJoint(group);
+            assertNotNull(joint, group + " must expose the joint its lower stack folds about");
+            assertEquals(split.joint(), joint.y, 0.01,
+                    group + "'s joint is not where the export leaves the gap between its two segments");
+            assertEquals(NixModel.pivot(group).x, joint.x, 0.01f, "a joint must sit on its limb's own axis");
+        }
+
+        for (NixBoss.LimbGroup group : List.of(NixBoss.LimbGroup.HEAD, NixBoss.LimbGroup.TORSO_UPPER,
+                NixBoss.LimbGroup.TORSO_LOWER)) {
+            assertNull(NixModel.secondJoint(group), group + " has no second segment");
+        }
+    }
+
+    @Test
+    @DisplayName("Only the lower stack of a limb folds, and it folds by the angle the limb itself walks with")
+    void onlyTheLowerStackFolds() {
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.1f) {
+            for (NixBoss.NixPart part : NixBoss.NixPart.values()) {
+                Quaternionf folded = NixModel.lowerRotation(part, phase);
+                if (!NixModel.hangsFromSecondJoint(part)) {
+                    assertEquals(new Quaternionf(), folded, part + " is above the joint and must stay rigid");
+                    continue;
+                }
+                float swing = NixModel.walkSwing(part.group, phase);
+                Quaternionf expected = part.group == NixBoss.LimbGroup.ARM_RIGHT
+                        || part.group == NixBoss.LimbGroup.ARM_LEFT
+                        ? MscLimb.elbow(swing) : MscLimb.knee(swing);
+                assertEquals(expected, folded, part + " does not follow its own limb's swing at phase " + phase);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("The whole walk keeps the body over the stand's hitbox")
+    void theWalkStaysOverTheHitbox() {
+        float halfWidth = 0.25f * (float) NixBoss.MODEL_HITBOX_SCALE;
+
+        // A step bends the elbows and knees, which carries those pieces further from the axis than the
+        // rest pose does, so the rest-pose coverage above is not enough on its own.
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.2f) {
+            for (NixBoss.NixPart part : NixBoss.NixPart.values()) {
+                float swing = NixModel.walkSwing(part.group, phase);
+                Vector3f moved = NixModel.compose(part, new Quaternionf().rotateX(swing),
+                        NixModel.lowerRotation(part, phase)).getTranslation();
+
+                assertTrue(Math.abs(moved.x) + part.scale.x * 0.25f < halfWidth,
+                        part + " swung out of the hitbox sideways at phase " + phase);
+                assertTrue(Math.abs(moved.z) + part.scale.z * 0.25f < halfWidth,
+                        part + " swung out of the hitbox front or back at phase " + phase + ": z=" + moved.z);
+            }
+        }
+    }
+
+    @Test
     @DisplayName("The twenty-seven parts keep their own place in the body")
     void partsNeverCollapseOntoEachOther() {
         List<NixBoss.NixPart> parts = new ArrayList<>(List.of(NixBoss.NixPart.values()));
@@ -210,9 +281,9 @@ class NixModelTest {
     @Test
     @DisplayName("A part display never lags behind the stand, and a reload reattaches parts instead of duplicating them")
     void partDisplaysFollowTheStandExactly() throws IOException {
-        String source = Files.readString(Path.of("src", "main", "java",
+        String source = ProjectPaths.read(ProjectPaths.source(
                 "com", "Chagui68", "entities", "boss", "NixBoss.java"));
-        String suit = Files.readString(Path.of("src", "main", "java",
+        String suit = ProjectPaths.read(ProjectPaths.source(
                 "com", "Chagui68", "utils", "DisplaySuit.java"));
 
         // The parts are placed on the stand's exact position every tick, so any interpolation would
@@ -256,6 +327,14 @@ class NixModelTest {
             lowest = Math.min(lowest, baseY(part) - part.scale.y * 0.25f);
         }
         return lowest;
+    }
+
+    private static List<NixBoss.NixPart> partsIn(NixBoss.LimbGroup group) {
+        List<NixBoss.NixPart> members = new ArrayList<>();
+        for (NixBoss.NixPart part : NixBoss.NixPart.values()) {
+            if (part.group == group) members.add(part);
+        }
+        return members;
     }
 
     private static NixBoss.NixPart leg(String name) {

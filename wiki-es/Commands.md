@@ -276,12 +276,12 @@ Las secciones sin datos se omiten; si aún no te ha tocado ningún jefe el coman
 Dibuja en el mundo la **hitbox real** de un jefe y las **articulaciones** sobre las que giran sus extremidades durante diez segundos, siguiéndolo mientras se mueve. Apunta al jefe de ese tipo más cercano en 32 bloques (omite el nombre para cualquier jefe vestido); la geometría se dibuja con partículas, así que no aparece ni queda nada en el mundo.
 
 - En **rojo**, las doce aristas de la caja del ArmorStand — la caja que recibe de verdad los golpes. Cada pieza visible tiene que quedar **dentro**; si no, un golpe a esa pieza se pierde.
-- En **cian**, cada articulación: hombro, cadera, cintura y cuello. Una extremidad cuelga de su punto y su extremo lejano mantiene la distancia mientras gira.
+- En **cian**, cada articulación: hombro, cadera, cintura, cuello y — para NIX y Jack Star, cuyos brazos y piernas se exportaron en dos segmentos — los **codos y las rodillas**. Una extremidad cuelga de su punto y su extremo lejano mantiene la distancia mientras gira.
 
 El Centinela no tiene articulaciones propias (viste la armadura sobre el stand), así que solo dibuja la caja. Es la versión en juego de los tests de modelo: existe para revisar un modelo junto al jefe en vez de con un test temporal.
 
 ```
-Drawing kinger for 10 s: hitbox 0.50 x 1.98 x 0.50 blocks (red), 6 joints (cyan).
+Drawing kinger for 10 s: hitbox 0.50 x 1.98 x 0.50 blocks (red), 8 joints (cyan).
 ```
 
 ---

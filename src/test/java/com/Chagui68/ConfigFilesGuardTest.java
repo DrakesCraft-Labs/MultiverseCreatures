@@ -1,6 +1,8 @@
 package com.Chagui68;
 
 import com.Chagui68.entities.Kinger;
+import com.Chagui68.testsupport.ProjectPaths;
+import com.Chagui68.entities.boss.ArmorStandBoss;
 import com.Chagui68.entities.boss.JackStarBoss;
 import com.Chagui68.entities.boss.NixBoss;
 import com.Chagui68.utils.MscEntityUtils;
@@ -41,10 +43,10 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class ConfigFilesGuardTest {
 
-    private static final Path RESOURCES = Path.of("src", "main", "resources");
-    private static final Path CONFIG = RESOURCES.resolve("config.yml");
-    private static final Path PLUGIN = RESOURCES.resolve("plugin.yml");
-    private static final Path SOURCES = Path.of("src", "main", "java");
+    private static final Path RESOURCES = ProjectPaths.mainResources();
+    private static final Path CONFIG = ProjectPaths.resource("config.yml");
+    private static final Path PLUGIN = ProjectPaths.resource("plugin.yml");
+    private static final Path SOURCES = ProjectPaths.mainJava();
 
     /** A quoted literal that looks like a config path: lowercase, at least one dot. */
     private static final Pattern CONFIG_LITERAL = Pattern.compile("\"([a-z][a-z0-9-]*(?:\\.[a-z0-9-]+)+)\"");
@@ -107,7 +109,7 @@ class ConfigFilesGuardTest {
     @DisplayName("No source reads a config key that config.yml does not define")
     void everyLiteralKeyExists() {
         Assumptions.assumeTrue(Files.isDirectory(SOURCES),
-                "Skipped: src/main/java is not reachable from " + Path.of("").toAbsolutePath());
+                "Skipped: src/main/java is not reachable from " + ProjectPaths.root());
 
         Set<String> defined = flatten(loadConfig());
         Set<String> roots = new LinkedHashSet<>();
@@ -115,12 +117,7 @@ class ConfigFilesGuardTest {
             roots.add(path.split("\\.", 2)[0]);
         }
 
-        List<Path> javaFiles;
-        try (Stream<Path> files = Files.walk(SOURCES)) {
-            javaFiles = files.filter(path -> path.toString().endsWith(".java")).toList();
-        } catch (IOException e) {
-            throw new UncheckedIOException("Could not read the sources under " + SOURCES, e);
-        }
+        List<Path> javaFiles = ProjectPaths.javaFiles(SOURCES);
         assertTrue(javaFiles.size() > 100,
                 "Expected to scan the whole main source set, found only " + javaFiles.size() + " files");
 
@@ -220,21 +217,24 @@ class ConfigFilesGuardTest {
         }
 
         @Test
-        @DisplayName("Each dressed boss ships the hitbox scale its geometry tests prove is right")
+        @DisplayName("Every boss ships the hitbox scale its geometry tests prove is right")
         void hitboxScales() {
             Map<String, Object> config = loadConfig();
 
-            // The scale is the size of the invisible stand the suit is hit through, so the shipped
-            // value is the one the model tests prove covers the model: change the knob and the fight
-            // changes, so the two must agree out of the box.
-            assertEquals(Kinger.MODEL_HITBOX_SCALE, number(config, "entities.kinger.hitbox-scale"), 1.0e-9,
-                    "Kinger ships a hitbox scale the model test does not cover");
-            assertEquals(NixBoss.MODEL_HITBOX_SCALE, number(config, "entities.nix-executioner.hitbox-scale"), 1.0e-9,
-                    "NIX ships a hitbox scale the model test does not cover");
-            assertEquals(JackStarBoss.MODEL_HITBOX_SCALE, number(config, "entities.jackstar-architect.hitbox-scale"), 1.0e-9,
-                    "Jack Star ships a hitbox scale the model test does not cover");
+            // The scale is the size of the stand the boss is hit through — the invisible suit stand
+            // for the dressed three, the boss's own body for the Sentinel — so the shipped value is
+            // the one the model tests prove covers the model: change the knob and the fight changes,
+            // so the two must agree out of the box.
+            Map<String, Double> shipped = Map.of(
+                    "entities.armor-stand-boss.", ArmorStandBoss.MODEL_HITBOX_SCALE,
+                    "entities.kinger.", Kinger.MODEL_HITBOX_SCALE,
+                    "entities.nix-executioner.", NixBoss.MODEL_HITBOX_SCALE,
+                    "entities.jackstar-architect.", JackStarBoss.MODEL_HITBOX_SCALE);
 
-            for (String boss : List.of("entities.kinger.", "entities.nix-executioner.", "entities.jackstar-architect.")) {
+            shipped.forEach((boss, proven) -> assertEquals(proven, number(config, boss + "hitbox-scale"), 1.0e-9,
+                    boss + " ships a hitbox scale its geometry test does not cover"));
+
+            for (String boss : shipped.keySet()) {
                 double scale = number(config, boss + "hitbox-scale");
                 assertTrue(scale >= MscEntityUtils.MIN_HITBOX_SCALE && scale <= MscEntityUtils.MAX_HITBOX_SCALE,
                         boss + "hitbox-scale is outside the range the code clamps to: " + scale);

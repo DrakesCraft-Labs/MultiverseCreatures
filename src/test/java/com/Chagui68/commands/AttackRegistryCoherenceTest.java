@@ -1,5 +1,6 @@
 package com.Chagui68.commands;
 
+import com.Chagui68.testsupport.ProjectPaths;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -30,10 +31,10 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class AttackRegistryCoherenceTest {
 
-    private static final Path BOSS_SOURCE = Path.of("src", "main", "java", "com", "Chagui68",
-            "entities", "boss", "ArmorStandBoss.java");
-    private static final Path ATTACK_SOURCES = Path.of("src", "main", "java", "com", "Chagui68",
-            "entities", "boss", "attack");
+    private static final Path BOSS_SOURCE = ProjectPaths.source(
+            "com", "Chagui68", "entities", "boss", "ArmorStandBoss.java");
+    private static final Path ATTACK_SOURCES = ProjectPaths.source(
+            "com", "Chagui68", "entities", "boss", "attack");
 
     private static final List<String> CATEGORY_FOLDERS = List.of("ground", "aerial", "ranged", "defensive");
 
@@ -162,10 +163,6 @@ class AttackRegistryCoherenceTest {
     }
 
     private static String read(Path path) {
-        try {
-            return Files.readString(path);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return ProjectPaths.read(path);
     }
 }
