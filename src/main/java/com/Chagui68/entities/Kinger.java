@@ -1,5 +1,6 @@
 package com.Chagui68.entities;
 
+import com.Chagui68.utils.MscBossBar;
 import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.MultiverseCreatures;
 import org.bukkit.Bukkit;
@@ -379,6 +380,11 @@ public class Kinger implements Listener {
             double current = MscEntityUtils.getVirtualHealth(stand);
             double max = MscEntityUtils.getVirtualMaxHealth(stand);
             inst.bossBar.setProgress(MscEntityUtils.calculateVirtualProgress(current, max));
+            // A bar is a packet per player, not a world object: taking a fresh look once a second is
+            // what makes a login, a logout or a world change correct itself.
+            if (inst.tickCount % 20 == 0) {
+                MscBossBar.showInWorld(inst.bossBar, stand.getWorld());
+            }
         }
     }
 
@@ -708,12 +714,8 @@ public class Kinger implements Listener {
     }
 
     private void setupBossBar(KingerInstance inst) {
-        BossBar bar = Bukkit.createBossBar(BAR_TITLE, BarColor.PURPLE, BarStyle.SEGMENTED_10, BarFlag.DARKEN_SKY);
-        bar.setProgress(1.0);
-        bar.setVisible(true);
-        for (Player p : inst.stand.getWorld().getPlayers()) {
-            bar.addPlayer(p);
-        }
+        BossBar bar = MscBossBar.create(BAR_TITLE, BarColor.PURPLE, BarStyle.SEGMENTED_10, BarFlag.DARKEN_SKY);
+        MscBossBar.showInWorld(bar, inst.stand.getWorld());
         inst.bossBar = bar;
     }
 

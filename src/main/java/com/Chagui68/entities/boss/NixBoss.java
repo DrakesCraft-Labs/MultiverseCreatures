@@ -1,6 +1,7 @@
 package com.Chagui68.entities.boss;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.utils.MscBossBar;
 import com.Chagui68.utils.MscEntityUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -494,6 +495,11 @@ public class NixBoss implements Listener {
             double current = MscEntityUtils.getVirtualHealth(stand);
             double max = MscEntityUtils.getVirtualMaxHealth(stand);
             inst.bossBar.setProgress(MscEntityUtils.calculateVirtualProgress(current, max));
+            // A bar is a packet per player, not a world object: taking a fresh look once a second is
+            // what makes a login, a logout or a world change correct itself.
+            if (inst.tickCount % 20 == 0) {
+                MscBossBar.showInWorld(inst.bossBar, stand.getWorld());
+            }
         }
     }
 
@@ -848,12 +854,8 @@ public class NixBoss implements Listener {
     }
 
     private void setupBossBar(NixInstance inst) {
-        BossBar bar = Bukkit.createBossBar(BAR_TITLE, BarColor.RED, BarStyle.SEGMENTED_12, BarFlag.DARKEN_SKY, BarFlag.CREATE_FOG);
-        bar.setProgress(1.0);
-        bar.setVisible(true);
-        for (Player p : inst.stand.getWorld().getPlayers()) {
-            bar.addPlayer(p);
-        }
+        BossBar bar = MscBossBar.create(BAR_TITLE, BarColor.RED, BarStyle.SEGMENTED_12, BarFlag.DARKEN_SKY, BarFlag.CREATE_FOG);
+        MscBossBar.showInWorld(bar, inst.stand.getWorld());
         inst.bossBar = bar;
     }
 

@@ -3,6 +3,7 @@ package com.Chagui68.entities.boss;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ArchitectKernel;
 import com.Chagui68.items.food.ScoobyCookie;
+import com.Chagui68.utils.MscBossBar;
 import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.utils.MscText;
 import com.google.gson.JsonObject;
@@ -1396,7 +1397,7 @@ public class JackStarBoss implements Listener {
     }
 
     private void setupBossBar(JackInstance inst) {
-        inst.bossBar = Bukkit.createBossBar(
+        inst.bossBar = MscBossBar.create(
                 ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "JackStar — El Arquitecto del Sistema",
                 BarColor.BLUE,
                 BarStyle.SEGMENTED_10,
@@ -1410,14 +1411,9 @@ public class JackStarBoss implements Listener {
                     cancel();
                     return;
                 }
-                Location loc = inst.stand.getLocation();
-                for (Player p : loc.getWorld().getPlayers()) {
-                    if (p.getLocation().distanceSquared(loc) <= aggroRange * aggroRange) {
-                        inst.bossBar.addPlayer(p);
-                    } else {
-                        inst.bossBar.removePlayer(p);
-                    }
-                }
+                // The bar shows to whoever is close to the boss; the helper also drops anyone who
+                // logged out or left the world, which the old distance sweep could never notice.
+                MscBossBar.showNear(inst.bossBar, inst.stand.getLocation(), aggroRange);
             }
         }.runTaskTimer(plugin, 0L, 20L);
     }

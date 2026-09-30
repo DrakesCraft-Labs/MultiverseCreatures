@@ -60,6 +60,7 @@ import com.Chagui68.entities.boss.attack.defensive.ShieldSealAttack;
 import com.Chagui68.entities.boss.attack.defensive.StoneSkinAttack;
 import com.Chagui68.entities.boss.attack.defensive.TriangleCallAttack;
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.utils.MscBossBar;
 import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.utils.MscLog;
 import com.Chagui68.utils.MscText;
@@ -448,14 +449,9 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     private void setupBossBar(BossInstance instance) {
-        BossBar bar = Bukkit.createBossBar(BAR_TITLE, BarColor.RED, BarStyle.SEGMENTED_6, BarFlag.DARKEN_SKY);
+        BossBar bar = MscBossBar.create(BAR_TITLE, BarColor.RED, BarStyle.SEGMENTED_6, BarFlag.DARKEN_SKY);
         bar.setProgress(MAX_PROGRESS);
-        bar.setVisible(true);
-
-        for (Player p : instance.stand.getWorld().getPlayers()) {
-            bar.addPlayer(p);
-        }
-
+        MscBossBar.showInWorld(bar, instance.stand.getWorld());
         instance.bossBar = bar;
     }
 
@@ -2051,24 +2047,7 @@ public class ArmorStandBoss implements Listener, BossHost {
 
     private void syncBossBarPlayers(BossInstance instance) {
         if (instance.bossBar == null) return;
-        BossBar bar = instance.bossBar;
-        BossPuppet stand = instance.stand;
-
-        List<Player> toRemove = new ArrayList<>();
-        for (Player p : bar.getPlayers()) {
-            if (!p.isOnline() || !p.getWorld().equals(stand.getWorld())) {
-                toRemove.add(p);
-            }
-        }
-        for (Player p : toRemove) {
-            bar.removePlayer(p);
-        }
-
-        for (Player p : stand.getWorld().getPlayers()) {
-            if (!bar.getPlayers().contains(p)) {
-                bar.addPlayer(p);
-            }
-        }
+        MscBossBar.showInWorld(instance.bossBar, instance.stand.getWorld());
     }
 
     @Override

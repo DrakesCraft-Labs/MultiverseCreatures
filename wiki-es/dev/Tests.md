@@ -25,13 +25,18 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 40 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 41 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - **`calculateSafeHealth`** — Ajusta la salud pedida al límite del servidor (cap de atributo, por defecto 1024 en Paper) evitando `IllegalArgumentException`. Verifica casos de jefes reales: ArmorStandBoss (3200), NIX (450), Frost Golem (200); clampa a mínimo **0.1** (evita muerte instantánea al aparecer) y protege de entradas negativas.
 - **`calculateVirtualProgress`** — Clampa el progreso de la boss bar entre 0.0 y 1.0 (incluye `0/0` = 0).
 - **`calculateScaledPhysicalHealth`** — Convierte la salud **virtual** (p. ej. 3200) a la salud física real almacenada en la entidad (escalada a su máximo físico), con 0 → muerte.
+
+### `utils/MscBossBarTest` — Quién ve una barra de jefe
+- Una barra de jefe es un paquete por jugador, no un objeto del mundo, así que la lista de espectadores hay que revisarla: el jugador que **entra más tarde** recibe la barra y al que ya la tenía no se le añade dos veces.
+- El espectador que **se desconecta** o se va a otro mundo deja de verla; una barra limitada por distancia (la de Jack Star) cambia sus espectadores por los jugadores dentro del rango en vez de acumularlos.
+- Una barra, un mundo o una localización ausentes se ignoran en vez de lanzar excepción, para que una barra entregada a medias no pueda romper el ticker.
 
 ### `ritual/RitualStructureTest` — Ritual de entrada (overworld, 7×7)
 - Centro del ritual en `(3, 0, 3)` con radio 5.

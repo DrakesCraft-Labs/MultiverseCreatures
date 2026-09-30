@@ -25,13 +25,18 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 40 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 41 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
 - **`calculateSafeHealth`** — Clamps the requested health to the server limit (attribute cap, default 1024 on Paper) to avoid `IllegalArgumentException`. Verifies real boss cases: ArmorStandBoss (3200), NIX (450), Frost Golem (200); clamps to a minimum of **0.1** (prevents instant death on spawn) and protects against negative input.
 - **`calculateVirtualProgress`** — Clamps the boss-bar progress to [0.0, 1.0] (including `0/0` = 0).
 - **`calculateScaledPhysicalHealth`** — Converts **virtual** health (e.g. 3200) into the real physical health stored on the entity (scaled to its physical max), with 0 → death.
+
+### `utils/MscBossBarTest` — Who sees a boss bar
+- A boss bar is a packet per player, not a world object, so the viewer list has to be revisited: a player who **logs in later** gets the bar and one who already had it is never added twice.
+- A viewer who **logs out** or moves to another world stops seeing the bar; a distance-limited bar (Jack Star's) swaps its viewers for the players inside the range instead of accumulating them.
+- A missing bar, world or location is ignored instead of throwing, so a bar handed over mid-teardown cannot break the ticker.
 
 ### `ritual/RitualStructureTest` — Entry ritual (overworld, 7×7)
 - Ritual center at `(3, 0, 3)` with radius 5.
