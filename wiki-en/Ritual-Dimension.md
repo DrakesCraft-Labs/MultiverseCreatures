@@ -1,8 +1,34 @@
 # 🌌 Ritual Dimension
 
-The **Ritual Dimension** (world `boss_dimension`) is a private, boss-only world where the **Obsidian Sentinel** is fought. It is a void world: a bedrock floor with 5 layers of crying obsidian, an eternal red sky, no weather, no daylight cycle and no natural mob spawning. The dimension is generated automatically the first time a player enters it.
+The **Ritual Dimension** (world `boss_dimension`) is a private, boss-only world where the **Obsidian Sentinel** is fought. It is a coliseum carved into a shattered plain: a paved arena the bosses and the invocation circles stand on, a terraced wall that closes it, and an eternal red sky over a wilderness of obsidian peaks, soul-fire flats, lava canyons and floating shards. No weather, no daylight cycle and no natural mob spawning. The dimension is generated automatically the first time a player enters it.
 
 > The dimension is heavily restricted on purpose: players cannot place or break blocks, and almost all commands are blocked (only `/say`, `/me`, `/help` and `/?` work — even `/msc dimtp` is blocked inside). Admins bypass these restrictions with the `msc.admin.bypass` permission.
+
+---
+
+## 🏛️ The terrain
+
+Generation lives in `ritual/terrain/` and writes every chunk from the world seed alone, so a chunk's edge always matches its neighbour's.
+
+```
+r = 0      eight-pointed sigil, glowing rings and spokes, brick checker over a deepslate base
+r ≤ 34     the plaza: paved **only** with blocks the invocation structures accept
+r ≤ 64     the arena floor: a decorative ring of masonry, gilded courses and glowing studs
+r ≤ 80     the wall: four terraces rising 6 blocks each, battlements on top,
+           eight buttress ribs climbing over the crown
+r > 80     the wilderness: an esplanade level with the wall, then shelves, obsidian peaks,
+           soul-fire flats, sculk basins and canyons with a flat lava floor
+           ~100 blocks out: ruins — monoliths, broken arches, gateways, soul wells, basalt spires
+           and eight floating shards over the crown
+```
+
+The arena floor is **exactly** at y=5 everywhere and **nothing is ever built above it** inside the ring: the bosses' ground queries, the ground-recovery fallback and the seal placement were all tuned on the flat plain this dimension used to be.
+
+> **Why the plaza has a material list.** Each invocation structure validates the block it stands on, and the intersection of both lists is `polished blackstone bricks`, `deepslate bricks` and `crying obsidian`. The plaza is paved with those three and nothing else, so a ritual can be built anywhere on it — and a test cross-checks the pavement against the structures, so a change to either list fails the build instead of the ritual.
+
+> **Light.** The dimension is stuck at midnight (`doDaylightCycle` off, time 14000), so the glow is built into the floor: crying obsidian (light 10) inside the plaza, shroomlight and ochre froglight studs outside it. Nothing luminous ever stands above the floor.
+
+**Regenerating.** A world that already exists is loaded as it was: terrain changes only reach the chunks nobody has visited. To see a new generator from the spawn point, set `boss-dimension.reset-on-load: true` once, restart, and set it back — the plugin deletes the dimension folder before creating it. It destroys everything built there, which is why it is off by default.
 
 ---
 
@@ -130,7 +156,8 @@ There is no teleport command available inside the dimension — the only way out
 ## 🧰 Technical notes
 
 - World name: `boss_dimension` (created on first entry, unloaded on plugin disable).
-- Spawn point: `0.5, 10, 0.5` (above the crying obsidian floor).
+- Spawn point: `0.5, 10, 0.5` — 5 blocks above the arena floor, the height players have always landed at.
 - Game rules: no daylight cycle, no weather cycle, no mob spawning, immediate respawn, no advancement announcements.
-- The sky is forced red via a biome override.
-- Relevant classes: `BossDimensionManager`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure` — see [Architecture](./dev/Architecture.md).
+- The sky is forced red via a biome override; `boss-dimension.red-sky: false` leaves it alone (the tint is applied to a vanilla biome, so it is global).
+- Config: `boss-dimension.red-sky` and `boss-dimension.reset-on-load`.
+- Relevant classes: `BossDimensionManager`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure`, and the terrain package (`BossArenaGenerator`, `ArenaShape`, `ArenaNoise`, `ArenaPalette`, `ArenaLandmarks`, `TerrainSink`) — see [Architecture](./dev/Architecture.md) and [Tests](./dev/Tests.md).

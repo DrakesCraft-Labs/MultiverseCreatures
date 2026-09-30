@@ -9,7 +9,7 @@ Esta página documenta **cómo se prueban** los cambios del plugin y **qué veri
 - **Java 21** — mismo compilador que el código principal.
 - **Headless**: no se arranca un servidor Paper/Purpur. Las clases de Bukkit que se tocan (p. ej. `World`) se simulan con `java.lang.reflect.Proxy` o se usan objetos `Location` con mundo `null` para ejercitar solo la aritmética.
 - **SnakeYAML** (viene con `purpur-api`) parsea `config.yml` y `plugin.yml` en `ConfigFilesGuardTest`, así una indentación inválida falla en la suite y no al arrancar el servidor.
-- El **soporte de tests** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`) es el arnés que comparten las guardias: encuentra el proyecto subiendo desde el directorio de trabajo (una guardia de fuentes leía `src/main/java` desde donde se lanzara Maven, no encontraba nada y pasaba de forma vacua), nombra un archivo por segmentos con un único modo de fallo, y lee la segunda articulación de una extremidad del propio export en vez de fiarse del código que la fija.
+- El **soporte de tests** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`, `testsupport/RecordingTerrain`) es el arnés que comparten las guardias: encuentra el proyecto subiendo desde el directorio de trabajo (una guardia de fuentes leía `src/main/java` desde donde se lanzara Maven, no encontraba nada y pasaba de forma vacua), nombra un archivo por segmentos con un único modo de fallo, lee la segunda articulación de una extremidad del propio export en vez de fiarse del código que la fija, y graba lo que escribe el generador de terreno para poder inspeccionar sus chunks sin servidor.
 
 Comandos:
 
@@ -26,7 +26,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 47 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 52 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
@@ -59,6 +59,35 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - La articulación entre dos segmentos del export está **a medio camino entre sus centros**, así no hay que suponer el tamaño de ninguna pieza y un reexport mueve la articulación con ella; una extremidad quieta queda exactamente donde la deja el export, segunda articulación incluida.
 - En todo el rango que alcanza un paso, el segmento inferior conserva su distancia exacta a la segunda articulación — no puede desprenderse de la extremidad — y se queda por debajo de esa articulación en vez de plegarse a través del muslo.
 - Una **rodilla** se dobla solo en la mitad trasera del balanceo y un **codo** solo en la delantera, ambos por una fracción documentada del balanceo del padre (`1.5×`, con tope en `1.2` rad ≈ 69°) y siempre en la dirección en la que ya va la extremidad, así la articulación suma al balanceo en vez de adelantarlo o cancelarlo.
+
+### `ritual/terrain/ArenaNoiseTest` — El ruido con el que se esculpe el páramo
+- Fija las dos propiedades de las que depende cada altura de la dimensión: cada campo (`unit`, `value`, `fbm`, `ridge`) se queda dentro de `[0, 1)`, así que ninguna altura derivada se escapa del recorte del constructor, y las mismas coordenadas dan siempre la misma respuesta, que es lo que permite que dos chunks vecinos encajen sin hablarse.
+- Demuestra que los campos son continuos — un paso de un bloque mueve `fbm` menos de 0.05 — así que el terreno no tiene pliegues de rejilla, y que intercambiar x por z cambia el valor casi siempre: un campo espejado le daría al coliseo una simetría diagonal que nadie pidió.
+- `smoothstep` se comprueba en ambos extremos y en el centro, incluida la forma descendente con la que se desvanecen los nervios de contrafuerte.
+
+### `ritual/terrain/ArenaShapeTest` — Las invariantes de la forma
+- El suelo de la arena está plano en y=5 en todas sus columnas, la muralla sube en cuatro terrazas de 6 bloques, cada una demasiado alta para escalarla, y el anillo nunca baja de la primera terraza: un coliseo del que se puede salir no es un coliseo.
+- Se comprueba la aritmética de las terrazas (`RIM_FIRST_STEP_Y + 3 × RIM_STEP_HEIGHT == RIM_TOP_Y`, las cuatro terrazas llenando el anillo), así que tocar una constante no puede dejar un hueco en la muralla sin que salte.
+- Los cañones nunca llegan dentro de `CHASM_INNER_RADIUS`, el páramo sí tiene cañones lo bastante hondos para inundarse y picos por encima de y=44, y ninguna ruina se acerca más que `LANDMARK_INNER_RADIUS`: la vista desde el suelo de la arena queda despejada.
+- La arena es idéntica con dos semillas distintas (es un decorado) mientras el páramo difiere en cientos de columnas muestreadas, y `spawnY()` está fijado en 10 porque moverlo mueve el punto donde el ritual deja a los jugadores.
+
+### `ritual/terrain/BossArenaTerrainTest` — El terreno que recibe la pelea
+- Conduce el generador real a un sumidero que graba, chunk a chunk, y comprueba lo que pisan jugadores y jefes: el suelo está plano y es sólido, el volumen de juego (por encima del suelo, hasta y=34) está vacío, y cada bloque de la plaza es uno de los tres que aceptan las estructuras de invocación — cruzado contra `JackInvocationStructure.isValidBase` y `NixInvocationStructure.isValidBase`, así que cambiar una de las dos listas falla aquí y no en el círculo de invocación.
+- El pavimento tiene que ser entre un 5% y un 45% bloque luminoso: la dimensión está congelada en medianoche y el suelo es la única luz de la pelea, pero con demasiada el sigilo deja de leerse como un sigilo.
+- Demuestra que el mundo está sellado: bedrock en y=0 en campo abierto, y `CANYON_ROCK_DEPTH` bloques de roca bajo el fondo de un cañón, así que picar en el fondo del cañón más profundo no llega al vacío.
+- El fuego de alma solo se apoya en arena de almas, la lava solo se estanca en el fondo de los cañones, y dos agrupaciones distintas de ventanas (una de 32×32 contra cuatro chunks de 16×16) producen bloques idénticos columna a columna — una costura en el borde de un chunk fallaría.
+- También fija el coste: un chunk bajo una esquirla flotante conserva al menos tanto como descarta, así que una ruina no puede ponerse a regenerar el mundo por chunk.
+
+### `ritual/terrain/BossArenaGeneratorGuardTest` — Guardias del terreno
+- `generateNoise` no puede mencionar el `Random` que le pasa el servidor: leerlo haría que el mismo chunk se generase distinto en cada pasada y dejaría costuras en los bordes.
+- Cada etapa de generación se declara explícitamente y solo el ruido está activo — un `true` suelto espolvorearía decoración vanilla por la arena — y `isParallelCapable` debe seguir en true, algo que solo es seguro mientras el generador no tenga estado.
+- El sumidero de chunk tiene que conservar tanto la comprobación de límites del chunk como la de altura del mundo, y las clases de forma y ruido tienen que quedarse sin Bukkit, que es justo lo que hace testeable el terreno sin servidor.
+- `BossDimensionManager` debe instalar el generador y no puede volver a `WorldType.FLAT` ni al eliminado `CryingObsidianChunkGenerator`.
+- Lee `config.yml` y exige que toda clave documentada en `boss-dimension` se lea en algún punto del código: un ajuste que nadie lee es una mentira en el único archivo que editan los dueños del servidor.
+
+### `testsupport/RecordingTerrainTest` — El sumidero sobre el que se apoyan los tests de terreno
+- Las claves de posición van y vuelven con coordenadas extremas y negativas y se mantienen únicas en un barrido grande: una clave compartida por dos posiciones hace que un test de terreno lea un bloque de su vecino. No es hipotético — una versión de esta clase empaquetaba 25 bits por coordenada donde iban 21 y el suelo plano de la arena empezó a leerse veinte bloques alto.
+- Las escrituras fuera de la ventana se cuentan en vez de guardarse, y cada columna lleva su propia altura, así que `topY` no puede devolver el techo de la columna de al lado.
 
 ### `ritual/RitualStructureTest` — Ritual de entrada (overworld, 7×7)
 - Centro del ritual en `(3, 0, 3)` con radio 5.

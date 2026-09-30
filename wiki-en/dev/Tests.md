@@ -9,7 +9,7 @@ This page documents **how plugin changes are tested** and **what each suite veri
 - **Java 21** — same compiler as the main code.
 - **Headless**: no Paper/Purpur server is booted. Bukkit classes that get touched (e.g. `World`) are simulated with `java.lang.reflect.Proxy`, or `Location` objects with a `null` world are used to exercise only the arithmetic.
 - **SnakeYAML** (shipped with `purpur-api`) parses `config.yml` and `plugin.yml` in `ConfigFilesGuardTest`, so an invalid indent fails the suite instead of the server start.
-- **Test support** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`) is the harness the guards share: it finds the project by walking up from the working directory (a source-reading guard used to read `src/main/java` from wherever Maven was started, which found nothing and passed vacuously), names a file by path segments with one failure mode, and reads a limb's second joint out of the export instead of trusting the code that hardcodes it.
+- **Test support** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`, `testsupport/RecordingTerrain`) is the harness the guards share: it finds the project by walking up from the working directory (a source-reading guard used to read `src/main/java` from wherever Maven was started, which found nothing and passed vacuously), names a file by path segments with one failure mode, reads a limb's second joint out of the export instead of trusting the code that hardcodes it, and records what the terrain generator writes so its chunks can be inspected without a server.
 
 Commands:
 
@@ -26,7 +26,7 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 47 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 52 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
@@ -59,6 +59,35 @@ Covers the health math in `utils/MscEntityUtils`:
 - The joint between two export segments is **halfway between their centres**, so nothing has to be assumed about how big a piece is and a re-export moves the joint with it; a still limb rests exactly where the export puts it, second joint and all.
 - Over the whole range a walk can reach, the lower segment keeps its exact distance from the second joint — it cannot come away from the limb — and stays below that joint instead of folding up through the thigh.
 - A **knee** folds only on the back half of the swing and an **elbow** only on the forward half, both by a documented share of the parent's swing (`1.5×`, capped at `1.2` rad ≈ 69°) and always in the direction the limb is already going, so a joint adds to the swing instead of leading or cancelling it.
+
+### `ritual/terrain/ArenaNoiseTest` — The noise the wilderness is made of
+- Pins the two properties every height in the dimension leans on: each field (`unit`, `value`, `fbm`, `ridge`) stays inside `[0, 1)`, so no derived height escapes the builder's clamp, and the same coordinates always give the same answer, which is what lets neighbouring chunks agree without talking to each other.
+- Proves the fields are continuous — a one-block step moves `fbm` by less than 0.05 — so the terrain has no lattice creases, and that swapping x and z almost always changes the value: a mirrored field would give the coliseum a diagonal symmetry nobody asked for.
+- `smoothstep` is checked at both ends and in the middle, including the descending form the buttress ribs fade out with.
+
+### `ritual/terrain/ArenaShapeTest` — The shape invariants
+- The arena floor is flat at y=5 for every column inside the radius, the wall rises in four 6-block terraces, each too tall to walk up, and the ring is never lower than the first terrace anywhere: a coliseum a player can climb out of is not a coliseum.
+- The terrace arithmetic (`RIM_FIRST_STEP_Y + 3 × RIM_STEP_HEIGHT == RIM_TOP_Y`, the four terraces exactly filling the ring) is asserted, so a constant edit cannot silently leave a gap in the wall.
+- Canyons never reach inside `CHASM_INNER_RADIUS`, the wilderness really does have canyons deep enough to flood and peaks above y=44, and landmarks never stand closer than `LANDMARK_INNER_RADIUS` — the view from the arena floor stays open.
+- The arena is identical across two world seeds (it is a set piece) while the wilderness differs in hundreds of sampled columns, and `spawnY()` is pinned at 10 because moving it moves where the ritual drops players.
+
+### `ritual/terrain/BossArenaTerrainTest` — The terrain a fight actually gets
+- Drives the real generator into a recording sink, chunk by chunk, and checks what players and bosses stand on: the floor is flat and solid, the play volume (above the floor, up to y=34) is empty, and every plaza block is one of the three the invocation structures accept — cross-checked against `JackInvocationStructure.isValidBase` and `NixInvocationStructure.isValidBase`, so changing either list fails here instead of at the invocation circle.
+- The pavement has to be between 5% and 45% glowing blocks: the dimension is stuck at midnight and the floor is the only light the fight has, but too much and the sigil stops reading as a sigil.
+- Proves the world is sealed: bedrock at y=0 in the open world, and `CANYON_ROCK_DEPTH` blocks of rock under a canyon floor, so digging at the bottom of the deepest canyon still cannot reach the void.
+- Soul fire only ever stands on soul sand, lava only ever pools at the canyon floor, and two different window groupings (one 32×32 window against four 16×16 chunks) produce identical blocks column by column — a seam at a chunk border would fail.
+- Also pins the cost: a chunk under a floating shard keeps at least as much as it throws away, so a landmark cannot quietly regenerate the world per chunk.
+
+### `ritual/terrain/BossArenaGeneratorGuardTest` — Terrain guards
+- `generateNoise` must not mention the `Random` the server passes in: reading it would make the same chunk generate differently on every pass and leave seams at the borders.
+- Every generation stage is declared explicitly and only noise is enabled — a stray `true` would sprinkle vanilla decoration over the arena — and `isParallelCapable` must stay true, which is only safe while the generator is stateless.
+- The chunk sink must keep both its chunk-bounds check and its world-height check, and the shape and noise classes must stay free of Bukkit, which is what makes the terrain testable without a server at all.
+- `BossDimensionManager` must install the generator and must not go back to `WorldType.FLAT` or the deleted `CryingObsidianChunkGenerator`.
+- Reads `config.yml` and requires every key documented under `boss-dimension` to be read somewhere in the code: a knob nobody reads is a lie in the one file server owners edit.
+
+### `testsupport/RecordingTerrainTest` — The sink the terrain tests stand on
+- Position keys round-trip for extreme and negative coordinates and stay unique across a large sweep: a key two positions share makes a terrain test read a block that belongs to a neighbour. That is not hypothetical — a version of this class packed 25 bits per coordinate where 21 belonged, and the flat arena floor started reading twenty blocks tall.
+- Writes outside the window are counted rather than kept, and every column tracks its own height, so `topY` cannot report a neighbouring column's ceiling.
 
 ### `ritual/RitualStructureTest` — Entry ritual (overworld, 7×7)
 - Ritual center at `(3, 0, 3)` with radius 5.

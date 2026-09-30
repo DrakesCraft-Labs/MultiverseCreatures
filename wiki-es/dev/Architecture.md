@@ -34,6 +34,7 @@ src/main/java/com/Chagui68/
 │   │       └── ranged/                      12 ataques a distancia (meteorstorm, spiritbeam, ...)
 │   ├── miniboss/                      Mahoraga.java
 │   ├── Kinger.java                    ♟️ minijefe pieza de ajedrez (traje de ArmorStand + ItemDisplay)
+│   ├── KingerModel.java               Geometría de las piezas de Kinger: pivotes, segunda articulación, ciclo de caminar
 │   ├── DiscTrader.java                Aldeano bibliotecario que vende discos de música
 │   └── handler/
 │       └── MobHandler.java            Enrutador de spawns naturales (registrado externamente)
@@ -52,10 +53,29 @@ src/main/java/com/Chagui68/
 ├── music/                             Reproducción de canciones NBS: NBSSong, MusicManager, MusicDisc,
 │                                      DiscJukeboxHandler (discos de jukebox)
 ├── ritual/                             Estructuras de ritual & dimensión privada del jefe
+│   ├── BossDimensionManager.java       Crea, configura y descarga boss_dimension
+│   ├── BossDimensionSky.java           Cielo y niebla rojos (override de efectos del bioma)
+│   ├── RitualStructure.java            Ritual de entrada del overworld (7×7) y sus velas
+│   ├── BossInvocationStructure.java    Círculo de invocación del Centinela (5×5, velas rojas)
+│   ├── NixInvocationStructure.java     Andamio de NIX (5×5, yunque y horcas)
+│   ├── JackInvocationStructure.java    Terminal de JACKSTAR (5×5, núcleo y pararrayos)
+│   └── terrain/                        Generación de terreno de boss_dimension
+│       ├── BossArenaGenerator.java     ChunkGenerator: etapas, sumidero de chunk, bioma, spawn
+│       ├── ArenaShape.java             Forma pura: arena, terrazas, páramo, cañones
+│       ├── ArenaNoise.java             Hash y campos de ruido deterministas
+│       ├── ArenaPalette.java           Estratos, pavimento luminoso, set de materiales de la plaza
+│       ├── ArenaLandmarks.java         Monolitos, arcos, portales, pozos, agujas, esquirlas
+│       └── TerrainSink.java            Destino de escritura: coordenadas de mundo, filtrado por chunk
 └── utils/
     ├── ItemBuilder.java               Builder fluido para ItemStacks (lore, etiquetas PDC, encantamientos)
-    └── MscEntityUtils.java            setAttribute, spawnTagged, permanentFireResistance,
-                                       isValidTarget, handleDeath — utilidades compartidas de mobs
+    ├── MscEntityUtils.java            setAttribute, spawnTagged, permanentFireResistance,
+    │                                  isValidTarget, handleDeath — utilidades compartidas de mobs
+    ├── MscLimb.java                   Cinemática de extremidades de dos segmentos (swing, fold, knee, elbow)
+    ├── DisplaySuit.java               El traje de ItemDisplay que visten los jefes
+    ├── MscBossBar.java                Contabilidad de barras de jefe: quién ve cuál y cuándo se va
+    ├── MscLeftovers.java              Barrido de arranque de props de ataque dejados en el mundo
+    ├── MscGeometryOverlay.java        Dibuja las articulaciones de un modelo en el mundo (/msc debug geometry)
+    └── MscText/MscLog/MscWorldPolicy   Texto, fallos reportados, lista de mundos permitidos
 
 src/main/resources/
 ├── plugin.yml                         comando, nodos de permiso y línea de usage
@@ -125,6 +145,16 @@ Todas las entidades personalizadas reciben una etiqueta de scoreboard `MSC_<nomb
 ### 6. Manejadores de paquetes
 
 `MantisClawsHandler` registra un manejador de paquetes Netty para interceptar `ServerboundPlayerInputPacket` — necesario para detectar entradas de salto de "flanco ascendente" para el salto de pared. El manejador se inyecta en el canal del jugador al unirse y se elimina al salir. Cualquier mecánica nueva que requiera detección de flanco de entradas brutas debe seguir este patrón.
+
+### 7. El terreno de la dimensión del jefe
+
+La dimensión del ritual la genera `ritual/terrain/`, y su forma es una función pura de las coordenadas del mundo y la semilla. No es una decisión de estilo, es lo que hace que el mundo funcione:
+
+- **Ningún chunk puede mirar a otro.** `ArenaShape`/`ArenaNoise` responden "cuánto mide esta columna" solo con las coordenadas, así que el borde de un chunk siempre encaja con el de su vecino, en cualquier orden de generación. Nunca leas el `Random` que el servidor pasa a `generateNoise`: cambia entre pasadas y deja costuras.
+- **La forma se testea, el pegamento no.** Todo lo que la pelea necesita — el suelo plano en y=5, el volumen de juego vacío, las terrazas que nadie puede escalar, los cañones quedándose lejos, el sellado de bedrock — es una función pura comprobada por `ArenaShapeTest` / `BossArenaTerrainTest`. La única parte sin test es `BossArenaGenerator.ChunkSink`, y es delgada a propósito: escribe coordenadas de mundo en el chunk actual y descarta todo lo demás.
+- **La plaza es un contrato, no un adorno.** `ArenaPalette.PLAZA_PAVEMENT` tiene que seguir siendo un subconjunto de lo que aceptan `JackInvocationStructure.isValidBase` y `NixInvocationStructure.isValidBase`, o los jugadores no podrán montar un ritual en el spawn. El test de terreno cruza ambas listas, así que cambiar cualquiera de las dos rompe el build.
+- **Nada se alza dentro de la arena.** Todo el espectáculo está en el pavimento y al otro lado de la muralla; las consultas de suelo de los jefes, la colocación del sello y el respaldo de recuperación de terreno se ajustaron sobre una llanura plana y vacía.
+- **Las ruinas también son por columna.** `ArenaLandmarks` decide desde un índice de celda, así que una ruina a caballo entre dos chunks la dibujan ambos sin saber nada el uno del otro, y el sumidero descarta la mitad que cae fuera.
 
 ---
 
