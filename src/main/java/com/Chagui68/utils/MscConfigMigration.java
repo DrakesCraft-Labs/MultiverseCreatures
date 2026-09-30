@@ -17,6 +17,9 @@ import java.util.TreeSet;
  * the ten keys of the boss dimension's geometry and the new {@code boss-dimension.*} switches would
  * have arrived — documented, shipped, and absent from every running server.
  *
+ * <p>It runs on start ({@code onEnable}) and on {@code /msc reload}, so a running server picks up a
+ * release's keys without a restart.
+ *
  * <p>The migration only ever <strong>adds</strong>: it reads the jar's defaults, writes the keys
  * the file does not have, stamps {@link #VERSION_KEY} and saves. A value an operator edited is
  * never touched, and a key they deleted on purpose comes back — which is the lesser evil in a file
@@ -82,12 +85,16 @@ public final class MscConfigMigration {
         return missing;
     }
 
-    /** Runs the migration and reports what it did; a current file logs nothing. */
-    public static void run(Plugin plugin) {
+    /**
+     * Runs the migration and reports what it did; a current file logs nothing.
+     *
+     * @return the keys that were added, sorted, or an empty set when the file was already current
+     */
+    public static Set<String> run(Plugin plugin) {
         int previous = version(plugin);
         Set<String> added = mergeNewDefaults(plugin);
         if (previous == CONFIG_VERSION && added.isEmpty()) {
-            return;
+            return added;
         }
         if (previous != CONFIG_VERSION) {
             plugin.getLogger().info("config.yml version " + previous + " -> " + CONFIG_VERSION);
@@ -99,6 +106,7 @@ public final class MscConfigMigration {
             plugin.getLogger().info("  " + listed
                     + (added.size() > LOGGED_KEYS ? " … and " + (added.size() - LOGGED_KEYS) + " more" : ""));
         }
+        return added;
     }
 
     private static void collect(ConfigurationSection section, String prefix, Set<String> paths) {

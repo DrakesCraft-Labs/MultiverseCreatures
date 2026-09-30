@@ -99,6 +99,25 @@ class MscConfigMigrationTest {
                         + "by this release is still missing when the code asks for it");
     }
 
+    @Test
+    @DisplayName("Reloading merges the shipped defaults before the handlers read them")
+    void theReloadMergesTheDefaultsToo() {
+        String source = ProjectPaths.read(
+                ProjectPaths.source("com", "Chagui68", "commands", "MSCCommand.java"));
+        String reload = SourceText.codeOnly(SourceText.methodBody(source, "private void handleReload("));
+
+        int reread = reload.indexOf("plugin.reloadConfig()");
+        int migration = reload.indexOf("MscConfigMigration.run(plugin)");
+        int firstHandlerRead = reload.indexOf("mobHandler.reloadConfig()");
+
+        assertTrue(reread > 0, "handleReload must still re-read config.yml from disk");
+        assertTrue(migration > reread,
+                "the file has to be re-read first, otherwise the merge compares against a stale one");
+        assertTrue(firstHandlerRead > migration,
+                "the merge must run before the handlers reload, otherwise they still read the keys the "
+                        + "previous file had and /msc reload cannot apply an update");
+    }
+
     @SuppressWarnings("unchecked")
     private static Map<String, Object> loadConfig() {
         try (InputStream in = Files.newInputStream(ProjectPaths.resource("config.yml"))) {

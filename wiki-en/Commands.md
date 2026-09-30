@@ -15,7 +15,7 @@ All commands use the **`/msc`** root. **Permission:** `msc.admin` (server OP by 
 /msc kill [type|all] [radius]  Safely kill/purge MSC custom creatures
 /msc debug [player]            Break down each boss's damage to and from a player
 /msc debug geometry [boss]     Draw a boss's real hitbox and its limb joints in the world
-/msc reload                    Reload config.yml and sync entities and bosses
+/msc reload                    Reload config.yml, merge new defaults and sync entities and bosses
 ```
 
 Each command is detailed below.

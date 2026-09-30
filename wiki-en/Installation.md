@@ -33,7 +33,7 @@ The plugin uses 1.21-specific APIs (transformation display entities, modern Attr
 
 Every plugin setting lives in `plugins/MultiverseCreatures/config.yml`. The default config is shipped with sane values; the most useful knobs are:
 
-> **Updating the plugin.** Your `config.yml` is never overwritten. On start the plugin reads the file the jar ships, adds the keys yours is missing, stamps the new `config-version` and says so in the log; values you edited are left exactly as they are. A backup of the previous file is written to `plugins/MultiverseCreatures/backups/` on every start, so a merge is always recoverable.
+> **Updating the plugin.** Your `config.yml` is never overwritten. On start — and on every `/msc reload` — the plugin reads the file the jar ships, adds the keys yours is missing, stamps the new `config-version` and says so in the log; values you edited are left exactly as they are. A backup of the previous file is written to `plugins/MultiverseCreatures/backups/` on every start, so a merge is always recoverable.
 
 ### Spawn chances
 

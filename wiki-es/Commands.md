@@ -15,7 +15,7 @@ Todos los comandos usan la raíz **`/msc`**. **Permiso:** `msc.admin` (OP del se
 /msc kill [tipo|all] [radio]   Purga criaturas de MSC de forma segura
 /msc debug [jugador]           Desglosa el daño de cada jefe hacia y desde un jugador
 /msc debug geometry [jefe]     Dibuja la hitbox real de un jefe y sus articulaciones en el mundo
-/msc reload                    Recarga config.yml y sincroniza entidades y jefes
+/msc reload                    Recarga config.yml, fusiona los defaults nuevos y sincroniza entidades y jefes
 ```
 
 Cada comando se detalla abajo.

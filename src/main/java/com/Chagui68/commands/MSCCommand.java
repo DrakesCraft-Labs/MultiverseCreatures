@@ -12,6 +12,7 @@ import com.Chagui68.entities.boss.NixModel;
 import com.Chagui68.entities.boss.PenetratingHit;
 import com.Chagui68.entities.handler.MobHandler;
 import com.Chagui68.music.MusicDisc;
+import com.Chagui68.utils.MscConfigMigration;
 import com.Chagui68.utils.MscGeometryOverlay;
 import com.Chagui68.utils.MscLog;
 import com.Chagui68.utils.MscText;
@@ -35,6 +36,7 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.bukkit.ChatColor.*;
@@ -421,6 +423,10 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
 
     private void handleReload(CommandSender sender) {
         plugin.reloadConfig();
+        // reloadConfig() only re-reads the file the operator already has, so the keys a release added
+        // since it was written would stay invisible until the next restart. Merge them before the
+        // handlers below read their values, so this reload applies everything the jar ships.
+        Set<String> added = MscConfigMigration.run(plugin);
         mobHandler.reloadConfig();
         if (plugin.getMahoraga() != null) plugin.getMahoraga().reloadConfig();
         if (plugin.getArmorStandBoss() != null) plugin.getArmorStandBoss().reloadConfig();
@@ -428,7 +434,12 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         if (plugin.getWarlord() != null) plugin.getWarlord().reloadConfig();
         if (plugin.getNixBoss() != null) plugin.getNixBoss().reloadConfig();
         if (plugin.getJackStarBoss() != null) plugin.getJackStarBoss().reloadConfig();
-        sender.sendMessage(GREEN + "Configuration reloaded. All changes have been applied.");
+        if (added.isEmpty()) {
+            sender.sendMessage(GREEN + "Configuration reloaded. All changes have been applied.");
+        } else {
+            sender.sendMessage(GREEN + "Configuration reloaded. " + added.size()
+                    + " new key(s) from the shipped defaults were merged in (your values were kept).");
+        }
     }
 
     private void handleCleanStands(CommandSender sender, String[] args) {

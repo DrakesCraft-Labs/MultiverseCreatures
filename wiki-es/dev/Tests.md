@@ -293,6 +293,7 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - La regla de fusión es pura y se prueba: solo se reportan las rutas que le faltan al archivo, el valor que editó un operador nunca aparece como ausente, y una ruta va punteada por todas sus secciones mientras que una **lista sigue siendo hoja** (indexarla inventaría claves que no están en el archivo).
 - Lee `config.yml` y exige que declare el mismo `config-version` que `MscConfigMigration.CONFIG_VERSION`, así una release no puede enviar un archivo con el que el código no está de acuerdo, ni un salto de versión que nunca ocurrió.
 - Lee `MultiverseCreatures.onEnable` y demuestra que la migración corre **después de `saveDefaultConfig()` y antes de la primera lectura de `getConfig()`**: `saveDefaultConfig()` solo escribe el config cuando no existe, así que una clave añadida por una actualización se quedaría invisible en todos los servidores que ya existen.
+- Lee `MSCCommand.handleReload` y demuestra que `/msc reload` relee el archivo, fusiona los defaults del jar y solo después recarga los handlers — un servidor que actualizó el plugin obtiene las claves nuevas con una recarga, no solo tras reiniciar.
 
 ### `utils/SilentCatchGuardTest` — Sin bloques catch silenciosos
 - Guardia de fuentes: recorta comentarios, strings y chars (conservando las líneas), localiza cada cláusula `catch` bajo `src/main/java` y **falla si algún cuerpo queda en blanco**, con una lista de permitidos vacía y un suelo de 40 catches para que el escáner no pase de forma vacua.

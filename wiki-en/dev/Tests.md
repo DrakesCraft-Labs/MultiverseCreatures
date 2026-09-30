@@ -293,6 +293,7 @@ Covers the health math in `utils/MscEntityUtils`:
 - The merge rule is pure and tested: only paths the file lacks are reported, an operator's edited value is never listed as missing, and a path is dotted all the way through sections while a **list stays a leaf** (indexing into it would invent keys that are not in the file).
 - Reads `config.yml` and asserts it declares the same `config-version` as `MscConfigMigration.CONFIG_VERSION`, so a release cannot ship a file the code disagrees with, nor a version bump that never happened.
 - Reads `MultiverseCreatures.onEnable` and proves the migration runs **after `saveDefaultConfig()` and before the first `getConfig()`**: `saveDefaultConfig()` only writes a config when there is none, so a key added by an update would otherwise stay invisible on every server that already exists.
+- Reads `MSCCommand.handleReload` and proves `/msc reload` re-reads the file, merges the shipped defaults and only then reloads the handlers — a server that updated the plugin picks up the new keys from a reload, not only from the next restart.
 
 ### `utils/SilentCatchGuardTest` — No silent catch blocks
 - A source guard: it strips comments, strings and chars (keeping line numbers), finds every `catch` clause under `src/main/java` and **fails if any body is left blank**, with an empty allow-list and a floor of 40 catches so the scanner cannot pass vacuously.
