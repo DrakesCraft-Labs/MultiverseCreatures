@@ -1,5 +1,6 @@
 package com.Chagui68.entities;
 
+import com.Chagui68.utils.DisplaySuit;
 import com.Chagui68.utils.MscBossBar;
 import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.MultiverseCreatures;
@@ -8,7 +9,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
@@ -19,7 +19,6 @@ import org.bukkit.boss.BarFlag;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemDisplay;
@@ -33,26 +32,18 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.profile.PlayerProfile;
-import org.bukkit.profile.PlayerTextures;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -512,17 +503,8 @@ public class Kinger implements Listener {
 
     /** Looks for this piece of this boss near the stand, without loading anything new. */
     private ItemDisplay findPartDisplay(KingerInstance inst, KingerPart part) {
-        Location loc = inst.stand.getLocation();
-        String ownerTag = partOwnerTag(inst.stand.getUniqueId());
-        String ownPartTag = partTag(part);
-        for (Entity e : inst.stand.getWorld().getNearbyEntities(loc, 4.0, 6.0, 4.0)) {
-            if (e instanceof ItemDisplay display
-                    && display.getScoreboardTags().contains(ownerTag)
-                    && display.getScoreboardTags().contains(ownPartTag)) {
-                return display;
-            }
-        }
-        return null;
+        return DisplaySuit.find(inst.stand.getWorld(), inst.stand.getLocation(),
+                tags(part, inst.stand.getUniqueId()));
     }
 
     /** The world point one piece's anchor rests at, used to fire the right hand's bullet. */
@@ -537,61 +519,20 @@ public class Kinger implements Listener {
     }
 
     /**
-     * Applies everything a piece needs, so a freshly spawned and an adopted piece end up identical.
-     *
-     * <p>Every interpolation value is zero because the pieces are placed on the stand's exact
-     * position every tick: letting the client smooth a teleport the server already snapped is what
-     * made the suit trail behind the invisible hitbox whenever Kinger walked or attacked.
-     *
-     * <p>Both display dimensions are zero because a display's width and height double as its
-     * bounding box, and a piece with a real box is picked by the client instead of the armour stand:
-     * a swing landing on the visible arm could then pass straight through and feel like a miss.
+     * Spawns one piece of the suit. Everything a display piece needs — the head, the rest transform,
+     * the zeroed interpolation and box, and the ownership tags — lives in {@link DisplaySuit}, so it
+     * stays identical for every dressed boss instead of drifting apart per file.
      */
-    private void configurePartDisplay(ItemDisplay display, KingerPart part, UUID ownerId) {
-        display.setItemStack(createHead(part.profileName, part.texture));
-        display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-        display.setBillboard(Display.Billboard.FIXED);
-        display.setTransformation(buildTransformation(part, null));
-        display.setTeleportDuration(0);
-        display.setInterpolationDuration(0);
-        display.setInterpolationDelay(0);
-        display.setBrightness(new Display.Brightness(15, 15));
-        display.setDisplayWidth(0.0f);
-        display.setDisplayHeight(0.0f);
-        display.setInvulnerable(false);
-        display.setGravity(false);
-        display.setSilent(true);
-        display.setPersistent(true);
-        display.addScoreboardTag(PART_TAG);
-        display.addScoreboardTag(partTag(part));
-        display.addScoreboardTag(partOwnerTag(ownerId));
-    }
-
     private ItemDisplay spawnPart(Location root, KingerPart part, UUID ownerId) {
-        ItemDisplay display = (ItemDisplay) root.getWorld().spawnEntity(root, EntityType.ITEM_DISPLAY);
-        configurePartDisplay(display, part, ownerId);
-        return display;
+        return DisplaySuit.spawn(root, headOf(part), buildTransformation(part, null), tags(part, ownerId));
     }
 
-    private ItemStack createHead(String profileName, String base64Texture) {
-        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
-        SkullMeta meta = (SkullMeta) head.getItemMeta();
-        if (meta != null) {
-            try {
-                String json = new String(Base64.getDecoder().decode(base64Texture));
-                JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-                String url = obj.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
-                PlayerProfile profile = Bukkit.createPlayerProfile(UUID.randomUUID(), profileName);
-                PlayerTextures textures = profile.getTextures();
-                textures.setSkin(new URL(url));
-                profile.setTextures(textures);
-                meta.setOwnerProfile(profile);
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to set Kinger head texture for " + profileName + ": " + e.getMessage());
-            }
-            head.setItemMeta(meta);
-        }
-        return head;
+    private ItemStack headOf(KingerPart part) {
+        return DisplaySuit.head(part.profileName, part.texture, "Kinger");
+    }
+
+    private static DisplaySuit.SuitTags tags(KingerPart part, UUID ownerId) {
+        return new DisplaySuit.SuitTags(PART_TAG, partTag(part), partOwnerTag(ownerId));
     }
 
     /** Builds the transform of one piece: a rigid rotation about its limb's joint. */
@@ -702,10 +643,7 @@ public class Kinger implements Listener {
 
     private void cleanup(KingerInstance inst) {
         World world = (inst.stand != null) ? inst.stand.getWorld() : null;
-        for (UUID id : inst.partDisplays.values()) {
-            Entity e = (world != null) ? world.getEntity(id) : Bukkit.getEntity(id);
-            if (e != null) e.remove();
-        }
+        DisplaySuit.remove(world, inst.partDisplays.values());
         inst.partDisplays.clear();
         if (inst.bossBar != null) {
             inst.bossBar.removeAll();

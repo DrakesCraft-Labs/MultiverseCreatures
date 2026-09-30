@@ -1,10 +1,9 @@
 package com.Chagui68.entities.boss;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.utils.DisplaySuit;
 import com.Chagui68.utils.MscBossBar;
 import com.Chagui68.utils.MscEntityUtils;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -21,7 +20,6 @@ import org.bukkit.boss.BarFlag;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemDisplay;
@@ -33,11 +31,8 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.profile.PlayerProfile;
-import org.bukkit.profile.PlayerTextures;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
@@ -45,9 +40,7 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -613,76 +606,26 @@ public class NixBoss implements Listener {
         }
     }
 
-    /** Looks for this part of this boss near the stand, without loading anything new. */
     private ItemDisplay findPartDisplay(NixInstance inst, NixPart part) {
-        Location loc = inst.stand.getLocation();
-        String ownerTag = partOwnerTag(inst.stand.getUniqueId());
-        String ownPartTag = partTag(part);
-        for (Entity e : inst.stand.getWorld().getNearbyEntities(loc, 6.0, 8.0, 6.0)) {
-            if (e instanceof ItemDisplay display
-                    && display.getScoreboardTags().contains(ownerTag)
-                    && display.getScoreboardTags().contains(ownPartTag)) {
-                return display;
-            }
-        }
-        return null;
+        return DisplaySuit.find(inst.stand.getWorld(), inst.stand.getLocation(),
+                tags(part, inst.stand.getUniqueId()));
     }
 
     /**
-     * Applies everything a part needs, so a freshly spawned and an adopted part are identical.
-     *
-     * <p>Both interpolation durations are zero on purpose: the parts are placed on the stand's exact
-     * position every tick, and letting the client smooth a teleport the server already snapped made
-     * the body trail behind the invisible hitbox whenever Nix moved or swung.
+     * Spawns one piece of the suit. Everything a display piece needs — the head, the rest transform,
+     * the zeroed interpolation and box, and the ownership tags — lives in {@link DisplaySuit}, so it
+     * stays identical for every dressed boss instead of drifting apart per file.
      */
-    private void configurePartDisplay(ItemDisplay display, NixPart part, UUID ownerId) {
-        display.setItemStack(createHead(part.profileName, part.texture));
-        display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-        display.setBillboard(Display.Billboard.FIXED);
-        display.setTransformation(buildTransformation(part, null));
-        display.setTeleportDuration(0);
-        display.setInterpolationDuration(0);
-        display.setInterpolationDelay(0);
-        display.setBrightness(new Display.Brightness(15, 15));
-        // Zero size on purpose: a display's width/height double as its bounding box, and a part with
-        // a real box would be picked by the client instead of the armour stand, so a swing aimed at
-        // the body could pass straight through it and feel like a miss.
-        display.setDisplayWidth(0.0f);
-        display.setDisplayHeight(0.0f);
-        display.setInvulnerable(false);
-        display.setGravity(false);
-        display.setSilent(true);
-        display.setPersistent(true);
-        display.addScoreboardTag(PART_TAG);
-        display.addScoreboardTag(partTag(part));
-        display.addScoreboardTag(partOwnerTag(ownerId));
-    }
-
     private ItemDisplay spawnPart(Location root, NixPart part, UUID ownerId) {
-        ItemDisplay display = (ItemDisplay) root.getWorld().spawnEntity(root, EntityType.ITEM_DISPLAY);
-        configurePartDisplay(display, part, ownerId);
-        return display;
+        return DisplaySuit.spawn(root, headOf(part), buildTransformation(part, null), tags(part, ownerId));
     }
 
-    private ItemStack createHead(String profileName, String base64Texture) {
-        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
-        SkullMeta meta = (SkullMeta) head.getItemMeta();
-        if (meta != null) {
-            try {
-                String json = new String(Base64.getDecoder().decode(base64Texture));
-                JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-                String url = obj.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
-                PlayerProfile profile = Bukkit.createPlayerProfile(UUID.randomUUID(), profileName);
-                PlayerTextures textures = profile.getTextures();
-                textures.setSkin(new URL(url));
-                profile.setTextures(textures);
-                meta.setOwnerProfile(profile);
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to set Nix head texture for " + profileName + ": " + e.getMessage());
-            }
-            head.setItemMeta(meta);
-        }
-        return head;
+    private ItemStack headOf(NixPart part) {
+        return DisplaySuit.head(part.profileName, part.texture, "Nix");
+    }
+
+    private static DisplaySuit.SuitTags tags(NixPart part, UUID ownerId) {
+        return new DisplaySuit.SuitTags(PART_TAG, partTag(part), partOwnerTag(ownerId));
     }
 
     /** Builds the transformation for a part: rigid-body rotation around its limb's joint. */
@@ -842,10 +785,7 @@ public class NixBoss implements Listener {
 
     private void cleanup(NixInstance inst) {
         World world = (inst.stand != null) ? inst.stand.getWorld() : null;
-        for (UUID id : inst.partDisplays.values()) {
-            Entity e = (world != null) ? world.getEntity(id) : Bukkit.getEntity(id);
-            if (e != null) e.remove();
-        }
+        DisplaySuit.remove(world, inst.partDisplays.values());
         inst.partDisplays.clear();
         if (inst.bossBar != null) {
             inst.bossBar.removeAll();

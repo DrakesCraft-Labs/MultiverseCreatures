@@ -3,11 +3,10 @@ package com.Chagui68.entities.boss;
 import com.Chagui68.MultiverseCreatures;
 import com.Chagui68.items.components.ArchitectKernel;
 import com.Chagui68.items.food.ScoobyCookie;
+import com.Chagui68.utils.DisplaySuit;
 import com.Chagui68.utils.MscBossBar;
 import com.Chagui68.utils.MscEntityUtils;
 import com.Chagui68.utils.MscText;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -41,11 +40,8 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.profile.PlayerProfile;
-import org.bukkit.profile.PlayerTextures;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
@@ -53,9 +49,7 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -1045,19 +1039,9 @@ public class JackStarBoss implements Listener {
         }
     }
 
-    /** Looks for this part of this boss near the stand, without loading anything new. */
     private ItemDisplay findPartDisplay(JackInstance inst, JackPart part) {
-        Location loc = inst.stand.getLocation();
-        String ownerTag = partOwnerTag(inst.stand.getUniqueId());
-        String partTag = PART_TAG + "_" + part.name();
-        for (Entity e : inst.stand.getWorld().getNearbyEntities(loc, 6.0, 8.0, 6.0)) {
-            if (e instanceof ItemDisplay display
-                    && display.getScoreboardTags().contains(ownerTag)
-                    && display.getScoreboardTags().contains(partTag)) {
-                return display;
-            }
-        }
-        return null;
+        return DisplaySuit.find(inst.stand.getWorld(), inst.stand.getLocation(),
+                tags(part, inst.stand.getUniqueId()));
     }
 
     private void enterCreativeModeAndSummonBoss(JackInstance inst) {
@@ -1225,60 +1209,20 @@ public class JackStarBoss implements Listener {
     }
 
     /**
-     * Applies everything a part needs, so a freshly spawned and an adopted part are identical.
-     *
-     * <p>Both interpolation durations are zero on purpose: the parts are placed on the stand's exact
-     * position every tick, and letting the client smooth a teleport the server already snapped made
-     * the body trail behind the invisible hitbox whenever JackStar moved or dashed.
+     * Spawns one piece of the suit. Everything a display piece needs — the head, the rest transform,
+     * the zeroed interpolation and box, and the ownership tags — lives in {@link DisplaySuit}, so it
+     * stays identical for every dressed boss instead of drifting apart per file.
      */
-    private void configurePartDisplay(ItemDisplay display, JackPart part) {
-        display.setItemStack(createHead(part.profileName, part.texture));
-        display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-        display.setBillboard(Display.Billboard.FIXED);
-        display.setTransformation(buildTransformation(part, null));
-        display.setTeleportDuration(0);
-        display.setInterpolationDuration(0);
-        display.setInterpolationDelay(0);
-        display.setBrightness(new Display.Brightness(15, 15));
-        // Zero size on purpose: a display's width/height double as its bounding box, and a part with
-        // a real box would be picked by the client instead of the armour stand. Display entities are
-        // not damageable, so that hit would simply be lost and the boss would look unkillable.
-        display.setDisplayWidth(0.0f);
-        display.setDisplayHeight(0.0f);
-        display.setInvulnerable(false);
-        display.setGravity(false);
-        display.setSilent(true);
-        display.setPersistent(true);
-        display.addScoreboardTag(PART_TAG);
-        display.addScoreboardTag(PART_TAG + "_" + part.name());
-    }
-
     private ItemDisplay spawnPart(Location root, JackPart part, UUID ownerId) {
-        ItemDisplay display = (ItemDisplay) root.getWorld().spawnEntity(root, EntityType.ITEM_DISPLAY);
-        configurePartDisplay(display, part);
-        display.addScoreboardTag(partOwnerTag(ownerId));
-        return display;
+        return DisplaySuit.spawn(root, headOf(part), buildTransformation(part, null), tags(part, ownerId));
     }
 
-    private ItemStack createHead(String profileName, String base64Texture) {
-        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
-        SkullMeta meta = (SkullMeta) head.getItemMeta();
-        if (meta != null) {
-            try {
-                String json = new String(Base64.getDecoder().decode(base64Texture));
-                JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-                String url = obj.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
-                PlayerProfile profile = Bukkit.createPlayerProfile(UUID.randomUUID(), profileName);
-                PlayerTextures textures = profile.getTextures();
-                textures.setSkin(new URL(url));
-                profile.setTextures(textures);
-                meta.setOwnerProfile(profile);
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to set Jack head texture for " + profileName + ": " + e.getMessage());
-            }
-            head.setItemMeta(meta);
-        }
-        return head;
+    private ItemStack headOf(JackPart part) {
+        return DisplaySuit.head(part.profileName, part.texture, "JackStar");
+    }
+
+    private static DisplaySuit.SuitTags tags(JackPart part, UUID ownerId) {
+        return new DisplaySuit.SuitTags(PART_TAG, PART_TAG + "_" + part.name(), partOwnerTag(ownerId));
     }
 
     public Transformation buildTransformation(JackPart part, JackInstance inst) {
@@ -1433,10 +1377,7 @@ public class JackStarBoss implements Listener {
             inst.bossBar.removeAll();
         }
         World world = inst.stand.getWorld();
-        for (UUID id : inst.partDisplays.values()) {
-            Entity e = world.getEntity(id);
-            if (e != null) e.remove();
-        }
+        DisplaySuit.remove(world, inst.partDisplays.values());
         inst.partDisplays.clear();
 
         // Clear arena HUD glitches and potion effects

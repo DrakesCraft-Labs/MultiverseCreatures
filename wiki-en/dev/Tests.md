@@ -25,13 +25,18 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Test inventory
 
-All 42 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
+All 43 files live in `src/test/java/com/Chagui68/`, mirroring the package of the class they exercise.
 
 ### `utils/MscEntityUtilsHealthTest` — Boss virtual health
 Covers the health math in `utils/MscEntityUtils`:
 - **`calculateSafeHealth`** — Clamps the requested health to the server limit (attribute cap, default 1024 on Paper) to avoid `IllegalArgumentException`. Verifies real boss cases: ArmorStandBoss (3200), NIX (450), Frost Golem (200); clamps to a minimum of **0.1** (prevents instant death on spawn) and protects against negative input.
 - **`calculateVirtualProgress`** — Clamps the boss-bar progress to [0.0, 1.0] (including `0/0` = 0).
 - **`calculateScaledPhysicalHealth`** — Converts **virtual** health (e.g. 3200) into the real physical health stored on the entity (scaled to its physical max), with 0 → death.
+
+### `utils/DisplaySuitTest` — The suit every dressed boss wears
+- An adoption recognises a piece only when its **suit, piece and owner tags all agree**: a piece of another boss, another piece of the same suit, or a suit tag without the rest is never taken.
+- The search skips entities that are not displays, returns nothing when there is nothing to adopt, and ignores a missing world or location.
+- The suit is built in **one place**: a source guard fails if any of the three dressed bosses builds its own head from the skin texture, zeroes its own display settings or forgets to adopt/remove its pieces.
 
 ### `utils/MscLeftoversTest` — Startup sweep of attack props
 - The props of an attack that a restart cut short are removed at enable (orbiting shields, the planted shield holder, the lance ring, the wing panels, the triangle seal, the mirror copies, Kinger's bullets), because their attack object is gone and nothing else would ever remove them.

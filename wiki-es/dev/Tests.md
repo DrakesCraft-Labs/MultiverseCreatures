@@ -25,13 +25,18 @@ mvn test -Dtest=NixInvocationStructureTest
 
 ## 📋 Inventario de tests
 
-Los 42 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
+Los 43 archivos viven en `src/test/java/com/Chagui68/` reflejando el paquete de la clase que prueban.
 
 ### `utils/MscEntityUtilsHealthTest` — Salud virtual de los jefes
 Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - **`calculateSafeHealth`** — Ajusta la salud pedida al límite del servidor (cap de atributo, por defecto 1024 en Paper) evitando `IllegalArgumentException`. Verifica casos de jefes reales: ArmorStandBoss (3200), NIX (450), Frost Golem (200); clampa a mínimo **0.1** (evita muerte instantánea al aparecer) y protege de entradas negativas.
 - **`calculateVirtualProgress`** — Clampa el progreso de la boss bar entre 0.0 y 1.0 (incluye `0/0` = 0).
 - **`calculateScaledPhysicalHealth`** — Convierte la salud **virtual** (p. ej. 3200) a la salud física real almacenada en la entidad (escalada a su máximo físico), con 0 → muerte.
+
+### `utils/DisplaySuitTest` — El traje que viste cada jefe
+- Una adopción reconoce una pieza solo cuando coinciden sus **etiquetas de traje, pieza y propietario**: una pieza de otro jefe, otra pieza del mismo traje, o la etiqueta de traje sin las demás nunca se adoptan.
+- La búsqueda salta las entidades que no son displays, no devuelve nada cuando no hay qué adoptar, e ignora un mundo o una localización ausentes.
+- El traje se construye en **un solo sitio**: una guardia de fuentes falla si alguno de los tres jefes vestidos construye su propia cabeza desde la textura, pone a cero sus propios ajustes de display u olvida adoptar/quitar sus piezas.
 
 ### `utils/MscLeftoversTest` — Barrido de sobrantes de ataques al arrancar
 - Los props de un ataque que un reinicio cortó se eliminan al habilitar (escudos orbitando, el portador de escudo plantado, el anillo de lanzas, los paneles de alas, el sello triangular, las copias espejo, las balas de Kinger), porque su ataque ya no existe y nada más los quitaría.

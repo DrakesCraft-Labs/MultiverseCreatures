@@ -307,21 +307,26 @@ class KingerModelTest {
     void partDisplaysFollowTheStandExactly() throws IOException {
         String source = Files.readString(Path.of("src", "main", "java",
                 "com", "Chagui68", "entities", "Kinger.java"));
+        String suit = Files.readString(Path.of("src", "main", "java",
+                "com", "Chagui68", "utils", "DisplaySuit.java"));
 
         // The pieces are placed on the stand's exact position every tick, so any interpolation would
         // make the suit trail the invisible hitbox, and any display box would swallow the swing aimed
-        // at it. Both were true of the first version of this model.
+        // at it. Both were true of the first version of this model. The values live in the suit every
+        // dressed boss shares, so this guard pins the one place they are applied.
         for (String call : List.of("setTeleportDuration", "setInterpolationDuration", "setInterpolationDelay",
                 "setDisplayWidth", "setDisplayHeight")) {
-            Matcher calls = Pattern.compile(Pattern.quote(call) + "\\(([^)]*)\\)").matcher(source);
+            Matcher calls = Pattern.compile(Pattern.quote(call) + "\\(([^)]*)\\)").matcher(suit);
             int found = 0;
             while (calls.find()) {
                 found++;
                 assertTrue(calls.group(1).trim().matches("0(\\.0+)?f?"),
                         call + " must be zero, found " + calls.group(1).trim());
             }
-            assertEquals(1, found, call + " should be configured once, for every piece, in configurePartDisplay");
+            assertEquals(1, found, call + " should be configured once, for every piece, in DisplaySuit");
         }
+        assertTrue(source.contains("DisplaySuit.spawn("),
+                "a piece display must be built by the shared suit, not by hand");
 
         // Enabling the plugin over a live Kinger must reattach the suit it already spawned: spawning
         // first is what used to leave two overlapping bodies.
