@@ -41,6 +41,12 @@ public final class BossArenaGenerator extends ChunkGenerator {
     /** Rock kept under a canyon floor, so digging at the bottom never reaches the void. */
     public static final int CANYON_ROCK_DEPTH = 16;
 
+    /**
+     * The common seal under the whole wilderness: below the lowest surface the shape allows and
+     * below the deepest well a landmark digs into it (a well bottoms out 14 blocks under its rim).
+     */
+    public static final int WASTE_BEDROCK_Y = ArenaShape.MIN_BUILD_Y - CANYON_ROCK_DEPTH;
+
     private static final int CHUNK_SIZE = 16;
 
     @Override
@@ -81,9 +87,7 @@ public final class BossArenaGenerator extends ChunkGenerator {
     private static void writeColumn(int x, int z, long seed, TerrainSink sink) {
         int surface = ArenaShape.surfaceY(x, z, seed);
         ArenaShape.Zone zone = ArenaShape.zone(x, z);
-        int bedrockY = surface >= ArenaShape.BEDROCK_Y
-                ? ArenaShape.BEDROCK_Y
-                : surface - CANYON_ROCK_DEPTH;
+        int bedrockY = bedrockY(zone, surface);
 
         Material top = switch (zone) {
             case ARENA -> ArenaPalette.arenaFloor(x, z, seed);
@@ -106,6 +110,24 @@ public final class BossArenaGenerator extends ChunkGenerator {
         if (zone == ArenaShape.Zone.WASTE && ArenaPalette.soulFireAt(x, z, top, seed)) {
             sink.set(x, surface + 1, z, Material.SOUL_FIRE);
         }
+    }
+
+    /**
+     * Where a column's bedrock seal sits.
+     *
+     * <p>The arena and the wall keep theirs at {@link ArenaShape#BEDROCK_Y}. The wilderness is
+     * different: canyons cut down to {@link ArenaShape#CHASM_FLOOR_Y}, and the seal used to follow
+     * each column's own surface, so a canyon floor at -22 stood next to an ordinary column whose
+     * rock stopped at 0. Everything between was air: the canyon walls opened sideways onto a void
+     * under the whole wilderness, the lava pooled at the bottom ran out into it, and a well dug
+     * near the rim broke through into the same hollow. Every wilderness column now rests on one
+     * common seal below the deepest thing the generator carves, so neighbours always meet rock.
+     */
+    static int bedrockY(ArenaShape.Zone zone, int surface) {
+        if (zone == ArenaShape.Zone.WASTE) {
+            return Math.min(WASTE_BEDROCK_Y, surface - CANYON_ROCK_DEPTH);
+        }
+        return surface >= ArenaShape.BEDROCK_Y ? ArenaShape.BEDROCK_Y : surface - CANYON_ROCK_DEPTH;
     }
 
     /**
@@ -217,7 +239,8 @@ public final class BossArenaGenerator extends ChunkGenerator {
             this.baseX = chunkX * CHUNK_SIZE;
             this.baseZ = chunkZ * CHUNK_SIZE;
             this.minY = data.getMinHeight();
-            this.maxY = data.getMaxHeight();
+            // getMaxHeight() is exclusive; keep maxY as the highest writable block.
+            this.maxY = data.getMaxHeight() - 1;
         }
 
         @Override

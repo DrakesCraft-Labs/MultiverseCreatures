@@ -144,9 +144,7 @@ class BossArenaTerrainTest {
                 for (int x = chunkX * CHUNK; x < chunkX * CHUNK + CHUNK; x += 3) {
                     for (int z = chunkZ * CHUNK; z < chunkZ * CHUNK + CHUNK; z += 3) {
                         int surface = ArenaShape.surfaceY(x, z, SEED);
-                        int bedrock = surface >= ArenaShape.BEDROCK_Y
-                                ? ArenaShape.BEDROCK_Y
-                                : surface - BossArenaGenerator.CANYON_ROCK_DEPTH;
+                        int bedrock = BossArenaGenerator.bedrockY(ArenaShape.zone(x, z), surface);
                         assertEquals(Material.BEDROCK, terrain.at(x, bedrock, z),
                                 "no bedrock seal at " + x + "," + bedrock + "," + z);
                         assertFalse(terrain.has(x, bedrock - 1, z),
@@ -195,6 +193,62 @@ class BossArenaTerrainTest {
             lava++;
         }
         assertTrue(lava > 0, "the canyon floor is not flooded at " + canyonChunk[0] + "," + canyonChunk[1]);
+    }
+
+    @Test
+    @DisplayName("Canyon lava is walled in: rock beside it and below it, never the void")
+    void canyonLavaIsContained() {
+        int[] canyonChunk = findCanyonChunk();
+        assertNotNull(canyonChunk, "the wilderness has no canyon deep enough to flood");
+        // The chunk and its eight neighbours, so lava on the chunk's edge is checked against the
+        // columns its neighbours generate.
+        RecordingTerrain terrain = RecordingTerrain.window(
+                (canyonChunk[0] - 1) * CHUNK, (canyonChunk[1] - 1) * CHUNK, CHUNK * 3);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                BossArenaGenerator.generateArea((canyonChunk[0] + dx) * CHUNK,
+                        (canyonChunk[1] + dz) * CHUNK, SEED, terrain);
+            }
+        }
+
+        int checked = 0;
+        int minX = canyonChunk[0] * CHUNK;
+        int minZ = canyonChunk[1] * CHUNK;
+        for (int x = minX; x < minX + CHUNK; x++) {
+            for (int z = minZ; z < minZ + CHUNK; z++) {
+                for (int y = ArenaShape.CHASM_FLOOR_Y - 2; y <= ArenaShape.CHASM_FLOOR_Y + 1; y++) {
+                    if (terrain.at(x, y, z) != Material.LAVA) continue;
+                    int[][] sides = {{1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1}, {0, -1, 0}};
+                    for (int[] side : sides) {
+                        assertTrue(terrain.at(x + side[0], y + side[1], z + side[2]) != Material.AIR,
+                                "lava at " + x + "," + y + "," + z + " flows out into the void through "
+                                        + (x + side[0]) + "," + (y + side[1]) + "," + (z + side[2]));
+                    }
+                    checked++;
+                }
+            }
+        }
+        assertTrue(checked > 0, "no canyon lava was found to check");
+    }
+
+    @Test
+    @DisplayName("The wilderness is solid rock from its surface down to the seal: no hollow under it")
+    void theWildernessHasNoHollowUnderneath() {
+        int[] canyonChunk = findCanyonChunk();
+        assertNotNull(canyonChunk, "the wilderness has no canyon deep enough to flood");
+        RecordingTerrain terrain = generate(canyonChunk[0], canyonChunk[1]);
+        int minX = canyonChunk[0] * CHUNK;
+        int minZ = canyonChunk[1] * CHUNK;
+        for (int x = minX; x < minX + CHUNK; x++) {
+            for (int z = minZ; z < minZ + CHUNK; z++) {
+                int surface = ArenaShape.surfaceY(x, z, SEED);
+                for (int y = BossArenaGenerator.WASTE_BEDROCK_Y; y <= Math.min(surface, ArenaShape.CHASM_FLOOR_Y); y++) {
+                    assertTrue(terrain.at(x, y, z) != Material.AIR,
+                            "air under the wilderness at " + x + "," + y + "," + z
+                                    + ": a canyon wall beside it would open onto the void");
+                }
+            }
+        }
     }
 
     @Test
