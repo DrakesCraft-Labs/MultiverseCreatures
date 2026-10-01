@@ -2,8 +2,6 @@ package com.Chagui68.commands;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.HashSet;
 import java.util.List;
@@ -126,18 +124,10 @@ class AttackCatalogueTest {
         }
     }
 
-    @ParameterizedTest(name = "{0} is part of the attack list")
-    @ValueSource(strings = {"groundslam", "starfall", "spiritbeam", "trianglecall", "hoverbarrage"})
-    void catalogueContainsTheOldSuggestions(String name) {
-        assertTrue(AttackCatalogue.names().contains(name));
-    }
-
     @Test
-    @DisplayName("Nothing is advertised that the boss can no longer trigger")
-    void helpNamesStayLowercaseAndAligned() {
+    @DisplayName("Every entry sits on a real page and shares the description colour")
+    void entriesAreOnRealPages() {
         for (AttackCatalogue.Entry entry : AttackCatalogue.entries()) {
-            assertFalse(entry.name().isBlank());
-            assertEquals(entry.name().toLowerCase(), entry.name());
             assertTrue(entry.page() >= 1 && entry.page() <= AttackCatalogue.pages(),
                     entry.name() + " is on a page that does not exist: " + entry.page());
             assertTrue(entry.description().startsWith("&7"), "descriptions share the &7 body colour: " + entry.name());

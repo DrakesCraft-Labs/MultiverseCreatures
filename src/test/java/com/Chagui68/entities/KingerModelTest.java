@@ -321,7 +321,7 @@ class KingerModelTest {
         // This used to allow five centimetres of overhang, which was the price of the wider stride
         // the walk started with; a swing that misses the stand hits nothing at all, so the budget for
         // "the leg looks lively" is the box and nothing more.
-        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.2f) {
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.05f) {
             for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
                 Vector3f moved = KingerModel.compose(part, new Quaternionf().rotateX(KingerModel.walkSwing(part.group(), phase)),
                         KingerModel.lowerRotation(part, phase)).getTranslation();

@@ -1,13 +1,11 @@
 package com.Chagui68.entities.boss;
 
+import com.Chagui68.testsupport.ProjectPaths;
 import com.Chagui68.utils.MscEntityUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.reflect.Field;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -32,8 +30,7 @@ class SentinelHitboxTest {
     private static final double STAND_WIDTH = 0.5;
     private static final double STAND_HEIGHT = 1.975;
 
-    private static final Path SOURCE = Path.of("src", "main", "java", "com", "Chagui68",
-            "entities", "boss", "ArmorStandBoss.java");
+    private static final Path SOURCE = ProjectPaths.source("com", "Chagui68", "entities", "boss", "ArmorStandBoss.java");
 
     @Test
     @DisplayName("The Sentinel's scale is one named number the fight was tuned around")
@@ -58,7 +55,7 @@ class SentinelHitboxTest {
 
     @Test
     @DisplayName("The scale comes from the clamped config knob, never from a literal")
-    void theScaleComesFromTheClampedKnob() throws IOException {
+    void theScaleComesFromTheClampedKnob() {
         String source = source();
 
         assertTrue(source.contains("\"entities.armor-stand-boss.hitbox-scale\""),
@@ -86,7 +83,7 @@ class SentinelHitboxTest {
 
     @Test
     @DisplayName("The stand the fight is hit through is configured in exactly one place")
-    void theStandIsConfiguredOnce() throws IOException {
+    void theStandIsConfiguredOnce() {
         String source = source();
 
         // Every one of these decides what the boss's body is. A second spawn path that forgot one of
@@ -109,11 +106,7 @@ class SentinelHitboxTest {
     }
 
     private static String source() {
-        try {
-            return Files.readString(SOURCE).replace("\r\n", "\n");
-        } catch (IOException e) {
-            throw new UncheckedIOException("Could not read " + SOURCE, e);
-        }
+        return ProjectPaths.read(SOURCE).replace("\r\n", "\n");
     }
 
     private static int count(String source, String token) {

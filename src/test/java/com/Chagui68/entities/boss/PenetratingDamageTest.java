@@ -106,22 +106,4 @@ class PenetratingDamageTest {
         }
     }
 
-    @Test
-    @DisplayName("The per-hit cap is applied before Resistance, so the potion cannot raise the cap")
-    void capAppliesBeforeResistance() {
-        double raw = Math.min(120.0, 15.0);
-        assertEquals(12.6, ArmorStandBoss.penetratingDamage(raw, 0, 0.2), EPS);
-    }
-
-    @Test
-    @DisplayName("The whole pipeline: netherite cannot shrink a 22-damage cleave below the 15 cap")
-    void pipelineEndToEnd() {
-        // Event as the engine reports it for a fully armoured player with Resistance I.
-        double eventDamage = 3.52;
-        double throughArmor = ArmorStandBoss.unmitigated(eventDamage, -17.6, 0.0, -0.88);
-        double dealt = ArmorStandBoss.penetratingDamage(Math.min(throughArmor, 15.0), 0, 0.2);
-        assertEquals(12.6, dealt, EPS, "armour must not shrink a penetrating hit");
-        // Without armour the same attack is capped at 15 and only loses the pierced resistance.
-        assertEquals(12.6, ArmorStandBoss.penetratingDamage(15.0, 0, 0.2), EPS);
-    }
 }

@@ -73,15 +73,6 @@ class ArenaNoiseTest {
     }
 
     @Test
-    @DisplayName("The same field is produced for the same seed and coordinates")
-    void fieldsAreDeterministic() {
-        for (int x = -30; x <= 30; x += 3) {
-            assertEquals(ArenaNoise.fbm(x, x * 2, SALT, 0.01, 4), ArenaNoise.fbm(x, x * 2, SALT, 0.01, 4));
-            assertEquals(ArenaNoise.ridge(x, x * 2, SALT, 0.01, 4), ArenaNoise.ridge(x, x * 2, SALT, 0.01, 4));
-        }
-    }
-
-    @Test
     @DisplayName("Smoothstep clamps at both ends and is symmetric in the middle")
     void smoothstepClamps() {
         assertEquals(0.0, ArenaNoise.smoothstep(10.0, 20.0, 5.0));

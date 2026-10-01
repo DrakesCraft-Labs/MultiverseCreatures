@@ -454,4 +454,17 @@ class NixModelTest {
         assertEquals(r.y, l.y, 0.02f, right + " / " + left + " are at different heights");
         assertEquals(r.z, l.z, 0.02f, right + " / " + left + " are at different depths");
     }
+
+    @Test
+    @DisplayName("Arms and legs are six pieces each, the head and both torso halves one")
+    void limbGroupsHaveTheirPieces() {
+        Map<NixBoss.LimbGroup, Integer> counts = new EnumMap<>(NixBoss.LimbGroup.class);
+        for (NixBoss.NixPart part : NixBoss.NixPart.values()) {
+            counts.merge(part.group, 1, Integer::sum);
+        }
+        assertEquals(Map.of(
+                NixBoss.LimbGroup.HEAD, 1, NixBoss.LimbGroup.TORSO_UPPER, 1, NixBoss.LimbGroup.TORSO_LOWER, 1,
+                NixBoss.LimbGroup.ARM_RIGHT, 6, NixBoss.LimbGroup.ARM_LEFT, 6,
+                NixBoss.LimbGroup.LEG_RIGHT, 6, NixBoss.LimbGroup.LEG_LEFT, 6), counts);
+    }
 }

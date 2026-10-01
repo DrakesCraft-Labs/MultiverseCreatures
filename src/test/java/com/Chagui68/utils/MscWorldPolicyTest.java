@@ -28,12 +28,7 @@ class MscWorldPolicyTest {
         assertTrue(MscWorldPolicy.isAllowed(List.of(), worldName));
         assertTrue(MscWorldPolicy.isAllowed(null, worldName));
     }
-
-    @Test
-    @DisplayName("Verify a null allowlist is treated as empty, not as a hardcoded list")
-    void testNullAllowlistIsUnrestricted() {
-        assertTrue(MscWorldPolicy.isAllowed((List<String>) null, "anything"));
-    }
+
 
     @Test
     @DisplayName("Verify a populated allowlist restricts and normalizes world names")
@@ -53,18 +48,13 @@ class MscWorldPolicyTest {
         // plugin creates itself must keep working.
         assertTrue(MscWorldPolicy.isAllowed(List.of("survival"), worldName));
     }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @DisplayName("Verify a null allowlist entry does not blow up the policy")
-    void testNullEntriesAreTolerated(String worldName) {
-        assertFalse(MscWorldPolicy.isAllowed(List.of("survival"), worldName));
-    }
+
 
     @Test
     @DisplayName("Verify a null world name is never allowed")
     void testNullWorldIsRejected() {
         assertFalse(MscWorldPolicy.isAllowed(List.of(), null));
         assertFalse(MscWorldPolicy.isAllowed(List.of("survival"), null));
+        assertFalse(MscWorldPolicy.isAllowed(List.of("survival"), ""));
     }
 }

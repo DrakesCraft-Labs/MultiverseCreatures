@@ -1,7 +1,6 @@
 package com.Chagui68.utils;
 
 import com.Chagui68.testsupport.ProjectPaths;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -40,11 +39,7 @@ class LegacyNameApiGuardTest {
     @Test
     @DisplayName("Verify no item or entity name is built through the deprecated String API")
     void testNoSourceUsesTheDeprecatedNameApi() {
-        Path sources = ProjectPaths.mainJava();
-        Assumptions.assumeTrue(Files.isDirectory(sources),
-                "Skipped: src/main/java is not reachable from " + ProjectPaths.root());
-
-        List<Path> javaFiles = ProjectPaths.javaFiles(sources);
+        List<Path> javaFiles = ProjectPaths.javaFiles(ProjectPaths.mainJava());
         // Without this the guard could pass vacuously if the walk ever stopped finding the sources.
         assertTrue(javaFiles.size() > 100,
                 "Expected to scan the whole main source set, found only " + javaFiles.size() + " files");

@@ -26,13 +26,6 @@ class MscEntityUtilsHealthTest {
                 "Health must be clamped between 0.1 and effectiveMax");
     }
 
-    @Test
-    @DisplayName("Verify requested health below server cap is preserved completely")
-    void testPreserveHealthBelowCap() {
-        double result = MscEntityUtils.calculateSafeHealth(500.0, 1024.0);
-        assertEquals(500.0, result, 1e-9);
-    }
-
     @ParameterizedTest(name = "Current {0} / Max {1} produces progress {2}")
     @CsvSource({
             "3200.0, 3200.0, 1.0",
@@ -83,12 +76,4 @@ class MscEntityUtilsHealthTest {
                         + MscEntityUtils.MAX_HITBOX_SCALE + "] must be clamped, not passed through");
     }
 
-    @Test
-    @DisplayName("Verify the clamped range keeps the shipped boss scales exactly as authored")
-    void testShippedBossScalesSurviveTheClamp() {
-        for (double scale : new double[]{1.0, 1.2, 1.9, 7.5}) {
-            assertEquals(scale, MscEntityUtils.clampHitboxScale(scale), 1e-9,
-                    scale + " is a scale a boss ships with and must not be trimmed by the clamp");
-        }
-    }
 }

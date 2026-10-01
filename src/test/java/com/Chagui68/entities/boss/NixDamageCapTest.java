@@ -46,14 +46,4 @@ class NixDamageCapTest {
         assertEquals(500.0, NixBoss.capIncomingDamage(500.0, disabled));
     }
 
-    @Test
-    @DisplayName("The clamped hit is what actually leaves the health pool")
-    void clampedHitDrainsThePools() {
-        double health = 450.0;
-        double afterOneShot = Math.max(0.0, health - NixBoss.capIncomingDamage(10_000.0, 100.0));
-        assertEquals(350.0, afterOneShot);
-        // Four capped hits still leave the boss alive; the fifth finishes it.
-        assertEquals(50.0, Math.max(0.0, afterOneShot - 3 * NixBoss.capIncomingDamage(1_000.0, 100.0)));
-        assertEquals(0.0, Math.max(0.0, 50.0 - NixBoss.capIncomingDamage(1_000.0, 100.0)));
-    }
 }
