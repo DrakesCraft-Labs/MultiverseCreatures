@@ -137,6 +137,18 @@ public final class DisplaySuit {
         return null;
     }
 
+    /** A still boss refreshes its suit once every this many ticks. */
+    public static final int IDLE_SYNC_INTERVAL = 3;
+
+    /**
+     * Whether a suit should be re-posed this tick. A boss that walks or animates is posed every tick
+     * so its pieces never lag; a still one only every {@link #IDLE_SYNC_INTERVAL} ticks, which saves
+     * two thirds of the display updates of a boss that is just standing there.
+     */
+    public static boolean shouldSync(boolean busy, int tick) {
+        return busy || tick % IDLE_SYNC_INTERVAL == 0;
+    }
+
     /** Removes every piece of a suit whose boss is gone. */
     public static void remove(World world, Collection<UUID> pieces) {
         for (UUID id : pieces) {

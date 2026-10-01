@@ -453,7 +453,7 @@ public class NixBoss implements Listener {
             if (inst.moving && dist <= aggroRange && inst.cleaveAnim <= 4) {
                 Vector dir = toTarget.clone().normalize();
                 double step = Math.min(currentSpeed, dist);
-                loc.add(dir.multiply(step));
+                BossArena.walk(loc, dir.multiply(step), true);
             }
 
             // Combat triggers
@@ -472,8 +472,8 @@ public class NixBoss implements Listener {
             inst.bloodlust = false;
         }
 
-        // Single ground snap & teleport for the anchor stand
-        snapToGround(loc);
+        // Single ground settle & teleport for the anchor stand
+        BossArena.settle(loc);
         stand.teleport(loc);
 
         // Impact moment of the cleave: hit at tick 9 (arms slam down)
@@ -499,8 +499,7 @@ public class NixBoss implements Listener {
         inst.tickCount++;
 
         // Synchronize all 27 display entities locked to stand location (throttled when stationary)
-        boolean isIdle = !inst.moving && inst.cleaveAnim == 0 && inst.chainAnim == 0;
-        if (!isIdle || inst.tickCount % 3 == 0) {
+        if (DisplaySuit.shouldSync(inst.moving || inst.cleaveAnim != 0 || inst.chainAnim != 0, inst.tickCount)) {
             syncDisplays(inst);
         }
 
@@ -513,19 +512,6 @@ public class NixBoss implements Listener {
             // what makes a login, a logout or a world change correct itself.
             if (inst.tickCount % 20 == 0) {
                 MscBossBar.showInWorld(inst.bossBar, stand.getWorld());
-            }
-        }
-    }
-
-    private void snapToGround(Location loc) {
-        World world = loc.getWorld();
-        int x = loc.getBlockX();
-        int z = loc.getBlockZ();
-        int y = loc.getBlockY();
-        for (int i = y; i > y - 8; i--) {
-            if (world.getBlockAt(x, i, z).getType().isSolid()) {
-                loc.setY(i + 1.0);
-                return;
             }
         }
     }

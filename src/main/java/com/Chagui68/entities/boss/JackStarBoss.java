@@ -250,6 +250,7 @@ public class JackStarBoss implements Listener {
                 if (!stand.getPersistentDataContainer().has(MscEntityUtils.KEY_VIRTUAL_MAX_HEALTH, org.bukkit.persistence.PersistentDataType.DOUBLE)) {
                     MscEntityUtils.initVirtualHealth(stand, health);
                 }
+                stand.setGravity(false);
                 JackInstance inst = new JackInstance(stand);
                 restorePartDisplays(inst);
                 activeInstances.put(stand.getUniqueId(), inst);
@@ -333,19 +334,11 @@ public class JackStarBoss implements Listener {
         double maxHealth = MscEntityUtils.getVirtualMaxHealth(stand);
         double ratio = currentHealth / Math.max(1.0, maxHealth);
 
-        // Update 5-Phase State Machine
+        // Update 5-Phase State Machine. A phase never walks back: a reboot restores health, and
+        // re-deriving the phase from it used to replay every transition (the summons and the
+        // broadcasts) on the way back up.
         int prevPhase = inst.currentPhase;
-        if (inst.isKernelPanic || ratio <= 0.15) {
-            inst.currentPhase = 5;
-        } else if (ratio <= 0.40) {
-            inst.currentPhase = 4;
-        } else if (ratio <= 0.60) {
-            inst.currentPhase = 3;
-        } else if (ratio <= 0.80) {
-            inst.currentPhase = 2;
-        } else {
-            inst.currentPhase = 1;
-        }
+        inst.currentPhase = Math.max(prevPhase, phaseFor(ratio, inst.isKernelPanic));
 
         if (inst.currentPhase != prevPhase) {
             handlePhaseTransition(inst, prevPhase, inst.currentPhase);
@@ -356,25 +349,22 @@ public class JackStarBoss implements Listener {
 
         Location loc = stand.getLocation();
 
-        // Scale interpolation
+        // Scale interpolation; the hitbox grows and shrinks with the model it stands for.
         inst.currentScale += (inst.targetScale - inst.currentScale) * 0.08f;
+        syncHitboxScale(inst);
 
-        // Levitating / Flight Mode in Phase 3 & 5
-        if (inst.isLevitating) {
-            double targetY = 3.8;
-            inst.flightYOffset += (targetY - inst.flightYOffset) * 0.05;
-            if (inst.tickCount % 2 == 0) {
-                Location vortex = loc.clone().add(0, 0.3, 0);
-                stand.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, vortex, 3, 0.4, 0.1, 0.4, 0.03);
-                stand.getWorld().spawnParticle(Particle.PORTAL, vortex, 3, 0.3, 0.2, 0.3, 0.05);
-            }
-        } else {
-            inst.flightYOffset *= 0.9;
+        // Phase 3 & 5 "levitation" is an aura, not altitude. It used to add a growing Y offset to
+        // the stand's own location every tick, so the offsets piled up and JackStar rose out of
+        // reach of every melee weapon: he flew instead of walking, and could not be hit.
+        if (inst.isLevitating && inst.tickCount % 2 == 0) {
+            Location vortex = loc.clone().add(0, 0.3, 0);
+            stand.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, vortex, 3, 0.4, 0.1, 0.4, 0.03);
+            stand.getWorld().spawnParticle(Particle.PORTAL, vortex, 3, 0.3, 0.2, 0.3, 0.05);
         }
 
         // Aura particles: Core beacon / plasma effect
         if (inst.tickCount % 5 == 0) {
-            Location coreLoc = loc.clone().add(0, 1.2 + inst.flightYOffset, 0);
+            Location coreLoc = loc.clone().add(0, 1.2, 0);
             stand.getWorld().spawnParticle(inst.isKernelPanic ? Particle.SOUL_FIRE_FLAME : Particle.END_ROD, coreLoc, 2, 0.15, 0.25, 0.15, 0.01);
             if (inst.isKernelPanic) {
                 stand.getWorld().spawnParticle(Particle.PORTAL, coreLoc, 5, 0.3, 0.5, 0.3, 0.05);
@@ -399,11 +389,11 @@ public class JackStarBoss implements Listener {
                 loc.setDirection(toTarget);
             }
 
-            // Movement toward target (with levitation)
+            // Movement toward target, on foot: up a step at most, never through a wall.
             if (inst.moving && dist <= aggroRange && inst.slashAnimTicks <= 3 && inst.slamAnimTicks <= 3) {
                 Vector dir = toTarget.clone().normalize();
                 double step = Math.min(currentSpeed, dist);
-                loc.add(dir.multiply(step));
+                BossArena.walk(loc, dir.multiply(step), true);
             }
 
             // --- Combat AI Routines Across 5 Phases ---
@@ -515,10 +505,30 @@ public class JackStarBoss implements Listener {
         inst.animTicks += JackModel.WALK_RATE;
         inst.tickCount++;
 
-        // Sync visual model position
-        Location finalLoc = loc.clone().add(0, inst.flightYOffset, 0);
-        stand.teleport(finalLoc);
+        // Feet on the floor every tick, whether he walked or not: a dash, a dodge or a block
+        // vanishing under him must never leave him standing on air.
+        BossArena.settle(loc);
+        stand.teleport(loc);
         syncDisplays(inst);
+    }
+
+    /** Keeps the stand's hitbox as big as the model, which phase 4 grows to 220% and shrinks to 60%. */
+    private void syncHitboxScale(JackInstance inst) {
+        double wanted = MscEntityUtils.clampHitboxScale(hitboxScale * inst.currentScale);
+        if (Math.abs(wanted - inst.appliedHitboxScale) < 0.05) return;
+        AttributeInstance scale = inst.stand.getAttribute(Attribute.SCALE);
+        if (scale == null) return;
+        scale.setBaseValue(wanted);
+        inst.appliedHitboxScale = wanted;
+    }
+
+    /** The phase a health fraction puts JackStar in; kernel panic is always the last one. */
+    static int phaseFor(double healthRatio, boolean kernelPanic) {
+        if (kernelPanic || healthRatio <= 0.15) return 5;
+        if (healthRatio <= 0.40) return 4;
+        if (healthRatio <= 0.60) return 3;
+        if (healthRatio <= 0.80) return 2;
+        return 1;
     }
 
     private void handlePhaseTransition(JackInstance inst, int oldP, int newP) {
@@ -624,7 +634,7 @@ public class JackStarBoss implements Listener {
     private void executeSonicBoom(JackInstance inst, Player target) {
         ArmorStand stand = inst.stand;
         World world = stand.getWorld();
-        Location eye = stand.getLocation().clone().add(0, 1.6 + inst.flightYOffset, 0);
+        Location eye = stand.getLocation().clone().add(0, 1.6 * inst.currentScale, 0);
         Location targetLoc = target.getLocation().clone().add(0, 1.0, 0);
         Vector dir = targetLoc.toVector().subtract(eye.toVector()).normalize();
 
@@ -805,7 +815,11 @@ public class JackStarBoss implements Listener {
         ArmorStand stand = inst.stand;
         World world = stand.getWorld();
         Location start = stand.getLocation();
-        Location dest = target.getLocation().clone().subtract(target.getLocation().getDirection().multiply(1.5));
+        // Behind the player on the horizontal: with the look pitch left in, a player looking down
+        // put him up in the air and one looking up put him inside the floor.
+        Location dest = target.getLocation().clone().subtract(horizontalLook(target).multiply(1.5));
+        dest.setDirection(target.getLocation().toVector().subtract(dest.toVector()).setY(0));
+        BossArena.settle(dest);
 
         world.playSound(start, Sound.ENTITY_WIND_CHARGE_WIND_BURST, 1.5f, 1.2f);
         world.spawnParticle(Particle.CLOUD, start.clone().add(0, 1.0, 0), 20, 0.3, 0.5, 0.3, 0.05);
@@ -849,9 +863,9 @@ public class JackStarBoss implements Listener {
         World world = stand.getWorld();
         Location loc = stand.getLocation();
 
-        Location behind = attacker.getLocation().clone().subtract(attacker.getLocation().getDirection().multiply(1.8));
-        behind.setDirection(attacker.getLocation().toVector().subtract(behind.toVector()));
-        snapToGround(behind);
+        Location behind = attacker.getLocation().clone().subtract(horizontalLook(attacker).multiply(1.8));
+        behind.setDirection(attacker.getLocation().toVector().subtract(behind.toVector()).setY(0));
+        BossArena.settle(behind);
 
         world.spawnParticle(Particle.CLOUD, loc.clone().add(0, 1.0, 0), 16, 0.3, 0.5, 0.3, 0.03);
         world.spawnParticle(Particle.FIREWORK, loc.clone().add(0, 1.0, 0), 12, 0.2, 0.4, 0.2, 0.05);
@@ -860,6 +874,16 @@ public class JackStarBoss implements Listener {
 
         stand.teleport(behind);
         attacker.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "⚡ ¡ESQUIVE INSTINTIVO! " + ChatColor.GRAY + "(Ultra Instinct)");
+    }
+
+    /** Where a player is looking, flattened onto the ground; straight up or down falls back to their yaw. */
+    private static Vector horizontalLook(Player player) {
+        Vector look = player.getLocation().getDirection().setY(0);
+        if (look.lengthSquared() < 1e-4) {
+            double yaw = Math.toRadians(player.getLocation().getYaw());
+            look = new Vector(-Math.sin(yaw), 0, Math.cos(yaw));
+        }
+        return look.normalize();
     }
 
     /** The players counted as part of the fight: everyone in range that can still take damage. */
@@ -1002,16 +1026,15 @@ public class JackStarBoss implements Listener {
         world.playSound(loc, Sound.ITEM_TRIDENT_THUNDER, 1.6f, 1.0f);
         world.spawnParticle(Particle.EXPLOSION_EMITTER, loc.clone().add(0, 1.5, 0), 1);
 
+        // The phase is left as it is: setting it back to 3 or 4 here was undone on the next tick,
+        // and replayed that phase's transition on the way.
         if (rebootNum == 1) {
-            inst.currentPhase = 3;
             if (inst.bossBar != null) inst.bossBar.setColor(BarColor.PURPLE);
             broadcastToArena(inst, ChatColor.AQUA + "[SYS] Nodo 'Hyperion' activado. JackStar ha revivido (Vidas restantes: 2)");
         } else if (rebootNum == 2) {
-            inst.currentPhase = 4;
             if (inst.bossBar != null) inst.bossBar.setColor(BarColor.YELLOW);
             broadcastToArena(inst, ChatColor.GOLD + "[SYS] Nodo 'StarCluster' en línea. JackStar ha revivido (Vidas restantes: 1)");
         } else {
-            inst.currentPhase = 5;
             inst.isKernelPanic = true;
             if (inst.bossBar != null) inst.bossBar.setColor(BarColor.RED);
             broadcastToArena(inst, ChatColor.RED + "[SYS] ¡ÚLTIMA VIDA! Modo Kernel Panic activado. ¡Destrucción total!");
@@ -1147,7 +1170,7 @@ public class JackStarBoss implements Listener {
         inst.creativeTicks++;
         // JackStar stays where the fight is: the ritual is extra pressure, not an escape. He never
         // leaves the ground, so the subprocess can be cleared without losing the boss off-screen.
-        Location anchor = stand.getLocation().clone().add(0, inst.flightYOffset, 0);
+        Location anchor = stand.getLocation().clone();
         updateCreativeDisplays(inst, anchor);
 
         if (inst.creativeTicks % 20 == 0) {
@@ -1338,7 +1361,9 @@ public class JackStarBoss implements Listener {
 
         ArmorStand stand = (ArmorStand) world.spawnEntity(spawnLoc, EntityType.ARMOR_STAND);
         stand.setVisible(false);
-        stand.setGravity(true);
+        // Off on purpose: the tick loop walks him over the terrain and settles his feet itself,
+        // and vanilla gravity fighting those teleports is how a stand ends up jittering in the air.
+        stand.setGravity(false);
         stand.setBasePlate(false);
         stand.setArms(false);
         stand.setSmall(false);
@@ -1664,7 +1689,8 @@ public class JackStarBoss implements Listener {
         public float currentScale = 1.0f;
         public float targetScale = 1.0f;
         public boolean isLevitating;
-        public double flightYOffset;
+        /** Hitbox scale last written to the stand, so the attribute is only touched when it changes. */
+        public double appliedHitboxScale = -1;
         public int scaleShiftTimer;
         public int sonicBoomCooldown;
         public int minionCooldown;

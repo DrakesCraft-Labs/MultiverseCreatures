@@ -11,6 +11,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 /**
  * Utility queries for terrain and players in a boss arena.
@@ -136,6 +137,21 @@ public final class BossArena {
         boolean isSolidAt(int y);
     }
 
+    /** Probes one vertical column of blocks by the height of their top face. */
+    @FunctionalInterface
+    public interface SurfaceProbe {
+        /** Absolute Y of the top of block {@code y} (e.g. {@code y + 0.5} for a slab), or NaN when it is not solid. */
+        double surfaceAt(int y);
+    }
+
+    /**
+     * How far a body may sit off the floor and still count as standing on it.
+     *
+     * Wider than float noise on purpose: a stand left a few centimetres up by a teleport would
+     * otherwise read as airborne, and an airborne Sentinel does not attack.
+     */
+    public static final double GROUND_TOLERANCE = 0.2;
+
     /** Probes whole columns of terrain, used to find somewhere safe to stand. */
     @FunctionalInterface
     public interface ColumnProbe {
@@ -157,26 +173,54 @@ public final class BossArena {
         World world = loc.getWorld();
         int x = loc.getBlockX();
         int z = loc.getBlockZ();
-        return findFloorY(loc.getY(), maxScan, y -> {
+        return findFloorY(loc.getY(), maxScan, (SurfaceProbe) y -> {
             Block block = world.getBlockAt(x, y, z);
-            return block != null && block.getType().isSolid();
+            if (block == null || !block.getType().isSolid()) return Double.NaN;
+            // Slabs, stairs and the like: stand on the shape, not on the block cell.
+            double top = block.getBoundingBox().getMaxY();
+            return top > y ? top : y + 1.0;
         });
     }
 
     /**
-     * Pure version of {@link #findFloorY(Location, double)}: no server required, so the rule can be
-     * tested directly.
+     * Pure version of {@link #findFloorY(Location, double)} over whole blocks: no server required, so
+     * the rule can be tested directly.
      */
     public static double findFloorY(double startY, double maxScan, VerticalProbe probe) {
         if (probe == null) {
             return Double.NaN;
         }
-        for (double dy = 1; dy <= maxScan; dy++) {
-            if (probe.isSolidAt((int) Math.floor(startY - dy))) {
-                return startY - dy + 1;
+        return findFloorY(startY, maxScan, (SurfaceProbe) y -> probe.isSolidAt(y) ? y + 1.0 : Double.NaN);
+    }
+
+    /**
+     * The top face of the first solid block at or below {@code startY}, or NaN within {@code maxScan}.
+     *
+     * The answer is always a block's own top face. The old scan answered {@code startY - dy + 1},
+     * which is the boss's own Y whenever it hovers less than a block up: a stand left at 64.5 over a
+     * floor at 64 was told the floor was at 64.5, the descent never moved it, {@code isOnGround}
+     * stayed false and the Sentinel hovered half a block up, not attacking, for the rest of the
+     * fight. The block containing {@code startY} is scanned too, so a body sunk into a slab or a
+     * step is pushed back on top of it instead of searching below it.
+     */
+    public static double findFloorY(double startY, double maxScan, SurfaceProbe probe) {
+        if (probe == null || Double.isNaN(startY)) {
+            return Double.NaN;
+        }
+        int top = (int) Math.floor(startY);
+        int bottom = (int) Math.floor(startY - maxScan);
+        for (int y = top; y >= bottom; y--) {
+            double surface = probe.surfaceAt(y);
+            if (!Double.isNaN(surface)) {
+                return surface;
             }
         }
         return Double.NaN;
+    }
+
+    /** Whether a body at {@code y} stands on a floor at {@code floorY}; NaN means there is no floor. */
+    public static boolean restsOn(double y, double floorY) {
+        return !Double.isNaN(floorY) && Math.abs(y - floorY) <= GROUND_TOLERANCE;
     }
 
     /** The Y altitude of the first solid block below, or the current Y if none found. */
@@ -193,9 +237,81 @@ public final class BossArena {
         return !Double.isNaN(findFloorY(loc, maxScan));
     }
 
-    /** Checks whether the entity is standing on a solid block. */
+    /**
+     * Checks whether the entity is standing on a solid block.
+     *
+     * Measured against the same floor {@link #findFloorY} reports, so "on the ground" and "where the
+     * descent snaps to" can never disagree; the old block-under-the-feet test said "airborne" for a
+     * stand hovering a fraction of a block up, while the floor scan said it had already landed.
+     */
     public static boolean isOnGround(BossPuppet stand) {
-        return stand.getLocation().subtract(0, 0.1, 0).getBlock().getType().isSolid();
+        Location loc = stand.getLocation();
+        return restsOn(loc.getY(), findFloorY(loc, 2.0));
+    }
+
+    /** Highest step a walking boss climbs; anything taller is a wall. */
+    public static final double STEP_HEIGHT = 1.0;
+
+    /** How fast a walking boss drops off a ledge, in blocks per tick. */
+    public static final double FALL_PER_TICK = 0.6;
+
+    /** How far below its feet a walker looks for a floor before treating the drop as bottomless. */
+    private static final double WALK_SCAN = 12.0;
+
+    /**
+     * Where a walker's feet go next given the floor under the destination, or NaN when that floor
+     * is a wall.
+     *
+     * <p>{@code floorY} is the top of the first solid block at or below {@code fromY + STEP_HEIGHT}
+     * (NaN when there is none within the scan): one block up is a step, level ground is level, and
+     * a lower floor is fallen towards rather than teleported onto. No floor at all still falls,
+     * which is what keeps a walker from hanging in the air over a deep drop.
+     */
+    public static double nextFeetY(double fromY, double floorY) {
+        if (Double.isNaN(floorY)) return fromY - FALL_PER_TICK;
+        if (floorY > fromY + STEP_HEIGHT + 1e-6) return Double.NaN;
+        if (floorY >= fromY) return floorY;
+        return Math.max(floorY, fromY - FALL_PER_TICK);
+    }
+
+    /**
+     * Moves {@code loc} by the horizontal {@code step} as a walker would: up one block at most, down
+     * by falling, and never into a wall.
+     *
+     * <p>The dressed bosses used to add the step and then snap to the first solid block under their
+     * feet. A wall is solid under the feet too, so they walked into it and climbed it a block per
+     * tick; and the snap only looked eight blocks down, so a longer drop left them standing on air.
+     *
+     * @param slide when the full step is blocked, try its two axes alone so a wall met at an angle
+     *              is followed instead of stopping the walker dead
+     * @return whether {@code loc} moved
+     */
+    public static boolean walk(Location loc, Vector step, boolean slide) {
+        Vector[] attempts = slide
+                ? new Vector[]{step, new Vector(step.getX(), 0, 0), new Vector(0, 0, step.getZ())}
+                : new Vector[]{step};
+        for (Vector attempt : attempts) {
+            if (attempt.lengthSquared() < 1e-6) continue;
+            Location next = loc.clone().add(attempt.getX(), 0, attempt.getZ());
+            Location probe = next.clone();
+            probe.setY(loc.getY() + STEP_HEIGHT);
+            double feet = nextFeetY(loc.getY(), findFloorY(probe, WALK_SCAN));
+            if (Double.isNaN(feet)) continue;
+            loc.setX(next.getX());
+            loc.setZ(next.getZ());
+            loc.setY(feet);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Drops {@code loc} towards the floor under it, or lifts it a block at a time out of terrain it
+     * ended up inside. Scanned from the feet, so the block a body is buried in is the floor to climb.
+     */
+    public static void settle(Location loc) {
+        double feet = nextFeetY(loc.getY(), findFloorY(loc, WALK_SCAN));
+        if (!Double.isNaN(feet)) loc.setY(feet);
     }
 
     /**

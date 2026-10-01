@@ -399,6 +399,13 @@ public class MultiverseCreatures extends JavaPlugin {
         return jackStarBoss;
     }
 
+    /** Whether any of the three arena bosses is fighting in {@code world}. */
+    public boolean isBossFightIn(org.bukkit.World world) {
+        return (armorStandBoss != null && armorStandBoss.isBossActiveIn(world))
+                || (nixBoss != null && nixBoss.isBossActiveIn(world))
+                || (jackStarBoss != null && jackStarBoss.isBossActiveIn(world));
+    }
+
     public JackInvocationManager getJackInvocationManager() {
         return jackInvocationManager;
     }

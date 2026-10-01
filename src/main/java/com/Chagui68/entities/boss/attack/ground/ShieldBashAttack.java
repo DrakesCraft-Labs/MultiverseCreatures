@@ -1,5 +1,6 @@
 package com.Chagui68.entities.boss.attack.ground;
 
+import com.Chagui68.entities.boss.BossArena;
 import com.Chagui68.entities.boss.BossPuppet;
 import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.attack.BossAttackBase;
@@ -71,7 +72,10 @@ public class ShieldBashAttack extends BossAttackBase {
                     t++;
                 } else if (chargeTicks < 15) {
                     Location loc = stand.getLocation();
-                    loc.add(fDir.clone().multiply(2.0));
+                    // Two one-block strides over the terrain: the charge used to teleport two blocks
+                    // straight ahead, through walls and off cliffs, and ended wherever that was.
+                    boolean blocked = !BossArena.walk(loc, fDir.clone(), false)
+                            || !BossArena.walk(loc, fDir.clone(), false);
                     stand.teleport(loc);
                     world.spawnParticle(Particle.CLOUD, loc, 5, 1, 0.2, 1, 0.02);
                     world.spawnParticle(Particle.CRIT, loc, 3, 0.5, 1, 0.5, 0.03);
@@ -84,7 +88,8 @@ public class ShieldBashAttack extends BossAttackBase {
                             p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1));
                         }
                     }
-                    chargeTicks++;
+                    // A wall ends the charge here, with its impact on the next tick.
+                    chargeTicks = blocked ? 15 : chargeTicks + 1;
                 } else {
                     world.playSound(stand.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.7f);
                     world.spawnParticle(Particle.EXPLOSION, stand.getLocation(), 10, 2, 1, 2, 0);

@@ -73,6 +73,19 @@ class DisplaySuitTest {
         }
     }
 
+    @Test
+    @DisplayName("A busy suit is posed every tick, a still one every third tick")
+    void stillSuitsAreThrottled() {
+        int still = 0;
+        int busy = 0;
+        for (int tick = 0; tick < 90; tick++) {
+            if (DisplaySuit.shouldSync(false, tick)) still++;
+            if (DisplaySuit.shouldSync(true, tick)) busy++;
+        }
+        assertEquals(90 / DisplaySuit.IDLE_SYNC_INTERVAL, still);
+        assertEquals(90, busy);
+    }
+
     // --- fakes -------------------------------------------------------------------------------------
 
     private static World world(List<Entity> nearby) {

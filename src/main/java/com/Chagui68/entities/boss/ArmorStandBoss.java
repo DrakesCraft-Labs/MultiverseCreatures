@@ -694,7 +694,9 @@ public class ArmorStandBoss implements Listener, BossHost {
                             executeRandomAerialAttack(instance);
                         }
 
-                        boolean allAerialDone = instance.aerialAttacksDone.size() >= 10;
+                        // Was 10, but no aerial pool holds ten attacks, so a flight could never end
+                        // early and always ran its full 40 seconds.
+                        boolean allAerialDone = instance.aerialAttacksDone.size() >= SentinelAttackPool.AERIAL_ATTACKS_PER_FLIGHT;
                         int minFlyTime = 200 + random.nextInt(200);
                         if (!instance.hoverBarrageActive && !instance.triangleCallActive
                                 && ((allAerialDone && instance.flyingTimer >= minFlyTime) || instance.flyingTimer >= 800)) {
@@ -736,9 +738,16 @@ public class ArmorStandBoss implements Listener, BossHost {
                             instance.floorLostTicks = 0;
                         }
                     } else if (instance.shieldState == ShieldState.NORMAL) {
+                        instance.floorLostTicks = 0;
                         instance.hoverBarrageCooldown++;
                         instance.groundAttackCooldown++;
-                        if (instance.hoverBarrageCooldown >= hoverBarrageCooldownBaseTicks + random.nextInt(hoverBarrageCooldownVarianceTicks)) {
+                        // The defence cooldown only gates the next defence. It used to sit in this
+                        // else-if chain, so for 15-30 s after every defence the Sentinel threw no
+                        // ground attack at all — below half health that was most of the fight.
+                        if (instance.defenseCooldown > 0) {
+                            instance.defenseCooldown--;
+                        }
+                        if (instance.hoverBarrageCooldown >= hoverBarrageCooldownBaseTicks + jitter(hoverBarrageCooldownVarianceTicks)) {
                             instance.hoverBarrageCooldown = 0;
 
                             double maxHealth = stand.getMaxHealth();
@@ -760,13 +769,12 @@ public class ArmorStandBoss implements Listener, BossHost {
                             } else {
                                 startHoverBarrage(instance);
                             }
-                        } else if (instance.defenseCooldown > 0) {
-                            instance.defenseCooldown--;
-                        } else if (instance.groundAttackCooldown >= groundAttackCooldownBaseTicks + random.nextInt(groundAttackCooldownVarianceTicks)) {
+                        } else if (instance.groundAttackCooldown >= groundAttackCooldownBaseTicks + jitter(groundAttackCooldownVarianceTicks)) {
                             instance.groundAttackCooldown = 0;
                             double maxHealth = stand.getMaxHealth();
                             double healthPct = maxHealth > 0.0 ? stand.getHealth() / maxHealth : 1.0;
-                            if (instance.activeDefense == DefenseState.NONE && healthPct < 0.5 && random.nextInt(100) < defenseActivationChance) {
+                            if (instance.activeDefense == DefenseState.NONE && instance.defenseCooldown <= 0
+                                    && healthPct < 0.5 && random.nextInt(100) < defenseActivationChance) {
                                 int defChoice = random.nextInt(100);
                                 if (defChoice < defenseWeightStoneSkin) {
                                     stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.6f);
@@ -778,7 +786,7 @@ public class ArmorStandBoss implements Listener, BossHost {
                                     stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.6f);
                                     attackRegistry.get("absorbshield").execute(instance);
                                 }
-                                instance.defenseCooldown = defenseCooldownBaseTicks + random.nextInt(defenseCooldownVarianceTicks);
+                                instance.defenseCooldown = defenseCooldownBaseTicks + jitter(defenseCooldownVarianceTicks);
                             } else {
                                 stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
                                 executeRandomGroundAttack(instance);
@@ -1457,28 +1465,21 @@ public class ArmorStandBoss implements Listener, BossHost {
         if (stand.isDead() || !stand.isValid()) return;
 
         double nearestDist = getNearestPlayerDistance(stand.getLocation());
-        String[] allAerial;
+        List<String> pool;
         if (nearestDist < 15) {
-            allAerial = new String[]{"aerialrush", "crossslash", "novaburst", "obsidianwings", "bladering"};
+            pool = SentinelAttackPool.AERIAL_CLOSE;
         } else if (nearestDist < 35) {
-            allAerial = new String[]{"sonicboom", "windcutter", "gravitywell", "darkorb", "aerialrush", "eclipsefall"};
+            pool = SentinelAttackPool.AERIAL_MEDIUM;
         } else {
-            allAerial = new String[]{"starfall", "lightningstorm", "heavenlyjudgment", "darkorb", "eclipsefall"};
+            pool = SentinelAttackPool.AERIAL_FAR;
         }
 
-        List<String> available = new ArrayList<>();
-        for (String a : allAerial) {
-            if (!instance.aerialAttacksDone.contains(a)) available.add(a);
-        }
-        if (available.isEmpty()) {
-            available.addAll(Arrays.asList(allAerial));
-        }
-
-        String choice = available.get(random.nextInt(available.size()));
+        // Both histories count: nothing repeats within one flight, nor right after the last landing.
+        Set<String> used = new HashSet<>(instance.aerialAttacksDone);
+        used.addAll(instance.recentAttacks);
+        String choice = SentinelAttackPool.pick(pool, used, random);
         instance.aerialAttacksDone.add(choice);
-
-        BossAttack attack = attackRegistry.get(choice);
-        if (attack != null) attack.execute(instance);
+        throwAttack(instance, choice);
     }
 
     private void executeRandomGroundAttack(BossInstance instance) {
@@ -1487,44 +1488,42 @@ public class ArmorStandBoss implements Listener, BossHost {
 
         double nearestDist = getNearestPlayerDistance(stand.getLocation());
 
-        String[] closeAttacks = {"shieldbash", "warstomp", "chaingrapple", "armorspikes", "mirrorimage", "vortexpull", "groundshatter",
-                "lanceflurry", "whirlwindslash", "executionsweep", "earthmaw", "shadowstep", "runeward"};
-        String[] mediumAttacks = {"lancestorm", "earthpillar", "groundshatter", "groundshatter", "armorspikes", "vortexpull",
-                "lanceflurry", "whirlwindslash", "obsidianspire", "earthmaw", "runeward"};
-        String[] farAttacks = {"shieldbash", "obsidianspire"};
-
-        String choice;
+        List<String> pool;
         if (nearestDist < DIST_CLOSE) {
-            choice = closeAttacks[random.nextInt(closeAttacks.length)];
+            pool = SentinelAttackPool.GROUND_CLOSE;
         } else if (nearestDist < DIST_MEDIUM) {
             if (random.nextInt(100) < mediumRangeAttackChance) {
                 executeRangedAttack(instance);
                 return;
             }
-            choice = mediumAttacks[random.nextInt(mediumAttacks.length)];
+            pool = SentinelAttackPool.GROUND_MEDIUM;
         } else {
             if (random.nextInt(100) < farRangeAttackChance) {
                 executeRangedAttack(instance);
                 return;
             }
-            choice = farAttacks[random.nextInt(farAttacks.length)];
+            pool = SentinelAttackPool.GROUND_FAR;
         }
 
-        BossAttack attack = attackRegistry.get(choice);
-        if (attack != null) attack.execute(instance);
+        throwAttack(instance, SentinelAttackPool.pick(pool, instance.recentAttacks, random));
     }
 
     private void executeRangedAttack(BossInstance instance) {
         BossPuppet stand = instance.stand;
         if (stand.isDead() || !stand.isValid()) return;
+        throwAttack(instance, SentinelAttackPool.pick(SentinelAttackPool.RANGED, instance.recentAttacks, random));
+    }
 
-        String[] rangedAttacks = {"lancesnipe", "meteorstorm", "voidbeam", "frostlance", "lightningspear",
-                "shadowvolley", "chainlightning", "crystalbarrage", "arcaneorb", "voidrift",
-                "arcanemissiles", "spiritbeam", "soultethers", "plaguebrand", "runemines"};
-        String choice = rangedAttacks[random.nextInt(rangedAttacks.length)];
+    /** Runs a registered attack by name and remembers it, so the next picks rotate past it. */
+    private void throwAttack(BossInstance instance, String name) {
+        if (name == null) return;
+        SentinelAttackPool.remember(instance.recentAttacks, name);
+        executeAttack(name, instance, true);
+    }
 
-        BossAttack attack = attackRegistry.get(choice);
-        if (attack != null) attack.execute(instance);
+    /** {@code base + [0, variance)}; a variance of 0 or less in the config means no jitter instead of a crash. */
+    private int jitter(int variance) {
+        return variance > 0 ? random.nextInt(variance) : 0;
     }
 
     public void airSlam(BossInstance instance, boolean telegraph) {
@@ -1742,7 +1741,7 @@ public class ArmorStandBoss implements Listener, BossHost {
 
 
     public int getShieldPlantInterval() {
-        return shieldPlantIntervalBaseTicks + random.nextInt(shieldPlantIntervalVarianceTicks);
+        return shieldPlantIntervalBaseTicks + jitter(shieldPlantIntervalVarianceTicks);
     }
 
     public int getShieldRetrieveDelay(int phase) {
@@ -1891,6 +1890,15 @@ public class ArmorStandBoss implements Listener, BossHost {
 
     public boolean isBossActive() {
         return !activeBosses.isEmpty();
+    }
+
+    /** Whether a Sentinel is fighting in {@code world}, so a fight elsewhere does not lock this one down. */
+    public boolean isBossActiveIn(World world) {
+        if (world == null) return false;
+        for (BossInstance instance : activeBosses.values()) {
+            if (world.equals(instance.stand.getWorld()) && instance.stand.isValid()) return true;
+        }
+        return false;
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.Chagui68.entities;
 
+import com.Chagui68.entities.boss.BossArena;
 import com.Chagui68.utils.DisplaySuit;
 import com.Chagui68.utils.MscBossBar;
 import com.Chagui68.utils.MscEntityUtils;
@@ -31,6 +32,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
@@ -359,17 +361,28 @@ public class Kinger implements Listener {
             }
             faceTarget(stand, target);
             double meleeRangeSq = meleeRange * meleeRange;
-            if (distSq <= meleeRangeSq && inst.meleeCooldown <= 0) {
-                meleeAttack(stand);
+            boolean swinging = inst.meleeAnim > 0;
+            if (distSq <= meleeRangeSq && inst.meleeCooldown <= 0 && !swinging) {
+                // Wind-up only: the hit lands at the top of the swing, below.
                 inst.meleeAnim = meleeAnimTicks;
                 inst.meleeCooldown = meleeCooldownTicks;
-            } else if (distSq > meleeRangeSq && distSq <= (rangedRange * rangedRange) && inst.rangedCooldown <= 0) {
+                inst.meleePending = true;
+            } else if (distSq > meleeRangeSq && distSq <= (rangedRange * rangedRange) && inst.rangedCooldown <= 0
+                    && !swinging && stand.hasLineOfSight(target)) {
                 rangedAttack(stand, target);
                 inst.rangedAnim = rangedAnimTicks;
                 inst.rangedCooldown = rangedCooldownTicks;
             }
         } else {
             inst.moving = false;
+        }
+
+        // The damage used to be dealt on the tick the swing started, before the arms had moved, so a
+        // player was hit by a pose that had not happened yet. It lands at the peak now, on whoever
+        // is in front of him at that moment.
+        if (inst.meleePending && isMeleeImpactTick(inst.meleeAnim, meleeAnimTicks)) {
+            inst.meleePending = false;
+            meleeAttack(stand);
         }
 
         snapToGround(stand);
@@ -383,8 +396,7 @@ public class Kinger implements Listener {
         inst.tickCount++;
 
         // Synchronize displays locked to stand location (throttled when idle)
-        boolean isIdle = !inst.moving && inst.meleeAnim == 0 && inst.rangedAnim == 0;
-        if (!isIdle || inst.tickCount % 3 == 0) {
+        if (DisplaySuit.shouldSync(inst.moving || inst.meleeAnim != 0 || inst.rangedAnim != 0, inst.tickCount)) {
             syncDisplays(inst);
         }
 
@@ -408,7 +420,7 @@ public class Kinger implements Listener {
         if (dist < 0.01) return;
         dir.normalize();
         double step = Math.min(moveSpeed, dist);
-        loc.add(dir.multiply(step));
+        if (!BossArena.walk(loc, dir.multiply(step), true)) return;
         loc.setPitch(0);
         stand.teleport(loc);
     }
@@ -419,22 +431,12 @@ public class Kinger implements Listener {
         stand.teleport(loc);
     }
 
+    /** Keeps his feet on the floor: falls off ledges, never hangs over a drop deeper than a few blocks. */
     private void snapToGround(ArmorStand stand) {
         Location loc = stand.getLocation();
-        World world = stand.getWorld();
-        int x = loc.getBlockX();
-        int z = loc.getBlockZ();
-        int y = loc.getBlockY();
-        for (int i = y; i > y - 8; i--) {
-            if (world.getBlockAt(x, i, z).getType().isSolid()) {
-                double groundY = i + 1.0;
-                if (Math.abs(groundY - loc.getY()) > 0.001) {
-                    loc.setY(groundY);
-                    stand.teleport(loc);
-                }
-                return;
-            }
-        }
+        double before = loc.getY();
+        BossArena.settle(loc);
+        if (Math.abs(loc.getY() - before) > 0.001) stand.teleport(loc);
     }
 
     private void hitEffect(ArmorStand stand) {
@@ -442,6 +444,31 @@ public class Kinger implements Listener {
         stand.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, loc, 8, 0.4, 0.6, 0.4, 0.1);
         stand.getWorld().playSound(loc, Sound.ENTITY_PLAYER_ATTACK_CRIT, 0.8f, 1.1f);
     }
+
+    /**
+     * Whether the swing has reached its peak this tick. The arms follow {@code sin(progress * PI)},
+     * which tops out halfway through the animation; {@code remaining} counts down from {@code total}.
+     */
+    static boolean isMeleeImpactTick(int remaining, int total) {
+        if (total <= 0) return true;
+        return remaining <= (total + 1) / 2;
+    }
+
+    /**
+     * Whether a player stands where the swing reaches: within the radius as a sphere (the old cube
+     * reached 40% further along its diagonals) and not behind him.
+     */
+    static boolean inMeleeArc(Vector facing, Vector toPlayer, double radius) {
+        if (toPlayer.lengthSquared() > radius * radius) return false;
+        Vector flat = toPlayer.clone().setY(0);
+        if (flat.lengthSquared() < 0.25) return true; // standing on top of him
+        Vector forward = facing.clone().setY(0);
+        if (forward.lengthSquared() < 1e-6) return true;
+        return forward.normalize().dot(flat.normalize()) >= MELEE_ARC_COS;
+    }
+
+    /** Cosine of the half-angle the swing covers: 0.0 is the whole front half. */
+    static final double MELEE_ARC_COS = 0.0;
 
     private void meleeAttack(ArmorStand stand) {
         World world = stand.getWorld();
@@ -451,9 +478,11 @@ public class Kinger implements Listener {
                 new Particle.DustOptions(Color.fromRGB(0xAA00FF), 1.6f));
         world.spawnParticle(Particle.LARGE_SMOKE, loc.clone().add(0, 0.5, 0), 20, 1.2, 0.8, 1.2, 0.02);
 
+        Vector facing = loc.getDirection();
         for (Entity e : world.getNearbyEntities(loc, meleeRadius, meleeRadius, meleeRadius)) {
             if (!(e instanceof Player p)) continue;
             if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) continue;
+            if (!inMeleeArc(facing, p.getLocation().toVector().subtract(loc.toVector()), meleeRadius)) continue;
             p.damage(meleeDamage, stand);
             Vector away = p.getLocation().toVector().subtract(loc.toVector());
             if (away.lengthSquared() < 0.01) away = new Vector(0, 0, -1);
@@ -470,6 +499,7 @@ public class Kinger implements Listener {
                 new Particle.DustOptions(Color.fromRGB(0xBB66FF), 1.2f));
         ShulkerBullet bullet = (ShulkerBullet) world.spawnEntity(hand, EntityType.SHULKER_BULLET);
         bullet.addScoreboardTag(BULLET_TAG);
+        bullet.setShooter(stand);
         bullet.setTarget(target);
         Vector vel = target.getLocation().toVector().subtract(hand.toVector()).normalize().multiply(1.5);
         bullet.setVelocity(vel);
@@ -727,13 +757,6 @@ public class Kinger implements Listener {
         }
 
         Entity damager = event.getDamager();
-        if (damager instanceof ShulkerBullet bullet && bullet.getScoreboardTags().contains(BULLET_TAG)) {
-            if (damaged instanceof Player p) {
-                event.setDamage(rangedDamage);
-                p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 60, 0, false, false));
-            }
-        }
-
         boolean damagerMsc = false;
         boolean damagedMsc = false;
         for (String tag : damager.getScoreboardTags()) {
@@ -755,6 +778,35 @@ public class Kinger implements Listener {
                 event.setCancelled(true);
             }
         }
+    }
+
+    /**
+     * Resolves Kinger's bullet itself. A vanilla shulker bullet that hits an entity also gives it ten
+     * seconds of Levitation, which no event before this one can strip, so every ranged hit used to
+     * float the player off the ground; the old damage override never touched that. The impact is
+     * cancelled here and the hit Kinger means — damage and a short Darkness — is applied instead.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onBulletHit(ProjectileHitEvent event) {
+        if (!(event.getEntity() instanceof ShulkerBullet bullet)) return;
+        if (!bullet.getScoreboardTags().contains(BULLET_TAG)) return;
+        Entity hit = event.getHitEntity();
+        if (hit == null) return; // a wall: the bullet just bursts, as usual
+
+        event.setCancelled(true);
+        Location at = bullet.getLocation();
+        bullet.remove();
+        at.getWorld().spawnParticle(Particle.DUST, at, 10, 0.2, 0.2, 0.2, 0,
+                new Particle.DustOptions(Color.fromRGB(0xBB66FF), 1.2f));
+
+        if (!(hit instanceof Player p)) return;
+        if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) return;
+        if (bullet.getShooter() instanceof ArmorStand stand && stand.isValid()) {
+            p.damage(rangedDamage, stand);
+        } else {
+            p.damage(rangedDamage);
+        }
+        p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 60, 0, false, false));
     }
 
     private void reduceHealth(ArmorStand stand, double damage) {
@@ -824,6 +876,8 @@ public class Kinger implements Listener {
         public int rangedCooldown;
         public int meleeAnim;
         public int rangedAnim;
+        /** A swing has started and its hit has not landed yet. */
+        public boolean meleePending;
         public boolean moving;
         public float animTicks;
         public int tickCount;

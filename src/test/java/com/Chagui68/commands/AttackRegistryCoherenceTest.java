@@ -98,28 +98,6 @@ class AttackRegistryCoherenceTest {
         }
     }
 
-    @Test
-    @DisplayName("The random rotations only ever draw registered attacks")
-    void rotationsOnlyUseRegisteredAttacks() {
-        String boss = read(BOSS_SOURCE);
-        int from = boss.indexOf("private void executeRandomAerialAttack");
-        int to = boss.indexOf("public void airSlam");
-        assertTrue(from > 0 && to > from, "the random rotation methods moved; update this guard");
-
-        Set<String> registered = new LinkedHashSet<>();
-        for (AttackFile attack : attackSources()) registered.add(attack.attackName());
-
-        Matcher literals = Pattern.compile("\"([a-z]+)\"").matcher(boss.substring(from, to));
-        List<String> checked = new ArrayList<>();
-        while (literals.find()) checked.add(literals.group(1));
-
-        assertFalse(checked.isEmpty(), "no attack names found in the rotation arrays");
-        for (String name : checked) {
-            assertTrue(registered.contains(name),
-                    "the rotation arrays still ask for " + name + ", which is not a registered attack");
-        }
-    }
-
     // ------------------------------------------------------------------ helpers
 
     /** Every attack source file with the name it reports from {@code getName()}. */

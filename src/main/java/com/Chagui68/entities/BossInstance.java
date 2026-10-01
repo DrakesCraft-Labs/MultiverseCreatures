@@ -45,6 +45,8 @@ public class BossInstance {
     public int flyingTimer = 0;
     public double groundY = 0;
     public final Set<String> aerialAttacksDone = new HashSet<>();
+    /** The last few attacks thrown, oldest first, kept out of the next pick so the rotation varies. */
+    public final java.util.Deque<String> recentAttacks = new java.util.ArrayDeque<>();
     public boolean shieldSealActive = false;
     public int shieldSealTimer = 0;
     public BukkitRunnable shieldSealTask;

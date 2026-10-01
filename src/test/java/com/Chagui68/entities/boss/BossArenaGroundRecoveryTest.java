@@ -68,6 +68,39 @@ class BossArenaGroundRecoveryTest {
     }
 
     @Test
+    @DisplayName("A boss hovering less than a block up is told where the floor really is")
+    void findFloorYIgnoresTheHoverFraction() {
+        // The Sentinel stuck at 64.5 over a floor at 64: the old scan answered 64.5, its own Y.
+        assertEquals(64.0, BossArena.findFloorY(64.5, 80, solidBelow(63)), 1e-9);
+        assertEquals(64.0, BossArena.findFloorY(64.05, 80, solidBelow(63)), 1e-9);
+        assertEquals(64.0, BossArena.findFloorY(65.7, 80, solidBelow(63)), 1e-9);
+        assertEquals(64.0, BossArena.findFloorY(64.0, 80, solidBelow(63)), 1e-9);
+    }
+
+    @Test
+    @DisplayName("A body sunk into a block is pushed back on top of it")
+    void findFloorYLiftsABodyOutOfTheBlockItIsIn() {
+        assertEquals(64.0, BossArena.findFloorY(63.4, 80, solidBelow(63)), 1e-9);
+    }
+
+    @Test
+    @DisplayName("A slab is stood on at its own height, not at the next full block")
+    void findFloorYUsesTheSurfaceHeight() {
+        BossArena.SurfaceProbe slabOnRock = y -> y == 63 ? 63.5 : (y < 63 ? y + 1.0 : Double.NaN);
+        assertEquals(63.5, BossArena.findFloorY(63.5, 80, slabOnRock), 1e-9);
+        assertEquals(63.5, BossArena.findFloorY(66.0, 80, slabOnRock), 1e-9);
+    }
+
+    @Test
+    @DisplayName("On the ground means within the tolerance of the floor findFloorY reports")
+    void restsOnUsesTheSameFloor() {
+        assertTrue(BossArena.restsOn(64.0, 64.0));
+        assertTrue(BossArena.restsOn(64.15, 64.0));
+        assertFalse(BossArena.restsOn(64.5, 64.0), "half a block up is airborne, and must be pulled down");
+        assertFalse(BossArena.restsOn(64.0, Double.NaN), "no floor is never ground");
+    }
+
+    @Test
     @DisplayName("findFloorY is NaN when the scan reaches no solid block")
     void testFindFloorReturnsNaNOverVoid() {
         // Solid floor far below, but the scan range does not reach it.
