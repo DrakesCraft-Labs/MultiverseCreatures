@@ -100,9 +100,16 @@ public final class MscLimb {
         return bend(Math.max(0f, swing));
     }
 
+    /**
+     * An arbitrary bend angle around X, bounded by [-MAX_BEND, MAX_BEND].
+     */
+    public static Quaternionf bendAngle(float angle) {
+        float clamped = Math.max(-MAX_BEND, Math.min(MAX_BEND, angle));
+        return new Quaternionf().rotateX(clamped);
+    }
+
     /** Both joints only ever add to the swing they are given, and never past {@link #MAX_BEND}. */
     private static Quaternionf bend(float swing) {
-        float angle = Math.max(-MAX_BEND, Math.min(MAX_BEND, swing * BEND_PER_SWING));
-        return new Quaternionf().rotateX(angle);
+        return bendAngle(swing * BEND_PER_SWING);
     }
 }

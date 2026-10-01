@@ -161,6 +161,43 @@ public final class NixModel {
         };
     }
 
+    /**
+     * The rotation of the piece below a limb's second joint during a cleave or knee bend in melee.
+     *
+     * <p>During windup (0 -> 0.4), elbows bend back as arms raise high; during chop (0.4 -> 0.7),
+     * arms snap straight with impact; during recovery (0.7 -> 1.0), arms relax back to neutral.
+     * Meanwhile, the knees flex into a slight squat to absorb the weight of the massive guillotine strike.
+     */
+    public static Quaternionf cleaveLowerRotation(NixBoss.NixPart part, float progress) {
+        if (!hangsFromSecondJoint(part)) return new Quaternionf();
+        float p = Math.max(0f, Math.min(1f, progress));
+        if (part.group == NixBoss.LimbGroup.ARM_RIGHT || part.group == NixBoss.LimbGroup.ARM_LEFT) {
+            float elbowAngle;
+            if (p < 0.4f) {
+                // Windup: elbows bend back deeply (up to ~40°) as arms raise overhead
+                elbowAngle = (float) (0.7f * Math.sin(p / 0.4f * Math.PI / 2));
+            } else if (p < 0.7f) {
+                // Strike: elbows snap fully straight for maximum reach on chop
+                float chopProgress = (p - 0.4f) / 0.3f;
+                elbowAngle = (float) (0.7f * (1.0 - Math.sin(chopProgress * Math.PI / 2)));
+            } else {
+                // Recovery: subtle natural elbow ease
+                elbowAngle = 0f;
+            }
+            return MscLimb.bendAngle(elbowAngle);
+        } else if (part.group == NixBoss.LimbGroup.LEG_RIGHT || part.group == NixBoss.LimbGroup.LEG_LEFT) {
+            // Knees bend slightly (-0.35 rad) during windup and chop to sell the heavy downward blow
+            float squat;
+            if (p < 0.7f) {
+                squat = (float) (-0.35f * Math.sin(p / 0.7f * Math.PI));
+            } else {
+                squat = 0f;
+            }
+            return MscLimb.bendAngle(squat);
+        }
+        return new Quaternionf();
+    }
+
     /** Where a part rests with no limb rotation, in model space. */
     public static Vector3f baseTranslation(NixBoss.NixPart part) {
         return new Vector3f(

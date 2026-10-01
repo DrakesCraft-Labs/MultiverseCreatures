@@ -137,6 +137,15 @@ class MscLimbTest {
         assertRotation(0f, MscLimb.elbow(-8f), "a back swing never bends an elbow");
     }
 
+    @ParameterizedTest(name = "An angle {0} rad is clamped to MAX_BEND")
+    @ValueSource(floats = {-10f, -2.5f, -1.2f, -0.5f, 0f, 0.5f, 1.2f, 2.5f, 10f})
+    @DisplayName("bendAngle creates an X rotation bounded by MAX_BEND")
+    void bendAngleIsBounded(float angle) {
+        Quaternionf rot = MscLimb.bendAngle(angle);
+        float expected = Math.max(-MscLimb.MAX_BEND, Math.min(MscLimb.MAX_BEND, angle));
+        assertRotation(expected, rot, "bendAngle must clamp and rotate about X");
+    }
+
     // --- helpers -----------------------------------------------------------------------------------
 
     /** The angle, in radians, of a rotation about X: positive turns a hanging limb forwards. */

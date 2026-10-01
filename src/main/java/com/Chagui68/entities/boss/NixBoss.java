@@ -660,14 +660,20 @@ public class NixBoss implements Listener {
     }
 
     /**
-     * The rotation of the segment below a limb's joint. Only a walking limb folds, and never during
-     * a cleave or a chain pull: the knee follows the step, not a pose the boss was put into.
+     * The rotation of the segment below a limb's joint. Folds during walking and during a cleave
+     * attack: elbows bend dynamically during the overhead windup and snap straight on the chop, while
+     * knees flex into a slight squat to absorb the blow.
      */
     private Quaternionf computeLowerQuat(NixPart part, NixInstance inst) {
-        if (!inst.moving) return new Quaternionf();
-        boolean posing = isArm(part.group) && (inst.cleaveAnim > 0 || inst.chainAnim > 0);
-        if (posing) return new Quaternionf();
-        return NixModel.lowerRotation(part, inst.animTicks);
+        if (inst == null) return new Quaternionf();
+        if (inst.cleaveAnim > 0) {
+            float prog = 1f - (float) inst.cleaveAnim / cleaveAnimTicks;
+            return NixModel.cleaveLowerRotation(part, prog);
+        }
+        if (inst.moving && (inst.chainAnim <= 0 || !isArm(part.group))) {
+            return NixModel.lowerRotation(part, inst.animTicks);
+        }
+        return new Quaternionf();
     }
 
     private static boolean isArm(LimbGroup group) {

@@ -1254,14 +1254,19 @@ public class JackStarBoss implements Listener {
     }
 
     /**
-     * The rotation of the segment below a limb's joint. Only a walking limb folds, and never during a
-     * slash: the elbow and knee follow the step, not a pose the boss was put into.
+     * The rotation of the segment below a limb's joint. Folds during walking and during a slash:
+     * elbows bend into the sword arc and knees flex into an athletic combat stance.
      */
     private Quaternionf computeLowerQuat(JackPart part, JackInstance inst) {
-        if (!inst.moving) return new Quaternionf();
-        boolean posing = isArm(part.group) && inst.slashAnimTicks > 0;
-        if (posing) return new Quaternionf();
-        return JackModel.lowerRotation(part, inst.animTicks);
+        if (inst == null) return new Quaternionf();
+        if (inst.slashAnimTicks > 0) {
+            float prog = 1f - (float) inst.slashAnimTicks / 18f;
+            return JackModel.slashLowerRotation(part, prog);
+        }
+        if (inst.moving) {
+            return JackModel.lowerRotation(part, inst.animTicks);
+        }
+        return new Quaternionf();
     }
 
     private static boolean isArm(LimbGroup group) {

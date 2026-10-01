@@ -215,6 +215,36 @@ class NixModelTest {
     }
 
     @Test
+    @DisplayName("During cleave, elbows fold during windup and straighten on chop while knees flex")
+    void cleaveFoldsElbowsAndKnees() {
+        for (float prog = 0f; prog <= 1f; prog += 0.05f) {
+            for (NixBoss.NixPart part : NixBoss.NixPart.values()) {
+                Quaternionf fold = NixModel.cleaveLowerRotation(part, prog);
+                if (!NixModel.hangsFromSecondJoint(part)) {
+                    assertEquals(new Quaternionf(), fold, part + " is above joint and must not fold");
+                    continue;
+                }
+                assertNotNull(fold);
+            }
+        }
+        // At windup peak (prog ~0.4), arms should have elbow bend
+        for (NixBoss.NixPart armPart : List.of(NixBoss.NixPart.ARM_R_5, NixBoss.NixPart.ARM_L_5)) {
+            Quaternionf elbowRot = NixModel.cleaveLowerRotation(armPart, 0.4f);
+            assertNotEquals(new Quaternionf(), elbowRot, "elbow should fold at peak windup");
+        }
+        // At chop impact (prog ~0.7), arms should be straight
+        for (NixBoss.NixPart armPart : List.of(NixBoss.NixPart.ARM_R_5, NixBoss.NixPart.ARM_L_5)) {
+            Quaternionf elbowRot = NixModel.cleaveLowerRotation(armPart, 0.7f);
+            assertEquals(new Quaternionf(), elbowRot, "elbow should snap straight on chop impact");
+        }
+        // At mid-cleave (prog 0.35), knees flex into squat
+        for (NixBoss.NixPart legPart : List.of(NixBoss.NixPart.LEG_R_5, NixBoss.NixPart.LEG_L_5)) {
+            Quaternionf kneeRot = NixModel.cleaveLowerRotation(legPart, 0.35f);
+            assertNotEquals(new Quaternionf(), kneeRot, "knees should flex during cleave swing");
+        }
+    }
+
+    @Test
     @DisplayName("The whole walk keeps the body over the stand's hitbox")
     void theWalkStaysOverTheHitbox() {
         float halfWidth = 0.25f * (float) NixBoss.MODEL_HITBOX_SCALE;

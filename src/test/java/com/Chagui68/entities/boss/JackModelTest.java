@@ -177,6 +177,31 @@ class JackModelTest {
     }
 
     @Test
+    @DisplayName("During slash, elbows bend in the sword arc and knees flex in stance")
+    void slashFoldsElbowsAndKnees() {
+        for (float prog = 0f; prog <= 1f; prog += 0.05f) {
+            for (JackStarBoss.JackPart part : JackStarBoss.JackPart.values()) {
+                Quaternionf fold = JackModel.slashLowerRotation(part, prog);
+                if (!JackModel.hangsFromSecondJoint(part)) {
+                    assertEquals(new Quaternionf(), fold, part + " is above joint and must not fold");
+                    continue;
+                }
+                assertNotNull(fold);
+            }
+        }
+        // At mid slash (prog = 0.5), elbows bend dynamically
+        for (JackStarBoss.JackPart armPart : List.of(JackStarBoss.JackPart.ARM_R_LOWER, JackStarBoss.JackPart.ARM_L_LOWER)) {
+            Quaternionf elbowRot = JackModel.slashLowerRotation(armPart, 0.5f);
+            assertNotEquals(new Quaternionf(), elbowRot, "elbows must fold during slash arc");
+        }
+        // At mid slash (prog = 0.5), knees flex dynamically
+        for (JackStarBoss.JackPart legPart : List.of(JackStarBoss.JackPart.LEG_R_LOWER, JackStarBoss.JackPart.LEG_L_LOWER)) {
+            Quaternionf kneeRot = JackModel.slashLowerRotation(legPart, 0.5f);
+            assertNotEquals(new Quaternionf(), kneeRot, "knees must flex during slash stance");
+        }
+    }
+
+    @Test
     @DisplayName("The whole walk keeps the body over the stand's hitbox")
     void theWalkStaysOverTheHitbox() {
         float halfWidth = 0.25f * (float) JackStarBoss.MODEL_HITBOX_SCALE;

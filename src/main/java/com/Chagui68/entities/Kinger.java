@@ -567,12 +567,19 @@ public class Kinger implements Listener {
     }
 
     /**
-     * The rotation of the segment below a limb's joint. Only a walking limb folds: the knee follows
-     * the step, and a limb holding a pose (a swing, a raised arm) keeps the pose it was given.
+     * The rotation of the segment below a limb's joint. Folds during walking and during a melee swing:
+     * the knees flex into the strike to support the violent attack impulse.
      */
     private Quaternionf computeLowerQuat(KingerPart part, KingerInstance inst) {
-        if (!inst.moving) return new Quaternionf();
-        return KingerModel.lowerRotation(part, inst.animTicks);
+        if (inst == null) return new Quaternionf();
+        if (inst.meleeAnim > 0) {
+            float prog = 1f - (float) inst.meleeAnim / meleeAnimTicks;
+            return KingerModel.meleeLowerRotation(part, prog);
+        }
+        if (inst.moving) {
+            return KingerModel.lowerRotation(part, inst.animTicks);
+        }
+        return new Quaternionf();
     }
 
     private Quaternionf computeLimbQuat(LimbGroup group, KingerInstance inst) {

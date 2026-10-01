@@ -156,6 +156,28 @@ public final class JackModel {
         };
     }
 
+    /**
+     * The rotation of the piece below a limb's second joint during a slash animation.
+     *
+     * <p>During the Zoro-style 3-slash sweep, the swinging arms fold their elbows tightly in the
+     * middle of the slash arc and extend as they follow through. Meanwhile, the legs sink into an
+     * athletic combat crouch/flexion.
+     */
+    public static Quaternionf slashLowerRotation(JackStarBoss.JackPart part, float progress) {
+        if (!hangsFromSecondJoint(part)) return new Quaternionf();
+        float p = Math.max(0f, Math.min(1f, progress));
+        if (part.group == JackStarBoss.LimbGroup.ARM_RIGHT || part.group == JackStarBoss.LimbGroup.ARM_LEFT) {
+            // Elbows bend inward dynamically during the sword sweep
+            float elbow = (float) (0.6f * Math.sin(p * Math.PI));
+            return MscLimb.bendAngle(elbow);
+        } else if (part.group == JackStarBoss.LimbGroup.LEG_RIGHT || part.group == JackStarBoss.LimbGroup.LEG_LEFT) {
+            // Legs crouch / flex knees into combat stance during slash
+            float knee = (float) (-0.25f * Math.sin(p * Math.PI));
+            return MscLimb.bendAngle(knee);
+        }
+        return new Quaternionf();
+    }
+
     /** Where a part rests with no limb rotation, in model space and at scale 1. */
     public static Vector3f baseTranslation(JackStarBoss.JackPart part) {
         return new Vector3f(

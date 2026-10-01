@@ -290,6 +290,26 @@ class KingerModelTest {
     }
 
     @Test
+    @DisplayName("During melee lunge, knees flex to support the attack impulse")
+    void meleeFoldsKnees() {
+        for (float prog = 0f; prog <= 1f; prog += 0.05f) {
+            for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
+                Quaternionf fold = KingerModel.meleeLowerRotation(part, prog);
+                if (!KingerModel.hangsFromSecondJoint(part)) {
+                    assertEquals(new Quaternionf(), fold, part + " is not below knee and must stay rigid");
+                    continue;
+                }
+                assertNotNull(fold);
+            }
+        }
+        // At mid melee (prog = 0.5), knees flex
+        for (Kinger.KingerPart shin : List.of(Kinger.KingerPart.LEG_RIGHT_LOWER, Kinger.KingerPart.LEG_LEFT_LOWER)) {
+            Quaternionf kneeRot = KingerModel.meleeLowerRotation(shin, 0.5f);
+            assertNotEquals(new Quaternionf(), kneeRot, "knees must flex during melee strike");
+        }
+    }
+
+    @Test
     @DisplayName("The whole walk keeps the body over the stand's hitbox")
     void theWalkStaysOverTheHitbox() {
         float halfWidth = (float) (0.25 * Kinger.MODEL_HITBOX_SCALE);

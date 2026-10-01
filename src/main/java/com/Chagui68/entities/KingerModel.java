@@ -147,6 +147,23 @@ public final class KingerModel {
         };
     }
 
+    /**
+     * The rotation of the piece of Kinger below its second joint during a melee swing.
+     *
+     * <p>Kinger's arms are single pieces (no elbow joint), but his legs have knee joints! During a
+     * melee swing (a forward body lunge / attack), Kinger's knees bend into a slight crouch/lunge
+     * to support the violent attack impulse.
+     */
+    public static Quaternionf meleeLowerRotation(Kinger.KingerPart part, float progress) {
+        if (!hangsFromSecondJoint(part)) return new Quaternionf();
+        float p = Math.max(0f, Math.min(1f, progress));
+        if (part.group() == Kinger.LimbGroup.LEG_RIGHT || part.group() == Kinger.LimbGroup.LEG_LEFT) {
+            float knee = (float) (-0.3f * Math.sin(p * Math.PI));
+            return MscLimb.bendAngle(knee);
+        }
+        return new Quaternionf();
+    }
+
     /** The joint a limb group rotates around. */
     public static Vector3f pivot(Kinger.LimbGroup group) {
         return switch (group) {
