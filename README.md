@@ -227,25 +227,8 @@ Maven build — they live only on GitHub for reference and are never bundled int
 
 ---
 
-## 📜 License
+## 📄 License & Sovereign Authorship
 
-[GPL-3.0](./LICENSE) — MultiverseCreatures is open source.
+Copyright © 2026 [**Chagui68**](https://github.com/Chagui68) · [**DrakesCraft Labs**](https://github.com/DrakesCraft-Labs).
 
----
-
-<div align="center">
-
-**Made with ☕ and a love of the multiverse.**
-
-If you enjoy the plugin, leave a ⭐ on GitHub and a ❤ on [Modrinth](https://modrinth.com/plugin/multiversecreatures)!
-
-</div>
-
-## ⚖️ License & Credits / Licencia y Créditos
-
-- **Author & Maintainer**: [Chagui68](https://github.com/Chagui68), for the DrakesCraft network.
-- **License**: GPL-3.0 only — see [`LICENSE`](./LICENSE).
-- **Source Code**: [GitHub Repository](https://github.com/Chagui68/MultiverseCreatures)
-- **Support & Issues**: [GitHub Issues](https://github.com/Chagui68/MultiverseCreatures/issues) | [Discord](https://discord.gg/rv3vtXZTk7)
-
-*All original assets and concepts referenced by this plugin belong to their respective creators.*
+This project is an **original sovereign creation** engineered by **Chagui68** for the DrakesCraft network. All intellectual authorship belongs to Chagui68. Commercial resale, repackaging in paid setups, or removing creator attribution is strictly prohibited.
