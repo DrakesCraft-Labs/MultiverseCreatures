@@ -50,12 +50,22 @@ import com.Chagui68.items.weapons.melee.NullshearEdge;
 import com.Chagui68.items.weapons.melee.SoulreapScythe;
 import com.Chagui68.items.weapons.melee.Venomfang;
 import com.Chagui68.items.weapons.ranged.AetherPullshot;
+import com.Chagui68.items.weapons.ranged.ArchitectDeployer;
+import com.Chagui68.items.weapons.melee.ExecutionerGuillotine;
+import com.Chagui68.items.components.ArchitectKernel;
+import com.Chagui68.items.components.ExecutionerEdge;
+import com.Chagui68.items.components.VampireBlood;
+import com.Chagui68.items.potions.VampirePotions;
+import io.papermc.paper.potion.PotionMix;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.PotionType;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.BlastingRecipe;
 import org.bukkit.inventory.FurnaceRecipe;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapedRecipe;
 
@@ -89,6 +99,18 @@ public class RecipeManager {
         registerMultiversalCore();
         registerSentinelGrimoire();
         registerExecutionerWarrant();
+        registerExecutionerGuillotine();
+        registerArchitectDeployer();
+        registerBearerElixir();
+    }
+
+    /**
+     * A recipe slot that only takes this exact custom item. Built from a list on purpose:
+     * the single-item constructor is marked for removal in the 26.x API, the list one
+     * exists in 1.21.11, 26.1 and 26.2 alike.
+     */
+    static RecipeChoice exact(ItemStack item) {
+        return new RecipeChoice.ExactChoice(java.util.List.of(item));
     }
 
     private static NamespacedKey key(String name) {
@@ -115,7 +137,7 @@ public class RecipeManager {
     private static void registerReinforcedBoneBlock() {
         ShapedRecipe recipe = new ShapedRecipe(key("reinforced_bone_block"), ReinforcedBoneBlock.REINFORCED_BONE_BLOCK.clone());
         recipe.shape("RRR", "RRR", "RRR");
-        recipe.setIngredient('R', new RecipeChoice.ExactChoice(ReinforcedBone.REINFORCED_BONE.clone()));
+        recipe.setIngredient('R', exact(ReinforcedBone.REINFORCED_BONE.clone()));
         Bukkit.addRecipe(recipe);
     }
 
@@ -123,7 +145,7 @@ public class RecipeManager {
         ShapedRecipe recipe = new ShapedRecipe(key("ender_core"), EnderCore.ENDER_CORE.clone());
         recipe.shape("DFD", "FNF", "DFD");
         recipe.setIngredient('D', Material.DIAMOND);
-        recipe.setIngredient('F', new RecipeChoice.ExactChoice(EnderFragment.ENDER_FRAGMENT.clone()));
+        recipe.setIngredient('F', exact(EnderFragment.ENDER_FRAGMENT.clone()));
         recipe.setIngredient('N', Material.NETHER_STAR);
         Bukkit.addRecipe(recipe);
     }
@@ -133,26 +155,26 @@ public class RecipeManager {
         ShapedRecipe powder = new ShapedRecipe(key("chaos_powder"), ChaosPowder.CHAOS_POWDER.clone());
         powder.shape(".G.", "GOG", ".G.");
         powder.setIngredient('G', Material.GLOWSTONE_DUST);
-        powder.setIngredient('O', new RecipeChoice.ExactChoice(ChaosOrb.CHAOS_ORB.clone()));
+        powder.setIngredient('O', exact(ChaosOrb.CHAOS_ORB.clone()));
         Bukkit.addRecipe(powder);
 
         ShapedRecipe fragment = new ShapedRecipe(key("chaos_fragment"), ChaosFragment.CHAOS_FRAGMENT.clone());
         fragment.shape("PPP", "POP", "PPP");
-        fragment.setIngredient('P', new RecipeChoice.ExactChoice(ChaosPowder.CHAOS_POWDER.clone()));
-        fragment.setIngredient('O', new RecipeChoice.ExactChoice(ChaosOrb.CHAOS_ORB.clone()));
+        fragment.setIngredient('P', exact(ChaosPowder.CHAOS_POWDER.clone()));
+        fragment.setIngredient('O', exact(ChaosOrb.CHAOS_ORB.clone()));
         Bukkit.addRecipe(fragment);
 
         ShapedRecipe core = new ShapedRecipe(key("chaos_core"), ChaosCore.CHAOS_CORE.clone());
         core.shape("FOF", "OSO", "FOF");
-        core.setIngredient('F', new RecipeChoice.ExactChoice(ChaosFragment.CHAOS_FRAGMENT.clone()));
-        core.setIngredient('O', new RecipeChoice.ExactChoice(ChaosOrb.CHAOS_ORB.clone()));
+        core.setIngredient('F', exact(ChaosFragment.CHAOS_FRAGMENT.clone()));
+        core.setIngredient('O', exact(ChaosOrb.CHAOS_ORB.clone()));
         core.setIngredient('S', Material.NETHER_STAR);
         Bukkit.addRecipe(core);
 
         ShapedRecipe condensed = new ShapedRecipe(key("condensed_chaos_orb"), CondensedChaosOrb.CONDENSED_CHAOS_ORB.clone());
         condensed.shape("COC", "OSO", "COC");
-        condensed.setIngredient('C', new RecipeChoice.ExactChoice(ChaosCore.CHAOS_CORE.clone()));
-        condensed.setIngredient('O', new RecipeChoice.ExactChoice(ChaosOrb.CHAOS_ORB.clone()));
+        condensed.setIngredient('C', exact(ChaosCore.CHAOS_CORE.clone()));
+        condensed.setIngredient('O', exact(ChaosOrb.CHAOS_ORB.clone()));
         condensed.setIngredient('S', Material.NETHER_STAR);
         Bukkit.addRecipe(condensed);
     }
@@ -162,7 +184,7 @@ public class RecipeManager {
         recipe.shape("IMI", "MTM", "IMI");
         recipe.setIngredient('I', Material.IRON_BLOCK);
         recipe.setIngredient('T', Material.TNT);
-        recipe.setIngredient('M', new RecipeChoice.ExactChoice(MilitaryComponent.MILITARY_COMPONENT.clone()));
+        recipe.setIngredient('M', exact(MilitaryComponent.MILITARY_COMPONENT.clone()));
         Bukkit.addRecipe(recipe);
     }
 
@@ -171,7 +193,7 @@ public class RecipeManager {
         recipe.shape("ASA", "SHS", "ASA");
         recipe.setIngredient('A', Material.APPLE);
         recipe.setIngredient('S', Material.SLIME_BALL);
-        recipe.setIngredient('H', new RecipeChoice.ExactChoice(HeadSlimeHeart.HEAD_SLIME_HEART.clone()));
+        recipe.setIngredient('H', exact(HeadSlimeHeart.HEAD_SLIME_HEART.clone()));
         Bukkit.addRecipe(recipe);
     }
 
@@ -180,8 +202,8 @@ public class RecipeManager {
         ShapedRecipe recipe = new ShapedRecipe(key("venomfang"), Venomfang.VENOMFANG.clone());
         recipe.shape("GVG", "VMV", "VSV");
         recipe.setIngredient('G', Material.GOLD_BLOCK);
-        recipe.setIngredient('V', new RecipeChoice.ExactChoice(VenomGland.VENOM_GLAND.clone()));
-        recipe.setIngredient('M', new RecipeChoice.ExactChoice(SwordMold.SWORD_MOLD.clone()));
+        recipe.setIngredient('V', exact(VenomGland.VENOM_GLAND.clone()));
+        recipe.setIngredient('M', exact(SwordMold.SWORD_MOLD.clone()));
         recipe.setIngredient('S', Material.STICK);
         Bukkit.addRecipe(recipe);
     }
@@ -192,7 +214,7 @@ public class RecipeManager {
         recipe.shape("IBI", "BHB", "IBI");
         recipe.setIngredient('I', Material.IRON_BLOCK);
         recipe.setIngredient('B', Material.BLUE_ICE);
-        recipe.setIngredient('H', new RecipeChoice.ExactChoice(FrostHeart.FROST_HEART.clone()));
+        recipe.setIngredient('H', exact(FrostHeart.FROST_HEART.clone()));
         Bukkit.addRecipe(recipe);
     }
 
@@ -200,7 +222,7 @@ public class RecipeManager {
     private static void registerSkyfireTalisman() {
         ShapedRecipe recipe = new ShapedRecipe(key("skyfire_talisman"), SkyfireTalisman.SKYFIRE_TALISMAN.clone());
         recipe.shape("SGS", "GQG", "SGS");
-        recipe.setIngredient('S', new RecipeChoice.ExactChoice(StormCrystal.STORM_CRYSTAL.clone()));
+        recipe.setIngredient('S', exact(StormCrystal.STORM_CRYSTAL.clone()));
         recipe.setIngredient('G', Material.GOLD_BLOCK);
         recipe.setIngredient('Q', Material.QUARTZ);
         Bukkit.addRecipe(recipe);
@@ -210,7 +232,7 @@ public class RecipeManager {
     private static void registerMarrowChain() {
         ShapedRecipe marrowRecipe = new ShapedRecipe(key("bone_marrow"), BoneMarrow.BONE_MARROW.clone());
         marrowRecipe.shape("BRB", "BWB", "BRB");
-        marrowRecipe.setIngredient('B', new RecipeChoice.ExactChoice(ReinforcedBone.REINFORCED_BONE.clone()));
+        marrowRecipe.setIngredient('B', exact(ReinforcedBone.REINFORCED_BONE.clone()));
         marrowRecipe.setIngredient('R', Material.REDSTONE_BLOCK);
         marrowRecipe.setIngredient('W', Material.NETHER_WART);
         Bukkit.addRecipe(marrowRecipe);
@@ -218,12 +240,12 @@ public class RecipeManager {
         ShapedRecipe plateRecipe = new ShapedRecipe(key("ossified_plate"), OssifiedPlate.OSSIFIED_PLATE.clone());
         plateRecipe.shape("CMC", "MDM", "CMC");
         plateRecipe.setIngredient('C', Material.CALCITE);
-        plateRecipe.setIngredient('M', new RecipeChoice.ExactChoice(BoneMarrow.BONE_MARROW.clone()));
+        plateRecipe.setIngredient('M', exact(BoneMarrow.BONE_MARROW.clone()));
         plateRecipe.setIngredient('D', Material.DIAMOND);
         Bukkit.addRecipe(plateRecipe);
 
         BlastingRecipe moltenMarrow = new BlastingRecipe(key("molten_marrow_blast"), MoltenMarrow.MOLTEN_MARROW.clone(),
-                new RecipeChoice.ExactChoice(OssifiedPlate.OSSIFIED_PLATE.clone()), 0.5f, 100);
+                exact(OssifiedPlate.OSSIFIED_PLATE.clone()), 0.5f, 100);
         Bukkit.addRecipe(moltenMarrow);
     }
 
@@ -232,8 +254,8 @@ public class RecipeManager {
         ShapedRecipe recipe = new ShapedRecipe(key("marrow_aegis"), MarrowAegis.MARROW_AEGIS.clone());
         recipe.shape("DPD", "PMP", "DPD");
         recipe.setIngredient('D', Material.DIAMOND_BLOCK);
-        recipe.setIngredient('P', new RecipeChoice.ExactChoice(OssifiedPlate.OSSIFIED_PLATE.clone()));
-        recipe.setIngredient('M', new RecipeChoice.ExactChoice(MoltenMarrow.MOLTEN_MARROW.clone()));
+        recipe.setIngredient('P', exact(OssifiedPlate.OSSIFIED_PLATE.clone()));
+        recipe.setIngredient('M', exact(MoltenMarrow.MOLTEN_MARROW.clone()));
         Bukkit.addRecipe(recipe);
     }
 
@@ -241,7 +263,7 @@ public class RecipeManager {
     private static void registerEightHandledWheel() {
         ShapedRecipe coreRecipe = new ShapedRecipe(key("wheel_core"), WheelCore.WHEEL_CORE.clone());
         coreRecipe.shape("WDW", "DED", "WDW");
-        coreRecipe.setIngredient('W', new RecipeChoice.ExactChoice(WheelEssence.WHEEL_ESSENCE.clone()));
+        coreRecipe.setIngredient('W', exact(WheelEssence.WHEEL_ESSENCE.clone()));
         coreRecipe.setIngredient('D', Material.DIAMOND_BLOCK);
         coreRecipe.setIngredient('E', Material.NETHER_STAR);
         Bukkit.addRecipe(coreRecipe);
@@ -268,14 +290,14 @@ public class RecipeManager {
 
         ShapedRecipe refinedMix = new ShapedRecipe(key("refined_wheel_core"), RefinedWheelCore.REFINED_WHEEL_CORE.clone());
         refinedMix.shape("AB");
-        refinedMix.setIngredient('A', new RecipeChoice.ExactChoice(MoltenWheelCore.MOLTEN_WHEEL_CORE.clone()));
-        refinedMix.setIngredient('B', new RecipeChoice.ExactChoice(MoltenNetherite.MOLTEN_NETHERITE.clone()));
+        refinedMix.setIngredient('A', exact(MoltenWheelCore.MOLTEN_WHEEL_CORE.clone()));
+        refinedMix.setIngredient('B', exact(MoltenNetherite.MOLTEN_NETHERITE.clone()));
         Bukkit.addRecipe(refinedMix);
 
         ShapedRecipe recipe = new ShapedRecipe(key("eight_handled_wheel"), EightHandledWheel.EIGHT_HANDLED_WHEEL.clone());
         recipe.shape(".N.", "NWN", ".N.");
         recipe.setIngredient('N', Material.NETHERITE_BLOCK);
-        recipe.setIngredient('W', new RecipeChoice.ExactChoice(RefinedWheelCore.REFINED_WHEEL_CORE.clone()));
+        recipe.setIngredient('W', exact(RefinedWheelCore.REFINED_WHEEL_CORE.clone()));
         Bukkit.addRecipe(recipe);
     }
 
@@ -283,14 +305,14 @@ public class RecipeManager {
     private static void registerSoulreapScythe() {
         ShapedRecipe coreRecipe = new ShapedRecipe(key("reaper_core"), ReaperCore.REAPER_CORE.clone());
         coreRecipe.shape("RNR", "NSN", "RNR");
-        coreRecipe.setIngredient('R', new RecipeChoice.ExactChoice(ReaperEssence.REAPER_ESSENCE.clone()));
+        coreRecipe.setIngredient('R', exact(ReaperEssence.REAPER_ESSENCE.clone()));
         coreRecipe.setIngredient('N', Material.SOUL_SAND);
         coreRecipe.setIngredient('S', Material.NETHER_STAR);
         Bukkit.addRecipe(coreRecipe);
 
         ShapedRecipe recipe = new ShapedRecipe(key("soulreap_scythe"), SoulreapScythe.SOULREAP_SCYTHE.clone());
         recipe.shape(" R ", "CR ", "NS ");
-        recipe.setIngredient('R', new RecipeChoice.ExactChoice(ReaperCore.REAPER_CORE.clone()));
+        recipe.setIngredient('R', exact(ReaperCore.REAPER_CORE.clone()));
         recipe.setIngredient('C', Material.SOUL_SAND);
         recipe.setIngredient('N', Material.NETHERITE_INGOT);
         recipe.setIngredient('S', Material.STICK);
@@ -301,7 +323,7 @@ public class RecipeManager {
     private static void registerChaosForge() {
         ShapedRecipe recipe = new ShapedRecipe(key("chaos_forge"), ChaosForge.CHAOS_FORGE.clone());
         recipe.shape("CCC", "ONO", "ONO");
-        recipe.setIngredient('C', new RecipeChoice.ExactChoice(ChaosOrb.CHAOS_ORB.clone()));
+        recipe.setIngredient('C', exact(ChaosOrb.CHAOS_ORB.clone()));
         recipe.setIngredient('O', Material.OBSIDIAN);
         recipe.setIngredient('N', Material.NETHERITE_INGOT);
         Bukkit.addRecipe(recipe);
@@ -313,7 +335,7 @@ public class RecipeManager {
         recipe.shape("DFD", "EFE", "DSD");
         recipe.setIngredient('D', Material.DIAMOND_BLOCK);
         recipe.setIngredient('F', Material.END_CRYSTAL);
-        recipe.setIngredient('E', new RecipeChoice.ExactChoice(EnderFragment.ENDER_FRAGMENT.clone()));
+        recipe.setIngredient('E', exact(EnderFragment.ENDER_FRAGMENT.clone()));
         recipe.setIngredient('S', Material.STICK);
         Bukkit.addRecipe(recipe);
     }
@@ -322,10 +344,10 @@ public class RecipeManager {
     private static void registerNullshearEdge() {
         ShapedRecipe recipe = new ShapedRecipe(key("nullshear_edge"), NullshearEdge.NULLSHEAR_EDGE.clone());
         recipe.shape("VVV", "VEV", "NMN");
-        recipe.setIngredient('V', new RecipeChoice.ExactChoice(VoidEssence.VOID_ESSENCE.clone()));
-        recipe.setIngredient('E', new RecipeChoice.ExactChoice(EnderCore.ENDER_CORE.clone()));
+        recipe.setIngredient('V', exact(VoidEssence.VOID_ESSENCE.clone()));
+        recipe.setIngredient('E', exact(EnderCore.ENDER_CORE.clone()));
         recipe.setIngredient('N', Material.NETHERITE_INGOT);
-        recipe.setIngredient('M', new RecipeChoice.ExactChoice(SwordMold.SWORD_MOLD.clone()));
+        recipe.setIngredient('M', exact(SwordMold.SWORD_MOLD.clone()));
         Bukkit.addRecipe(recipe);
     }
 
@@ -333,7 +355,7 @@ public class RecipeManager {
     private static void registerVeilwalkerMantle() {
         ShapedRecipe recipe = new ShapedRecipe(key("veilwalker_mantle"), VeilwalkerMantle.VEILWALKER_MANTLE.clone());
         recipe.shape("SGS", "GNG", "SGS");
-        recipe.setIngredient('S', new RecipeChoice.ExactChoice(ShadowCloak.SHADOW_CLOAK.clone()));
+        recipe.setIngredient('S', exact(ShadowCloak.SHADOW_CLOAK.clone()));
         recipe.setIngredient('G', Material.GOLD_BLOCK);
         recipe.setIngredient('N', Material.NETHER_STAR);
         Bukkit.addRecipe(recipe);
@@ -343,7 +365,7 @@ public class RecipeManager {
     private static void registerCinderGreatsword() {
         ShapedRecipe recipe = new ShapedRecipe(key("cinder_greatsword"), CinderGreatsword.CINDER_GREATSWORD.clone());
         recipe.shape("MMM", "MCM", "N N");
-        recipe.setIngredient('M', new RecipeChoice.ExactChoice(MagmaCore.MAGMA_CORE.clone()));
+        recipe.setIngredient('M', exact(MagmaCore.MAGMA_CORE.clone()));
         recipe.setIngredient('C', Material.COAL_BLOCK);
         recipe.setIngredient('N', Material.NETHERITE_INGOT);
         Bukkit.addRecipe(recipe);
@@ -361,35 +383,35 @@ public class RecipeManager {
     private static void registerObsidianBastion() {
         ShapedRecipe refinedRecipe = new ShapedRecipe(key("refined_netherite"), RefinedNetherite.REFINED_NETHERITE.clone());
         refinedRecipe.shape("SNS", "NGN", "SNS");
-        refinedRecipe.setIngredient('S', new RecipeChoice.ExactChoice(StarCore.STAR_CORE.clone()));
+        refinedRecipe.setIngredient('S', exact(StarCore.STAR_CORE.clone()));
         refinedRecipe.setIngredient('N', Material.NETHERITE_SCRAP);
-        refinedRecipe.setIngredient('G', new RecipeChoice.ExactChoice(CompressedGoldBlock.COMPRESSED_GOLD_BLOCK.clone()));
+        refinedRecipe.setIngredient('G', exact(CompressedGoldBlock.COMPRESSED_GOLD_BLOCK.clone()));
         Bukkit.addRecipe(refinedRecipe);
 
-        RecipeChoice refinedChoice = new RecipeChoice.ExactChoice(RefinedNetherite.REFINED_NETHERITE.clone());
+        RecipeChoice refinedChoice = exact(RefinedNetherite.REFINED_NETHERITE.clone());
 
         ShapedRecipe helm = new ShapedRecipe(key("obsidian_bastion_helmet"), ObsidianBastion.HELMET.clone());
         helm.shape("ONO", "O O");
-        helm.setIngredient('O', new RecipeChoice.ExactChoice(ObsidianShard.OBSIDIAN_SHARD.clone()));
+        helm.setIngredient('O', exact(ObsidianShard.OBSIDIAN_SHARD.clone()));
         helm.setIngredient('N', refinedChoice);
         Bukkit.addRecipe(helm);
 
         ShapedRecipe chest = new ShapedRecipe(key("obsidian_bastion_chestplate"), ObsidianBastion.CHESTPLATE.clone());
         chest.shape("ONO", "OBO", "OOO");
-        chest.setIngredient('O', new RecipeChoice.ExactChoice(ObsidianShard.OBSIDIAN_SHARD.clone()));
+        chest.setIngredient('O', exact(ObsidianShard.OBSIDIAN_SHARD.clone()));
         chest.setIngredient('N', refinedChoice);
         chest.setIngredient('B', Material.DIAMOND_BLOCK);
         Bukkit.addRecipe(chest);
 
         ShapedRecipe legs = new ShapedRecipe(key("obsidian_bastion_leggings"), ObsidianBastion.LEGGINGS.clone());
         legs.shape("ONO", "O O", "O O");
-        legs.setIngredient('O', new RecipeChoice.ExactChoice(ObsidianShard.OBSIDIAN_SHARD.clone()));
+        legs.setIngredient('O', exact(ObsidianShard.OBSIDIAN_SHARD.clone()));
         legs.setIngredient('N', refinedChoice);
         Bukkit.addRecipe(legs);
 
         ShapedRecipe boots = new ShapedRecipe(key("obsidian_bastion_boots"), ObsidianBastion.BOOTS.clone());
         boots.shape("O O", "ONO");
-        boots.setIngredient('O', new RecipeChoice.ExactChoice(ObsidianShard.OBSIDIAN_SHARD.clone()));
+        boots.setIngredient('O', exact(ObsidianShard.OBSIDIAN_SHARD.clone()));
         boots.setIngredient('N', refinedChoice);
         Bukkit.addRecipe(boots);
     }
@@ -398,9 +420,9 @@ public class RecipeManager {
     private static void registerMultiversalCore() {
         ShapedRecipe recipe = new ShapedRecipe(key("multiversal_core"), MultiversalCore.MULTIVERSAL_CORE.clone());
         recipe.shape("NSN", "SRS", "NSN");
-        recipe.setIngredient('N', new RecipeChoice.ExactChoice(RefinedNetherite.REFINED_NETHERITE.clone()));
-        recipe.setIngredient('S', new RecipeChoice.ExactChoice(StarCore.STAR_CORE.clone()));
-        recipe.setIngredient('R', new RecipeChoice.ExactChoice(SentinelCore.SENTINEL_CORE.clone()));
+        recipe.setIngredient('N', exact(RefinedNetherite.REFINED_NETHERITE.clone()));
+        recipe.setIngredient('S', exact(StarCore.STAR_CORE.clone()));
+        recipe.setIngredient('R', exact(SentinelCore.SENTINEL_CORE.clone()));
         Bukkit.addRecipe(recipe);
     }
 
@@ -409,8 +431,8 @@ public class RecipeManager {
         ShapedRecipe recipe = new ShapedRecipe(key("sentinel_grimoire"), SentinelGrimoire.GRIMOIRE.clone());
         recipe.shape(".B.", "MSM", ".B.");
         recipe.setIngredient('B', Material.BOOK);
-        recipe.setIngredient('M', new RecipeChoice.ExactChoice(MultiversalCore.MULTIVERSAL_CORE.clone()));
-        recipe.setIngredient('S', new RecipeChoice.ExactChoice(SentinelCore.SENTINEL_CORE.clone()));
+        recipe.setIngredient('M', exact(MultiversalCore.MULTIVERSAL_CORE.clone()));
+        recipe.setIngredient('S', exact(SentinelCore.SENTINEL_CORE.clone()));
         Bukkit.addRecipe(recipe);
     }
 
@@ -423,5 +445,58 @@ public class RecipeManager {
         recipe.setIngredient('W', Material.WITHER_SKELETON_SKULL);
         recipe.setIngredient('I', Material.IRON_INGOT);
         Bukkit.addRecipe(recipe);
+    }
+
+    /**
+     * The Executioner's Guillotine: two Executioner's Edges for the blade, the chain NIX drags his
+     * victims with, a netherite axe for the haft and an Executioner's Warrant to bind it.
+     */
+    private static void registerExecutionerGuillotine() {
+        ShapedRecipe recipe = new ShapedRecipe(key("executioner_guillotine"),
+                ExecutionerGuillotine.EXECUTIONER_GUILLOTINE.clone());
+        recipe.shape("ECE", " A ", " W ");
+        recipe.setIngredient('E', exact(ExecutionerEdge.EXECUTIONER_EDGE.clone()));
+        recipe.setIngredient('C', Material.IRON_CHAIN);
+        recipe.setIngredient('A', Material.NETHERITE_AXE);
+        recipe.setIngredient('W', exact(ExecutionerWarrant.EXECUTIONER_WARRANT.clone()));
+        Bukkit.addRecipe(recipe);
+    }
+
+    /**
+     * The Architect's Deployer: Jack Star's Kernel at the heart of a bow, netherite on its limbs
+     * and an echo shard as the sight.
+     */
+    private static void registerArchitectDeployer() {
+        ShapedRecipe recipe = new ShapedRecipe(key("architect_deployer"), ArchitectDeployer.ARCHITECT_DEPLOYER.clone());
+        recipe.shape(" E ", "NKN", " B ");
+        recipe.setIngredient('E', Material.ECHO_SHARD);
+        recipe.setIngredient('N', Material.NETHERITE_INGOT);
+        recipe.setIngredient('K', exact(ArchitectKernel.ARCHITECT_KERNEL.clone()));
+        recipe.setIngredient('B', Material.BOW);
+        Bukkit.addRecipe(recipe);
+    }
+
+    /**
+     * The two brews of DIO's blood, in the brewing stand:
+     * Awkward Potion + Vampire Blood = Unstable Blood, then Unstable Blood + Wither Rose =
+     * Bearer's Elixir.
+     */
+    private static void registerBearerElixir() {
+        NamespacedKey unstable = key("unstable_blood_brew");
+        NamespacedKey elixir = key("bearer_elixir_brew");
+        var brewer = Bukkit.getPotionBrewer();
+        brewer.removePotionMix(unstable);
+        brewer.removePotionMix(elixir);
+        brewer.addPotionMix(new PotionMix(unstable, VampirePotions.UNSTABLE_BLOOD.clone(),
+                PotionMix.createPredicateChoice(RecipeManager::isAwkwardPotion),
+                exact(VampireBlood.VAMPIRE_BLOOD.clone())));
+        brewer.addPotionMix(new PotionMix(elixir, VampirePotions.BEARER_ELIXIR.clone(),
+                PotionMix.createPredicateChoice(VampirePotions::isUnstableBlood),
+                new RecipeChoice.MaterialChoice(Material.WITHER_ROSE)));
+    }
+
+    private static boolean isAwkwardPotion(ItemStack item) {
+        return item != null && item.getType() == Material.POTION && item.getItemMeta() instanceof PotionMeta meta
+                && meta.getBasePotionType() == PotionType.AWKWARD;
     }
 }

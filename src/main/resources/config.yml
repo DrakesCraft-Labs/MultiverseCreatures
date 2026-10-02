@@ -4,7 +4,7 @@
 # Version of this file. A server that updates the plugin keeps its own config.yml and the plugin
 # adds whatever keys are missing on start (values you edited are never touched), stamping the new
 # version here. See MscConfigMigration.CONFIG_VERSION — keep the two in step.
-config-version: 2
+config-version: 3
 #
 # All paths match the code:
 #   general.*                          -> MultiverseCreatures, MobHandler, MscWorldPolicy
@@ -13,6 +13,8 @@ config-version: 2
 #   entities.<mob>.*                   -> each entity class + MobHandler
 #   items.<item>.*                     -> item handlers / GrimoireHandler
 #   commands.*                         -> MSCCommand
+#   stands.*                           -> StandManager (Stands awakened by the Arrow)
+#   vampire.*                          -> VampireManager (DIO's blood)
 # =============================================================================
 
 
@@ -352,6 +354,9 @@ entities:
       - "&6%player% &efue aplastado por la Road Roller de DIO"
       - "&6%player% &eno pudo moverse en el tiempo detenido de DIO"
       - "&6%player% &erecibió un MUDA MUDA MUDA de The World"
+    # Vampire Blood dropped when DIO falls: the ingredient of the Bearer's Elixir.
+    vampire-blood-min: 1
+    vampire-blood-max: 2
 
   # -------------------------------------------------------------------------
   # NIX - The Executioner
@@ -383,6 +388,10 @@ entities:
       - "&4%player%'s sentence was carried out by NIX - The Executioner"
       - "&4%player% fell under the guillotine of NIX"
       - "&4%player% could not escape the executioner's judgment"
+    # Executioner's Edge dropped when NIX falls (two forge the Executioner's Guillotine):
+    # one with edge-drop-chance, plus a second one with edge-bonus-chance.
+    edge-drop-chance: 1.0
+    edge-bonus-chance: 0.35
 
   # -------------------------------------------------------------------------
   # JACKSTAR - The System Architect
@@ -457,6 +466,28 @@ entities:
   # -------------------------------------------------------------------------
   # Bone Shield
   # -------------------------------------------------------------------------
+  # -------------------------------------------------------------------------
+  # Arquero de la Flecha - the skeleton that carries the Stand Arrow
+  # -------------------------------------------------------------------------
+  arrow-skeleton:
+    enabled: true
+    spawn-chance: 0.04
+    health: 50.0
+    speed: 0.28
+    # Chance that a shot is the Stand Arrow.
+    stand-arrow-chance: 0.02
+    # Chance that the Arrow kills the player it pierces. The rest are chosen: a player who
+    # drank the Bearer's Elixir awakens a Stand, anybody else only survives.
+    death-chance: 0.7
+    arrow-death-messages:
+      - "&6%player% &efue atravesado por la Flecha y no resultó digno"
+      - "&6%player% &eno sobrevivió al juicio de la Flecha"
+      - "&6%player% &equiso un Stand, pero la Flecha solo le dio el final"
+    death-messages:
+      - "&6%player% &ecayó ante el Arquero de la Flecha"
+      - "&6%player% &efue cazado por el Arquero de la Flecha"
+      - "&6%player% &eestaba en la mira del Arquero de la Flecha"
+
   bone-shield:
     enabled: true
     spawn-chance: 0.06
@@ -688,6 +719,27 @@ items:
       knockback-horizontal: 1.5
       knockback-vertical: 0.8
 
+  # NIX's axe, forged from two Executioner's Edges.
+  executioner-guillotine:
+    execute-threshold: 0.3    # Sentencia: targets below this share of their health...
+    execute-bonus: 0.4        # ...take this much extra damage
+    bleed-chance: 0.25        # Sangrado: chance of Wither I for 3 seconds
+    chains-range: 18.0        # Cadenas del Juicio (right click)
+    chains-cooldown-ms: 15000
+    slam-damage: 14.0         # Caida de la Guillotina (sneak + right click)
+    slam-radius: 4.0
+    slam-cooldown-ms: 25000
+
+  # Jack Star's bow, built round the Architect Kernel.
+  architect-deployer:
+    damage-bonus: 0.2         # extra damage of every guided arrow
+    homing-radius: 8.0
+    beam-range: 40.0          # sudo rm -rf (sneak + left click)
+    beam-damage: 12.0
+    beam-cooldown-ms: 18000
+    failover-threshold: 0.3   # Failover below this share of health
+    failover-cooldown-ms: 12000
+
   # Void-blink passive of the Nullshear Edge. Read once at startup, so restart after editing.
   nullshear-edge:
     # Chance that a hit applies Darkness
@@ -805,6 +857,84 @@ items:
 # Multiverse Merchant trades (Wandering Trader)
 # Kept for reference / future config-driven trades
 # =============================================================================
+# ---------------------------------------------------------------------------
+# Stands: awakened by the Stand Arrow in players who drank the Bearer's Elixir
+# ---------------------------------------------------------------------------
+# Sneak + F summons or sends the Stand back; F uses its ability; sneak + left click with an
+# empty hand uses the second one (time stop). /stand shows a player's Stand. Weights decide
+# how often each Stand is awakened (0 = never).
+stands:
+  enabled: true
+  hermit-purple:
+    weight: 30
+    cooldown-seconds: 30
+    reveal-radius: 48.0
+    reveal-seconds: 10
+  magicians-red:
+    weight: 25
+    cooldown-seconds: 12
+    fireballs: 3
+    fire-damage: 6.0
+  crazy-diamond:
+    weight: 18
+    cooldown-seconds: 30
+    heal: 8.0
+    repair-fraction: 0.5
+    range: 6.0
+  killer-queen:
+    weight: 14
+    # First bomb: every player the user hits also takes an explosion.
+    explosion-damage: 4.0
+    explosion-cooldown-ms: 1500
+    require-summoned: false   # true: only while the Stand is out
+    include-mobs: false       # true: mobs explode too, not only players
+    # Sheer Heart Attack (/stand sha): an immortal bomb that rolls after the chosen player,
+    # through any block, keeping its chunk loaded. 0 lifetime = until it arrives.
+    sha-cooldown-seconds: 300
+    sha-speed: 0.12
+    sha-damage: 18.0
+    sha-reach: 1.2
+    sha-lifetime-seconds: 0
+  star-platinum:
+    weight: 10
+    cooldown-seconds: 20
+    range: 4.0
+    barrage-hits: 10
+    barrage-damage: 1.5
+    barrage-finisher: 5.0
+    time-stop-seconds: 1.5
+    time-stop-radius: 10.0
+    time-stop-cooldown-seconds: 120
+  the-world:
+    weight: 3
+    cooldown-seconds: 20
+    range: 4.5
+    barrage-hits: 10
+    barrage-damage: 1.8
+    barrage-finisher: 6.0
+    time-stop-seconds: 3.0
+    time-stop-radius: 14.0
+    time-stop-cooldown-seconds: 150
+
+# ---------------------------------------------------------------------------
+# Vampires: whoever drinks the Bearer's Elixir (DIO's blood)
+# ---------------------------------------------------------------------------
+vampire:
+  # True damage dealt every check under the open sky in daytime: it ignores armour,
+  # Resistance, enchantments, absorption and totems.
+  sun-damage: 2.0
+  sun-check-ticks: 20
+  # Rain clouds hide the sun, as they do for zombies.
+  rain-protects: true
+  # Strength and Speed at night, night vision always.
+  night-perks: true
+  # Share of the melee damage dealt that heals the vampire.
+  lifesteal: 0.15
+  sun-death-messages:
+    - "&6%player% &cse convirtió en cenizas bajo el sol"
+    - "&6%player% &colvidó que el amanecer no perdona a los hijos de la noche"
+    - "&6%player% &cquiso desafiar al sol como DIO... y el sol ganó"
+
 merchant:
   enabled: true
   spawn-chance: 0.3

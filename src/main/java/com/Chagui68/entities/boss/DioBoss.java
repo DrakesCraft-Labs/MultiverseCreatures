@@ -1267,6 +1267,15 @@ public class DioBoss implements Listener {
         fx.burst(at.toVector().add(new Vector(0, 1.2, 0)), Particle.EXPLOSION_EMITTER, 1, 0);
         fx.sound(at.toVector(), Sfx.WITHER_DEATH, 2f, 1.2f);
         world.spawn(at, ExperienceOrb.class, orb -> orb.setExperience(1200));
+        // His blood: the one ingredient of the Bearer's Elixir.
+        int min = Math.max(0, plugin.getConfig().getInt("entities.dio-brando.vampire-blood-min", 1));
+        int max = Math.max(min, plugin.getConfig().getInt("entities.dio-brando.vampire-blood-max", 2));
+        int blood = min + java.util.concurrent.ThreadLocalRandom.current().nextInt(max - min + 1);
+        if (blood > 0) {
+            org.bukkit.inventory.ItemStack drop = com.Chagui68.items.components.VampireBlood.VAMPIRE_BLOOD.clone();
+            drop.setAmount(blood);
+            world.dropItemNaturally(at.clone().add(0, 0.5, 0), drop);
+        }
         if (inst.world != null) inst.world.remove();
         inst.stand.remove();
         cleanup(inst);

@@ -52,6 +52,7 @@ Cada spawn de mob vanilla tiene una probabilidad configurable de ser reemplazado
 
 - [Jefes](./Bosses.md) — El Centinela de Obsidiana, Mahoraga
 - [Dimensión del Ritual](./Ritual-Dimension.md) — El mundo privado del jefe: cómo entrar e invocar al Centinela
+- [La Flecha y los Stands](./Stands.md) — Arquero de la Flecha, la sangre de DIO y los vampiros, los seis Stands, Sheer Heart Attack, armas de NIX y Jack Star
 - [Criaturas](./Creatures.md) — Todos los mobs que reemplazan spawns naturales + el ejército ZombieHorseTrap
 - [Armas](./Weapons.md) — Excalibur, Gran Espada de Ascuas, Filo Nullshear, Guadaña Soulreap, Aether Pullshot, Talismán Skyfire, Forja del Caos
 - [Armaduras y Reliquias](./Armor-and-Relics.md) — Rueda de Ocho Manos, Bastión de Obsidiana, reliquias de mano secundaria

@@ -31,7 +31,9 @@ class GiveCatalogueTest {
             "aetherpullshot &8- &bGravitational Pull Bow",
             "chaosforge &8- &dChaos Casting Hammer",
             "skyfiretalisman &8- &6Celestial Skyfire Charm",
-            "sentinelgrimoire &8- &9Guardian Spell Grimoire");
+            "sentinelgrimoire &8- &9Guardian Spell Grimoire",
+            "executionerguillotine &8- &4NIX Executioner Axe",
+            "architectdeployer &8- &bJackStar Data Bow");
 
     private static final List<String> LEGACY_PAGE_2 = List.of(
             "eighthandledwheel &8- &fMahoraga's Sacred Wheel",
@@ -59,7 +61,9 @@ class GiveCatalogueTest {
             "endercore &8- &5End Void Dimensional Core",
             "starcore &8- &eCelestial Star Core",
             "chaoscore &8- &dRaw Concentrated Chaos Core",
-            "scoobycookie &8- &6Mystery Scooby Snack (Food)");
+            "scoobycookie &8- &6Mystery Scooby Snack (Food)",
+            "executioneredge &8- &4NIX Axe Shard",
+            "vampireblood &8/ &eunstableblood &8/ &ebearerelixir &8- &4DIO Blood & Elixir");
 
     private static final List<String> LEGACY_PAGE_4 = List.of(
             "reaperessence &8/ &evoidessence &8/ &ewheelessence &8- &7Essences",

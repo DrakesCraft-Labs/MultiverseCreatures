@@ -55,6 +55,7 @@ public class MobHandler implements Listener {
     private double headSlimeChance;
     private double creeperJrChance;
     private double shadowRogueChance;
+    private double arrowSkeletonChance;
     private double boneShieldChance;
     private double flameElementalChance;
     private double frostGolemBuildChance;
@@ -106,6 +107,7 @@ public class MobHandler implements Listener {
         headSlimeChance = config.getDouble("entities.head-slime.spawn-chance", 0.1) * spawnRateMultiplier;
         creeperJrChance = config.getDouble("entities.creeper-jr.spawn-chance", 0.15) * spawnRateMultiplier;
         shadowRogueChance = config.getDouble("entities.shadow-rogue.spawn-chance", 0.05) * spawnRateMultiplier;
+        arrowSkeletonChance = config.getDouble("entities.arrow-skeleton.spawn-chance", 0.04) * spawnRateMultiplier;
         boneShieldChance = config.getDouble("entities.bone-shield.spawn-chance", 0.06) * spawnRateMultiplier;
         flameElementalChance = config.getDouble("entities.flame-elemental.spawn-chance", 0.1) * spawnRateMultiplier;
         frostGolemBuildChance = config.getDouble("entities.frost-golem.build-spawn-chance", 0.2) * spawnRateMultiplier;
@@ -406,6 +408,13 @@ public class MobHandler implements Listener {
     }
 
     private void handleSkeletonSpawn(CreatureSpawnEvent event, Location loc) {
+        if (random.nextDouble() < arrowSkeletonChance) {
+            if (plugin.isEnabled("entities.arrow-skeleton") && plugin.getArrowSkeleton() != null) {
+                event.setCancelled(true);
+                plugin.getArrowSkeleton().trySpawn(loc);
+                return;
+            }
+        }
         if (random.nextDouble() < shadowRogueChance) {
             if (!plugin.isEnabled("entities.shadow-rogue")) return;
             event.setCancelled(true);

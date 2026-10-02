@@ -13,11 +13,18 @@ commands:
     description: Main command for MultiverseCreatures
     usage: /msc <spawn|give|attack|music|seal|dummy|dimtp|cleanstands|kill|debug|reload> - run /msc for help
     permission: msc.admin
+  stand:
+    description: Your Stand, its abilities and Killer Queen's Sheer Heart Attack
+    usage: /stand [invocar|habilidad|sha|dar|quitar|vampiro|flecha]
+    permission: msc.stand
 
 permissions:
   msc.admin:
     description: Allows all /msc commands
     default: op
+  msc.stand:
+    description: Allows using /stand (your own Stand); the admin subcommands need msc.admin
+    default: true
   msc.admin.bypass:
     description: Bypasses the protected boss-dimension build and teleport rules
     default: op

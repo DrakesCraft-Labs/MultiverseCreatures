@@ -11,6 +11,7 @@
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21%2B-7C4DFF?logo=minecraft&logoColor=white)](https://modrinth.com/plugin/multiversecreatures)
 [![Purpur](https://img.shields.io/badge/Purpur-1.21.11-FFA000?logo=purpur)](https://purpurmc.org/)
+[![Paper](https://img.shields.io/badge/Paper-26.1%20%7C%2026.2-2C6BED)](https://papermc.io/)
 [![Java](https://img.shields.io/badge/Java-21%2B-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue)](./LICENSE)
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/gJCViBEN?label=Modrinth%20Downloads&logo=modrinth&color=2DD2A4)](https://modrinth.com/plugin/multiversecreatures)
@@ -138,7 +139,7 @@ Spanish version lives in [wiki-es/dev/Tests.md](wiki-es/dev/Tests.md).
 4. (Optional) Edit `plugins/MultiverseCreatures/config.yml` to tune spawn chances, cooldowns, boss stats, death messages, and effect amplifiers.
 5. Restart and enjoy. Use `/msc spawn <type>` to summon anything, or wait for natural spawns to be replaced.
 
-> **Requirements:** Paper / Purpur / Spigot **1.21+** (built against `purpur-api 1.21.11`) · **Java 21+**
+> **Requirements:** Paper / Purpur **1.21.11, 26.1 or 26.2** (built against `purpur-api 1.21.11`, checked against `paper-api` 26.1 and 26.2 with `mvn -P api-26.1 compile` / `mvn -P api-26.2 compile`) · **Java 21+** (26.x servers run on Java 25)
 
 A full install guide lives in the [Installation wiki page](wiki-en/Installation.md).
 

@@ -51,6 +51,7 @@ Every vanilla mob spawn has a configurable chance to be replaced by an MSC count
 
 - [Bosses](./Bosses.md) — The Obsidian Sentinel, Mahoraga
 - [Ritual Dimension](./Ritual-Dimension.md) — The private boss world: how to enter and invoke the Sentinel
+- [The Arrow and the Stands](./Stands.md) — Archer of the Arrow, DIO's blood and vampires, the six Stands, Sheer Heart Attack, NIX and Jack Star weapons
 - [Creatures](./Creatures.md) — All natural-spawn replacement mobs + ZombieHorseTrap army
 - [Weapons](./Weapons.md) — Excalibur, Cinder Greatsword, Nullshear Edge, Soulreap Scythe, Aether Pullshot, Skyfire Talisman, Chaos Forge
 - [Armor and Relics](./Armor-and-Relics.md) — Eight-Handled Wheel, Obsidian Bastion, off-hand relics

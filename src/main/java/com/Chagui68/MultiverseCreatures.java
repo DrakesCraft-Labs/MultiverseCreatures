@@ -80,6 +80,9 @@ public class MultiverseCreatures extends JavaPlugin {
     private BossDimensionManager bossDimensionManager;
     private RitualManager ritualManager;
     private ShadowRogue shadowRogue;
+    private com.Chagui68.entities.ArrowSkeleton arrowSkeleton;
+    private com.Chagui68.stand.StandManager standManager;
+    private com.Chagui68.stand.VampireManager vampireManager;
     private FlameElemental flameElemental;
     private FrostGolem frostGolem;
     private VoidCrawler voidCrawler;
@@ -175,6 +178,9 @@ public class MultiverseCreatures extends JavaPlugin {
         magicSealListener = new MagicSealListener(this);
         musicManager = new MusicManager(this);
         shadowRogue = new ShadowRogue(this);
+        standManager = new com.Chagui68.stand.StandManager(this);
+        vampireManager = new com.Chagui68.stand.VampireManager(this);
+        arrowSkeleton = new com.Chagui68.entities.ArrowSkeleton(this);
         flameElemental = new FlameElemental(this);
         frostGolem = new FrostGolem(this);
         voidCrawler = new VoidCrawler(this);
@@ -238,6 +244,10 @@ public class MultiverseCreatures extends JavaPlugin {
         getServer().getPluginManager().registerEvents(frostHeartOffhandHandler, this);
         getServer().getPluginManager().registerEvents(new SkyfireTalismanHandler(this), this);
         getServer().getPluginManager().registerEvents(new NullshearEdgeHandler(this), this);
+        getServer().getPluginManager().registerEvents(
+                new com.Chagui68.listener.weapons.melee.ExecutionerGuillotineHandler(this), this);
+        getServer().getPluginManager().registerEvents(
+                new com.Chagui68.listener.weapons.ranged.ArchitectDeployerHandler(this), this);
         getServer().getPluginManager().registerEvents(new EightHandledWheelHandler(this), this);
         getServer().getPluginManager().registerEvents(new AetherPullshotHandler(this), this);
         getServer().getPluginManager().registerEvents(new ChaosForgeHandler(), this);
@@ -251,6 +261,9 @@ public class MultiverseCreatures extends JavaPlugin {
         com.Chagui68.commands.MSCCommand mscCommand = new com.Chagui68.commands.MSCCommand(this, mobHandler);
         getCommand("msc").setExecutor(mscCommand);
         getCommand("msc").setTabCompleter(mscCommand);
+        com.Chagui68.stand.StandCommand standCommand = new com.Chagui68.stand.StandCommand(this);
+        getCommand("stand").setExecutor(standCommand);
+        getCommand("stand").setTabCompleter(standCommand);
     }
 
     @Override
@@ -285,6 +298,9 @@ public class MultiverseCreatures extends JavaPlugin {
         if (zombieHorseTrap != null) zombieHorseTrap.stopTasks();
         if (mahoraga != null) mahoraga.stopTasks();
         if (shadowRogue != null) shadowRogue.stopTasks();
+        if (arrowSkeleton != null) arrowSkeleton.stopTasks();
+        if (standManager != null) standManager.stopAll();
+        if (vampireManager != null) vampireManager.stopAll();
         if (flameElemental != null) flameElemental.stopTasks();
         if (frostGolem != null) frostGolem.stopTasks();
         if (voidCrawler != null) voidCrawler.stopTasks();
@@ -349,6 +365,18 @@ public class MultiverseCreatures extends JavaPlugin {
 
     public MusicManager getMusicManager() {
         return musicManager;
+    }
+
+    public com.Chagui68.entities.ArrowSkeleton getArrowSkeleton() {
+        return arrowSkeleton;
+    }
+
+    public com.Chagui68.stand.StandManager getStandManager() {
+        return standManager;
+    }
+
+    public com.Chagui68.stand.VampireManager getVampireManager() {
+        return vampireManager;
     }
 
     public ShadowRogue getShadowRogue() {

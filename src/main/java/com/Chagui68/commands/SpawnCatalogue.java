@@ -144,6 +144,11 @@ final class SpawnCatalogue {
                     "Bone Shield", "Bone Shield",
                     "&fBone Shield Skeleton &7(Arrow Defense)", 3,
                     (plugin, mobs, location) -> plugin.getBoneShield().trySpawn(location)),
+            new Type("arrowskeleton", List.of("arrowskeleton", "archer", "standarrow"),
+                    "Arrow Skeleton", "Arrow Skeleton",
+                    "&6Arquero de la Flecha &7(Stand Arrow Archer)", 3,
+                    (plugin, mobs, location) -> plugin.getArrowSkeleton() != null
+                            && plugin.getArrowSkeleton().trySpawn(location)),
             new Type("venomwitch", List.of("venomwitch", "venom"),
                     "Venom Witch", "Venom Witch",
                     "&2Venom Witch &7(Toxic Splash Potions)", 3,

@@ -32,13 +32,6 @@
             <version>5.11.4</version>
             <scope>test</scope>
         </dependency>
-        <!-- Purpur API 1.21.11 (superset of Paper/Spigot/Bukkit) -->
-        <dependency>
-            <groupId>org.purpurmc.purpur</groupId>
-            <artifactId>purpur-api</artifactId>
-            <version>1.21.11-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
 
         <!-- JOML for 3D Display Entities -->
         <dependency>
@@ -163,4 +156,49 @@
             </resource>
         </resources>
     </build>
+    <!--
+        The release jar is built against the Purpur 1.21.11 API and runs on 1.21.11,
+        26.1 and 26.2. The two extra profiles compile the same sources against the newer
+        Paper APIs, so a call that does not exist there is caught before release:
+            mvn -P api-26.1 compile
+            mvn -P api-26.2 compile
+    -->
+    <profiles>
+        <profile>
+            <id>api-1.21.11</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.purpurmc.purpur</groupId>
+                    <artifactId>purpur-api</artifactId>
+                    <version>1.21.11-R0.1-SNAPSHOT</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>api-26.1</id>
+            <dependencies>
+                <dependency>
+                    <groupId>io.papermc.paper</groupId>
+                    <artifactId>paper-api</artifactId>
+                    <version>26.1.2.build.74-stable</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>api-26.2</id>
+            <dependencies>
+                <dependency>
+                    <groupId>io.papermc.paper</groupId>
+                    <artifactId>paper-api</artifactId>
+                    <version>26.2.build.124-stable</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

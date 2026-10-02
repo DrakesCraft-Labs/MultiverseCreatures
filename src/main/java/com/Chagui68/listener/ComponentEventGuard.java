@@ -34,8 +34,13 @@ public class ComponentEventGuard implements Listener {
             "msc_reaper_core", "msc_reaper_essence", "msc_refined_netherite", "msc_refined_wheel_core",
             "msc_reinforced_bone", "msc_reinforced_bone_block", "msc_sentinel_core", "msc_shadow_cloak",
             "msc_star_core", "msc_storm_crystal", "msc_sword_mold", "msc_venom_gland", "msc_void_essence",
-            "msc_wheel_core", "msc_wheel_essence"
+            "msc_wheel_core", "msc_wheel_essence", "msc_vampire_blood", "msc_executioner_edge"
     );
+
+    private static boolean isVampireBlood(ItemStack item) {
+        return item != null && item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer()
+                .has(com.Chagui68.items.components.VampireBlood.KEY, org.bukkit.persistence.PersistentDataType.INTEGER);
+    }
 
     private boolean isComponent(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return false;
@@ -58,7 +63,8 @@ public class ComponentEventGuard implements Listener {
 
         if (event.getClickedBlock() == null) return;
         Material block = event.getClickedBlock().getType();
-        if (block == Material.JUKEBOX || block == Material.BEACON) {
+        if (block == Material.JUKEBOX || block == Material.BEACON
+                || org.bukkit.Tag.ALL_SIGNS.isTagged(block)) {
             event.setCancelled(true);
             return;
         }
@@ -91,6 +97,7 @@ public class ComponentEventGuard implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onEntityInteract(PlayerInteractEntityEvent event) {
         if (!(event.getRightClicked() instanceof AbstractHorse
+                || event.getRightClicked() instanceof org.bukkit.entity.Sheep
                 || event.getRightClicked() instanceof ItemFrame
                 || event.getRightClicked() instanceof ArmorStand)) return;
         ItemStack held = event.getPlayer().getInventory().getItem(event.getHand());
@@ -108,6 +115,8 @@ public class ComponentEventGuard implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBrew(BrewEvent event) {
+        // DIO's blood is the one component meant for the brewing stand (Bearer's Elixir).
+        if (isVampireBlood(event.getContents().getIngredient())) return;
         if (isComponent(event.getContents().getIngredient())) {
             event.setCancelled(true);
         }

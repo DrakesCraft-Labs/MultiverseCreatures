@@ -51,6 +51,7 @@ class SpawnCatalogueTest {
             " &e• shadowrogue &8- &8Shadow Rogue &7(Stealth Infiltrator)",
             " &e• voidcrawler &8- &5Void Crawler &7(End Abyss Parasite)",
             " &e• boneshield &8- &fBone Shield Skeleton &7(Arrow Defense)",
+            " &e• arrowskeleton &8- &6Arquero de la Flecha &7(Stand Arrow Archer)",
             " &e• venomwitch &8- &2Venom Witch &7(Toxic Splash Potions)",
             " &e• warlord &8- &4Orcish Warlord &7(Berserker Rage)",
             " &e• creeperjr &8- &aCreeper Jr. &7(Fast Micro-Exploder)",

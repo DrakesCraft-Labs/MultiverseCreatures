@@ -32,7 +32,7 @@ public class RecipeGuardListener implements Listener {
             "msc_reaper_core", "msc_reaper_essence", "msc_refined_netherite", "msc_refined_wheel_core",
             "msc_reinforced_bone", "msc_reinforced_bone_block", "msc_sentinel_core", "msc_shadow_cloak",
             "msc_star_core", "msc_storm_crystal", "msc_sword_mold", "msc_venom_gland", "msc_void_essence",
-            "msc_wheel_core", "msc_wheel_essence"
+            "msc_wheel_core", "msc_wheel_essence", "msc_vampire_blood", "msc_executioner_edge"
     );
 
     public static boolean isCustomItem(ItemStack item) {
@@ -176,7 +176,13 @@ public class RecipeGuardListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBrew(BrewEvent event) {
-        if (isCustomItem(event.getContents().getIngredient())) {
+        ItemStack ingredient = event.getContents().getIngredient();
+        // DIO's blood only brews through its own mix (Awkward Potion -> Unstable Blood).
+        if (ingredient != null && ingredient.hasItemMeta() && ingredient.getItemMeta().getPersistentDataContainer()
+                .has(com.Chagui68.items.components.VampireBlood.KEY, org.bukkit.persistence.PersistentDataType.INTEGER)) {
+            return;
+        }
+        if (isCustomItem(ingredient)) {
             event.setCancelled(true);
         }
     }

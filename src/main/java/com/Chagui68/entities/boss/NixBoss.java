@@ -1395,6 +1395,18 @@ public class NixBoss implements Listener {
 
         // Experience and title announcement
         world.spawn(loc, org.bukkit.entity.ExperienceOrb.class).setExperience(450);
+        // The edges of his axe: the blade of the Executioner's Guillotine.
+        java.util.concurrent.ThreadLocalRandom chance = java.util.concurrent.ThreadLocalRandom.current();
+        int edges = chance.nextDouble() < plugin.getConfig().getDouble("entities.nix-executioner.edge-drop-chance", 1.0)
+                ? 1 : 0;
+        if (chance.nextDouble() < plugin.getConfig().getDouble("entities.nix-executioner.edge-bonus-chance", 0.35)) {
+            edges++;
+        }
+        if (edges > 0) {
+            ItemStack edge = com.Chagui68.items.components.ExecutionerEdge.EXECUTIONER_EDGE.clone();
+            edge.setAmount(edges);
+            world.dropItemNaturally(loc.clone().add(0, 0.5, 0), edge);
+        }
         for (Player p : world.getPlayers()) {
             if (p.getLocation().distanceSquared(loc) <= 60 * 60) {
                 p.sendTitle(ChatColor.DARK_RED + "" + ChatColor.BOLD + "NIX",
