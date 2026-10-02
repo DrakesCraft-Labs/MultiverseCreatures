@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * exported in one piece may not report a joint; one exported in segments may not skip it.
  *
  * <p>Only limbs are asked to fold. A body group can be exported in several pieces with a visible
- * gap between them (Kinger's `TORSO_UPPER` has two, 19 cm apart) and still move as one block: the
+ * gap between them (Kinger's head has seven pieces, neck to cross) and still move as one block: the
  * torso leans around the waist, it does not bend in the middle. What the guard does insist on is
  * that such a group reports no joint at all, so a fold cannot be invented where the model has none.
  */

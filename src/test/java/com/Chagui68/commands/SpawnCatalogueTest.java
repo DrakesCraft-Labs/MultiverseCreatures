@@ -29,7 +29,7 @@ class SpawnCatalogueTest {
             " &e• armorstand &8- &6The Ancient Armor Stand &7(Multiverse Boss)",
             " &e• mahoraga &8- &fMahoraga &7(Adapting Divine General)",
             " &e• garou &8- &bGarou &7(Martial Arts Miniboss)",
-            " &e• kinger &8- &5Kinger &7(Floating Digital Head Boss)",
+            " &e• kinger &8- &5Kinger &7(The Chess King)",
             " &e• disctrader &8- &dDisc Trader &7(Music & Relic Merchant)");
 
     private static final List<String> LEGACY_PAGE_2 = List.of(

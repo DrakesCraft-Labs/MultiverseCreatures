@@ -17,30 +17,32 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Guards Kinger's suit the way the Jack Star and NIX model suites guard theirs: fifteen pieces pinned
- * to the exported model, limbs that actually hang from their joints, the body centred on the
- * invisible armour stand that receives the hits, and a hitbox that covers the model without
- * swallowing swings aimed at thin air.
+ * Guards Kinger's suit: fifteen pieces pinned to the exported model, read with the rule the game
+ * draws them by, a skeleton whose joints sit where the pieces actually meet, and the poses that move
+ * it.
  *
- * <p>The reference numbers are the translations of the model as exported for the plugin, in the same
- * column-major matrices {@link Kinger.KingerPart} carries. The export was made around the torso and
- * not around a block, so the code re-centres the suit on that torso axis; these tests pin both halves
- * of the contract, so neither the export nor the re-centring can drift unnoticed.
+ * <p>A piece is a player head on an item display with no item transform: centred on its anchor in x
+ * and z, hanging below it from 0 to -0.5 of its own height. The first version of this suite assumed
+ * centred pieces, which is why it never noticed that the "arms" were the eyes and that every joint
+ * was off: under the wrong rule nothing in the export fits, under the right one it fits to the
+ * millimetre. The tests below pin that fit, so a re-export or a wrong assumption fails here.
  */
 class KingerModelTest {
 
-    /**
-     * Reference model: one entry per piece, straight from the export, translation only. The full
-     * matrices live in {@code KingerPart}.
-     */
+    /** Reference model: one anchor per piece, straight from the export. */
     private static final Map<Kinger.KingerPart, Vector3f> EXPORT = new EnumMap<>(Kinger.KingerPart.class);
 
     static {
-        EXPORT.put(Kinger.KingerPart.BASE_LEFT, new Vector3f(0.3886122987f, 0.6775875205f, 0.501853708f));
-        EXPORT.put(Kinger.KingerPart.BASE_RIGHT, new Vector3f(0.634953709f, 0.6814326334f, 0.4967771821f));
+        EXPORT.put(Kinger.KingerPart.ARM_LEFT, new Vector3f(0.3886122987f, 0.6775875205f, 0.501853708f));
+        EXPORT.put(Kinger.KingerPart.ARM_RIGHT, new Vector3f(0.634953709f, 0.6814326334f, 0.4967771821f));
 
         EXPORT.put(Kinger.KingerPart.LEG_RIGHT_LOWER, new Vector3f(0.5950490686f, 0.232635498f, 0.5025390625f));
         EXPORT.put(Kinger.KingerPart.LEG_RIGHT_UPPER, new Vector3f(0.5950490686f, 0.683807373f, 0.5025390625f));
@@ -49,512 +51,381 @@ class KingerModelTest {
 
         EXPORT.put(Kinger.KingerPart.TORSO_UPPER, new Vector3f(0.5022069787f, 1.2012714355f, 0.5028765625f));
         EXPORT.put(Kinger.KingerPart.TORSO_LOWER, new Vector3f(0.5021828576f, 0.810135498f, 0.5025390625f));
-        EXPORT.put(Kinger.KingerPart.NECK, new Vector3f(0.5052224005f, 1.5827280655f, 0.4711609839f));
-        EXPORT.put(Kinger.KingerPart.BELT, new Vector3f(0.5052224005f, 1.3913218155f, 0.4711609839f));
-        EXPORT.put(Kinger.KingerPart.COLLAR, new Vector3f(0.5052224005f, 1.619095253f, 0.4711609839f));
-        EXPORT.put(Kinger.KingerPart.HEAD, new Vector3f(0.5050075647f, 1.7741992188f, 0.4708984375f));
+        EXPORT.put(Kinger.KingerPart.HEAD, new Vector3f(0.5052224005f, 1.5827280655f, 0.4711609839f));
+        EXPORT.put(Kinger.KingerPart.NECK, new Vector3f(0.5052224005f, 1.3913218155f, 0.4711609839f));
+        EXPORT.put(Kinger.KingerPart.CROWN, new Vector3f(0.5052224005f, 1.619095253f, 0.4711609839f));
+        EXPORT.put(Kinger.KingerPart.CROSS, new Vector3f(0.5050075647f, 1.7741992188f, 0.4708984375f));
+        EXPORT.put(Kinger.KingerPart.CROSS_BAR, new Vector3f(0.5764186975f, 1.7048144531f, 0.4603515625f));
 
-        EXPORT.put(Kinger.KingerPart.ARM_RIGHT, new Vector3f(0.5764186975f, 1.511015625f, 0.34375f));
-        EXPORT.put(Kinger.KingerPart.ARM_LEFT, new Vector3f(0.4335964318f, 1.4631640625f, 0.34375f));
-        EXPORT.put(Kinger.KingerPart.ORNAMENT_RIGHT, new Vector3f(0.5764186975f, 1.7048144531f, 0.4603515625f));
+        EXPORT.put(Kinger.KingerPart.EYE_RIGHT, new Vector3f(0.5764186975f, 1.511015625f, 0.34375f));
+        EXPORT.put(Kinger.KingerPart.EYE_LEFT, new Vector3f(0.4335964318f, 1.4631640625f, 0.34375f));
     }
+
+    private static final float HALF_WIDTH = (float) (0.25 * Kinger.MODEL_HITBOX_SCALE);
+    private static final float HEIGHT = (float) (1.975 * Kinger.MODEL_HITBOX_SCALE);
+
+    // ------------------------------------------------------------------ the export
 
     @Test
     @DisplayName("Every piece still carries the exported transform")
     void partsKeepTheExportedTransforms() {
-        assertEquals(Kinger.KingerPart.values().length, EXPORT.size(),
-                "the reference table must cover every piece");
-
+        assertEquals(Kinger.KingerPart.values().length, EXPORT.size(), "the reference table must cover every piece");
         for (Map.Entry<Kinger.KingerPart, Vector3f> entry : EXPORT.entrySet()) {
-            Vector3f exported = entry.getValue();
             Vector3f actual = entry.getKey().offset;
-
-            assertEquals(exported.x, actual.x, 0.001f, entry.getKey() + " drifted from the export");
-            assertEquals(exported.y, actual.y, 0.001f, entry.getKey() + " drifted vertically from the export");
-            assertEquals(exported.z, actual.z, 0.001f, entry.getKey() + " drifted in depth from the export");
+            assertEquals(entry.getValue().x, actual.x, 0.001f, entry.getKey() + " drifted from the export");
+            assertEquals(entry.getValue().y, actual.y, 0.001f, entry.getKey() + " drifted vertically");
+            assertEquals(entry.getValue().z, actual.z, 0.001f, entry.getKey() + " drifted in depth");
         }
-
-        // The trunk and the legs were exported around one shared axis; the arms are the only pieces
-        // that deliberately sit in front of it.
-        for (Kinger.KingerPart trunk : List.of(Kinger.KingerPart.TORSO_UPPER, Kinger.KingerPart.TORSO_LOWER,
-                Kinger.KingerPart.LEG_RIGHT_UPPER, Kinger.KingerPart.LEG_RIGHT_LOWER,
-                Kinger.KingerPart.LEG_LEFT_UPPER, Kinger.KingerPart.LEG_LEFT_LOWER)) {
-            assertEquals(0.5025390625f, EXPORT.get(trunk).z, 0.001f,
-                    trunk + " is not on the body's single shared Z axis");
-        }
-
-        // Each half of a leg is stacked on its own axis, so a swinging leg cannot come apart sideways.
-        assertEquals(EXPORT.get(Kinger.KingerPart.LEG_RIGHT_UPPER).x, EXPORT.get(Kinger.KingerPart.LEG_RIGHT_LOWER).x, 0.001f);
-        assertEquals(EXPORT.get(Kinger.KingerPart.LEG_LEFT_UPPER).x, EXPORT.get(Kinger.KingerPart.LEG_LEFT_LOWER).x, 0.001f);
     }
 
     @Test
-    @DisplayName("The body is centred on the torso axis instead of a centimetre off the hitbox")
-    void theBodyIsCentredOnTheTorsoAxis() {
-        assertEquals(midTorso('x'), Kinger.KingerPart.CENTER.x, 1.0e-5f,
-                "CENTER must be the torso axis, not an average the arms can drag around");
-        assertEquals(midTorso('z'), Kinger.KingerPart.CENTER.z, 1.0e-5f);
+    @DisplayName("The export fits together only with pieces hanging below their anchor")
+    void piecesHangBelowTheirAnchor() {
+        // Thigh ends where the shin starts, on both legs.
+        assertEquals(base(Kinger.KingerPart.LEG_RIGHT_LOWER).y, end(Kinger.KingerPart.LEG_RIGHT_UPPER).y, 0.002f);
+        assertEquals(base(Kinger.KingerPart.LEG_LEFT_LOWER).y, end(Kinger.KingerPart.LEG_LEFT_UPPER).y, 0.002f);
+        // The two robe pieces meet.
+        assertEquals(base(Kinger.KingerPart.TORSO_LOWER).y, end(Kinger.KingerPart.TORSO_UPPER).y, 0.002f);
+        // He stands on the ground.
+        assertEquals(0f, end(Kinger.KingerPart.LEG_RIGHT_LOWER).y, 0.02f, "the right foot floats or sinks");
+        assertEquals(0f, end(Kinger.KingerPart.LEG_LEFT_LOWER).y, 0.02f, "the left foot floats or sinks");
+        // The cross bar crosses the cross: centred on it, inside its height.
+        Vector3f bar = centre(Kinger.KingerPart.CROSS_BAR);
+        assertEquals(centre(Kinger.KingerPart.CROSS).x, bar.x, 0.01f, "the cross bar is off the cross");
+        assertTrue(bar.y > end(Kinger.KingerPart.CROSS).y && bar.y < base(Kinger.KingerPart.CROSS).y,
+                "the cross bar is not on the cross");
+    }
 
-        // The trunk sits exactly on the invisible armour stand that carries the hitbox...
+    @Test
+    @DisplayName("The body is centred on the torso axis, over the stand that carries the hitbox")
+    void theBodyIsCentredOnTheTorsoAxis() {
         for (Kinger.KingerPart trunk : List.of(Kinger.KingerPart.TORSO_UPPER, Kinger.KingerPart.TORSO_LOWER)) {
             assertEquals(0f, base(trunk).x, 0.001f, trunk + " must sit on the armour stand");
             assertEquals(0f, base(trunk).z, 0.001f, trunk + " must sit on the armour stand");
         }
-        // ...the legs share that axis...
-        for (Kinger.KingerPart leg : List.of(Kinger.KingerPart.LEG_RIGHT_UPPER, Kinger.KingerPart.LEG_RIGHT_LOWER,
-                Kinger.KingerPart.LEG_LEFT_UPPER, Kinger.KingerPart.LEG_LEFT_LOWER)) {
-            assertEquals(0f, base(leg).z, 0.001f, leg + " is not on the torso axis");
-        }
-        // ...and re-centring only touches the horizontal axes: heights are the export's own.
         for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
             assertEquals(part.offset.y, base(part).y, 1.0e-6f, part + " was shifted vertically");
         }
+    }
 
-        // The two centres that were rejected: the average of the fifteen anchors drags the trunk
-        // 0.03 blocks forward, and the bounding-box midpoint 0.08, because the arms sit in front.
-        Vector3f mean = new Vector3f();
-        float minZ = Float.POSITIVE_INFINITY, maxZ = Float.NEGATIVE_INFINITY;
-        for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
-            mean.add(part.offset);
-            minZ = Math.min(minZ, part.offset.z);
-            maxZ = Math.max(maxZ, part.offset.z);
+    @Test
+    @DisplayName("The eyes are the two white pieces on the front of the face, and turn with the head")
+    void theEyesAreOnTheFace() {
+        float faceFront = Float.POSITIVE_INFINITY;
+        float faceBottom = Float.POSITIVE_INFINITY;
+        float faceTop = Float.NEGATIVE_INFINITY;
+        for (Vector3f corner : KingerModel.corners(Kinger.KingerPart.HEAD)) {
+            faceFront = Math.min(faceFront, corner.z);
+            faceBottom = Math.min(faceBottom, corner.y);
+            faceTop = Math.max(faceTop, corner.y);
         }
-        mean.div(Kinger.KingerPart.values().length);
-
-        assertTrue(Math.abs(mean.z - Kinger.KingerPart.CENTER.z) > 0.02f,
-                "the mean of the anchors is not the torso axis, and centring on it would move the trunk off the stand");
-        assertTrue(Math.abs((minZ + maxZ) * 0.5f - Kinger.KingerPart.CENTER.z) > 0.05f,
-                "the bounding-box midpoint is even further forward than the mean");
+        for (Kinger.KingerPart eye : List.of(Kinger.KingerPart.EYE_RIGHT, Kinger.KingerPart.EYE_LEFT)) {
+            Vector3f c = centre(eye);
+            assertEquals(Kinger.LimbGroup.HEAD, eye.group(), eye + " must turn with the head, not swing like an arm");
+            assertTrue(c.z < faceFront + 0.05f, eye + " is not on the front of the face: z=" + c.z);
+            assertTrue(c.y > faceBottom && c.y < faceTop, eye + " is not at face height: y=" + c.y);
+        }
+        assertTrue(centre(Kinger.KingerPart.EYE_RIGHT).x > 0f && centre(Kinger.KingerPart.EYE_LEFT).x < 0f,
+                "the right eye sits on his right (+x), the left on his left");
     }
 
     @Test
-    @DisplayName("Head above torso, torso above legs, feet off the ground and about two blocks of body")
-    void verticalLayoutIsAChessPiece() {
-        assertTrue(baseY(Kinger.KingerPart.HEAD) > baseY(Kinger.KingerPart.TORSO_UPPER) + 0.3f);
-        assertTrue(baseY(Kinger.KingerPart.TORSO_UPPER) > baseY(Kinger.KingerPart.TORSO_LOWER) + 0.2f);
-        assertTrue(baseY(Kinger.KingerPart.TORSO_LOWER) > baseY(Kinger.KingerPart.LEG_RIGHT_UPPER) + 0.1f);
-        assertTrue(baseY(Kinger.KingerPart.LEG_RIGHT_UPPER) > baseY(Kinger.KingerPart.LEG_RIGHT_LOWER) + 0.4f);
-
-        float headTop = topOf(Kinger.KingerPart.HEAD);
-        assertTrue(headTop > 1.8f && headTop < 1.95f, "head top should be just under two blocks: " + headTop);
-        assertTrue(feetBottom() > 0.05f && feetBottom() < 0.4f,
-                "feet should clear the ground: " + feetBottom());
+    @DisplayName("The arms are the sleeves: they leave the robe at the shoulder and end in a hand outside it")
+    void theArmsAreTheSleeves() {
+        float robeHalf = 0f;
+        for (Vector3f corner : KingerModel.corners(Kinger.KingerPart.TORSO_LOWER)) robeHalf = Math.max(robeHalf, Math.abs(corner.x));
+        for (Kinger.LimbGroup group : List.of(Kinger.LimbGroup.ARM_RIGHT, Kinger.LimbGroup.ARM_LEFT)) {
+            Kinger.KingerPart arm = group == Kinger.LimbGroup.ARM_RIGHT ? Kinger.KingerPart.ARM_RIGHT : Kinger.KingerPart.ARM_LEFT;
+            assertEquals(group, arm.group());
+            Vector3f shoulder = KingerModel.pivot(group);
+            Vector3f hand = end(arm);
+            assertTrue(Math.abs(shoulder.x) < robeHalf, group + "'s shoulder is outside the robe");
+            assertTrue(Math.abs(hand.x) > Math.abs(shoulder.x) + 0.1f, group + "'s hand is not out to the side");
+            assertTrue(hand.y < shoulder.y, group + "'s hand does not hang below the shoulder");
+            assertTrue(Math.signum(hand.x) == Math.signum(group == Kinger.LimbGroup.ARM_RIGHT ? 1 : -1),
+                    group + " is on the wrong side");
+        }
     }
 
+    // ------------------------------------------------------------------ the skeleton
+
     @Test
-    @DisplayName("Every joint is on the limb it drives, and every limb hangs from its joint")
-    void jointsSitOnTheLimbTheyDrive() {
+    @DisplayName("Every joint sits where its pieces meet")
+    void jointsSitWhereThePiecesMeet() {
+        assertEquals(0f, KingerModel.PIVOT_HIP_RIGHT.distance(base(Kinger.KingerPart.LEG_RIGHT_UPPER)), 1e-6f);
+        assertEquals(0f, KingerModel.PIVOT_KNEE_RIGHT.distance(base(Kinger.KingerPart.LEG_RIGHT_LOWER)), 1e-6f);
+        assertEquals(KingerModel.PIVOT_HIP_RIGHT.x, KingerModel.PIVOT_KNEE_RIGHT.x, 1e-3f, "a knee must sit on its leg");
+        assertEquals(KingerModel.PIVOT_HIP_LEFT.x, KingerModel.PIVOT_KNEE_LEFT.x, 1e-3f, "a knee must sit on its leg");
+        assertEquals(end(Kinger.KingerPart.TORSO_UPPER).y, KingerModel.PIVOT_TORSO.y, 0.15f,
+                "the torso leans about the hips, inside the lower robe");
+        assertEquals(base(Kinger.KingerPart.TORSO_UPPER).y, KingerModel.PIVOT_NECK.y, 1e-6f,
+                "the head turns on top of the robe");
         for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
-            Kinger.LimbGroup group = part.group();
-            Vector3f pivot = KingerModel.pivot(group);
-            Vector3f base = base(part);
-
-            if (!isLimb(group)) {
-                // The trunk and the head hang from the body axis, so their joints are on that axis.
-                assertEquals(0f, pivot.x, 1.0e-6f, group + "'s joint is off the body axis");
-                assertEquals(0f, pivot.z, 1.0e-6f);
-                assertTrue(Math.abs(base.x) < 0.1f, part + " is not part of the trunk it was given to");
-                continue;
+            if (part.group() == Kinger.LimbGroup.HEAD) {
+                assertTrue(centre(part).y > KingerModel.PIVOT_NECK.y - 0.1f, part + " hangs below the neck it turns on");
             }
-
-            assertTrue(Math.signum(base.x) == Math.signum(pivot.x),
-                    part + " swings around a joint on the wrong side (piece x=" + base.x + ", joint x=" + pivot.x + ")");
-
-            float minX = Float.POSITIVE_INFINITY, maxX = Float.NEGATIVE_INFINITY;
-            for (Kinger.KingerPart sibling : Kinger.KingerPart.values()) {
-                if (sibling.group() != group) continue;
-                minX = Math.min(minX, base(sibling).x);
-                maxX = Math.max(maxX, base(sibling).x);
-            }
-            assertTrue(pivot.x > minX - 0.02f && pivot.x < maxX + 0.02f,
-                    group + "'s joint (" + pivot.x + ") is outside the limb it drives (" + minX + ".." + maxX + ")");
-            assertTrue(pivot.y >= base.y - 0.001f, part + " does not hang from its joint");
         }
+        assertTrue(KingerModel.EYE_HEIGHT > 1.35f && KingerModel.EYE_HEIGHT < 1.5f, "eye height " + KingerModel.EYE_HEIGHT);
     }
 
     @Test
-    @DisplayName("A still limb rests exactly where the export puts it")
-    void anIdleLimbRestsWhereTheExportPutsIt() {
+    @DisplayName("At rest every piece is exactly where the export puts it")
+    void restPoseIsTheExport() {
         for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
-            Vector3f rest = base(part);
-            Vector3f composed = KingerModel.compose(part, new Quaternionf()).getTranslation();
-
-            assertEquals(rest.x, composed.x, 1.0e-5f, part + " moved while idle");
-            assertEquals(rest.y, composed.y, 1.0e-5f, part + " moved while idle");
-            assertEquals(rest.z, composed.z, 1.0e-5f, part + " moved while idle");
+            var t = KingerModel.compose(part, KingerModel.Pose.rest());
+            assertEquals(0f, t.getTranslation().distance(base(part)), 1e-5f, part + " moved while idle");
+            assertTrue(t.getLeftRotation().equals(part.rotation, 1e-5f), part + " turned while idle");
         }
     }
 
     @Test
-    @DisplayName("A limb rotates about its joint instead of detaching from the body")
-    void limbsSwingAroundTheirJoints() {
-        Quaternionf swing = new Quaternionf().rotateX(0.32f);
-        for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
-            Vector3f rest = base(part);
-            Vector3f pivot = KingerModel.pivot(part.group());
-            Vector3f moved = KingerModel.compose(part, new Quaternionf(swing)).getTranslation();
-
-            assertEquals(rest.x, moved.x, 1.0e-4f, part + " slid sideways while swinging");
-            assertTrue(rest.distance(moved) < 0.4f, part + " flew away from its joint: " + rest.distance(moved));
-            assertEquals(rest.distance(pivot), moved.distance(pivot), 1.0e-3f,
-                    part + " is no longer the same distance from its joint");
-        }
-    }
-
-    @Test
-    @DisplayName("The pieces of one limb move as one body instead of each spinning in place")
-    void theWholeLimbSwingsAsOne() {
-        // Named check first: the shin used to stay put while the thigh swung, because every piece
-        // rotated about its own anchor. Walking tore the leg apart.
-        Quaternionf swing = new Quaternionf().rotateX(0.3f);
-        Vector3f upperRest = base(Kinger.KingerPart.LEG_RIGHT_UPPER);
-        Vector3f lowerRest = base(Kinger.KingerPart.LEG_RIGHT_LOWER);
-        Vector3f upperMoved = KingerModel.compose(Kinger.KingerPart.LEG_RIGHT_UPPER, new Quaternionf(swing)).getTranslation();
-        Vector3f lowerMoved = KingerModel.compose(Kinger.KingerPart.LEG_RIGHT_LOWER, new Quaternionf(swing)).getTranslation();
-
-        assertTrue(lowerRest.distance(lowerMoved) > 0.1f,
-                "the shin must swing with the thigh, not from its own knee");
-        assertEquals(upperRest.distance(lowerRest), upperMoved.distance(lowerMoved), 1.0e-4f,
-                "the leg changed length while swinging");
-
-        // And the same for every multi-piece group: nothing stands still, nothing stretches.
-        for (Kinger.LimbGroup group : Kinger.LimbGroup.values()) {
-            List<Kinger.KingerPart> members = membersOf(group);
-            if (members.size() < 2) continue;
-
-            for (Kinger.KingerPart part : members) {
-                Vector3f rest = base(part);
-                Vector3f moved = KingerModel.compose(part, new Quaternionf(swing)).getTranslation();
-                assertTrue(rest.distance(moved) > 0.01f, part + " spun in place instead of following " + group);
-            }
-            for (int i = 0; i < members.size(); i++) {
-                for (int j = i + 1; j < members.size(); j++) {
-                    Vector3f restGap = base(members.get(i)).sub(base(members.get(j)));
-                    Vector3f movedGap = KingerModel.compose(members.get(i), new Quaternionf(swing)).getTranslation()
-                            .sub(KingerModel.compose(members.get(j), new Quaternionf(swing)).getTranslation());
-                    assertEquals(restGap.length(), movedGap.length(), 1.0e-4f,
-                            members.get(i) + " and " + members.get(j) + " came apart while swinging");
+    @DisplayName("Each group moves as one rigid body in every pose")
+    void groupsStayRigid() {
+        for (KingerModel.Pose pose : samplePoses()) {
+            for (Kinger.LimbGroup group : Kinger.LimbGroup.values()) {
+                List<Kinger.KingerPart> members = membersOf(group);
+                for (int i = 0; i < members.size(); i++) {
+                    for (int j = i + 1; j < members.size(); j++) {
+                        if (KingerModel.hangsFromSecondJoint(members.get(i)) != KingerModel.hangsFromSecondJoint(members.get(j))) continue;
+                        float rest = base(members.get(i)).distance(base(members.get(j)));
+                        float moved = posed(members.get(i), pose).distance(posed(members.get(j), pose));
+                        assertEquals(rest, moved, 1e-4f, members.get(i) + " and " + members.get(j) + " came apart");
+                    }
                 }
             }
         }
     }
 
     @Test
-    @DisplayName("Each knee sits where the export splits the leg, and only the shin hangs from it")
-    void theKneeSitsWhereTheExportSplitsTheLeg() {
-        for (Kinger.LimbGroup group : List.of(Kinger.LimbGroup.LEG_RIGHT, Kinger.LimbGroup.LEG_LEFT)) {
-            List<Kinger.KingerPart> leg = membersOf(group);
-            LimbGeometry.Split<Kinger.KingerPart> split =
-                    LimbGeometry.largestGap(leg, part -> base(part).y);
-
-            for (Kinger.KingerPart part : leg) {
-                assertEquals(split.lower().contains(part), KingerModel.hangsFromSecondJoint(part),
-                        part + " is on the wrong side of its knee, so the walk would fold the wrong piece");
-            }
-
-            Vector3f knee = KingerModel.secondJoint(group);
-            assertNotNull(knee, group + " must expose the knee its shin folds about");
-            assertEquals(split.joint(), knee.y, 0.01,
-                    "the knee is not where the export leaves the gap between the thigh and the shin");
-            assertEquals(KingerModel.pivot(group).x, knee.x, 1.0e-3f, "a knee must sit on its leg's own axis");
-            assertEquals(0f, knee.z, 1.0e-3f, "a knee must sit on the body's own plane");
+    @DisplayName("A lean carries the head and both arms along instead of leaving them behind")
+    void theTorsoCarriesHeadAndArms() {
+        KingerModel.Pose lean = KingerModel.Pose.rest();
+        lean.torso().rotateX(-0.3f);
+        for (Kinger.KingerPart part : List.of(Kinger.KingerPart.NECK, Kinger.KingerPart.EYE_RIGHT,
+                Kinger.KingerPart.ARM_RIGHT, Kinger.KingerPart.ARM_LEFT)) {
+            float rest = base(part).distance(base(Kinger.KingerPart.TORSO_UPPER));
+            float moved = posed(part, lean).distance(posed(Kinger.KingerPart.TORSO_UPPER, lean));
+            assertEquals(rest, moved, 1e-4f, part + " did not follow the torso's lean");
         }
-
-        // One piece per arm and one per body part: there is no second segment to fold.
-        for (Kinger.LimbGroup group : List.of(Kinger.LimbGroup.ARM_RIGHT, Kinger.LimbGroup.ARM_LEFT,
-                Kinger.LimbGroup.HEAD, Kinger.LimbGroup.TORSO_UPPER, Kinger.LimbGroup.TORSO_LOWER)) {
-            assertNull(KingerModel.secondJoint(group), group + " has no second segment");
-        }
+        assertTrue(posed(Kinger.KingerPart.CROSS, lean).z < base(Kinger.KingerPart.CROSS).z - 0.1f,
+                "a forward lean must bring the crown forward");
     }
 
     @Test
-    @DisplayName("A fold follows the step: the knee bends with the walk and stays dead while the boss stands")
+    @DisplayName("Only the shins fold, at the knee, and only on the back half of the step")
     void theKneeFollowsTheWalk() {
-        float backSwing = (float) (-Math.PI / 2);
-
         for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.1f) {
             for (Kinger.KingerPart shin : List.of(Kinger.KingerPart.LEG_RIGHT_LOWER, Kinger.KingerPart.LEG_LEFT_LOWER)) {
                 float swing = KingerModel.walkSwing(shin.group(), phase);
-                Quaternionf expected = swing < 0f ? MscLimb.knee(swing) : new Quaternionf();
-                assertEquals(expected, KingerModel.lowerRotation(shin, phase),
-                        shin + " must fold by exactly the knee its own swing calls for at phase " + phase);
+                assertEquals(MscLimb.knee(swing), KingerModel.lowerRotation(shin, phase));
             }
         }
-
-        // Everything above the knee rides the hip and never bends, whatever the step is doing.
-        for (Kinger.KingerPart rigid : Kinger.KingerPart.values()) {
-            if (KingerModel.hangsFromSecondJoint(rigid)) continue;
-            assertEquals(new Quaternionf(), KingerModel.lowerRotation(rigid, backSwing),
-                    rigid + " is not below a knee and must stay rigid");
+        for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
+            if (KingerModel.hangsFromSecondJoint(part)) continue;
+            assertEquals(new Quaternionf(), KingerModel.lowerRotation(part, (float) (-Math.PI / 2)), part + " must stay rigid");
+            assertEquals(new Quaternionf(), KingerModel.meleeLowerRotation(part, 0.5f), part + " must stay rigid");
         }
+        for (Kinger.LimbGroup group : Kinger.LimbGroup.values()) {
+            boolean leg = group == Kinger.LimbGroup.LEG_RIGHT || group == Kinger.LimbGroup.LEG_LEFT;
+            assertEquals(leg, KingerModel.secondJoint(group) != null, group + ": only the legs have a second joint");
+        }
+        LimbGeometry.Split<Kinger.KingerPart> split =
+                LimbGeometry.largestGap(membersOf(Kinger.LimbGroup.LEG_RIGHT), part -> base(part).y);
+        assertTrue(split.lower().contains(Kinger.KingerPart.LEG_RIGHT_LOWER));
+        assertNotEquals(new Quaternionf(), KingerModel.meleeLowerRotation(Kinger.KingerPart.LEG_RIGHT_LOWER, 0.5f),
+                "the knees flex into the melee strike");
     }
 
-    @Test
-    @DisplayName("During melee lunge, knees flex to support the attack impulse")
-    void meleeFoldsKnees() {
-        for (float prog = 0f; prog <= 1f; prog += 0.05f) {
-            for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
-                Quaternionf fold = KingerModel.meleeLowerRotation(part, prog);
-                if (!KingerModel.hangsFromSecondJoint(part)) {
-                    assertEquals(new Quaternionf(), fold, part + " is not below knee and must stay rigid");
-                    continue;
-                }
-                assertNotNull(fold);
-            }
-        }
-        // At mid melee (prog = 0.5), knees flex
-        for (Kinger.KingerPart shin : List.of(Kinger.KingerPart.LEG_RIGHT_LOWER, Kinger.KingerPart.LEG_LEFT_LOWER)) {
-            Quaternionf kneeRot = KingerModel.meleeLowerRotation(shin, 0.5f);
-            assertNotEquals(new Quaternionf(), kneeRot, "knees must flex during melee strike");
-        }
-    }
+    // ------------------------------------------------------------------ the hitbox
 
     @Test
-    @DisplayName("The whole walk keeps the body over the stand's hitbox")
-    void theWalkStaysOverTheHitbox() {
-        float halfWidth = (float) (0.25 * Kinger.MODEL_HITBOX_SCALE);
-
-        // A step bends the knee, which carries the shin further from the axis than the rest pose does,
-        // so the rest-pose coverage above is not enough on its own: the whole cycle has to fit too.
-        //
-        // No slack: the stride is tuned so even the deepest step keeps the folded shin over the box.
-        // This used to allow five centimetres of overhang, which was the price of the wider stride
-        // the walk started with; a swing that misses the stand hits nothing at all, so the budget for
-        // "the leg looks lively" is the box and nothing more.
-        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.05f) {
-            for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
-                Vector3f moved = KingerModel.compose(part, new Quaternionf().rotateX(KingerModel.walkSwing(part.group(), phase)),
-                        KingerModel.lowerRotation(part, phase)).getTranslation();
-
-                assertTrue(Math.abs(moved.x) < halfWidth,
-                        part + " swung far out of the hitbox sideways at phase " + phase);
-                assertTrue(Math.abs(moved.z) < halfWidth,
-                        part + " swung far out of the hitbox front or back at phase " + phase + ": z=" + moved.z);
-                assertTrue(moved.y > 0f && moved.y < (float) (1.975 * Kinger.MODEL_HITBOX_SCALE),
-                        part + " left the hitbox vertically at phase " + phase);
-            }
-        }
-    }
-
-    @Test
-    @DisplayName("The fifteen pieces keep their own place in the body")
-    void partsNeverCollapseOntoEachOther() {
-        List<Kinger.KingerPart> parts = List.of(Kinger.KingerPart.values());
-        for (int i = 0; i < parts.size(); i++) {
-            for (int j = i + 1; j < parts.size(); j++) {
-                float gap = base(parts.get(i)).distance(base(parts.get(j)));
-                assertTrue(gap > 0.015f, parts.get(i) + " and " + parts.get(j) + " sit on top of each other");
-            }
-        }
-    }
-
-    @Test
-    @DisplayName("The armour stand's hitbox covers the whole suit, and is no bigger than it needs")
+    @DisplayName("The stand's hitbox covers the body, and is no bigger than it needs")
     void hitboxCoversTheModel() {
-        // The stand is the only hitbox the suit has: the pieces are zero-sized so the client cannot
-        // pick one instead, which means a swing that misses the stand hits nothing at all.
-        float halfWidth = (float) (0.25 * Kinger.MODEL_HITBOX_SCALE);
-        float height = (float) (1.975 * Kinger.MODEL_HITBOX_SCALE);
-
         float needed = 0f;
         for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
-            Vector3f base = base(part);
-            float reachX = Math.abs(base.x) + part.scale.x * 0.25f;
-            float reachZ = Math.abs(base.z) + part.scale.z * 0.25f;
-            float top = topOf(part);
-
-            assertTrue(reachX < halfWidth, part + " leans out of the side of the hitbox, so a swing at it would miss the stand");
-            assertTrue(reachZ < halfWidth, part + " stands out of the front of the hitbox: " + reachZ);
-            assertTrue(top < height, part + " pokes out of the top of the hitbox: " + top);
-            assertTrue(base.y - part.scale.y * 0.25f > 0f, part + " hangs below the stand's feet");
-
-            needed = Math.max(needed, reachX / 0.25f);
-            needed = Math.max(needed, reachZ / 0.25f);
-            needed = Math.max(needed, top / 1.975f);
+            boolean arm = part.group() == Kinger.LimbGroup.ARM_RIGHT || part.group() == Kinger.LimbGroup.ARM_LEFT;
+            for (Vector3f corner : KingerModel.corners(part)) {
+                assertTrue(corner.y > -0.02f && corner.y < HEIGHT, part + " leaves the hitbox vertically: " + corner.y);
+                if (arm) {
+                    // The hands are small and stick out to the sides by design; a few centimetres only.
+                    assertTrue(Math.abs(corner.x) < HALF_WIDTH + 0.12f, part + " reaches far outside the hitbox");
+                    continue;
+                }
+                assertTrue(Math.abs(corner.x) < HALF_WIDTH + 0.01f, part + " leans out of the side of the hitbox");
+                assertTrue(Math.abs(corner.z) < HALF_WIDTH + 0.01f, part + " stands out of the front of the hitbox");
+                needed = Math.max(needed, Math.max(Math.abs(corner.x), Math.abs(corner.z)) / 0.25f);
+                needed = Math.max(needed, corner.y / 1.975f);
+            }
         }
-
-        assertTrue(Kinger.MODEL_HITBOX_SCALE >= needed,
-                "the box is smaller than the suit needs: " + Kinger.MODEL_HITBOX_SCALE + " < " + needed);
-        assertTrue(Kinger.MODEL_HITBOX_SCALE - needed < 0.1f,
-                "the box is far bigger than the suit needs, so it swallows swings at thin air: "
-                        + Kinger.MODEL_HITBOX_SCALE + " vs " + needed);
-
-        // The suit fits inside a plain, unscaled armour stand: the old literal 2.0 doubled the box in
-        // every direction for nothing.
-        assertTrue(Kinger.MODEL_HITBOX_SCALE <= 1.0f, "an unscaled stand is already enough for this model");
+        assertTrue(Kinger.MODEL_HITBOX_SCALE >= needed, "the box is smaller than the body: " + needed);
+        assertTrue(Kinger.MODEL_HITBOX_SCALE - needed < 0.15f, "the box swallows swings at thin air: " + needed);
     }
 
     @Test
-    @DisplayName("Every piece carries its own tag, so an adoption can never confuse two of them")
-    void pieceTagsAreUnique() {
+    @DisplayName("The whole walk keeps the body's pieces over the hitbox")
+    void theWalkStaysOverTheHitbox() {
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.05f) {
+            KingerModel.Pose pose = KingerModel.pose(phase, true, -1f, -1f, 0f);
+            for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
+                Vector3f c = KingerModel.posePoint(part, centre(part), pose);
+                float limit = part.group() == Kinger.LimbGroup.ARM_RIGHT || part.group() == Kinger.LimbGroup.ARM_LEFT
+                        ? HALF_WIDTH + 0.12f : HALF_WIDTH;
+                assertTrue(Math.abs(c.x) < limit, part + " swung out sideways at phase " + phase);
+                assertTrue(Math.abs(c.z) < limit, part + " swung out front or back at phase " + phase + ": " + c.z);
+                assertTrue(c.y > 0f && c.y < HEIGHT, part + " left the hitbox vertically at phase " + phase);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ the poses
+
+    @Test
+    @DisplayName("He looks up at a player above his eyes and down at one below")
+    void theHeadLooksTheRightWay() {
+        assertTrue(KingerModel.lookPitch(1.0, 3.0) > 0f, "a player above must make him look up");
+        assertTrue(KingerModel.lookPitch(-1.0, 3.0) < 0f, "a player below must make him look down");
+        assertEquals(0f, KingerModel.lookPitch(5.0, 0.1), "straight overhead he does not snap his neck");
+        assertEquals(KingerModel.MAX_LOOK, KingerModel.lookPitch(50.0, 1.0), 1e-6f);
+
+        // Positive pitch turns the face (which points to -z) upwards: the eyes rise.
+        KingerModel.Pose up = KingerModel.pose(0f, false, -1f, -1f, KingerModel.MAX_LOOK);
+        assertTrue(posed(Kinger.KingerPart.EYE_RIGHT, up).y > base(Kinger.KingerPart.EYE_RIGHT).y,
+                "looking up must lift the eyes");
+    }
+
+    @Test
+    @DisplayName("Melee: the arms rise on the wind-up and come down in front of him on the strike")
+    void meleeSwingsTheArms() {
+        Vector3f rest = handTip(KingerModel.Pose.rest());
+        Vector3f windUp = handTip(KingerModel.pose(0f, false, 0.4f, -1f, 0f));
+        Vector3f strike = handTip(KingerModel.pose(0f, false, 0.52f, -1f, 0f));
+        assertTrue(windUp.y > rest.y + 0.1f, "the wind-up must raise the hand: " + windUp.y + " vs " + rest.y);
+        assertTrue(strike.z < rest.z - 0.06f, "the strike must bring the hand in front of him: " + strike.z);
+        for (Kinger.KingerPart eye : List.of(Kinger.KingerPart.EYE_RIGHT, Kinger.KingerPart.EYE_LEFT)) {
+            Vector3f eyeAtStrike = posed(eye, KingerModel.pose(0f, false, 0.52f, -1f, 0f));
+            assertTrue(eyeAtStrike.distance(base(eye)) < 0.6f, eye + " flew away from the face during the swing");
+        }
+        assertEquals(KingerModel.Pose.rest().armRight(), KingerModel.pose(0f, false, 1f, -1f, 0f).armRight(),
+                "the swing ends at rest");
+    }
+
+    @Test
+    @DisplayName("Ranged: the shot leaves his right hand, raised and pointing ahead, never his eyes")
+    void theShotLeavesTheHand() {
+        KingerModel.Pose firing = KingerModel.pose(0f, false, -1f, KingerModel.RANGED_FIRE_PROGRESS, 0f);
+        Vector3f hand = KingerModel.rightHand(firing);
+        Vector3f restHand = KingerModel.rightHand(KingerModel.Pose.rest());
+        assertTrue(hand.z < KingerModel.PIVOT_SHOULDER_RIGHT.z - 0.1f, "the arm must point ahead when he fires: " + hand.z);
+        assertTrue(hand.y > restHand.y, "the arm must be raised when he fires");
+        for (Kinger.KingerPart eye : List.of(Kinger.KingerPart.EYE_RIGHT, Kinger.KingerPart.EYE_LEFT)) {
+            assertTrue(hand.distance(centre(eye)) > 0.5f, "the shot starts at the eyes");
+        }
+    }
+
+    @Test
+    @DisplayName("The walk pose is a rigid skeleton: arms of one piece, legs folding at the knee")
+    void theWalkPoseIsARigidSkeleton() {
+        List<MscLimb.Limb> rest = KingerModel.walkPose(0f);
+        assertEquals(4, rest.size(), "the four limbs are the whole walk skeleton");
+        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.1f) {
+            List<MscLimb.Limb> posed = KingerModel.walkPose(phase);
+            for (int index = 0; index < posed.size(); index++) {
+                MscLimb.Limb limb = posed.get(index);
+                MscLimb.Limb idle = rest.get(index);
+                assertEquals(0f, limb.pivot().distance(idle.pivot()), 1e-5f, "a limb's pivot moved");
+                if (limb.joint() == null) {
+                    assertEquals(idle.pivot().distance(idle.tip()), limb.pivot().distance(limb.tip()), 1e-4f);
+                } else {
+                    assertEquals(idle.pivot().distance(idle.joint()), limb.pivot().distance(limb.joint()), 1e-4f);
+                    assertEquals(idle.joint().distance(idle.tip()), limb.joint().distance(limb.tip()), 1e-4f);
+                }
+            }
+        }
+        assertNull(rest.get(0).joint(), "an arm is a single piece");
+        assertNotNull(rest.get(2).joint(), "a leg folds at its knee");
+
+        String source = ProjectPaths.read(ProjectPaths.source("com", "Chagui68", "entities", "Kinger.java"));
+        assertTrue(source.contains("KingerModel.WALK_RATE"),
+                "the mob's own step and the walk replay must advance at the same rate");
+    }
+
+    // ------------------------------------------------------------------ the entity
+
+    @Test
+    @DisplayName("Every piece carries its own versioned tag; a piece of the old suit is never adopted")
+    void pieceTagsAreUniqueAndVersioned() {
         Set<String> pieceTags = new HashSet<>();
         for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
             assertTrue(pieceTags.add(Kinger.partTag(part)), part + " shares a tag with another piece");
-            assertTrue(Kinger.partTag(part).startsWith(Kinger.PART_TAG),
-                    "the damage listener finds pieces by " + Kinger.PART_TAG);
+            assertTrue(Kinger.partTag(part).startsWith(Kinger.PART_TAG));
+            assertTrue(Kinger.isCurrentPiece(Set.of(Kinger.PART_TAG, Kinger.partTag(part))));
         }
-
-        String one = Kinger.partOwnerTag(java.util.UUID.randomUUID());
-        String two = Kinger.partOwnerTag(java.util.UUID.randomUUID());
-        assertTrue(one.startsWith(Kinger.PART_OWNER_TAG_PREFIX));
-        assertNotEquals(one, two, "two bosses must not answer to the same ownership tag");
+        // The old build tagged the right eye as an arm: under the new names that would be a sleeve.
+        assertFalse(Kinger.isCurrentPiece(Set.of(Kinger.PART_TAG, Kinger.PART_TAG + "_ARM_RIGHT")));
+        assertNotEquals(Kinger.partOwnerTag(java.util.UUID.randomUUID()), Kinger.partOwnerTag(java.util.UUID.randomUUID()));
     }
 
     @Test
-    @DisplayName("A piece never lags, and a reload reattaches the suit and its boss bar instead of duplicating them")
-    void partDisplaysFollowTheStandExactly() throws IOException {
-        String source = ProjectPaths.read(ProjectPaths.source(
-                "com", "Chagui68", "entities", "Kinger.java"));
-        String suit = ProjectPaths.read(ProjectPaths.source(
-                "com", "Chagui68", "utils", "DisplaySuit.java"));
+    @DisplayName("Animation progress runs from 0 to 1 as the ticks count down")
+    void progressCountsUp() {
+        assertEquals(0f, Kinger.progress(20, 20));
+        assertEquals(0.5f, Kinger.progress(10, 20));
+        assertEquals(1f, Kinger.progress(0, 20));
+        assertEquals(1f, Kinger.progress(5, 0));
+    }
 
-        // The pieces are placed on the stand's exact position every tick, so any interpolation would
-        // make the suit trail the invisible hitbox, and any display box would swallow the swing aimed
-        // at it. Both were true of the first version of this model. The values live in the suit every
-        // dressed boss shares, so this guard pins the one place they are applied.
+    @Test
+    @DisplayName("A piece never lags, and a reload reattaches the suit instead of duplicating it")
+    void partDisplaysFollowTheStandExactly() throws IOException {
+        String source = ProjectPaths.read(ProjectPaths.source("com", "Chagui68", "entities", "Kinger.java"));
+        String suit = ProjectPaths.read(ProjectPaths.source("com", "Chagui68", "utils", "DisplaySuit.java"));
+
         for (String call : List.of("setTeleportDuration", "setInterpolationDuration", "setInterpolationDelay",
                 "setDisplayWidth", "setDisplayHeight")) {
             Matcher calls = Pattern.compile(Pattern.quote(call) + "\\(([^)]*)\\)").matcher(suit);
             int found = 0;
             while (calls.find()) {
                 found++;
-                assertTrue(calls.group(1).trim().matches("0(\\.0+)?f?"),
-                        call + " must be zero, found " + calls.group(1).trim());
+                assertTrue(calls.group(1).trim().matches("0(\\.0+)?f?"), call + " must be zero");
             }
-            assertEquals(1, found, call + " should be configured once, for every piece, in DisplaySuit");
+            assertEquals(1, found, call + " should be configured once, in DisplaySuit");
         }
-        assertTrue(source.contains("DisplaySuit.spawn("),
-                "a piece display must be built by the shared suit, not by hand");
-
-        // Enabling the plugin over a live Kinger must reattach the suit it already spawned: spawning
-        // first is what used to leave two overlapping bodies.
-        assertTrue(source.contains("restorePartDisplays("),
-                "the enable path must adopt the pieces of a boss that is already alive");
-        assertTrue(source.contains("findPartDisplay("),
-                "syncDisplays must adopt an orphaned piece before spawning a new one");
-        assertTrue(source.contains("setupBossBar(inst)"),
-                "a boss that survived a restart must get its boss bar back, or it fights with none");
-        assertTrue(source.contains("KEY_VIRTUAL_MAX_HEALTH"),
-                "a restored boss must have the virtual health its bar progress is read from");
-
-        // The animations run through the joint maths, not through a per-piece transform: that is what
-        // keeps a limb rigid.
-        assertTrue(source.contains("KingerModel.compose("),
-                "piece transforms must be built as a rotation about the limb joint");
-        assertFalse(source.contains("computeAnimQuat("),
-                "the old per-piece animation rotated every piece about its own anchor");
-        assertTrue(source.contains("entities.kinger.hitbox-scale"),
-                "the hitbox scale must be the configured knob, not a literal");
-        assertTrue(source.contains("MODEL_HITBOX_SCALE"),
-                "the tested constant must stay the shipped default of that knob");
-        assertTrue(source.contains("clampHitboxScale("),
-                "a broken scale in config.yml must not leave the boss impossible to hit");
+        for (String required : List.of("DisplaySuit.spawn(", "restorePartDisplays(", "findPartDisplay(",
+                "setupBossBar(inst)", "KEY_VIRTUAL_MAX_HEALTH", "KingerModel.compose(", "entities.kinger.hitbox-scale",
+                "MODEL_HITBOX_SCALE", "clampHitboxScale(", "isCurrentPiece(", "KingerModel.rightHand(")) {
+            assertTrue(source.contains(required), "Kinger.java no longer uses " + required);
+        }
     }
 
-    @Test
-    @DisplayName("The walk pose is a rigid skeleton whose knees fold inside the hitbox")
-    void theWalkPoseIsARigidSkeleton() {
-        List<MscLimb.Limb> rest = KingerModel.walkPose(0f);
-        assertEquals(4, rest.size(), "the four limbs are the whole walk skeleton");
-        for (Kinger.LimbGroup group : List.of(Kinger.LimbGroup.ARM_RIGHT, Kinger.LimbGroup.ARM_LEFT,
-                Kinger.LimbGroup.LEG_RIGHT, Kinger.LimbGroup.LEG_LEFT)) {
-            MscLimb.Limb limb = limbAt(rest, KingerModel.pivot(group));
-            assertNotNull(limb, group + " is missing from the walk skeleton");
-            if (KingerModel.secondJoint(group) == null) {
-                assertNull(limb.joint(), group + " has no second joint and must not grow one in the pose");
-            } else {
-                assertEquals(0f, limb.joint().distance(KingerModel.secondJoint(group)), 1.0e-5f,
-                        group + " must fold exactly at the knee the display pieces fold at");
-            }
+    // ------------------------------------------------------------------ helpers
+
+    private static List<KingerModel.Pose> samplePoses() {
+        List<KingerModel.Pose> poses = new java.util.ArrayList<>();
+        for (float t = 0f; t <= 1f; t += 0.1f) {
+            poses.add(KingerModel.pose(t * 6f, true, t, -1f, 0.3f));
+            poses.add(KingerModel.pose(t * 6f, false, -1f, t, -0.3f));
         }
-
-        float halfWidth = (float) (0.25 * Kinger.MODEL_HITBOX_SCALE);
-        float height = (float) (1.975 * Kinger.MODEL_HITBOX_SCALE);
-        for (float phase = 0f; phase < (float) (2 * Math.PI); phase += 0.1f) {
-            List<MscLimb.Limb> posed = KingerModel.walkPose(phase);
-            assertEquals(rest.size(), posed.size());
-            for (int index = 0; index < posed.size(); index++) {
-                MscLimb.Limb limb = posed.get(index);
-                MscLimb.Limb idle = rest.get(index);
-                assertEquals(0f, limb.pivot().distance(idle.pivot()), 1.0e-5f,
-                        "a limb's pivot moved at phase " + phase);
-                if (limb.joint() == null) {
-                    assertEquals(idle.pivot().distance(idle.tip()), limb.pivot().distance(limb.tip()), 1.0e-4f,
-                            "a one-piece arm changed length at phase " + phase);
-                } else {
-                    assertEquals(idle.pivot().distance(idle.joint()), limb.pivot().distance(limb.joint()),
-                            1.0e-4f, "the thigh changed length at phase " + phase);
-                    assertEquals(idle.joint().distance(idle.tip()), limb.joint().distance(limb.tip()),
-                            1.0e-4f, "the shin came away from its knee at phase " + phase);
-                }
-                List<Vector3f> points = (limb.joint() == null)
-                        ? List.of(limb.pivot(), limb.tip())
-                        : List.of(limb.pivot(), limb.joint(), limb.tip());
-                for (Vector3f point : points) {
-                    assertTrue(Math.abs(point.x) < halfWidth,
-                            "the walk left the hitbox sideways at phase " + phase);
-                    assertTrue(Math.abs(point.z) < halfWidth,
-                            "the walk left the hitbox front or back at phase " + phase);
-                    assertTrue(point.y > 0f && point.y < height,
-                            "the walk left the hitbox vertically at phase " + phase);
-                }
-            }
-        }
-
-        // The knee folds on the back half of the step: the shin swings behind the straight leg and
-        // the foot comes closer to the hip, which is the fold the replay exists to show.
-        float backPhase = (float) (-Math.PI / 2);
-        MscLimb.Limb bent = limbAt(KingerModel.walkPose(backPhase), KingerModel.pivot(Kinger.LimbGroup.LEG_RIGHT));
-        MscLimb.Limb straight = limbAt(rest, KingerModel.pivot(Kinger.LimbGroup.LEG_RIGHT));
-        Vector3f straightFoot = MscLimb.swing(straight.tip(), straight.pivot(),
-                new Quaternionf().rotateX(KingerModel.walkSwing(Kinger.LimbGroup.LEG_RIGHT, backPhase)));
-        assertTrue(bent.tip().z > straightFoot.z, "the knee must fold the foot behind the straight leg");
-        assertTrue(bent.tip().distance(bent.pivot()) < straightFoot.distance(straight.pivot()),
-                "the fold must bring the foot closer to the hip, or the knee never bent");
-
-        // And the mob itself steps at the same rate the replay does.
-        String source = ProjectPaths.read(ProjectPaths.source("com", "Chagui68", "entities", "Kinger.java"));
-        assertTrue(source.contains("KingerModel.WALK_RATE"),
-                "the mob's own step and the walk replay must advance at the same rate");
+        return poses;
     }
 
-    private static MscLimb.Limb limbAt(List<MscLimb.Limb> limbs, Vector3f pivot) {
-        for (MscLimb.Limb limb : limbs) {
-            if (limb.pivot().distance(pivot) < 1.0e-5f) return limb;
-        }
-        return null;
+    private static Vector3f handTip(KingerModel.Pose pose) {
+        return KingerModel.rightHand(pose);
     }
 
-    private static float midTorso(char axis) {
-        float upper = axis == 'x' ? Kinger.KingerPart.TORSO_UPPER.offset.x : Kinger.KingerPart.TORSO_UPPER.offset.z;
-        float lower = axis == 'x' ? Kinger.KingerPart.TORSO_LOWER.offset.x : Kinger.KingerPart.TORSO_LOWER.offset.z;
-        return (upper + lower) * 0.5f;
+    private static Vector3f posed(Kinger.KingerPart part, KingerModel.Pose pose) {
+        return KingerModel.compose(part, pose).getTranslation();
     }
 
     private static Vector3f base(Kinger.KingerPart part) {
         return KingerModel.baseTranslation(part);
     }
 
-    private static float baseY(Kinger.KingerPart part) {
-        return base(part).y;
+    private static Vector3f centre(Kinger.KingerPart part) {
+        return KingerModel.centre(part);
     }
 
-    private static float topOf(Kinger.KingerPart part) {
-        return baseY(part) + part.scale.y * 0.25f;
-    }
-
-    private static float feetBottom() {
-        float lowest = Float.POSITIVE_INFINITY;
-        for (Kinger.KingerPart part : Kinger.KingerPart.values()) {
-            if (part.group() != Kinger.LimbGroup.LEG_RIGHT && part.group() != Kinger.LimbGroup.LEG_LEFT) continue;
-            lowest = Math.min(lowest, baseY(part) - part.scale.y * 0.25f);
-        }
-        return lowest;
-    }
-
-    private static boolean isLimb(Kinger.LimbGroup group) {
-        return group == Kinger.LimbGroup.ARM_RIGHT || group == Kinger.LimbGroup.ARM_LEFT
-                || group == Kinger.LimbGroup.LEG_RIGHT || group == Kinger.LimbGroup.LEG_LEFT;
+    private static Vector3f end(Kinger.KingerPart part) {
+        return KingerModel.end(part);
     }
 
     private static List<Kinger.KingerPart> membersOf(Kinger.LimbGroup group) {

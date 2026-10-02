@@ -164,7 +164,7 @@ Outfit: white stained-glass helmet + white leather armor (unbreakable).
 
 ## ♟️ Kinger — Miniboss (The Amazing Digital Circus)
 
-A living chess king: an invisible ArmorStand dressed in a 15-piece ItemDisplay suit (base, legs, torso, collar, belt, arms, head and ornament) that walks, fights and tracks players like a chess piece come to life. The stand is unscaled — a plain 0.5 × 1.975-block hitbox, sized to the suit instead of the old doubled one — and the pieces are grouped into limbs, so a leg swings from its hip and the shin follows the thigh rather than every piece turning on its own anchor — and the **knee bends with the step**, because the shin hinges on a second joint halfway between the exported thigh and shin instead of staying frozen against the thigh. The stride is calibrated to that box: even the deepest step keeps the folded shin over the stand, so a sword swing aimed at the leg never passes through empty air.
+A living chess king: an invisible ArmorStand dressed in a 15-piece ItemDisplay suit — a wooden head (neck, face, crown and cross) with two eyes, a purple robe in two pieces, two sleeved arms and two legs that fold at the knee. The skeleton is hierarchical: the legs swing from the hips, the torso leans about the hip line and carries the head and both arms with it, and the head turns about the neck with the eyes and crown as one piece. The stand is unscaled — a plain 0.5 × 1.975-block hitbox that covers the body; only the small hands poke a few centimetres out of the sides.
 
 | Stat | Default |
 |---|---|
@@ -182,8 +182,8 @@ A living chess king: an invisible ArmorStand dressed in a 15-piece ItemDisplay s
 
 - **Chases** the nearest player within aggro range (walks at `move-speed`, snaps to the ground) and **faces** the target while tracking its head pitch.
 - **Melee** (≤3 blocks): purple dust + smoke burst, `melee-damage` to all players within the melee radius, with a 1.3-velocity knockback.
-- **Ranged** (>3 and ≤30 blocks): fires a **ShulkerBullet** from the right hand (`MSC_KingerBullet`) with a shulker shoot sound.
-- **Animations**: walking sway, melee wind-up and ranged cast poses on the suit parts. Each piece belongs to a rigid limb group that revolves around one joint (hip, shoulder, waist or neck), so the suit stays in one piece while it moves.
+- **Ranged** (>3 and ≤30 blocks): raises his right arm until it points at the target, then fires a **ShulkerBullet** from that hand (`MSC_KingerBullet`) — damage and a short Darkness, no levitation.
+- **Animations**: a walk with arms swinging against the legs and knees that fold; a melee *Royal Decree* (both arms fly up, then sweep down and forward as he lunges — the hit lands at that moment); a ranged *Royal Command* (arm raised and pointed while he fires). His head follows the target from eye height: up for a player above him, down for one below.
 
 **Boss bar:** purple "Kinger" bar, always updated with current health.
 

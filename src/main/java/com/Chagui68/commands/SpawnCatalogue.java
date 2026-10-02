@@ -72,7 +72,7 @@ final class SpawnCatalogue {
                     (plugin, mobs, location) -> plugin.getGarouBoss().trySpawn(location)),
             new Type("kinger", List.of("kinger"),
                     "Kinger", "Kinger",
-                    "&5Kinger &7(Floating Digital Head Boss)", 1,
+                    "&5Kinger &7(The Chess King)", 1,
                     (plugin, mobs, location) -> plugin.getKinger().trySpawn(location)),
             new Type("disctrader", List.of("disctrader"),
                     "Disc Trader", "Disc Trader",

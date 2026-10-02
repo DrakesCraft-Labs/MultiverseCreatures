@@ -164,7 +164,7 @@ Atuendo: casco de vidrio blanco + armadura de cuero blanca (irrompible).
 
 ## ♟️ Kinger — Minijefe (The Amazing Digital Circus)
 
-Un rey de ajedrez viviente: un ArmorStand invisible vestido con un traje de 15 piezas ItemDisplay (base, piernas, torso, cuello, cinturón, brazos, cabeza y adorno) que camina, pelea y persigue jugadores como una pieza de ajedrez cobrada vida. El stand no lleva escala — una hitbox normal de 0.5 × 1.975 bloques, ajustada al traje en vez de la doblada anterior — y las piezas se agrupan en extremidades, así que una pierna gira desde su cadera y la espinilla sigue al muslo en lugar de girar cada pieza sobre su propia ancla — y la **rodilla se dobla con el paso**, porque la espinilla articula sobre una segunda articulación a medio camino entre el muslo y la espinilla exportados en vez de quedarse congelada contra el muslo. El paso está calibrado a esa caja: incluso el paso más profundo deja la espinilla doblada sobre el stand, así que un espadazo apuntado a la pierna nunca pasa por el aire.
+Un rey de ajedrez viviente: un ArmorStand invisible vestido con un traje de 15 piezas ItemDisplay — una cabeza de madera (cuello, cara, corona y cruz) con dos ojos, una túnica morada en dos piezas, dos brazos con manga y dos piernas que se doblan en la rodilla. El esqueleto es jerárquico: las piernas oscilan desde la cadera, el torso se inclina sobre la línea de la cadera y arrastra la cabeza y los brazos, y la cabeza gira sobre el cuello con los ojos y la corona como una sola pieza. El stand no está escalado — un hitbox normal de 0.5 × 1.975 bloques que cubre el cuerpo; solo las manos asoman unos centímetros por los lados.
 
 | Estadística | Valor por defecto |
 |---|---|
@@ -182,8 +182,8 @@ Un rey de ajedrez viviente: un ArmorStand invisible vestido con un traje de 15 p
 
 - **Persigue** al jugador más cercano dentro del rango de agresión (camina a `move-speed`, se ancla al suelo) y **mira** al objetivo mientras sigue su inclinación de cabeza.
 - **Cuerpo a cuerpo** (≤3 bloques): ráfaga de partículas púrpuras + humo, `melee-damage` a todos los jugadores dentro del radio cuerpo a cuerpo, con knockback de velocidad 1.3.
-- **A distancia** (>3 y ≤30 bloques): dispara una **ShulkerBullet** desde la mano derecha (`MSC_KingerBullet`) con sonido de disparo de shulker.
-- **Animaciones**: balanceo al caminar, preparación de golpe cuerpo a cuerpo y poses de lanzamiento a distancia en las piezas del traje. Cada pieza pertenece a un grupo de extremidad rígido que gira alrededor de una única articulación (cadera, hombro, cintura o cuello), así que el traje no se desmonta al moverse.
+- **A distancia** (>3 y ≤30 bloques): levanta el brazo derecho hasta apuntar al objetivo y dispara una **ShulkerBullet** desde esa mano (`MSC_KingerBullet`) — daño y una Oscuridad breve, sin levitación.
+- **Animaciones**: caminata con los brazos en contra de las piernas y rodillas que se doblan; melee *Decreto Real* (ambos brazos suben y luego barren hacia abajo y al frente mientras embiste — el golpe cae en ese momento); disparo *Orden Real* (brazo levantado apuntando mientras dispara). La cabeza sigue al objetivo desde la altura de los ojos: arriba si el jugador está más alto, abajo si está más bajo.
 
 **Barra de jefe:** barra púrpura "Kinger", siempre actualizada con la salud actual.
 
@@ -276,7 +276,8 @@ Tres segundos después de aparecer, y de nuevo en cada cambio de fase — cinco 
 
 Los golpes pasan por una sola puerta: primero el esquive **Ultra Instinct** (0.22, elevado a 0.45 en forma comprimida) y después el **Load Balancer**, que deja el 65% en el jefe y reparte el 35% entre cada jugador no creativo en 14 bloques. Un golpe que acierta siempre llega al jefe; `/msc debug` imprime el golpe previsto, el reparto y el valor aplicado.
 
-**Botín:** 950 XP y el `ArchitectKernel`, con un título final para cada jugador en 60 bloques.
+**Botín:** 950 XP y el `ArchitectKernel`, con un título final para cada jugador en 60 bloques.
+
 
 ---
 

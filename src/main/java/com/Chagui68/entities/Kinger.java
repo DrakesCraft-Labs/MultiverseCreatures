@@ -60,14 +60,14 @@ public class Kinger implements Listener {
      * its thigh and a boot plate follows its leg instead of each piece swinging from its own anchor.
      */
     public enum LimbGroup {
-        HEAD, TORSO_UPPER, TORSO_LOWER, ARM_RIGHT, ARM_LEFT, LEG_RIGHT, LEG_LEFT
+        HEAD, TORSO, ARM_RIGHT, ARM_LEFT, LEG_RIGHT, LEG_LEFT
     }
 
     public enum KingerPart {
-        BASE_LEFT("StormStormy",
+        ARM_LEFT("StormStormy",
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4NTI2OTQ0ODExNCwKICAicHJvZmlsZUlkIiA6ICI5MWYwNGZlOTBmMzY0M2I1OGYyMGUzMzc1Zjg2ZDM5ZSIsCiAgInByb2ZpbGVOYW1lIiA6ICJTdG9ybVN0b3JteSIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS82NTAwNmQxMmZlOGM3YWNhOTBhOGU4NzEwMDI4ZjZkOWVhODVmNDE2OGZhOWEyNmQxYWVlYTZiOTZhYzZlOWEyIiwKICAgICAgIm1ldGFkYXRhIiA6IHsKICAgICAgICAibW9kZWwiIDogInNsaW0iCiAgICAgIH0KICAgIH0KICB9Cn0=",
                 new float[]{0.1276971324f, 0.3221145439f, 0.0041503481f, 0.3886122987f, -0.2949017661f, 0.1617527436f, 0.002580528f, 0.6775875205f, 0.0005826184f, -0.0078345397f, 0.3280719816f, 0.501853708f, 0f, 0f, 0f, 1f}),
-        BASE_RIGHT("PatatjeMC",
+        ARM_RIGHT("PatatjeMC",
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4NTI2OTQ1MDYzNCwKICAicHJvZmlsZUlkIiA6ICIxMjE4YWNiNDJiYzA0MzY4YjIxOTU4ZTZiYWU2NDMyMCIsCiAgInByb2ZpbGVOYW1lIiA6ICJQYXRhdGplTUMiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzg0YmIxN2I5MmE1MzBkMjI3NDlmMGM0ODg3ZmVkNmI4OTg5NjMyNTUwYTE5NWMxNzQzMTk2NmExMWE0ZWQ2OCIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9",
                 new float[]{0.1201950133f, -0.289781228f, 0.0080174534f, 0.634953709f, 0.277548711f, 0.1455017004f, -0.0049849465f, 0.6814326334f, 0.0010592712f, 0.0136209663f, 0.3279271088f, 0.4967771821f, 0f, 0f, 0f, 1f}),
         LEG_RIGHT_LOWER("Roco_cop",
@@ -88,41 +88,44 @@ public class Kinger implements Listener {
         TORSO_LOWER("xentany",
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4NTI2OTQ2MTQ5MCwKICAicHJvZmlsZUlkIiA6ICI3MjU1MDA3NjQzYzQ0YTZiYjM3MjJlNzc3OTk5OTFkOSIsCiAgInByb2ZpbGVOYW1lIiA6ICJ4ZW50YW55IiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzQwNGY4OWZiYmE4Nzc4MGM1NzYxZDIyZDIyMDlkYWNlODIwMzdkMmVjNWM4MzQyOTM1ZDUzYjNhYjI3NmZkMmYiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfQogIH0KfQ==",
                 new float[]{0.73328125f, 0f, 0f, 0.5021828576f, 0f, 0.391015625f, 0f, 0.810135498f, 0f, 0f, 0.5625f, 0.5025390625f, 0f, 0f, 0f, 1f}),
-        NECK("PrinceCR",
+        HEAD("PrinceCR",
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4NTI2OTQ2MzUwMiwKICAicHJvZmlsZUlkIiA6ICI4MDQ2MzdjMTA1ZGY0MzM0ODE3YTNmMDcxMTMyOTYyMSIsCiAgInByb2ZpbGVOYW1lIiA6ICJQcmluY2VDUiIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS84NDAwNDk0MjNjNzlmNTcyYzRmZDZkZDMxNmQ0NmY4NjQ3ODRiNTRmMzJmMDI5Nzg0ZWNjZWRkZjBhNWE2MTM1IiwKICAgICAgIm1ldGFkYXRhIiA6IHsKICAgICAgICAibW9kZWwiIDogInNsaW0iCiAgICAgIH0KICAgIH0KICB9Cn0=",
                 new float[]{0.380859375f, 0f, 0f, 0.5052224005f, 0f, 0.6698198427f, 0.0066809993f, 1.5827280655f, 0f, -0.0143164272f, 0.4686786071f, 0.4711609839f, 0f, 0f, 0f, 1f}),
-        BELT("_pakman_",
+        NECK("_pakman_",
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4NTI2OTQ2NTI5MywKICAicHJvZmlsZUlkIiA6ICIwNDg2YWUwMWI4Y2I0OWUzODMyZDcwOTNmMWJlNzI3NyIsCiAgInByb2ZpbGVOYW1lIiA6ICJfcGFrbWFuXyIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS9jYmUzZDJlY2ViNzk1ZDQxZTFjZTU5ZTZmNjdkNzM0ZGUzYWNjMjU3MTYzYWY5MzcyYjQxOGVlMGM4NWViYzg0IiwKICAgICAgIm1ldGFkYXRhIiA6IHsKICAgICAgICAibW9kZWwiIDogInNsaW0iCiAgICAgIH0KICAgIH0KICB9Cn0=",
                 new float[]{0.2380371094f, 0f, 0f, 0.5052224005f, 0f, 0.4784427448f, 0.0041756246f, 1.3913218155f, 0f, -0.0102260194f, 0.2929241294f, 0.4711609839f, 0f, 0f, 0f, 1f}),
-        ARM_RIGHT("MineSkin_14",
+        EYE_RIGHT("MineSkin_14",
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4NTI2OTQ2NzcxMCwKICAicHJvZmlsZUlkIiA6ICI5MDczN2E1N2RlYjk0MWYxYTEyMzE1MmJkZmZjMTBmYiIsCiAgInByb2ZpbGVOYW1lIiA6ICJNaW5lU2tpbl8xNCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS9iNzBlNTIxZWZlOTI2Yzk2MjVmNTEyNTAxZTFiMzU0MTk4OTdmNjc0ODU3MTdhOGJkZDEzOTAyNjQyN2ZlMmMyIgogICAgfQogIH0KfQ==",
                 new float[]{0.2344292468f, -0.0246395067f, -0.0265026901f, 0.5764186975f, 0.0272583744f, 0.2371247105f, 0.013221886f, 1.511015625f, 0.0383150384f, -0.0245761095f, 0.2315287091f, 0.34375f, 0f, 0f, 0f, 1f}),
-        COLLAR("_pakman_",
+        CROWN("_pakman_",
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4NTI2OTQ2NTI5MywKICAicHJvZmlsZUlkIiA6ICIwNDg2YWUwMWI4Y2I0OWUzODMyZDcwOTNmMWJlNzI3NyIsCiAgInByb2ZpbGVOYW1lIiA6ICJfcGFrbWFuXyIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS9jYmUzZDJlY2ViNzk1ZDQxZTFjZTU5ZTZmNjdkNzM0ZGUzYWNjMjU3MTYzYWY5MzcyYjQxOGVlMGM4NWViYzg0IiwKICAgICAgIm1ldGFkYXRhIiA6IHsKICAgICAgICAibW9kZWwiIDogInNsaW0iCiAgICAgIH0KICAgIH0KICB9Cn0=",
                 new float[]{0.1904296875f, 0f, 0f, 0.5052224005f, 0f, 0.5741312937f, 0.0033404997f, 1.619095253f, 0f, -0.0122712233f, 0.2343393036f, 0.4711609839f, 0f, 0f, 0f, 1f}),
-        HEAD("8b2ca111504dde50",
+        CROSS("8b2ca111504dde50",
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4NTI2OTQ3MDAxNywKICAicHJvZmlsZUlkIiA6ICIzOTg5OGFiODFmMjU0NmQxOGIyY2ExMTE1MDRkZGU1MCIsCiAgInByb2ZpbGVOYW1lIiA6ICI4YjJjYTExMTUwNGRkZTUwIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2Q5YmIyNWI4ZjcyMDMyYWM1MDc2MzAxMzM2YjhjNDcxY2FmNTZiOTNhM2MyYzNmNmFhMDQzYzg2MDI5ZGM4MGMiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfQogIH0KfQ==",
                 new float[]{0.0476074219f, 0f, 0f, 0.5050075647f, 0f, 0.3349099213f, 0.0016702498f, 1.7741992188f, 0f, -0.0071582136f, 0.1171696518f, 0.4708984375f, 0f, 0f, 0f, 1f}),
-        ORNAMENT_RIGHT("8b2ca111504dde50",
+        CROSS_BAR("8b2ca111504dde50",
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4NTI2OTQ3MDAxNywKICAicHJvZmlsZUlkIiA6ICIzOTg5OGFiODFmMjU0NmQxOGIyY2ExMTE1MDRkZGU1MCIsCiAgInByb2ZpbGVOYW1lIiA6ICI4YjJjYTExMTUwNGRkZTUwIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2Q5YmIyNWI4ZjcyMDMyYWM1MDc2MzAxMzM2YjhjNDcxY2FmNTZiOTNhM2MyYzNmNmFhMDQzYzg2MDI5ZGM4MGMiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfQogIH0KfQ==",
                 new float[]{0f, 0.2856010262f, 0.0016617282f, 0.5764186975f, -0.0123848957f, -0.0048400124f, 0.0924280407f, 1.7048144531f, 0.0565972164f, -0.0015880131f, 0.0303257374f, 0.4603515625f, 0f, 0f, 0f, 1f}),
-        ARM_LEFT("ThadomInator478",
+        EYE_LEFT("ThadomInator478",
                 "ewogICJ0aW1lc3RhbXAiIDogMTc4NTI2OTQ3MTY2NSwKICAicHJvZmlsZUlkIiA6ICIzMzU3MWJiY2UyMDE0MTRiYmNkMDYyMjEyZTI4MjBlMyIsCiAgInByb2ZpbGVOYW1lIiA6ICJUaGFkb21JbmF0b3I0NzgiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjcyMjQ5NDc3ODNlYjNkMjA3ZTZlZjM2M2JiOTAyMmU5ZmYwMWZjNDc5ZDg4NDRjZDQ4MmIwNjc5MWNkNTczYyIKICAgIH0KICB9Cn0=",
                 new float[]{0.2338185397f, 0.0370332185f, 0.0199053226f, 0.4335964318f, -0.035613916f, 0.2360094161f, -0.0132786824f, 1.4631640625f, -0.0333698349f, 0.0154059474f, 0.2325232711f, 0.34375f, 0f, 0f, 0f, 1f});
 
         /**
-         * The limb this piece belongs to. The head is its own group so it can pitch at a player;
-         * the belt, collar and shoulder ornament ride the trunk; each boot plate rides its leg.
+         * The limb this piece belongs to. The whole wooden head — neck, face, crown, cross and both
+         * eyes — turns as one; the two robe pieces are the torso; each sleeve is an arm.
+         *
+         * <p>The names follow the skins, not the old guesses: the two pieces once called the arms are
+         * the eyes (white, blue iris), which is why Kinger used to "attack with his eyes", and the
+         * two once called boot plates are the purple sleeves with white hands.
          */
         public LimbGroup group() {
             return switch (this) {
-                case HEAD -> LimbGroup.HEAD;
-                case TORSO_UPPER, NECK, BELT, COLLAR, ORNAMENT_RIGHT -> LimbGroup.TORSO_UPPER;
-                case TORSO_LOWER -> LimbGroup.TORSO_LOWER;
+                case NECK, HEAD, CROWN, CROSS, CROSS_BAR, EYE_RIGHT, EYE_LEFT -> LimbGroup.HEAD;
+                case TORSO_UPPER, TORSO_LOWER -> LimbGroup.TORSO;
                 case ARM_RIGHT -> LimbGroup.ARM_RIGHT;
                 case ARM_LEFT -> LimbGroup.ARM_LEFT;
-                case LEG_RIGHT_UPPER, LEG_RIGHT_LOWER, BASE_RIGHT -> LimbGroup.LEG_RIGHT;
-                case LEG_LEFT_UPPER, LEG_LEFT_LOWER, BASE_LEFT -> LimbGroup.LEG_LEFT;
+                case LEG_RIGHT_UPPER, LEG_RIGHT_LOWER -> LimbGroup.LEG_RIGHT;
+                case LEG_LEFT_UPPER, LEG_LEFT_LOWER -> LimbGroup.LEG_LEFT;
             };
         }
 
@@ -157,11 +160,10 @@ public class Kinger implements Listener {
         public static final Vector3f CENTER;
 
         static {
-            // The torso is the axis the whole suit hangs from: both torso pieces, the four leg pieces
-            // and the head share its x/z to within a millimetre, so centring on it is what puts the
-            // visible body over the invisible armour stand that carries the hitbox. The old average
-            // of all fifteen anchors was dragged 0.03 blocks forward by the arms, and the bounding-box
-            // midpoint 0.08, because both of those sit well in front of the trunk.
+            // The torso is the axis the whole suit hangs from: both robe pieces and the four leg
+            // pieces share its x/z to within a millimetre, so centring on it is what puts the visible
+            // body over the invisible armour stand that carries the hitbox. The average of all fifteen
+            // anchors would be dragged forward by the eyes, which sit on the front of the face.
             Vector3f axis = new Vector3f(TORSO_UPPER.offset).add(TORSO_LOWER.offset).mul(0.5f);
             CENTER = new Vector3f(axis.x, 0f, axis.z);
         }
@@ -179,12 +181,10 @@ public class Kinger implements Listener {
     /**
      * Scale of the invisible armour stand that carries the hitbox.
      *
-     * <p>The suit reaches 0.22 blocks from the torso axis and 1.86 blocks up, so a plain unscaled
-     * armour stand (0.5 wide, 1.975 tall) already covers the whole rest pose; 0.94 is the smallest
-     * scale that would. The old literal 2.0 doubled the box in every direction, so a swing aimed a
-     * block clear of the chess piece still landed on it; 1.0 keeps the hitbox on the body it is
-     * meant to stand for. Pieces that swing outside the box are not unclickable: their damage
-     * routes to the stand through {@link #onEntityDamageByEntity}.
+     * <p>The body — robe, legs and head — reaches under 0.2 blocks from the torso axis and 1.78
+     * blocks up, so a plain unscaled armour stand (0.5 wide, 1.975 tall) covers it; only the two
+     * small hands poke a few centimetres out of the sides. The old literal 2.0 doubled the box in
+     * every direction, so a swing aimed a block clear of the chess piece still landed on it.
      */
     public static final double MODEL_HITBOX_SCALE = 1.0;
 
@@ -269,9 +269,10 @@ public class Kinger implements Listener {
                 if (!display.getScoreboardTags().contains(PART_TAG)) continue;
                 boolean hasOwner = display.getScoreboardTags().stream()
                         .anyMatch(tag -> tag.startsWith(PART_OWNER_TAG_PREFIX));
-                // Pieces made by pre-ownership builds cannot be reattached to a stand, so removing
-                // them is the only way to avoid a second suit standing next to the real one.
-                if (!hasOwner) {
+                // Pieces made by pre-ownership builds cannot be reattached to a stand, and pieces of an
+                // older suit carry names that mean something else now: removing both is the only way
+                // to avoid a second suit standing inside the real one.
+                if (!hasOwner || !isCurrentPiece(display.getScoreboardTags())) {
                     display.remove();
                     continue;
                 }
@@ -305,9 +306,25 @@ public class Kinger implements Listener {
         }
     }
 
+    /**
+     * Version of the suit's piece tags. Bumped when the pieces were renamed after what they really
+     * are: a piece spawned by an older build carries an old name — an "arm" that is really an eye —
+     * so it is never adopted under the new one; {@link #reloadExisting} removes it and the next sync
+     * dresses the stand again.
+     */
+    static final String SUIT_VERSION = "v2";
+
     /** Every piece carries its own tag, so an adoption can tell the pieces apart. */
     static String partTag(KingerPart part) {
-        return PART_TAG + "_" + part.name();
+        return PART_TAG + "_" + SUIT_VERSION + "_" + part.name();
+    }
+
+    /** Whether a piece was spawned by this build's suit, under one of the current piece names. */
+    static boolean isCurrentPiece(java.util.Set<String> tags) {
+        for (KingerPart part : KingerPart.values()) {
+            if (tags.contains(partTag(part))) return true;
+        }
+        return false;
     }
 
     static String partOwnerTag(UUID ownerId) {
@@ -368,10 +385,11 @@ public class Kinger implements Listener {
                 inst.meleeCooldown = meleeCooldownTicks;
                 inst.meleePending = true;
             } else if (distSq > meleeRangeSq && distSq <= (rangedRange * rangedRange) && inst.rangedCooldown <= 0
-                    && !swinging && stand.hasLineOfSight(target)) {
-                rangedAttack(stand, target);
+                    && !swinging && inst.rangedAnim <= 0 && stand.hasLineOfSight(target)) {
+                // He raises his hand first; the shot leaves it once the arm points at the target.
                 inst.rangedAnim = rangedAnimTicks;
                 inst.rangedCooldown = rangedCooldownTicks;
+                inst.rangedPending = true;
             }
         } else {
             inst.moving = false;
@@ -383,6 +401,10 @@ public class Kinger implements Listener {
         if (inst.meleePending && isMeleeImpactTick(inst.meleeAnim, meleeAnimTicks)) {
             inst.meleePending = false;
             meleeAttack(stand);
+        }
+        if (inst.rangedPending && progress(inst.rangedAnim, rangedAnimTicks) >= KingerModel.RANGED_FIRE_PROGRESS) {
+            inst.rangedPending = false;
+            if (target != null) rangedAttack(inst, target);
         }
 
         snapToGround(stand);
@@ -427,7 +449,10 @@ public class Kinger implements Listener {
 
     private void faceTarget(ArmorStand stand, Player target) {
         Location loc = stand.getLocation();
-        loc.setDirection(target.getLocation().toVector().subtract(loc.toVector()).setY(0));
+        Vector to = target.getLocation().toVector().subtract(loc.toVector()).setY(0);
+        // Standing inside him: a zero direction would tip the stand's pitch to the vertical.
+        if (to.lengthSquared() < 1.0e-4) return;
+        loc.setDirection(to);
         stand.teleport(loc);
     }
 
@@ -491,9 +516,10 @@ public class Kinger implements Listener {
         }
     }
 
-    private void rangedAttack(ArmorStand stand, Player target) {
+    private void rangedAttack(KingerInstance inst, Player target) {
+        ArmorStand stand = inst.stand;
         World world = stand.getWorld();
-        Location hand = partWorldLocation(stand, KingerPart.ARM_RIGHT);
+        Location hand = modelToWorld(stand, KingerModel.rightHand(pose(inst)));
         world.playSound(hand, Sound.ENTITY_SHULKER_SHOOT, 1.0f, 1.2f);
         world.spawnParticle(Particle.DUST, hand, 12, 0.3, 0.3, 0.3, 0,
                 new Particle.DustOptions(Color.fromRGB(0xBB66FF), 1.2f));
@@ -501,7 +527,8 @@ public class Kinger implements Listener {
         bullet.addScoreboardTag(BULLET_TAG);
         bullet.setShooter(stand);
         bullet.setTarget(target);
-        Vector vel = target.getLocation().toVector().subtract(hand.toVector()).normalize().multiply(1.5);
+        Vector vel = MscEntityUtils.direction(hand.toVector(), target.getEyeLocation().toVector(),
+                stand.getLocation().getDirection()).multiply(1.5);
         bullet.setVelocity(vel);
         bullet.setSilent(true);
         bullet.setGlowing(true);
@@ -524,12 +551,14 @@ public class Kinger implements Listener {
     private void syncDisplays(KingerInstance inst) {
         ArmorStand stand = inst.stand;
         Location root = standRoot(stand);
+        KingerModel.Pose pose = pose(inst);
+        boolean dressed = false;
         for (KingerPart part : KingerPart.values()) {
             UUID id = inst.partDisplays.get(part);
             Entity e = (id != null) ? root.getWorld().getEntity(id) : null;
             if (e instanceof ItemDisplay display && display.isValid()) {
                 display.teleport(root);
-                display.setTransformation(buildTransformation(part, inst));
+                display.setTransformation(KingerModel.compose(part, pose));
             } else {
                 // A reload with the piece's chunk unloaded hides it from restorePartDisplays;
                 // adopting the piece still tagged for this stand avoids a second, overlapping suit.
@@ -539,7 +568,22 @@ public class Kinger implements Listener {
                 } else {
                     ItemDisplay display = spawnPart(root, part, stand.getUniqueId());
                     inst.partDisplays.put(part, display.getUniqueId());
+                    dressed = true;
                 }
+            }
+        }
+        // A stand dressed again after its chunk came back may still wear the pieces of an older
+        // suit that the startup sweep could not see.
+        if (dressed) removeStalePieces(stand);
+    }
+
+    /** Removes this stand's pieces that an older build spawned under names that mean something else now. */
+    private void removeStalePieces(ArmorStand stand) {
+        String ownerTag = partOwnerTag(stand.getUniqueId());
+        for (Entity entity : stand.getWorld().getNearbyEntities(stand.getLocation(), 6.0, 8.0, 6.0)) {
+            if (entity instanceof ItemDisplay display && display.getScoreboardTags().contains(ownerTag)
+                    && !isCurrentPiece(display.getScoreboardTags())) {
+                display.remove();
             }
         }
     }
@@ -558,14 +602,13 @@ public class Kinger implements Listener {
                 tags(part, inst.stand.getUniqueId()));
     }
 
-    /** The world point one piece's anchor rests at, used to fire the right hand's bullet. */
-    private Location partWorldLocation(ArmorStand stand, KingerPart part) {
+    /** The world point a model-space point of the suit is drawn at: where the right hand fires from. */
+    private Location modelToWorld(ArmorStand stand, Vector3f point) {
         Location base = standRoot(stand);
         double yawRad = Math.toRadians(base.getYaw());
         double cos = Math.cos(yawRad);
         double sin = Math.sin(yawRad);
-        Vector3f off = KingerModel.baseTranslation(part);
-        base.add(off.x * cos - off.z * sin, off.y, off.x * sin + off.z * cos);
+        base.add(point.x * cos - point.z * sin, point.y, point.x * sin + point.z * cos);
         return base;
     }
 
@@ -586,88 +629,33 @@ public class Kinger implements Listener {
         return new DisplaySuit.SuitTags(PART_TAG, partTag(part), partOwnerTag(ownerId));
     }
 
-    /**
-     * Builds the transform of one piece: a rigid rotation about its limb's joint and, for a piece
-     * below the knee, the fold of that joint on top of it.
-     */
+    /** The transform of one piece in the pose Kinger is in this tick, or at rest before he has one. */
     private Transformation buildTransformation(KingerPart part, KingerInstance inst) {
-        Quaternionf limbRot = (inst != null) ? computeLimbQuat(part.group(), inst) : new Quaternionf();
-        Quaternionf lowerRot = (inst != null) ? computeLowerQuat(part, inst) : new Quaternionf();
-        return KingerModel.compose(part, limbRot, lowerRot);
+        return KingerModel.compose(part, inst != null ? pose(inst) : KingerModel.Pose.rest());
     }
 
     /**
-     * The rotation of the segment below a limb's joint. Folds during walking and during a melee swing:
-     * the knees flex into the strike to support the violent attack impulse.
+     * The pose for this tick: the walk, the swing or the shot, and the head following his target.
+     * Built once per sync; the head looks from his eyes, not from his feet, so a player in front of
+     * him is looked at instead of the floor at his feet.
      */
-    private Quaternionf computeLowerQuat(KingerPart part, KingerInstance inst) {
-        if (inst == null) return new Quaternionf();
-        if (inst.meleeAnim > 0) {
-            float prog = 1f - (float) inst.meleeAnim / meleeAnimTicks;
-            return KingerModel.meleeLowerRotation(part, prog);
+    private KingerModel.Pose pose(KingerInstance inst) {
+        float melee = inst.meleeAnim > 0 ? progress(inst.meleeAnim, meleeAnimTicks) : -1f;
+        float ranged = inst.rangedAnim > 0 ? progress(inst.rangedAnim, rangedAnimTicks) : -1f;
+        float look = 0f;
+        Player target = inst.targetId != null ? Bukkit.getPlayer(inst.targetId) : null;
+        if (target != null && target.isOnline() && target.getWorld().equals(inst.stand.getWorld())) {
+            Vector to = target.getEyeLocation().toVector()
+                    .subtract(inst.stand.getLocation().toVector().add(new Vector(0, KingerModel.EYE_HEIGHT, 0)));
+            look = KingerModel.lookPitch(to.getY(), Math.hypot(to.getX(), to.getZ()));
         }
-        if (inst.moving) {
-            return KingerModel.lowerRotation(part, inst.animTicks);
-        }
-        return new Quaternionf();
+        return KingerModel.pose(inst.animTicks, inst.moving, melee, ranged, look);
     }
 
-    private Quaternionf computeLimbQuat(LimbGroup group, KingerInstance inst) {
-        Quaternionf q = new Quaternionf();
-        float s = inst.animTicks;
-        boolean walking = inst.moving;
-        switch (group) {
-            case LEG_RIGHT, LEG_LEFT -> {
-                if (walking) q.rotateX(KingerModel.walkSwing(group, s));
-            }
-            case ARM_RIGHT -> {
-                if (inst.meleeAnim > 0) {
-                    float prog = 1f - (float) inst.meleeAnim / meleeAnimTicks;
-                    q.rotateX((float) (Math.sin(prog * Math.PI) * -3.0));
-                } else if (inst.rangedAnim > 0) {
-                    q.rotateX(3.0f);
-                } else if (walking) {
-                    q.rotateX(KingerModel.walkSwing(group, s));
-                }
-            }
-            case ARM_LEFT -> {
-                if (inst.meleeAnim > 0) {
-                    float prog = 1f - (float) inst.meleeAnim / meleeAnimTicks;
-                    q.rotateX((float) (Math.sin(prog * Math.PI) * 3.0));
-                } else if (inst.rangedAnim > 0) {
-                    q.rotateX(3.0f);
-                } else if (walking) {
-                    q.rotateX(KingerModel.walkSwing(group, s));
-                }
-            }
-            case TORSO_UPPER, TORSO_LOWER -> {
-                if (inst.meleeAnim > 0) {
-                    float prog = 1f - (float) inst.meleeAnim / meleeAnimTicks;
-                    q.rotateX((float) (Math.sin(prog * Math.PI) * -0.5));
-                } else if (inst.rangedAnim > 0) {
-                    q.rotateX(0.4f);
-                } else if (walking) {
-                    q.rotateX((float) (Math.sin(s) * 0.05));
-                }
-            }
-            case HEAD -> {
-                Player target = inst.targetId != null ? Bukkit.getPlayer(inst.targetId) : null;
-                if (inst.meleeAnim > 0) {
-                    q.rotateX((float) Math.toRadians(-15));
-                } else if (inst.rangedAnim > 0) {
-                    q.rotateX((float) Math.toRadians(-55));
-                } else if (target != null && target.isOnline()) {
-                    Vector to = target.getEyeLocation().toVector().subtract(inst.stand.getLocation().toVector());
-                    double horiz = Math.sqrt(to.getX() * to.getX() + to.getZ() * to.getZ());
-                    if (horiz > 0.5) {
-                        float pitch = (float) Math.toDegrees(Math.atan2(-to.getY(), horiz));
-                        pitch = Math.max(-35, Math.min(35, pitch));
-                        q.rotateX((float) Math.toRadians(pitch));
-                    }
-                }
-            }
-        }
-        return q;
+    /** How far through an animation of {@code total} ticks one with {@code remaining} left is, in [0, 1]. */
+    static float progress(int remaining, int total) {
+        if (total <= 0) return 1f;
+        return Math.max(0f, Math.min(1f, 1f - (float) remaining / total));
     }
 
     public boolean trySpawn(Location location) {
@@ -878,6 +866,8 @@ public class Kinger implements Listener {
         public int rangedAnim;
         /** A swing has started and its hit has not landed yet. */
         public boolean meleePending;
+        /** A shot has been wound up and has not left his hand yet. */
+        public boolean rangedPending;
         public boolean moving;
         public float animTicks;
         public int tickCount;
