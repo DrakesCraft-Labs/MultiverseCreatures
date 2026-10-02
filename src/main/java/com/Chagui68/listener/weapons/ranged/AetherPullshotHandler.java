@@ -79,7 +79,7 @@ public class AetherPullshotHandler implements Listener {
 
                 Location pLoc = p.getLocation();
                 Location tLoc = target.getLocation();
-                Vector dir = pLoc.toVector().subtract(tLoc.toVector()).normalize();
+                Vector dir = com.Chagui68.utils.MscEntityUtils.horizontalDirection(tLoc, pLoc);
                 target.setVelocity(dir.multiply(AetherPullshot.PULL_SPEED).setY(0.2));
 
                 if (tLoc.distance(pLoc) < 2) {

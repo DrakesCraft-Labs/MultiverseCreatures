@@ -790,7 +790,7 @@ public class JackStarBoss implements Listener {
 
             dealToPlayer(stand, p, meleeDamage * (scale > 1.5f ? 1.4 : 1.0), "Three-Slash");
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1, false, true));
-            Vector knock = p.getLocation().toVector().subtract(stand.getLocation().toVector()).normalize().multiply(0.7 * scale).setY(0.25);
+            Vector knock = MscEntityUtils.horizontalDirection(stand.getLocation(), p.getLocation()).multiply(0.7 * scale).setY(0.25);
             p.setVelocity(knock);
         }
     }

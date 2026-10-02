@@ -323,12 +323,19 @@ public final class LiveStage implements Stage {
 
         @Override
         public void push(Vector velocity) {
+            if (!isFinite(velocity)) return;
             player.setVelocity(player.getVelocity().add(velocity));
         }
 
         @Override
         public void fling(Vector velocity) {
+            if (!isFinite(velocity)) return;
             player.setVelocity(velocity);
+        }
+
+        /** A direction normalised from two coinciding points is NaN; setVelocity would throw. */
+        private static boolean isFinite(Vector v) {
+            return Double.isFinite(v.getX()) && Double.isFinite(v.getY()) && Double.isFinite(v.getZ());
         }
 
         @Override

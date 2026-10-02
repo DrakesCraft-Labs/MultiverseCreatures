@@ -170,7 +170,7 @@ public class GarouBoss implements Listener {
                     w.spawnParticle(Particle.REVERSE_PORTAL, gLoc.clone().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.1);
                     w.playSound(gLoc, Sound.ENTITY_ENDERMAN_TELEPORT, 1.2f, 0.8f);
 
-                    Vector dir = tLoc.toVector().subtract(gLoc.toVector()).normalize().multiply(1.5);
+                    Vector dir = MscEntityUtils.horizontalDirection(gLoc, tLoc).multiply(1.5);
                     dir.setY(0.35);
                     garou.setVelocity(dir);
 
@@ -188,7 +188,7 @@ public class GarouBoss implements Listener {
                     for (Entity nearby : garou.getNearbyEntities(4.0, 3.0, 4.0)) {
                         if (nearby instanceof LivingEntity le && !(nearby instanceof WitherSkeleton)) {
                             le.damage(skillDamage, garou);
-                            le.setVelocity(le.getLocation().toVector().subtract(gLoc.toVector()).normalize().multiply(0.8).setY(0.3));
+                            le.setVelocity(MscEntityUtils.horizontalDirection(gLoc, le.getLocation()).multiply(0.8).setY(0.3));
                         }
                     }
                 }
@@ -236,7 +236,7 @@ public class GarouBoss implements Listener {
             if (event.getDamager() instanceof LivingEntity damager) {
                 damager.damage(counterDamage, garou);
                 damager.sendMessage(ChatColor.DARK_PURPLE + "[Garou]" + ChatColor.GRAY + " Your strike was deflected by the Water Stream Fist!");
-                damager.setVelocity(damager.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(0.9).setY(0.3));
+                damager.setVelocity(MscEntityUtils.horizontalDirection(loc, damager.getLocation()).multiply(0.9).setY(0.3));
             }
         }
     }

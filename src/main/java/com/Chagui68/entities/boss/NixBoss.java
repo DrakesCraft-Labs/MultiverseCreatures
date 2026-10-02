@@ -637,7 +637,7 @@ public class NixBoss implements Listener {
         }
 
         // Pull player toward Nix
-        Vector pull = stand.getLocation().toVector().subtract(target.getLocation().toVector()).normalize().multiply(1.35);
+        Vector pull = MscEntityUtils.horizontalDirection(target.getLocation(), stand.getLocation()).multiply(1.35);
         pull.setY(0.35);
         target.setVelocity(pull);
         target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 50, 0, false, false));

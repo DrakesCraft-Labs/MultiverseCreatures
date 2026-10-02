@@ -39,6 +39,28 @@ public final class MscEntityUtils {
     private MscEntityUtils() {
     }
 
+    /**
+     * Unit vector from {@code from} towards {@code to}, or {@code fallback} when the two points
+     * (nearly) coincide. A plain {@code subtract(...).normalize()} turns into NaN there, and
+     * {@code setVelocity} throws "x not finite" — a player standing inside a boss is enough.
+     */
+    public static org.bukkit.util.Vector direction(org.bukkit.util.Vector from, org.bukkit.util.Vector to,
+                                                   org.bukkit.util.Vector fallback) {
+        org.bukkit.util.Vector delta = to.clone().subtract(from);
+        if (delta.lengthSquared() < 1.0E-6 || !Double.isFinite(delta.lengthSquared())) {
+            return fallback.clone();
+        }
+        return delta.normalize();
+    }
+
+    /** {@link #direction} on the horizontal plane, falling back to {@code fallback}'s heading. */
+    public static org.bukkit.util.Vector horizontalDirection(Location from, Location to) {
+        org.bukkit.util.Vector heading = from.getDirection().setY(0);
+        org.bukkit.util.Vector fallback = heading.lengthSquared() < 1.0E-6
+                ? new org.bukkit.util.Vector(1, 0, 0) : heading.normalize();
+        return direction(from.toVector().setY(0), to.toVector().setY(0), fallback);
+    }
+
     public static void setAttribute(Entity entity, Attribute attribute, double value) {
         if (entity instanceof LivingEntity le) {
             AttributeInstance attr = le.getAttribute(attribute);

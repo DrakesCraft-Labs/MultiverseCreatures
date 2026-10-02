@@ -891,7 +891,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         for (Player p : getValidPlayers(world)) {
             double distSq = p.getLocation().distanceSquared(loc);
             if (distSq < 900.0) {
-                Vector away = p.getLocation().toVector().subtract(loc.toVector()).normalize();
+                Vector away = MscEntityUtils.horizontalDirection(loc, p.getLocation());
                 p.setVelocity(away.multiply(2.0).setY(1.0));
                 MscEntityUtils.damageBy(stand.entidad(), p, phaseTransitionSlamDamage);
                 p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 0));
