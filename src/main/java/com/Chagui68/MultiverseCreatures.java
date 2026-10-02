@@ -34,6 +34,7 @@ import com.Chagui68.listener.bossdimension.BossInvocationManager;
 import com.Chagui68.listener.bossdimension.JackInvocationManager;
 import com.Chagui68.listener.bossdimension.DioInvocationManager;
 import com.Chagui68.listener.bossdimension.NixInvocationManager;
+import com.Chagui68.listener.bossdimension.PantheonInvocationManager;
 import com.Chagui68.listener.combat.ItemCombatHandler;
 import com.Chagui68.listener.CustomItemPlaceHandler;
 import com.Chagui68.listener.ComponentEventGuard;
@@ -94,6 +95,8 @@ public class MultiverseCreatures extends JavaPlugin {
     private JackStarBoss jackStarBoss;
     private DioBoss dioBoss;
     private JackInvocationManager jackInvocationManager;
+    /** DrakesBosses' gods, summoned at the Pantheon Altars of the Boss Dimension. */
+    private PantheonInvocationManager pantheonInvocationManager;
     private DiscTrader discTrader;
     private Warlord warlord;
     private DiscJukeboxHandler discJukeboxHandler;
@@ -222,6 +225,8 @@ public class MultiverseCreatures extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new DioInvocationManager(this), this);
         jackInvocationManager = new JackInvocationManager(this);
         getServer().getPluginManager().registerEvents(jackInvocationManager, this);
+        pantheonInvocationManager = new PantheonInvocationManager(this);
+        getServer().getPluginManager().registerEvents(pantheonInvocationManager, this);
 
         getServer().getPluginManager().registerEvents(new CinderGreatswordHandler(this), this);
         getServer().getPluginManager().registerEvents(new VeilwalkerMantleHandler(this), this);
@@ -294,6 +299,7 @@ public class MultiverseCreatures extends JavaPlugin {
         if (nixBoss != null) nixBoss.stopTasks();
         if (jackStarBoss != null) jackStarBoss.stopTasks();
         if (dioBoss != null) dioBoss.stopTasks();
+        if (pantheonInvocationManager != null) pantheonInvocationManager.stopTasks();
         if (itemCombatHandler != null) itemCombatHandler.stopTasks();
         if (wirtsLanternHandler != null) wirtsLanternHandler.stopTasks();
         if (mantisClawsHandler != null) mantisClawsHandler.stopTasks();
@@ -409,12 +415,13 @@ public class MultiverseCreatures extends JavaPlugin {
         return dioBoss;
     }
 
-    /** Whether any of the arena bosses is fighting in {@code world}. */
+    /** Whether any of the arena bosses, or a summoned DrakesBosses god, is fighting in {@code world}. */
     public boolean isBossFightIn(org.bukkit.World world) {
         return (armorStandBoss != null && armorStandBoss.isBossActiveIn(world))
                 || (nixBoss != null && nixBoss.isBossActiveIn(world))
                 || (jackStarBoss != null && jackStarBoss.isBossActiveIn(world))
-                || (dioBoss != null && dioBoss.isBossActiveIn(world));
+                || (dioBoss != null && dioBoss.isBossActiveIn(world))
+                || (pantheonInvocationManager != null && pantheonInvocationManager.isBossActiveIn(world));
     }
 
     public JackInvocationManager getJackInvocationManager() {

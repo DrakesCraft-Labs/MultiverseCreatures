@@ -170,6 +170,46 @@ S . . . S
 
 ---
 
+## 🏛️ Dioses de DrakesBosses: el Altar del Panteón
+
+Con **DrakesBosses** instalado (dependencia suave), sus dioses también se pueden invocar dentro de `boss_dimension`. Sin DrakesBosses el altar no responde. DrakesBosses spawnea al dios con sus propias stats, habilidades, loot y recompensas.
+
+### Diseño (5×5)
+
+```
+P . . . P        P = Pilar de esquina (2 bloques de alto)
+. . c . .        c = Vela del panteón (encendida)
+. c A c .        A = Núcleo del altar
+. . c . .
+P . . . P
+```
+
+| Panteón | Velas | Núcleo `(2, 0, 2)` | Pilares |
+|---|---|---|---|
+| **Olimpo** | `white_candle` | `chiseled_quartz_block` | `quartz_pillar` |
+| **Asgard** | `green_candle` | `chiseled_deepslate` | `spruce_log` |
+| **Duat** | `orange_candle` | `chiseled_sandstone` | `smooth_sandstone` |
+| **el Vacío** | `purple_candle` | `end_stone_bricks` | `purpur_pillar` |
+
+### Ofrendas (por defecto, configurables en `drakes-bosses.offerings`)
+
+| Panteón | Dios ← ofrenda |
+|---|---|
+| Olimpo | Zeus ← `lightning_rod` · Poseidón ← `heart_of_the_sea` · Hades ← `wither_skeleton_skull` · Ares ← `netherite_sword` · Artemisa ← `spectral_arrow` · Prometeo ← `fire_charge` · Circe ← `amethyst_shard` · Polifemo ← `fermented_spider_eye` · Kratos ← `netherite_axe` · Tifón ← `magma_block` · Hidra ← `prismarine_shard` · Cerbero ← `bone_block` |
+| Asgard | Thor ← `iron_block` · Odín ← `gold_block` · Loki ← `ender_pearl` · Heimdall ← `blaze_rod` |
+| Duat | Ra ← `golden_carrot` · Isis ← `feather` · Anubis ← `rotten_flesh` · Set ← `redstone_block` |
+| el Vacío | Coloso del End ← `echo_shard` · Garou Cósmico ← `nether_star` · Dios Corrupto ← `totem_of_undying` · Wither Storm ← `wither_rose` · Dragón Ancestral ← `dragon_breath` · Jax ← `lantern` |
+
+### Procedimiento
+1. Construye el altar del panteón en cualquier lugar de `boss_dimension` (coordenadas relativas a la esquina suroeste; el suelo no se comprueba).
+2. Enciende las **4 velas** y haz clic derecho en una de ellas. El altar despierta: luz desde los pilares, un pentagrama girando en el suelo, y el chat lista las ofrendas que acepta.
+3. **Suelta (Q) la ofrenda** del dios sobre el núcleo (a menos de **3 bloques**). Se consume **una** unidad; el resto del stack queda en el suelo. Una ofrenda de otro panteón se rechaza sin consumirse.
+4. Tras `drakes-bosses.arrival-delay-ticks` (40 por defecto) cae un rayo y el dios aparece sobre el núcleo. Si DrakesBosses no puede spawnearlo (p. ej. Jax desactivado), la ofrenda se devuelve.
+
+> Un altar por mundo a la vez, y no despierta si ya hay un jefe peleando en la dimensión. Mientras el dios vive se aplican los bloqueos de construcción y comandos. Un dios sin jugadores a menos de 64 bloques durante `drakes-bosses.no-player-despawn-seconds` (300 por defecto; 0 = nunca) se retira para no bloquear la dimensión.
+
+---
+
 ## 🚪 Salir
 
 Con el jefe inactivo puedes salir directamente con **`/msc dimtp`** (los comandos solo se bloquean durante la pelea). Si quieres salir por medios del juego, o si el jefe sigue activo, la única salida es **el mismo ritual usado para entrar**:
@@ -189,4 +229,4 @@ Con el jefe inactivo puedes salir directamente con **`/msc dimtp`** (los comando
 - Reglas del mundo: sin ciclo de día/noche, sin ciclo de clima, sin spawns de mobs, reaparición inmediata, sin anuncios de avances.
 - El cielo se fuerza a rojo vía un override de bioma; `boss-dimension.red-sky: false` lo deja como está (el tinte se aplica a un bioma vanilla, así que es global).
 - Config: `boss-dimension.red-sky`, `boss-dimension.size` y `boss-dimension.reset-on-load`.
-- Clases relevantes: `BossDimensionManager`, `Wasteland`, `WastelandGenerator`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure` — ver [Arquitectura](./dev/Architecture.md) y [Tests](./dev/Tests.md).
+- Clases relevantes: `BossDimensionManager`, `Wasteland`, `WastelandGenerator`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure`, `PantheonInvocationManager`, `PantheonAltarStructure`, `PantheonGod` — ver [Arquitectura](./dev/Architecture.md) y [Tests](./dev/Tests.md).

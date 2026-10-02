@@ -4,7 +4,7 @@
 # Version of this file. A server that updates the plugin keeps its own config.yml and the plugin
 # adds whatever keys are missing on start (values you edited are never touched), stamping the new
 # version here. See MscConfigMigration.CONFIG_VERSION — keep the two in step.
-config-version: 1
+config-version: 2
 #
 # All paths match the code:
 #   general.*                          -> MultiverseCreatures, MobHandler, MscWorldPolicy
@@ -68,6 +68,65 @@ boss-dimension:
   # A world built by an older generator is rebuilt once on its own; this switch forces it.
   # One-shot switch: it destroys everything built in that world. Set it back to false after.
   reset-on-load: false
+
+
+# ---------------------------------------------------------------------------
+# DrakesBosses gods in the ritual dimension (soft dependency)
+# ---------------------------------------------------------------------------
+# With DrakesBosses installed, its gods can be summoned inside boss_dimension at a Pantheon Altar:
+#
+#   P . . . P     P = pillar, 2 blocks tall
+#   . . c . .     c = candle (4 of them, lit)
+#   . c A c .     A = altar core
+#   . . c . .
+#   P . . . P
+#
+#   Olimpo   : white candles,  chiseled quartz core,   quartz pillars
+#   Asgard   : green candles,  chiseled deepslate core, spruce log pillars
+#   Duat     : orange candles, chiseled sandstone core, smooth sandstone pillars
+#   el Vacío : purple candles, end stone bricks core,  purpur pillars
+#
+# Light the four candles, then drop (Q) one god's offering on the core. DrakesBosses spawns the god,
+# with its own stats, skills, loot and rewards. Without DrakesBosses the altar does nothing.
+drakes-bosses:
+  enabled: true
+  # Ticks between the offering and the god's arrival (1 - 200).
+  arrival-delay-ticks: 40
+  # Seconds a god may stay with no player within 64 blocks before it is sent away; 0 never.
+  # A living god counts as a boss fight, which locks building and commands in the dimension.
+  no-player-despawn-seconds: 300
+  # Item each god takes, by DrakesBosses id. Keep them unique: an item calls the first god listing it.
+  offerings:
+    # Olimpo
+    zeus: LIGHTNING_ROD
+    poseidon: HEART_OF_THE_SEA
+    hades: WITHER_SKELETON_SKULL
+    ares: NETHERITE_SWORD
+    artemisa: SPECTRAL_ARROW
+    prometeo: FIRE_CHARGE
+    circe: AMETHYST_SHARD
+    polifemo: FERMENTED_SPIDER_EYE
+    kratos: NETHERITE_AXE
+    tifon: MAGMA_BLOCK
+    hidra: PRISMARINE_SHARD
+    cerbero: BONE_BLOCK
+    # Asgard
+    thor: IRON_BLOCK
+    odin: GOLD_BLOCK
+    loki: ENDER_PEARL
+    heimdall: BLAZE_ROD
+    # Duat
+    ra: GOLDEN_CARROT
+    isis: FEATHER
+    anubis: ROTTEN_FLESH
+    set: REDSTONE_BLOCK
+    # el Vacío
+    coloso_end: ECHO_SHARD
+    garou_cosmico: NETHER_STAR
+    dios_corrupto: TOTEM_OF_UNDYING
+    wither_storm: WITHER_ROSE
+    dragon_ancestral: DRAGON_BREATH
+    jax: LANTERN
 
 
 # ---------------------------------------------------------------------------

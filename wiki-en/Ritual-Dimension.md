@@ -170,6 +170,46 @@ S . . . S
 
 ---
 
+## 🏛️ DrakesBosses gods: the Pantheon Altar
+
+With **DrakesBosses** installed (soft dependency), its gods can also be summoned inside `boss_dimension`. Without DrakesBosses the altar does nothing. DrakesBosses spawns the god with its own stats, skills, loot and rewards.
+
+### Layout (5×5)
+
+```
+P . . . P        P = Corner pillar (2 blocks tall)
+. . c . .        c = Pantheon candle (lit)
+. c A c .        A = Altar core
+. . c . .
+P . . . P
+```
+
+| Pantheon | Candles | Core `(2, 0, 2)` | Pillars |
+|---|---|---|---|
+| **Olimpo** | `white_candle` | `chiseled_quartz_block` | `quartz_pillar` |
+| **Asgard** | `green_candle` | `chiseled_deepslate` | `spruce_log` |
+| **Duat** | `orange_candle` | `chiseled_sandstone` | `smooth_sandstone` |
+| **el Vacío** | `purple_candle` | `end_stone_bricks` | `purpur_pillar` |
+
+### Offerings (defaults, configurable under `drakes-bosses.offerings`)
+
+| Pantheon | God ← offering |
+|---|---|
+| Olimpo | Zeus ← `lightning_rod` · Poseidón ← `heart_of_the_sea` · Hades ← `wither_skeleton_skull` · Ares ← `netherite_sword` · Artemisa ← `spectral_arrow` · Prometeo ← `fire_charge` · Circe ← `amethyst_shard` · Polifemo ← `fermented_spider_eye` · Kratos ← `netherite_axe` · Tifón ← `magma_block` · Hidra ← `prismarine_shard` · Cerbero ← `bone_block` |
+| Asgard | Thor ← `iron_block` · Odín ← `gold_block` · Loki ← `ender_pearl` · Heimdall ← `blaze_rod` |
+| Duat | Ra ← `golden_carrot` · Isis ← `feather` · Anubis ← `rotten_flesh` · Set ← `redstone_block` |
+| el Vacío | Coloso del End ← `echo_shard` · Garou Cósmico ← `nether_star` · Dios Corrupto ← `totem_of_undying` · Wither Storm ← `wither_rose` · Dragón Ancestral ← `dragon_breath` · Jax ← `lantern` |
+
+### Procedure
+1. Build the pantheon's altar anywhere in `boss_dimension` (coordinates relative to the south-west corner; the floor is not checked).
+2. Light the **4 candles** and right-click one. The altar wakes: light from the pillars, a turning pentagram on the ground, and chat lists the offerings it takes.
+3. **Drop (Q) the god's offering** on the core (within **3 blocks**). **One** item is consumed; the rest of the stack stays on the ground. An offering from another pantheon is refused and kept.
+4. After `drakes-bosses.arrival-delay-ticks` (40 by default) lightning strikes and the god appears on the core. If DrakesBosses cannot spawn it (e.g. Jax disabled), the offering is given back.
+
+> One altar per world at a time, and it will not wake while another boss fights in the dimension. While the god lives, the building and command locks apply. A god with no player within 64 blocks for `drakes-bosses.no-player-despawn-seconds` (300 by default; 0 = never) is sent away so it cannot lock the dimension.
+
+---
+
 ## 🚪 Leaving
 
 There is no teleport command available inside the dimension — the only way out is the **same ritual used to enter**:
@@ -189,4 +229,4 @@ There is no teleport command available inside the dimension — the only way out
 - Game rules: no daylight cycle, no weather cycle, no mob spawning, immediate respawn, no advancement announcements.
 - The sky is forced red via a biome override; `boss-dimension.red-sky: false` leaves it alone (the tint is applied to a vanilla biome, so it is global).
 - Config: `boss-dimension.red-sky`, `boss-dimension.size` and `boss-dimension.reset-on-load`.
-- Relevant classes: `BossDimensionManager`, `Wasteland`, `WastelandGenerator`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure` — see [Architecture](./dev/Architecture.md) and [Tests](./dev/Tests.md).
+- Relevant classes: `BossDimensionManager`, `Wasteland`, `WastelandGenerator`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure`, `PantheonInvocationManager`, `PantheonAltarStructure`, `PantheonGod` — see [Architecture](./dev/Architecture.md) and [Tests](./dev/Tests.md).

@@ -31,7 +31,7 @@ public final class MscConfigMigration {
      * Version of the shipped {@code config.yml}. Bump it when a release adds, moves or renames keys
      * so the log stops claiming the file is current once it is not.
      */
-    public static final int CONFIG_VERSION = 1;
+    public static final int CONFIG_VERSION = 2;
 
     /** Key holding that version; written into the file so an operator can see what they have. */
     public static final String VERSION_KEY = "config-version";
