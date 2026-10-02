@@ -32,7 +32,8 @@ La escalera es datos, no código: `armor-stand-boss.phase-thresholds` contiene l
 ### Comportamiento de la IA
 
 - **Modo suelo** elige entre Círculo de Curación (<40% HP, 25%), Vuelo (15%), Sello de Escudo (35%), Ataque de Suelo (55%), Bombardeo Flotante (por defecto).
-- **Modo vuelo** ejecuta ataques aéreos aleatorios cada 80 ticks; aterriza con AirSlam cuando se han realizado ≥10 ataques únicos.
+- **Modo vuelo** lanza un ataque aéreo 50 ticks después de que termine el anterior; tras cinco distintos (y 10–20 s en el aire) aterriza o cae en picado con AirSlam, y nunca pasa más de 40 s arriba.
+- **Un ataque a la vez** — mientras un ataque se anima la IA ni lo gira ni empieza el siguiente; los tiempos de espera solo cuentan cuando está libre, así que un ataque largo nunca se come la pausa que le sigue.
 - **Estados defensivos** (aleatorios, solo por debajo del 50% de HP, en el suelo): **Piel de Piedra** (×0.5 daño recibido), **Barrera Reflectante** (×0.7 daño + 30% reflejado), **Escudo Absorbente** (absorbedor de 100 HP que visualmente cambia de azul a rojo). Sus duraciones salen de `defense-duration-stone-skin-ticks` (200), `defense-duration-reflect-barrier-ticks` (160) y `defense-duration-absorb-shield-ticks` (300).
 - **Recuperación de suelo** — un jefe en modo suelo solo ataca mientras `isOnGround` es cierto. Si se queda sin bloque sólido debajo (vacío, agua, un agujero, un borde), flotaba en silencio para siempre. Tras `ground-recovery-grace-ticks` (40) ticks sin suelo se teletransporta a la columna más cercana con piso y espacio libre, prefiriendo la zona de su objetivo actual y recurriendo al spawn del mundo si no encuentra nada, y reanuda el ataque con los cooldowns reiniciados.
 - **Despawn** — sin nadie en un radio de 100 bloques el jefe sigue peleando durante `no-player-despawn-ticks` (200, ~10 s) antes de despawnear y limpiar sus tareas, sellos, música y barra de jefe. Ponlo a `0` para que el jefe se vaya en cuanto la arena se vacíe.
@@ -40,28 +41,31 @@ La escalera es datos, no código: `armor-stand-boss.phase-thresholds` contiene l
 
 ### Mecánicas especiales
 
-- **Escudo Plantado / Ground Slam** — planta el escudo como ItemDisplay (escala 7.5), realiza un GroundSlam retrasado y lo recupera después.
-- **Sello de Escudo** — esfera protectora hemisférica de partículas dust+END_ROD durante 200 ticks, ×0.7 daño entrante, con 12 escudos ItemDisplay en órbita.
-- **Círculo de Curación** — lanzamiento de 35 ticks, círculo verde, cura hasta el 5% de la HP máxima en 200 ticks, ×0.8 daño recibido mientras está activo.
-- **Bombardeo Flotante ("CrossBarrage")** — sube a y+15, traza una forma de X, dispara rayos X que explotan infligiendo `hover-barrage-damage` (12) + knockback.
-- **Llamada del Triángulo** — invoca un sello de triángulo mágico + refuerzos (escala con el número de jugadores):
+- **Juicio de la Égida** (`groundslam`) — con su propio reloj, fuera de las tablas: lanza el escudo al cielo, donde gira y proyecta un pentagrama ardiente bajo cada jugador durante dos segundos; cuando baja la lanza, columnas de luz caen del escudo sobre cada pentagrama — `seal-damage` (15) en un radio de 4 bloques + empuje hacia arriba — y el escudo vuelve a su mano.
+- **Alas** — alas ardientes construidas como unas de verdad: un hueso oscuro que sale de la espalda entre los omóplatos y sube por un codo y una muñeca, plumas largas colgando de él que brillan de rojo a naranja hacia las puntas, y una fila más corta de coberteras. Aletean despacio, girando toda el ala desde su raíz.
+- **Sello de Escudo** — seis grandes escudos de luz giran a su alrededor a la altura del pecho durante 200 ticks, ×0.7 daño entrante; al final se pliegan de nuevo en uno.
+- **Círculo de Curación** — se arrodilla en un círculo de runas verdes durante 200 ticks mientras hilos de luz suben hacia él, curando un 0.15% por tick hasta el 3% de su HP máxima. Golpearlo dentro del círculo es la respuesta.
+- **Bombardeo Flotante ("CrossBarrage")** — sube si está en el suelo y dispara ráfagas de rayos en forma de X desde el aire, `hover-barrage-damage` (12) + knockback.
+- **Llamada del Triángulo** — clava la lanza y alza dos sellos de fuego de pie; columnas de luz bajan a través de ellos y salen los refuerzos (escala con el número de jugadores):
   - Modo aéreo: Ghast Infernal + Fantasma Acechador Nocturno (que lleva un Esqueleto Francotirador con arco Power V / Infinity).
   - Modo suelo: Bestia de Guerra Ravager (300 HP, 24 de daño) que lleva un Evocador Sacerdote Oscuro (40 HP, Velocidad I).
   - Las invocaciones llevan la etiqueta `MSC_ArmorBossSummoned`; el fuego amigo entre el jefe y sus invocaciones está desactivado.
-- **Pentagrama del Cielo** — sellos de pentagrama por jugador 30 bloques por encima, que explotan en una columna tras 80 ticks — `seal-damage` (15) en un radio de 6 bloques + empuje hacia arriba.
-- **Anillos de Onda Expansiva** — 10 anillos en expansión, daño de suelo que decae con la distancia, empuje hacia arriba, escombros de FallingBlock.
 
-### Registro de ataques — 55 ataques en total
+### Ataques animados
 
-Todos los ataques son clases que extienden `BossAttackBase` bajo `entities/boss/attack/<aerial|ground|ranged|defensive>/`, registrados en `ArmorStandBoss.initAttacks()` y despachados polimórficamente vía `attackRegistry.get(name).execute(instance)`. Activa cualquiera manualmente:
+Cada ataque es una **coreografía**: un aviso en el suelo que dice *dónde* (de rojo a amarillo según se calienta), una preparación del cuerpo que dice *cuándo*, el golpe y una recuperación de vuelta a la guardia. Brazos, piernas, cabeza y torso del Centinela pasan por poses reales calculadas a partir del modelo del armor stand, así que la punta de la lanza, la cara del escudo y las manos son de donde salen los efectos. Mientras un ataque se reproduce es dueño del cuerpo: la IA no lo gira ni empieza otro ataque hasta que termina. Los objetos (escudos, lanzas, pilares de obsidiana, meteoros) son display entities con la etiqueta `MSC_AttackProp` y se eliminan al terminar el ataque o al reiniciar el servidor.
+
+### Registro de ataques — 61 ataques en total
+
+Todos los ataques son clases que extienden `ChoreographedAttack` bajo `entities/boss/attack/<aerial|ground|ranged|defensive>/`, registrados en `ArmorStandBoss.initAttacks()` y despachados polimórficamente vía `attackRegistry.get(name).execute(instance)`. Activa cualquiera manualmente:
 
 ```
 /msc attack <nombre-del-ataque> [rango]
 ```
 
-Los 55 nombres los lista `/msc attack help` (cuatro páginas, una por categoría) y los ofrece el autocompletado. `/msc attack` también acepta las mecánicas de arriba (`flyup`, `land`, `heal`, `reset`, las cuatro transiciones `phase*`) y el alias heredado `crossbarrage` de `hoverbarrage`.
+Los 61 nombres los lista `/msc attack help` (cuatro páginas, una por categoría) y los ofrece el autocompletado. `/msc attack` también acepta las mecánicas de arriba (`flyup`, `land`, `heal`, `reset`, las cuatro transiciones `phase*`) y el alias heredado `crossbarrage` de `hoverbarrage`.
 
-| Suelo (18) | Aéreos (16) | A distancia (15) | Defensivos (6) |
+| Suelo (21) | Aéreos (18) | A distancia (16) | Defensivos (6) |
 |---|---|---|---|
 | groundslam | starfall | lancesnipe | stoneskin |
 | groundshatter | aerialrush | meteorstorm | reflectbarrier |
@@ -79,8 +83,11 @@ Los 55 nombres los lista `/msc attack help` (cuatro páginas, una por categoría
 | executionsweep | eclipsefall | plaguebrand |  |
 | obsidianspire | bladering | runemines |  |
 | earthmaw | obsidianwings |  |  |
-| shadowstep |  |  |  |
-| runeward |  |  |  |
+| shadowstep | voidmeteor | obsidianprison |  |
+| runeward | phantomlegion |  |  |
+| sunderingcharge |  |  |  |
+| spearcyclone |  |  |  |
+| cataclysm |  |  |  |
 
 Objetivos adicionales de `/msc attack` para **mecánicas y transiciones de fase**: `flyup`, `land`, `heal`, `reset`, `phaserage`, `phasebarrier`, `phasestorm`, `phasedespair`.
 
@@ -102,6 +109,19 @@ Cada uno de los diez añadidos está animado alrededor de una seña inequívoca,
 | `runemines` | A distancia | Un barrido bajo del brazo por el suelo bajo un triángulo rúnico, y luego seis runas salen **lanzadas alrededor del objetivo**. Tardan 25 ticks en armarse (apagadas, planas), se vuelven violetas y laten, y estallan hacia arriba cuando alguien las pisa — o se apagan solas a los 140 ticks. | `rune-mine-damage` (8) |
 
 Las rotaciones aleatorias también los usan: `obsidianspire`, `earthmaw`, `shadowstep` y `runeward` en las tablas de suelo, `eclipsefall`, `bladering` y `obsidianwings` en las aéreas, y `soultethers`, `plaguebrand` y `runemines` en la de distancia. Los tres a distancia disparan tanto en suelo como en vuelo; los otros siete exigen el estado correspondiente.
+
+### Tercera tanda — seis ataques más
+
+| Ataque | Categoría | Seña de la animación | Clave de daño (por defecto) |
+|---|---|---|---|
+| `sunderingcharge` | Suelo | Baja la punta de la lanza al suelo, carga el peso atrás y el carril brilla por delante; luego un sprint que **abre una grieta fundida** tras la punta. Al final un tajo ascendente lanza un abanico de hojas de obsidiana desde el suelo y, un instante después, toda la grieta estalla en fuego. | `sundering-charge-damage` (14) |
+| `spearcyclone` | Suelo | Hace girar la lanza sobre la cabeza cada vez más rápido dentro de una espiral de viento, y la baja de golpe: un **ciclón** rueda tras el objetivo, arrastrando y levantando a quien esté cerca, y revienta al final de su recorrido. | `spear-cyclone-damage` (4 por golpe, ×3 en el estallido) |
+| `cataclysm` | Suelo | Definitivo: clava la lanza en la tierra y tres franjas del suelo brillan, con **anillos seguros** de suelo oscuro entre ellas. De dentro hacia fuera cada franja revienta en muros de fuego y púas de obsidiana. Quédate en los huecos. | `cataclysm-damage` (20) |
+| `voidmeteor` | Aéreo | Con ambos brazos en alto se forma sobre su cabeza una roca de obsidiana llorosa envuelta en vacío; la lanza contra el objetivo, cae con una onda expansiva y deja un **cráter de vacío** que ciega y debilita. | `void-meteor-damage` (18) |
+| `phantomlegion` | Aéreo | Cuatro **copias espectrales** suyas salen del suelo alrededor del objetivo. Una tras otra marcan su línea y embisten atravesando el anillo; las dos últimas golpean a la vez. | `phantom-legion-damage` (11) |
+| `obsidianprison` | A distancia | Apunta la lanza a cada jugador: se abre un círculo de runas bajo él, luego una **jaula de púas de obsidiana** brota a su alrededor, inclinada hacia dentro, y se derrumba sobre sí misma. Sal del círculo antes de que se cierren los barrotes. | `obsidian-prison-damage` (16) |
+
+También entran en las rotaciones aleatorias: `sunderingcharge` en las tablas de suelo media y lejana, `spearcyclone` y `cataclysm` en la cercana y la media, `voidmeteor` y `phantomlegion` en las aéreas y `obsidianprison` en la de distancia.
 
 ### Drops
 
@@ -195,6 +215,15 @@ Un verdugo colosal e implacable construido a partir de un **modelo personalizado
   Al estar a distancia de golpe, Nix levanta ambos brazos y descarga un tajo descendente aplastante. Inflige `cleave-damage` (22) en un radio frontal de 3.2 bloques, empuja a los jugadores y les aplica **Wither II (Sangrado)** y **Lentitud II**.
 - **Cadenas del Juicio (Atracción a distancia):**
   Cuando un objetivo intenta huir (a entre 5 y 24 bloques de distancia), Nix lanza cadenas de hierro espectrales (`Sound.BLOCK_CHAIN_PLACE`) que aprisionan a la víctima, atrayéndola con violencia hacia él e infligiéndole **Oscuridad** y **Lentitud III**.
+- **Cosecha de Sangre (Firma):**
+  Abre los brazos a los lados mientras la sangre se acumula en sus manos y un anillo de aviso se cierra en el suelo, y luego gira tres vueltas completas con hojas de sangre saliendo de sus manos. Cada vuelta corta a todos en 4.5 bloques por `harvest-damage` (9) con Wither y los arrastra hacia dentro; termina en un anillo de sangre.
+- **Salto del Patíbulo (Firma):**
+  Una sentadilla profunda con los brazos atrás mientras el punto de aterrizaje brilla bajo el objetivo, y un salto de hasta 18 bloques con los dos brazos sobre la cabeza. Cae con un golpe a dos manos: `gallows-damage` (18) en 4 bloques más un empuje hacia arriba, y una onda expansiva que golpea a la mitad al salir.
+- **Condena (Firma):**
+  Alza el brazo derecho y señala a sus víctimas: un patíbulo de partículas se alza sobre cada jugador en su rango (hasta cuatro), con la hoja temblando arriba y un círculo rojo en el suelo. 1.5 segundos después el brazo cae y todas las hojas bajan — `condemn-damage` (20), Wither II y Lentitud para quien siga dentro del círculo.
+  Un movimiento de firma cada `special-cooldown-ticks` (160) + hasta 2 s, elegido según la distancia; mientras se reproduce es dueño del cuerpo.
+- **El Hacha del Verdugo:**
+  Nix lleva un hacha de netherita en la mano derecha que sigue su antebrazo y su codo. El ataque básico es un tajo de guillotina: el hacha sube sobre su cabeza y baja delante de él, y el golpe cae cuando baja el hacha (al 60% del movimiento). Su cabeza sigue los ojos del jugador desde los suyos en vez de mirar al suelo.
 - **Frenesí de Ejecución (Pasiva):**
   Cuando la salud del jugador objetivo cae por debajo del **25%**, Nix entra en frenesí de ejecución: su velocidad de movimiento aumenta un +30%, sus ojos emiten partículas de polvo carmesí y el compás de sus zancadas se acelera.
 - **Animaciones Procedurales del Modelo:**
@@ -229,6 +258,16 @@ Cinco fases, tres vidas y un cuerpo construido con once cabezas de skin.
 
 Once cabezas de skin (`ItemDisplay`, etiqueta `msc_jackstar_part`) forman la cabeza, el torso y dos segmentos por brazo y pierna. Siguen a un **ArmorStand invisible** (`msc_jackstar_boss`) que carga la vida real y la hitbox, así que el cuerpo visible es lo que apuntan los jugadores mientras el stand lleva la contabilidad. Las articulaciones viven en `JackModel` (hombros en x = ±0.35, caderas en ∓0.12, cuello en 1.87) y cada extremidad gira sobre su propia articulación, con contra-rotaciones al caminar. Los dos brazos y las dos piernas se exportaron en dos segmentos, así que los **codos y las rodillas se pliegan además de ese balanceo**: el antebrazo y la espinilla articulan sobre su propia articulación al caminar y durante tajos cuerpo a cuerpo (los codos articulan en el arco de tajo y las rodillas flexan en pose de combate). Las piezas se recentran sobre la hitbox, que es lo que hace que el cuerpo coincida con el stand en vez de desplazarse casi un bloque hacia un lado.
 
+### Movimientos de firma
+
+Uno cada `special-cooldown-ticks` (200) + hasta 2 s, un 30% antes desde la fase 4, elegido según la distancia y anunciado en el chat de la arena como una línea de código. Mientras se reproduce es dueño del cuerpo y la rutina normal espera.
+
+| Movimiento | Seña de la animación | Clave de daño (por defecto) |
+|---|---|---|
+| **fork()** | Echa atrás el brazo derecho con un cubo de alambre girando en la mano, la izquierda apuntando, y lo lanza. Cada vez que el cubo cae revienta y **se bifurca en dos** que saltan a los lados, tres generaciones: 1 + 2 + 4 explosiones, cada una con su anillo de caída visible antes. | `fork-bomb-damage` (10; ×0.6 en las bifurcaciones) |
+| **Lluvia Binaria** | Las dos manos en alto, tecleando hacia el cielo mientras una lámina de código verde se desplaza sobre la arena. Bajo y delante de los jugadores se encienden celdas y en cada una cae un **1 o un 0**. | `binary-rain-damage` (8) |
+| **Stack Overflow** | Una postura baja de carrera con las dos hojas hacia atrás, y **cuatro tajos en carrera** a través del objetivo, cada uno apilado como un marco "[ ]" que queda dibujado en el suelo. Cuando la pila se llena se desborda: cada marco detona a lo largo de su línea en orden inverso. | `stack-overflow-damage` (14; la mitad en la propia carrera) |
+
 ### Subprocesos
 
 Tres segundos después de aparecer, y de nuevo en cada cambio de fase — cinco veces como máximo — Jack Star invoca a otro jefe a 14 bloques: Garou, Mahoraga, Chaos Mage, Obsidian Guard, Soul Reaper o NIX, elegido al azar hasta que uno acepte. Él se queda en el campo todo el tiempo: un subproceso es presión extra, **nunca un escudo**, así que sigue peleando y sigue recibiendo daño mientras esté vivo.
@@ -238,3 +277,26 @@ Tres segundos después de aparecer, y de nuevo en cada cambio de fase — cinco 
 Los golpes pasan por una sola puerta: primero el esquive **Ultra Instinct** (0.22, elevado a 0.45 en forma comprimida) y después el **Load Balancer**, que deja el 65% en el jefe y reparte el 35% entre cada jugador no creativo en 14 bloques. Un golpe que acierta siempre llega al jefe; `/msc debug` imprime el golpe previsto, el reparto y el valor aplicado.
 
 **Botín:** 950 XP y el `ArchitectKernel`, con un título final para cada jugador en 60 bloques.
+
+---
+
+## ⏱️ DIO — JoJo's Bizarre Adventure
+
+DIO camina amenazante (letras ゴゴゴ suben a su alrededor) con su Stand **The World** flotando tras su hombro derecho. DIO es un armor stand visible con su ropa amarilla de la Parte 3 y su propia cara; The World es un stand más grande con su propia cabeza, armadura de oro, adornos de esmeralda y un aura dorada. La vida es virtual, como en Nix y Jack Star. Se invoca en **El Trono de The World** dentro de la Boss Dimension (ver [Ritual Dimension](Ritual-Dimension)) o con `/msc spawn dio` (OP).
+
+| Campo | Valor |
+|---|---|
+| Vida | `dio-brando.health` (900) — por debajo del 50% se enfurece ("WRYYYY!"): pausas más cortas, tiempo detenido más largo y más cuchillos |
+| Detección / velocidad | `aggro-range` (32) · `move-speed` (0.26) |
+| Tope de daño recibido | `max-damage-per-hit` (100) |
+
+| Ataque | Qué pasa | Clave de daño (por defecto) |
+|---|---|---|
+| **ZA WARUDO** | The World se eleva con los brazos abiertos y una esfera de tiempo detenido se expande `time-stop-radius` (40) bloques. Durante `time-stop-ticks` (100) los jugadores no pueden moverse, atacar, usar objetos ni disparar; mobs y proyectiles también se congelan, y él cuenta los segundos ("1-byō keika..."). Lanza cuchillos que se quedan quietos en el aire rodeando a cada jugador. "Toki wa ugokidasu": el tiempo vuelve a moverse y todos los cuchillos salen disparados. Espera `time-stop-cooldown-ticks` (700). | `knife-damage` (5) por cuchillo |
+| **MUDA MUDA MUDA** | The World avanza hasta 10 bloques y entierra al objetivo bajo una ráfaga de puñetazos, con un último "MUDAAA!" a dos puños que lo lanza lejos. | `barrage-damage` (2.5 cada 3 ticks) · `barrage-finisher-damage` (14) |
+| **ROAD ROLLER DA!** | Salta muy alto sobre el objetivo, aparece una apisonadora y cae con él encima; The World la golpea contra el suelo ("MUDA MUDA") y explota. El círculo de caída se ve todo el tiempo. | `road-roller-damage` (26; la mitad en la explosión) |
+| **Abanico de cuchillos** | Cuchillos detrás de la cabeza lanzados en abanico de 7 (9 enfurecido). | `knife-damage` (5) |
+| **Space Ripper Stingy Eyes** | Sus ojos brillan en rojo y dos chorros de líquido a presión barren la arena. | `eye-beam-damage` (5 cada 3 ticks) |
+| **Puñetazo de The World** | Su ataque básico a corta distancia: un puñetazo fuerte con retroceso. | `punch-damage` (12) |
+
+Saluda a quien se le acerca ("¿Oh? ¿Te estás acercando a mí?"). Sus cuchillos, la apisonadora y las letras amenazantes son objetos de display que se borran al terminar el ataque, al morir el jefe o al reiniciar; `/msc kill` elimina a DIO y a The World.

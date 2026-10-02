@@ -24,6 +24,16 @@ import static org.junit.jupiter.api.Assertions.*;
 class DisplaySuitTest {
 
     @Test
+    @DisplayName("Owner tags are read back with or without the UUID's dashes")
+    void readsOwnerTags() {
+        java.util.UUID id = java.util.UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        assertEquals(id, DisplaySuit.parseOwner("123e4567e89b12d3a456426614174000"));
+        assertEquals(id, DisplaySuit.parseOwner(id.toString()));
+        assertNull(DisplaySuit.parseOwner("not-a-uuid"));
+        assertNull(DisplaySuit.parseOwner("zz3e4567e89b12d3a456426614174000"));
+    }
+
+    @Test
     @DisplayName("A piece is recognised only when its suit, its name and its owner all agree")
     void allThreeTagsHaveToAgree() {
         DisplaySuit.SuitTags tags = new DisplaySuit.SuitTags("suit", "piece_a", "owner_x");

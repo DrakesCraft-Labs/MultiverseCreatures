@@ -34,6 +34,9 @@ src/main/java/com/Chagui68/
 │   │   └── attack/
 │   │       ├── BossAttack.java              Interfaz: execute(BossInstance), getName()
 │   │       ├── BossAttackBase.java          Base abstracta: helpers de boss/plugin/random/sealDamage
+│   │       ├── ChoreographedAttack.java     Base de cada ataque del Centinela: aviso → preparación → golpe → recuperación
+│   │   ├── fx/                          El kit de coreografía, probable sin servidor (Timeline, Stage, Pose, Fx, Shapes, Telegraph, Area, Missile, Prop)
+│   │   ├── NixMoves.java / JackMoves.java  Tablas de poses de los movimientos de firma de NIX y JackStar
 │   │       ├── aerial/                      13 ataques aéreos (starfall, airslam, ...)
 │   │       ├── ground/                      11 ataques de suelo (shieldbash, groundslam, ...)
 │   │       └── ranged/                      12 ataques a distancia (meteorstorm, spiritbeam, ...)
@@ -64,13 +67,7 @@ src/main/java/com/Chagui68/
 │   ├── BossInvocationStructure.java    Círculo de invocación del Centinela (5×5, velas rojas)
 │   ├── NixInvocationStructure.java     Andamio de NIX (5×5, yunque y horcas)
 │   ├── JackInvocationStructure.java    Terminal de JACKSTAR (5×5, núcleo y pararrayos)
-│   └── terrain/                        Generación de terreno de boss_dimension
-│       ├── BossArenaGenerator.java     ChunkGenerator: etapas, sumidero de chunk, bioma, spawn
-│       ├── ArenaShape.java             Forma pura: arena, terrazas, páramo, cañones
-│       ├── ArenaNoise.java             Hash y campos de ruido deterministas
-│       ├── ArenaPalette.java           Estratos, pavimento luminoso, set de materiales de la plaza
-│       ├── ArenaLandmarks.java         Monolitos, arcos, portales, pozos, agujas, esquirlas
-│       └── TerrainSink.java            Destino de escritura: coordenadas de mundo, filtrado por chunk
+│   └── terrain/                        El campo de batalla: Wasteland (forma), WastelandGenerator, TerrainNoise
 └── utils/
     ├── ItemBuilder.java               Builder fluido para ItemStacks (lore, etiquetas PDC, encantamientos)
     ├── MscEntityUtils.java            setAttribute, spawnTagged, permanentFireResistance,
@@ -93,7 +90,7 @@ src/main/resources/
 
 ### 1. Ataques del jefe — registro polimórfico
 
-Cada ataque del CENTINELA DE OBSIDIANA vive como su propia clase que extiende `BossAttackBase`, ubicada en `entities/boss/attack/{aerial,ground,ranged}/`. Se registran en `ArmorStandBoss.initAttacks()` y se despachan polimórficamente vía:
+Cada ataque del CENTINELA DE OBSIDIANA vive como su propia clase que extiende `ChoreographedAttack` (a su vez un `BossAttackBase`), ubicada en `entities/boss/attack/{aerial,ground,ranged,defensive}/`. Un ataque solo escribe un `Timeline` sobre un `Stage`: poses, partículas, objetos y volúmenes de golpe por tick. En el servidor lo reproduce `LiveStage`, que bloquea el cuerpo mientras dura; en los tests `RecordingStage` reproduce el mismo guion sin servidor. Se registran en `ArmorStandBoss.initAttacks()` y se despachan polimórficamente vía:
 
 ```java
 attackRegistry.get(name).execute(instance);
@@ -153,13 +150,12 @@ Todas las entidades personalizadas reciben una etiqueta de scoreboard `MSC_<nomb
 
 ### 7. El terreno de la dimensión del jefe
 
-La dimensión del ritual la genera `ritual/terrain/`, y su forma es una función pura de las coordenadas del mundo y la semilla. No es una decisión de estilo, es lo que hace que el mundo funcione:
+`ritual/terrain/Wasteland` describe el campo de batalla como una función pura de la columna y la semilla del mundo, y `WastelandGenerator` solo copia cada columna en el chunk. Un chunk nunca le pregunta nada a otro, así que los bordes siempre encajan y la generación corre en paralelo.
 
-- **Ningún chunk puede mirar a otro.** `ArenaShape`/`ArenaNoise` responden "cuánto mide esta columna" solo con las coordenadas, así que el borde de un chunk siempre encaja con el de su vecino, en cualquier orden de generación. Nunca leas el `Random` que el servidor pasa a `generateNoise`: cambia entre pasadas y deja costuras.
-- **La forma se testea, el pegamento no.** Todo lo que la pelea necesita — el suelo plano en y=5, el volumen de juego vacío, las terrazas que nadie puede escalar, los cañones quedándose lejos, el sellado de bedrock — es una función pura comprobada por `ArenaShapeTest` / `BossArenaTerrainTest`. La única parte sin test es `BossArenaGenerator.ChunkSink`, y es delgada a propósito: escribe coordenadas de mundo en el chunk actual y descarta todo lo demás.
-- **La plaza es un contrato, no un adorno.** `ArenaPalette.PLAZA_PAVEMENT` tiene que seguir siendo un subconjunto de lo que aceptan `JackInvocationStructure.isValidBase` y `NixInvocationStructure.isValidBase`, o los jugadores no podrán montar un ritual en el spawn. El test de terreno cruza ambas listas, así que cambiar cualquiera de las dos rompe el build.
-- **Nada se alza dentro de la arena.** Todo el espectáculo está en el pavimento y al otro lado de la muralla; las consultas de suelo de los jefes, la colocación del sello y el respaldo de recuperación de terreno se ajustaron sobre una llanura plana y vacía.
-- **Las ruinas también son por columna.** `ArenaLandmarks` decide desde un índice de celda, así que una ruina a caballo entre dos chunks la dibujan ambos sin saber nada el uno del otro, y el sumidero descarta la mitad que cae fuera.
+- **Todas las etapas vanilla apagadas.** Si `shouldGenerateNoise()` devuelve true, el servidor genera el terreno normal del overworld *antes* que los bloques del plugin; el generador de coliseo de la 2.5 hacía justo eso, y por eso su arena salía mezclada con colinas, agua y piedra.
+- **La arena es un contrato.** Es plana en y=40, nada se levanta encima ni a menos de 40 bloques, y a su alrededor ningún escalón supera un bloque: las consultas de suelo de los jefes, su forma de caminar y la colocación de sellos dependen de eso.
+- **La lava no puede derramarse.** Llena las columnas hasta un único nivel, `LAVA_Y`, así que siempre toca más lava o roca.
+- **Un mundo antiguo se regenera una vez.** Un mundo que ya existe se carga tal cual, así que `BossDimensionManager` deja `msc-generator.txt` en la carpeta del mundo y regenera la dimensión si falta esa marca o nombra otro generador.
 
 ### 8. Tareas programadas — un handle, o un cancel propio
 
@@ -185,7 +181,7 @@ Toda tarea repetida tiene una de dos formas, y `SchedulerHandleGuardTest` rompe 
 |---|---|
 | **Objeto nuevo** | 1. Crea una clase en `items/<categoría>/` usando `ItemBuilder`. Expón `public static final ItemStack` + `NamespacedKey KEY`.<br>2. Registra la receta en `MultiverseCreatures.registerRecipes()`.<br>3. Crea un `listener/XxxHandler implements Listener` para su comportamiento de click derecho/izquierdo/consumo (usa `MscEntityUtils.isCreativeOrSpectator` para los controles de modo de juego).<br>4. Registra el manejador en `MultiverseCreatures.onEnable()`: `getServer().getPluginManager().registerEvents(new XxxHandler(this), this)`. |
 | **Mob nuevo** | 1. Crea una clase en `entities/<...>/` que implemente `Listener`. Usa `MscEntityUtils.spawnTagged/setAttribute/handleDeath`.<br>2. Auto-regístrate en el constructor.<br>3. Instánciala una vez en `MultiverseCreatures.onEnable()` para que esté viva y reciba eventos.<br>4. (Opcional) Registra una ruta de reemplazo de spawn dentro de `MobHandler`. |
-| **Ataque de jefe nuevo** | 1. Crea una clase que extienda `BossAttackBase` en `entities/boss/attack/<aerial\|ground\|ranged>/` devolviendo un `getName()` único.<br>2. Delega la lógica compartida vía `boss.<helper>()` (la clase base ya expone `boss`, `plugin`, un `Random`, `sealDamage(...)`, etc.).<br>3. Regístrala en `ArmorStandBoss.initAttacks()` con `registerAttack(new XxxAttack(this))`. Sin editar el código de despacho. |
+| **Ataque de jefe nuevo** | 1. Crea una clase que extienda `ChoreographedAttack.Ground`, `.Aerial` o `.Ranged` en `entities/boss/attack/<aerial\|ground\|ranged>/` devolviendo un `getName()` único, y escribe su `choreograph(Stage)`.<br>2. Regístrala en `ArmorStandBoss.initAttacks()` con `registerAttack(new XxxAttack(this))`, añádela a una tabla de `SentinelAttackPool` y al conjunto de nombres aéreos/de suelo. `ChoreographyTest` la encuentra sola y la reproduce sin servidor. |
 | **Manejador de herramienta/arma nuevo** | 1. Crea `listener/XxxHandler implements Listener`.<br>2. Usa `MscEntityUtils.isCreativeOrSpectator` para los controles de modo de juego.<br>3. Regístralo en `MultiverseCreatures.onEnable()` vía `getServer().getPluginManager().registerEvents(new XxxHandler(this), this)`. |
 | **Alias, objeto o ataque nuevo de `/msc`** | 1. Añade una entrada en `commands/SpawnCatalogue`, `commands/GiveCatalogue` o `commands/AttackCatalogue`: el ejecutor, las páginas de ayuda y el autocompletado leen esa única tabla.<br>2. Un ataque igual necesita su clase registrada en `ArmorStandBoss.initAttacks()`, su `getName()` copiado en la entrada del catálogo y el nombre añadido a los sets aéreo/suelo que gobiernan cuándo puede dispararse. |
 | **Opción de configuración nueva** | 1. Léela con valor por defecto (`config.getInt("ruta.a.clave", fallback)`) para que las configs existentes sigan funcionando.<br>2. Declárala en `config.yml`: `ConfigFilesGuardTest` falla el build cuando el código lee una clave que no está en el archivo. |

@@ -1,11 +1,17 @@
 package com.Chagui68.entities.boss;
 
 import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.MagicSealListener;
+import com.Chagui68.entities.boss.fx.Pose;
 import com.Chagui68.entities.boss.seal.SealPlane;
 import com.Chagui68.entities.boss.attack.BossAttack;
 import com.Chagui68.items.components.SentinelCore;
 import com.Chagui68.entities.boss.attack.aerial.AerialRushAttack;
+import com.Chagui68.entities.boss.attack.aerial.PhantomLegionAttack;
+import com.Chagui68.entities.boss.attack.aerial.VoidMeteorAttack;
+import com.Chagui68.entities.boss.attack.ground.CataclysmAttack;
+import com.Chagui68.entities.boss.attack.ground.SpearCycloneAttack;
+import com.Chagui68.entities.boss.attack.ground.SunderingChargeAttack;
+import com.Chagui68.entities.boss.attack.ranged.ObsidianPrisonAttack;
 import com.Chagui68.entities.boss.attack.aerial.AirSlamAttack;
 import com.Chagui68.entities.boss.attack.aerial.BladeRingAttack;
 import com.Chagui68.entities.boss.attack.aerial.CrossSlashAttack;
@@ -90,7 +96,6 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ArmorMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.meta.trim.ArmorTrim;
@@ -235,6 +240,8 @@ public class ArmorStandBoss implements Listener, BossHost {
         registerAttack(new EclipseFallAttack(this));
         registerAttack(new BladeRingAttack(this));
         registerAttack(new ObsidianWingsAttack(this));
+        registerAttack(new VoidMeteorAttack(this));
+        registerAttack(new PhantomLegionAttack(this));
         // Ground
         registerAttack(new GroundSlamAttack(this));
         registerAttack(new GroundShatterAttack(this));
@@ -254,6 +261,9 @@ public class ArmorStandBoss implements Listener, BossHost {
         registerAttack(new EarthMawAttack(this));
         registerAttack(new ShadowStepAttack(this));
         registerAttack(new RuneWardAttack(this));
+        registerAttack(new SunderingChargeAttack(this));
+        registerAttack(new SpearCycloneAttack(this));
+        registerAttack(new CataclysmAttack(this));
         // Ranged
         registerAttack(new LanceSnipeAttack(this));
         registerAttack(new MeteorStormAttack(this));
@@ -270,6 +280,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         registerAttack(new SoulTetherAttack(this));
         registerAttack(new PlagueBrandAttack(this));
         registerAttack(new RuneMineAttack(this));
+        registerAttack(new ObsidianPrisonAttack(this));
         // Defensive
         registerAttack(new StoneSkinAttack(this));
         registerAttack(new ReflectBarrierAttack(this));
@@ -469,76 +480,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         instance.bossBar = bar;
     }
 
-    public void skyPentagramAttack(BossInstance instance) {
-        if (plugin.getMagicSealListener() == null) return;
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        MagicSealListener seals = plugin.getMagicSealListener();
 
-        final int PENTAGRAM_HEIGHT = 30;
-        final int PENTAGRAM_DURATION = 80;
-        instance.pentagramCenters.clear();
-
-        for (Player player : world.getPlayers()) {
-            if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) continue;
-            double rangeSq = player.getLocation().distanceSquared(stand.getLocation());
-            if (rangeSq > 10000) continue;
-
-            Location above = player.getLocation().add(0, PENTAGRAM_HEIGHT, 0);
-            instance.pentagramCenters.put(player.getUniqueId(), player.getLocation());
-            seals.spawnPentagramSeal(above, PENTAGRAM_DURATION, SealPlane.XZ);
-        }
-
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                skyPentagramStrike(instance, PENTAGRAM_HEIGHT);
-            }
-        }.runTaskLater(plugin, PENTAGRAM_DURATION);
-    }
-
-    public void skyPentagramStrike(BossInstance instance, int columnHeight) {
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        double damage = sealDamage;
-        final double sealRadius = 6.0;
-        final double sealRadiusSq = sealRadius * sealRadius;
-
-        for (var entry : instance.pentagramCenters.entrySet()) {
-            Player player = Bukkit.getPlayer(entry.getKey());
-            Location base = entry.getValue();
-            if (player == null || !player.isOnline() || !player.getWorld().equals(world)) {
-                continue;
-            }
-
-            for (int y = columnHeight; y >= 0; y -= 2) {
-                for (int p = 0; p < 3; p++) {
-                    double angle = random.nextDouble() * Math.PI * 2;
-                    double r = random.nextDouble() * sealRadius;
-                    Location pl = base.clone().add(
-                            Math.cos(angle) * r,
-                            y,
-                            Math.sin(angle) * r
-                    );
-                    world.spawnParticle(Particle.EXPLOSION, pl, 1, 0.3, 0.3, 0.3, 0);
-                    world.spawnParticle(Particle.FLAME, pl, 3, 0.2, 0.2, 0.2, 0.03);
-                    world.spawnParticle(Particle.CRIT, pl, 2, 0.2, 0.5, 0.2, 0.05);
-                }
-            }
-
-            world.spawnParticle(Particle.CLOUD, base.clone().add(0, 1, 0), 20, 1.5, 0.2, 1.5, 0.1);
-            world.spawnParticle(Particle.EXPLOSION, base.clone().add(0, 1, 0), 5, 2.0, 0.5, 2.0, 0.1);
-            world.playSound(base, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.6f);
-
-            double distSq = player.getLocation().distanceSquared(base);
-            if (distSq <= sealRadiusSq) {
-                MscEntityUtils.damageBy(stand.entidad(), player, damage);
-                player.setVelocity(player.getVelocity().add(new org.bukkit.util.Vector(0, 0.4, 0)));
-            }
-        }
-
-        instance.pentagramCenters.clear();
-    }
 
     private BarColor getPhaseColor(int phase) {
         return SentinelPhase.barColor(phase);
@@ -673,24 +615,31 @@ public class ArmorStandBoss implements Listener, BossHost {
                     instance.lastAirY = stand.getLocation().getY();
                 }
 
+                instance.clock++;
+                boolean busy = instance.isBusy();
                 if (instance.healingCircleActive || instance.shieldSealActive) {
-                    if (instance.shieldSealActive) {
-                        attackRegistry.get("groundslam").execute(instance);
-                        instance.shieldSealTimer++;
-                        if (!instance.triangleCallActive && !instance.hoverBarrageActive
-                                && instance.shieldSealTimer > 40 && instance.shieldSealTimer % 100 == 0) {
+                    // The seal's own choreography counts shieldSealTimer; behind the shields the
+                    // Sentinel still judges and calls for help, but never mid-swing.
+                    if (instance.shieldSealActive && !busy) {
+                        tickAegisJudgment(instance, 2);
+                        if (!instance.isBusy() && !instance.triangleCallActive && !instance.hoverBarrageActive
+                                && instance.shieldSealTimer > 40 && instance.clock % 100 == 0) {
                             attackRegistry.get("trianglecall").execute(instance);
                         }
                     }
                 } else {
-                    attackRegistry.get("groundslam").execute(instance);
+                    if (!busy) tickAegisJudgment(instance, 1);
+                    busy = instance.isBusy();
 
                     if (instance.isFlying) {
                         instance.flyingTimer++;
 
-                        if (!instance.hoverBarrageActive && !instance.triangleCallActive
-                                && instance.flyingTimer > 40 && instance.flyingTimer % 80 == 0) {
-                            stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
+                        // The gap counts from the end of the last attack, not from its start, so a
+                        // long choreography never eats the breathing room after it.
+                        if (!busy) instance.aerialCooldown++;
+                        if (!busy && !instance.hoverBarrageActive && !instance.triangleCallActive
+                                && instance.flyingTimer > 40 && instance.aerialCooldown >= AERIAL_GAP_TICKS) {
+                            instance.aerialCooldown = 0;
                             executeRandomAerialAttack(instance);
                         }
 
@@ -698,7 +647,7 @@ public class ArmorStandBoss implements Listener, BossHost {
                         // early and always ran its full 40 seconds.
                         boolean allAerialDone = instance.aerialAttacksDone.size() >= SentinelAttackPool.AERIAL_ATTACKS_PER_FLIGHT;
                         int minFlyTime = 200 + random.nextInt(200);
-                        if (!instance.hoverBarrageActive && !instance.triangleCallActive
+                        if (!busy && !instance.hoverBarrageActive && !instance.triangleCallActive
                                 && ((allAerialDone && instance.flyingTimer >= minFlyTime) || instance.flyingTimer >= 800)) {
                             if (random.nextBoolean()) {
                                 land(instance);
@@ -737,6 +686,8 @@ public class ArmorStandBoss implements Listener, BossHost {
                         } else {
                             instance.floorLostTicks = 0;
                         }
+                    } else if (busy) {
+                        instance.floorLostTicks = 0;
                     } else if (instance.shieldState == ShieldState.NORMAL) {
                         instance.floorLostTicks = 0;
                         instance.hoverBarrageCooldown++;
@@ -755,16 +706,13 @@ public class ArmorStandBoss implements Listener, BossHost {
                             int choice = random.nextInt(100);
 
                             if (healthPct < 0.4 && choice < attackWeightHealingCircle) {
-                                stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
                                 attackRegistry.get("healingcircle").execute(instance);
                             } else if (choice < attackWeightFlyUp) {
                                 stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
                                 flyUp(instance);
                             } else if (choice < attackWeightShieldSeal) {
-                                stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.7f);
                                 attackRegistry.get("shieldseal").execute(instance);
                             } else if (choice < attackWeightGround) {
-                                stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
                                 executeRandomGroundAttack(instance);
                             } else {
                                 startHoverBarrage(instance);
@@ -777,18 +725,14 @@ public class ArmorStandBoss implements Listener, BossHost {
                                     && healthPct < 0.5 && random.nextInt(100) < defenseActivationChance) {
                                 int defChoice = random.nextInt(100);
                                 if (defChoice < defenseWeightStoneSkin) {
-                                    stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.6f);
                                     attackRegistry.get("stoneskin").execute(instance);
                                 } else if (defChoice < defenseWeightReflectBarrier) {
-                                    stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.6f);
                                     attackRegistry.get("reflectbarrier").execute(instance);
                                 } else {
-                                    stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.6f);
                                     attackRegistry.get("absorbshield").execute(instance);
                                 }
                                 instance.defenseCooldown = defenseCooldownBaseTicks + jitter(defenseCooldownVarianceTicks);
                             } else {
-                                stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
                                 executeRandomGroundAttack(instance);
                             }
                         }
@@ -796,7 +740,9 @@ public class ArmorStandBoss implements Listener, BossHost {
                 }
 
                 Player target = detectTarget(stand);
-                if (target != null) {
+                // While an attack is animating it owns the heading (a spin, a sweep, a charge);
+                // turning the body towards the target here would undo it every tick.
+                if (target != null && !instance.isBusy()) {
                     Location current = stand.getLocation();
                     Location targetLoc = target.getLocation();
                     current.setDirection(targetLoc.toVector().subtract(current.toVector()));
@@ -923,6 +869,7 @@ public class ArmorStandBoss implements Listener, BossHost {
         instance.stand.setHeadPose(new org.bukkit.util.EulerAngle(0, 0, 0));
         instance.stand.setRightLegPose(new org.bukkit.util.EulerAngle(0, 0, 0));
         instance.stand.setLeftLegPose(new org.bukkit.util.EulerAngle(0, 0, 0));
+        instance.pose = Pose.REST;
     }
 
     private void phaseTransitionRage(BossInstance instance) {
@@ -1103,139 +1050,7 @@ public class ArmorStandBoss implements Listener, BossHost {
     }
 
     public void startHoverBarrage(BossInstance instance) {
-        if (instance.hoverBarrageActive) return;
-        instance.hoverBarrageActive = true;
-
-        if (instance.hoverBarrageTask != null) {
-            instance.hoverBarrageTask.cancel();
-            instance.hoverBarrageTask = null;
-        }
-
-        BossPuppet stand = instance.stand;
-        Location startLoc = stand.getLocation();
-        boolean fromAir = instance.isFlying;
-        double targetY = startLoc.getY() + (fromAir ? 0 : 15);
-
-        instance.hoverBarrageTask = new BukkitRunnable() {
-            final List<XMark> xMarks = new ArrayList<>();
-            int xMarksFired = 0;
-            int tick = 0;
-            boolean rising = !fromAir;
-            boolean descending = false;
-            final List<Player> targets = new ArrayList<>();
-            int targetIndex = 0;
-
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid()) {
-                    instance.hoverBarrageActive = false;
-                    cancel();
-                    return;
-                }
-
-                if (rising) {
-                    tick++;
-                    Location loc = stand.getLocation();
-                    double newY = loc.getY() + 0.5;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-90), 0, 0));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-90), 0, 0));
-                    if (newY >= targetY) {
-                        newY = targetY;
-                        rising = false;
-                        tick = 0;
-                        targets.clear();
-                        targets.addAll(getValidPlayersNear(stand.getLocation(), 10000));
-                        if (targets.isEmpty()) {
-                            instance.hoverBarrageActive = false;
-                            cancel();
-                            return;
-                        }
-                        stand.getWorld().playSound(loc, Sound.ENTITY_ENDER_DRAGON_FLAP, 2.0f, 0.5f);
-                    }
-                    loc.setY(newY);
-                    stand.teleport(loc);
-                    stand.getWorld().spawnParticle(Particle.CLOUD, loc, 3, 0.5, 0.1, 0.5, 0.02);
-                    return;
-                }
-
-                if (!descending) {
-                    tick++;
-                    if (tick % 40 == 0 && xMarksFired < targets.size()) {
-                        Player t = targets.get(targetIndex % targets.size());
-                        targetIndex++;
-                        Location xOrigin = stand.getLocation().add(0, 8, 0);
-                        Vector fwd = stand.getLocation().getDirection();
-                        if (fwd.lengthSquared() > 0.01) {
-                            xOrigin.add(fwd.clone().multiply(3));
-                        }
-                        xMarks.add(new XMark(xOrigin, t));
-                        xMarksFired++;
-                    }
-
-                    Iterator<XMark> it = xMarks.iterator();
-                    XMark tracingX = null;
-                    while (it.hasNext()) {
-                        XMark x = it.next();
-                        if (x.isDone()) {
-                            it.remove();
-                        } else {
-                            if (tracingX == null && x.isTracing()) tracingX = x;
-                            x.update();
-                        }
-                    }
-
-                    if (tracingX != null) {
-                        Vector lp = tracingX.getCurrentLocalPoint();
-                        if (lp != null) {
-                            double pitch = -lp.getY() * 15 + 10;
-                            double yaw = lp.getX() * 15;
-                            stand.setRightArmPose(new EulerAngle(Math.toRadians(pitch), Math.toRadians(yaw), 0));
-                            stand.setLeftArmPose(new EulerAngle(Math.toRadians(pitch), Math.toRadians(-yaw), 0));
-                            stand.setBodyPose(new EulerAngle(Math.toRadians(8), 0, 0));
-                        }
-                    } else {
-                        stand.setRightArmPose(new EulerAngle(0, 0, 0));
-                        stand.setLeftArmPose(new EulerAngle(0, 0, 0));
-                    }
-
-                    if (xMarksFired >= targets.size() && xMarks.isEmpty()) {
-                        if (fromAir) {
-                            stand.setRightArmPose(new EulerAngle(0, 0, 0));
-                            stand.setLeftArmPose(new EulerAngle(0, 0, 0));
-                            instance.hoverBarrageActive = false;
-                            cancel();
-                        } else {
-                            descending = true;
-                            tick = 0;
-                        }
-                    }
-                } else {
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(20), Math.toRadians(10), 0));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(20), Math.toRadians(-10), 0));
-                    stand.setBodyPose(new EulerAngle(Math.toRadians(-5), 0, 0));
-                    tick++;
-                    if (tick % 2 == 0) {
-                        Location loc = stand.getLocation();
-                        double groundY = getGroundY(startLoc, 80);
-                        double newY = loc.getY() - 0.5;
-                        if (newY <= groundY) {
-                            startLoc.setY(groundY);
-                            stand.teleport(startLoc);
-                            stand.getWorld().spawnParticle(Particle.CLOUD, startLoc, 20, 1, 0.5, 1, 0.1);
-                            stand.getWorld().playSound(startLoc, Sound.ENTITY_ENDER_DRAGON_FLAP, 1.0f, 0.7f);
-                            resetBossPose(instance);
-                            instance.hoverBarrageActive = false;
-                            cancel();
-                        } else {
-                            loc.setY(newY);
-                            stand.teleport(loc);
-                            stand.getWorld().spawnParticle(Particle.CLOUD, loc, 2, 0.3, 0.1, 0.3, 0.02);
-                        }
-                    }
-                }
-            }
-        };
-        instance.hoverBarrageTask.runTaskTimer(plugin, 0L, 1L);
+        executeAttack("hoverbarrage", instance, true);
     }
 
     private void flyUp(BossInstance instance) {
@@ -1628,117 +1443,28 @@ public class ArmorStandBoss implements Listener, BossHost {
 
 
 
-    public class XMark {
-        final Location pos;
-        final Player target;
-        final Vector direction;
-        final Vector right;
-        final Vector up;
-        final List<Vector> localPoints = new ArrayList<>();
-        int tick = 0;
-        boolean tracing = true;
-        boolean done = false;
-        static final double X_SIZE = 3.0;
 
-        public XMark(Location origin, Player target) {
-            this.pos = origin.clone();
-            this.target = target;
 
-            Vector toTarget = target.getLocation().toVector().subtract(origin.toVector());
-            if (toTarget.lengthSquared() < 0.01) toTarget = new Vector(0, 0, 1);
-            direction = toTarget.normalize();
+    /** Ticks between aerial attacks, counted while the Sentinel is free. */
+    private static final int AERIAL_GAP_TICKS = 50;
 
-            Vector dirH = direction.clone();
-            dirH.setY(0);
-            if (dirH.lengthSquared() < 0.01) dirH = new Vector(0, 0, 1);
-            dirH.normalize();
-
-            right = dirH.clone().crossProduct(new Vector(0, 1, 0)).normalize();
-            up = new Vector(0, 1, 0);
-
-            double half = X_SIZE / 2;
-            for (int i = 0; i <= 7; i++) {
-                double t = (double) i / 7;
-                localPoints.add(new Vector(-half + t * X_SIZE, half - t * X_SIZE, 0));
-            }
-            for (int i = 0; i <= 7; i++) {
-                double t = (double) i / 7;
-                localPoints.add(new Vector(half - t * X_SIZE, half - t * X_SIZE, 0));
-            }
+    /**
+     * Counts down to the next Aegis Judgment (the shield thrown into the sky) on its own clock,
+     * outside the attack pools; {@code speed} is how many ticks pass per AI tick.
+     */
+    private void tickAegisJudgment(BossInstance instance, int speed) {
+        if (instance.isFlying || instance.hoverBarrageActive || instance.shieldState != ShieldState.NORMAL
+                || !isOnGround(instance.stand)) return;
+        if (instance.shieldCooldown <= 0) {
+            instance.shieldCooldown = getShieldPlantInterval();
+            return;
         }
-
-        public boolean isDone() {
-            return done;
-        }
-
-        public boolean isTracing() {
-            return tracing && !done && tick <= localPoints.size();
-        }
-
-        public Vector getCurrentLocalPoint() {
-            if (!tracing || done) return null;
-            int idx = Math.min(tick - 1, localPoints.size() - 1);
-            if (idx < 0) return null;
-            return localPoints.get(idx);
-        }
-
-        public void update() {
-            if (done) return;
-
-            if (tracing) {
-                if (tick > localPoints.size()) {
-                    tracing = false;
-                    tick = 0;
-                    return;
-                }
-                for (int i = 0; i < Math.min(tick, localPoints.size()); i++) {
-                    spawnPoint(i, Particle.END_ROD, Particle.GLOW_SQUID_INK);
-                }
-                tick++;
-            } else {
-                pos.add(direction.clone().multiply(1.5));
-                tick++;
-                for (int i = 0; i < localPoints.size(); i++) {
-                    spawnPoint(i, Particle.END_ROD, Particle.CRIT);
-                }
-                if (tick > 40 || pos.distanceSquared(target.getLocation()) < 9
-                        || pos.clone().subtract(0, 0.3, 0).getBlock().getType().isSolid()) {
-                    impact();
-                    done = true;
-                }
-            }
-        }
-
-        void spawnPoint(int index, Particle a, Particle b) {
-            Vector lp = localPoints.get(index);
-            Location pLoc = pos.clone().add(
-                    right.clone().multiply(lp.getX()).add(up.clone().multiply(lp.getY()))
-            );
-            pLoc.getWorld().spawnParticle(a, pLoc, 1, 0, 0, 0, 0);
-            pLoc.getWorld().spawnParticle(b, pLoc, 1, 0.03, 0.03, 0.03, 0);
-        }
-
-        void impact() {
-            World w = pos.getWorld();
-            w.spawnParticle(Particle.EXPLOSION, pos, 3, 0.5, 0.5, 0.5, 0);
-            w.spawnParticle(Particle.CLOUD, pos, 15, 1.5, 0.5, 1.5, 0.1);
-            w.spawnParticle(Particle.FLAME, pos, 10, 0.5, 0.5, 0.5, 0.05);
-            w.spawnParticle(Particle.CRIT, pos, 20, 1, 1, 1, 0.1);
-            w.playSound(pos, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.8f);
-
-            final ArmorStand stand = getBossStand(w);
-
-            double damage = hoverBarrageDamage;
-            double radius = 4.0;
-            for (Player p : getValidPlayers(w)) {
-                if (p.getLocation().distanceSquared(pos) <= radius * radius) {
-                    if (stand != null) MscEntityUtils.damageBy(stand, p, damage);
-                    p.setVelocity(p.getVelocity().add(new Vector(0, 0.5, 0)));
-                }
-            }
+        instance.shieldCooldown -= speed;
+        if (instance.shieldCooldown <= 0) {
+            instance.shieldCooldown = getShieldPlantInterval();
+            attackRegistry.get("groundslam").execute(instance);
         }
     }
-
 
     public int getShieldPlantInterval() {
         return shieldPlantIntervalBaseTicks + jitter(shieldPlantIntervalVarianceTicks);
@@ -1954,13 +1680,8 @@ public class ArmorStandBoss implements Listener, BossHost {
                 startHoverBarrage(instance);
             }
             case "groundslam", "slam" -> {
-                if (instance.isFlying) return false;
-                if (instance.shieldState == ShieldState.PLANTED || instance.shieldState == ShieldState.SLAM_DONE) {
-                    attackRegistry.get("groundslam").execute(instance);
-                } else {
-                    stand.getWorld().playSound(stand.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
-                    attackRegistry.get("groundslam").execute(instance);
-                }
+                if (instance.isFlying || instance.shieldState != ShieldState.NORMAL) return false;
+                attackRegistry.get("groundslam").execute(instance);
             }
             case "trianglecall", "call" -> {
                 if (instance.triangleCallActive) return false;
@@ -2036,27 +1757,24 @@ public class ArmorStandBoss implements Listener, BossHost {
         return true;
     }
 
-    /**
-     * Dispatch helper for attacks that accept a telegraph flag (RainOfLances, AirSlam).
-     */
+    /** Runs a registered attack by name; every attack telegraphs itself now, so there is no flag. */
     private void executeAttack(String name, BossInstance instance, boolean telegraph) {
         BossAttack a = attackRegistry.get(name);
-        if (a instanceof RainOfLancesAttack r) r.execute(instance, telegraph);
-        else if (a instanceof AirSlamAttack s) s.execute(instance, telegraph);
-        else if (a != null) a.execute(instance);
+        if (a != null) a.execute(instance);
     }
 
     private static final java.util.Set<String> AERIAL_ATTACK_NAMES = java.util.Set.of(
             "starfall", "aerialrush", "sonicboom", "lightningstorm", "gravitywell",
             "crossslash", "novaburst", "darkorb", "windcutter", "heavenlyjudgment",
-            "rainoflances", "airslam", "hoverbarrage", "eclipsefall", "bladering", "obsidianwings"
+            "rainoflances", "airslam", "hoverbarrage", "eclipsefall", "bladering", "obsidianwings",
+            "voidmeteor", "phantomlegion"
     );
 
     private static final java.util.Set<String> GROUND_ATTACK_NAMES = java.util.Set.of(
             "groundslam", "groundshatter", "shieldbash", "lancestorm", "earthpillar",
             "chaingrapple", "warstomp", "armorspikes", "vortexpull", "mirrorimage", "doombeam",
             "lanceflurry", "whirlwindslash", "executionsweep", "obsidianspire", "earthmaw",
-            "shadowstep", "runeward"
+            "shadowstep", "runeward", "sunderingcharge", "spearcyclone", "cataclysm"
     );
 
     private boolean isAerialAttackName(String name) {

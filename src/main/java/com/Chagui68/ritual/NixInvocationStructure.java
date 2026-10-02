@@ -127,14 +127,7 @@ public class NixInvocationStructure {
                 || material == Material.DAMAGED_ANVIL;
     }
 
-    /**
-     * The blocks NIX's scaffold accepts under its corner gallows.
-     *
-     * <p>Public because the terrain guard cross-checks the arena pavement against it: a plaza the
-     * structure refuses would make the ritual impossible at spawn, which is exactly the kind of
-     * drift a test should catch rather than a player.
-     */
-    public static boolean isValidBase(Material material) {
+    private static boolean isValidBase(Material material) {
         return material == Material.POLISHED_BLACKSTONE_BRICKS
                 || material == Material.POLISHED_BLACKSTONE
                 || material == Material.DEEPSLATE_BRICKS

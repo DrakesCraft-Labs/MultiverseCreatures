@@ -1,78 +1,111 @@
 package com.Chagui68.entities.boss.attack.ranged;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Missile;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Pose;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Prop;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
+import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-public class FrostLanceAttack extends BossAttackBase {
+import java.util.List;
+
+/**
+ * Frost Lance: a lance of packed ice forms in the Sentinel's free hand, frost crawling over it, and is
+ * flung at the target. It shatters into shards and leaves a ring of frost on the floor.
+ */
+public class FrostLanceAttack extends ChoreographedAttack.Ranged {
+
+    private static final int FORM = 18;
+    private static final double SPEED = 2.1;
+    private static final Pose RAISED = Poses.GUARD.withLeftArm(-165, 20, -10).withHead(-10, 0, 0);
+    private static final Pose HURL = Poses.GUARD.withLeftArm(-60, -10, 0).withBody(10, 15, 0);
+
     public FrostLanceAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        Player target = boss.detectTarget(stand);
-        if (target == null) return;
+    public Timeline choreograph(Stage stage) {
+        Victim target = stage.target();
+        if (target == null) return null;
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.8);
+        Timeline t = new Timeline();
+        List<Prop> props = props(t);
+        Prop[] lance = new Prop[1];
 
-        Vector dir = target.getLocation().toVector().subtract(center.toVector()).normalize();
-        new BukkitRunnable() {
-            int t = 0;
-            double traveled = 0;
-            Location pos = center.clone().add(0, 1.5, 0);
-            final double speed = 1.6;
-            final double maxRange = 35.0;
+        tweenTo(t, stage, 0, FORM, RAISED, Ease.IN_OUT);
+        t.at(2, () -> {
+            Vector hand = stage.body().leftHand();
+            lance[0] = stage.block(Material.PACKED_ICE, hand, 0.6f, Prop.pointing(target.chest().subtract(hand)));
+            lance[0].resize(0.6f, 0.2f, Prop.pointing(target.chest().subtract(hand)), 0);
+            lance[0].glow(Palette.FROST);
+            props.add(lance[0]);
+        });
+        t.span(3, FORM, (tick, p) -> {
+            Vector hand = stage.body().leftHand().add(new Vector(0, 1, 0));
+            Vector dir = target.chest().subtract(hand);
+            lance[0].moveTo(hand, 1);
+            lance[0].resize(0.6f, (float) (0.2 + 5 * p), Prop.pointing(dir), 1);
+            fx.draw(Shapes.helix(hand.clone().subtract(new Vector(0, 1, 0)), 1.2, 3, 2, 14, tick * 0.4), fx.dust(Palette.ICE, 1.2f));
+            fx.cloud(Particle.SNOWFLAKE, hand, 3, 0.6, 0.02);
+        });
+        t.at(0, () -> fx.sound(stage.feet(), Sfx.GLASS_BREAK, 1.5f, 0.5f));
+        t.at(FORM - 6, () -> fx.sound(stage.feet(), Sfx.AMETHYST_CHIME, 2f, 0.5f));
 
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid() || t > 100) {
-                    cancel();
-                    return;
-                }
-                if (t < 22) {
-                    double phase = (double) t / 22;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-120 * phase), Math.toRadians(20), 0));
-                    if (t == 1) world.playSound(center, Sound.BLOCK_GLASS_BREAK, 1.0f, 0.5f);
-                } else if (traveled < maxRange) {
-                    pos.add(dir.clone().multiply(speed));
-                    traveled += speed;
-                    world.spawnParticle(Particle.SNOWFLAKE, pos, 3, 0.15, 0.15, 0.15, 0);
-                    world.spawnParticle(Particle.DUST, pos, 1, 0, 0, 0, 0,
-                            new Particle.DustOptions(Color.fromRGB(0x88DDFF), 1.5f));
-                    for (Player p : boss.getValidPlayers(world)) {
-                        if (p.getLocation().distanceSquared(pos) < 6) {
-                            MscEntityUtils.damageBy(stand.entidad(), p, sealDamage * 0.8);
-                            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 3));
-                            p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 100, -4));
-                            world.spawnParticle(Particle.EXPLOSION, pos, 5, 0.5, 0.5, 0.5, 0);
-                            world.playSound(pos, Sound.ENTITY_PLAYER_HURT_FREEZE, 1.2f, 0.6f);
-                            cancel();
-                            return;
+        tween(t, stage, FORM, FORM + 4, RAISED, HURL, Ease.OUT_BACK);
+        t.at(FORM + 1, () -> {
+            Vector from = stage.body().leftHand().add(new Vector(0, 1, 0));
+            Vector velocity = target.chest().subtract(from).normalize().multiply(SPEED);
+            lance[0].resize(0.6f, 5f, Prop.pointing(velocity), 1);
+            fx.sound(from, Sfx.TRIDENT_THROW, 2.5f, 1.4f);
+            Missile missile = new Missile(from, velocity, 1.5)
+                    .homing(target, 0.04)
+                    .carrying(lance[0])
+                    .look((at, dir, age) -> {
+                        fx.line(at, at.clone().subtract(dir.clone().multiply(3)), 0.5, fx.fade(Palette.ICE, Palette.FROST, 1.2f));
+                        fx.cloud(Particle.SNOWFLAKE, at, 2, 0.3, 0.01);
+                    })
+                    .onHit(victim -> {
+                        stage.damage(victim, damage);
+                        victim.effect(Affliction.SLOWNESS, 80, 3);
+                        victim.effect(Affliction.MINING_FATIGUE, 80, 1);
+                    })
+                    .onBurst(at -> {
+                        fx.flash(at, Palette.ICE);
+                        fx.burst(at, Particle.SNOWFLAKE, 50, 0.5);
+                        for (int i = 0; i < 6; i++) {
+                            stage.debris(at, Vector.getRandom().subtract(new Vector(0.5, 0, 0.5)).multiply(0.5).setY(0.4), Material.PACKED_ICE, 20);
                         }
-                    }
-                } else {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
+                        Vector floor = stage.onGround(at);
+                        fx.ring(floor, 3.5, 0.4, 0, fx.dust(Palette.ICE, 1.6f).and(fx.particle(Particle.SNOWFLAKE)));
+                        fx.sound(at, Sfx.GLASS_BREAK, 2.5f, 0.7f);
+                        stage.hit(Area.cylinder(floor, 3.5, 1, 3), damage * 0.4,
+                                victim -> victim.effect(Affliction.SLOWNESS, 60, 2));
+                    });
+            fly(t, stage, FORM + 2, 36, missile);
+        });
+        recover(t, stage, FORM + 8, FORM + 22, Poses.GUARD);
+        t.hold(FORM + 40);
+        return t;
+    }
+
+    @Override
+    public int lockTicks(Timeline timeline) {
+        return FORM + 22;
     }
 
     @Override

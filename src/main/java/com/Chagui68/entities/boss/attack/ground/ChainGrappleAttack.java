@@ -1,103 +1,112 @@
 package com.Chagui68.entities.boss.attack.ground;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.entities.boss.MagicSealListener;
-import com.Chagui68.entities.boss.seal.SealPlane;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Pose;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Telegraph;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
+import org.bukkit.Color;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-public class ChainGrappleAttack extends BossAttackBase {
-    private final double grappleDamage;
+/**
+ * Chain Grapple: the free hand flings a burning chain at the target. If it bites, the target is
+ * reeled in hand over hand and met with a spear thrust that throws them back out.
+ */
+public class ChainGrappleAttack extends ChoreographedAttack.Ground {
+
+    private static final int AIM = 14;
+    private static final int THROW = 8;
+    private static final int REEL = 18;
+    private static final Pose FLING = Poses.GUARD.withLeftArm(-95, 10, 0).withBody(0, -15, 0).withHead(5, 0, 0);
+    private static final Pose HAUL = Poses.THRUST_COIL.withLeftArm(-30, 0, -20);
+    private static final Color IRON = Color.fromRGB(0x9A9AA6);
 
     public ChainGrappleAttack(BossHost boss) {
         super(boss);
-        grappleDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.chain-grapple-damage", 2.0);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        if (instance.isFlying) return;
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnPentagramSeal(center, 60, SealPlane.XZ);
-        }
+    public Timeline choreograph(Stage stage) {
+        Victim target = stage.target();
+        if (target == null) return null;
+        Fx fx = stage.fx();
+        double hookDamage = stage.config("entities.armor-stand-boss.chain-grapple-damage", 2.0) * 3;
+        double thrustDamage = seal(stage, 0.8);
+        Vector aimed = target.position();
+        Victim[] hooked = new Victim[1];
+        Vector[] chainHead = new Vector[1];
+        Timeline t = new Timeline();
 
-        new BukkitRunnable() {
-            int t = 0;
-            boolean pulled = false;
+        tweenTo(t, stage, 0, AIM, FLING, Ease.IN_OUT);
+        t.span(0, AIM, (tick, p) -> {
+            if (tick % 2 == 0) Telegraph.line(stage, stage.feet(), aimed, 3, p);
+            Vector hand = stage.body().leftHand();
+            fx.draw(Shapes.helix(hand.clone().subtract(new Vector(0, 1, 0)), 0.8, 2, 2, 12, tick * 0.5),
+                    fx.dust(Palette.EMBER, 1.2f));
+        });
+        t.at(AIM - 4, () -> fx.sound(stage.feet(), Sfx.CHAIN_BREAK, 2f, 0.5f));
 
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid()) {
-                    cancel();
-                    return;
-                }
-                if (!pulled) {
-                    if (t < 20) {
-                        double phase = (double) t / 20;
-                        stand.setRightArmPose(new EulerAngle(Math.toRadians(-180 * phase + 90), Math.toRadians(20 * phase), 0));
-                        stand.setLeftArmPose(new EulerAngle(Math.toRadians(-180 * phase + 90), Math.toRadians(-20 * phase), 0));
-                        world.spawnParticle(Particle.END_ROD, center.clone().add(0, 6, 0), 2, 0.5, 0.5, 0.5, 0.01);
-                        if (t == 1) world.playSound(center, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.0f, 0.9f);
-                    } else if (t < 40) {
-                        stand.setRightArmPose(new EulerAngle(Math.toRadians(-90), Math.toRadians(20), 0));
-                        stand.setLeftArmPose(new EulerAngle(Math.toRadians(-90), Math.toRadians(-20), 0));
-                        Player target = boss.detectTarget(stand);
-                        if (target != null) {
-                            Location tLoc = target.getLocation();
-                            Vector toBoss = center.toVector().subtract(tLoc.toVector());
-                            double dist = toBoss.length();
-                            if (dist > 3) {
-                                target.setVelocity(toBoss.normalize().multiply(Math.min(1.5, dist * 0.05)));
-                                MscEntityUtils.damageBy(stand.entidad(), target, grappleDamage);
-                                for (double y = 0; y < dist; y += 1) {
-                                    Location chain = tLoc.clone().add(toBoss.normalize().multiply(y));
-                                    chain.setY(chain.getY() + 1);
-                                    world.spawnParticle(Particle.END_ROD, chain, 1, 0, 0, 0, 0);
-                                    world.spawnParticle(Particle.FLAME, chain, 1, 0.1, 0.1, 0.1, 0.01);
-                                }
-                            } else {
-                                pulled = true;
-                                t = 0;
-                            }
-                        }
-                        world.playSound(center, Sound.ENTITY_ARROW_SHOOT, 0.8f, 0.5f);
-                    } else {
-                        pulled = true;
-                        t = 0;
-                    }
-                } else {
-                    if (t < 15) {
-                        stand.setRightArmPose(new EulerAngle(Math.toRadians(-90), Math.toRadians(60), Math.toRadians(30)));
-                        stand.setLeftArmPose(new EulerAngle(Math.toRadians(-90), Math.toRadians(-60), Math.toRadians(-30)));
-                        stand.setBodyPose(new EulerAngle(Math.toRadians(20), 0, 0));
-                        world.spawnParticle(Particle.EXPLOSION, center, 5, 1, 0.5, 1, 0);
-                        Player target = boss.detectTarget(stand);
-                        if (target != null && target.getLocation().distanceSquared(center) < 16) {
-                            MscEntityUtils.damageBy(stand.entidad(), target, sealDamage);
-                            boss.launchPlayer(target, 1.5);
-                        }
-                    } else {
-                        boss.resetBossPose(instance);
-                        cancel();
-                    }
-                }
-                t++;
+        // The chain flies out link by link.
+        t.span(AIM, AIM + THROW, (tick, p) -> {
+            Vector hand = stage.body().leftHand();
+            Vector to = target.chest();
+            chainHead[0] = hand.clone().add(to.clone().subtract(hand).multiply(Math.min(1, (tick + 1.0) / THROW)));
+            drawChain(fx, hand, chainHead[0], tick);
+            fx.cloud(Particle.FLAME, chainHead[0], 3, 0.2, 0.02);
+            if (tick == THROW - 1 && chainHead[0].distance(target.chest()) < 4) {
+                hooked[0] = target;
+                stage.damage(target, hookDamage);
+                target.effect(Affliction.SLOWNESS, 40, 2);
+                fx.impact(target.chest(), Palette.EMBER, 1.5);
+                fx.sound(target.position(), Sfx.CHAIN_BREAK, 2f, 1.2f);
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+        });
+
+        tweenTo(t, stage, AIM + THROW, AIM + THROW + REEL, HAUL, Ease.IN);
+        t.span(AIM + THROW, AIM + THROW + REEL, (tick, p) -> {
+            if (hooked[0] == null) return;
+            Vector hand = stage.body().leftHand();
+            Vector victimAt = hooked[0].chest();
+            drawChain(fx, hand, victimAt, tick);
+            Vector pull = stage.feet().add(stage.forward().multiply(5)).subtract(hooked[0].position());
+            if (pull.lengthSquared() > 4) hooked[0].fling(pull.normalize().multiply(0.9).setY(0.15));
+            if (tick % 4 == 0) fx.sound(victimAt, Sfx.CHAIN_BREAK, 1f, 0.8f);
+        });
+
+        int stab = AIM + THROW + REEL;
+        tween(t, stage, stab, stab + 3, HAUL, Poses.THRUST, Ease.OUT_BACK);
+        t.at(stab + 2, () -> {
+            Vector tip = stage.body().spearTip();
+            fx.line(stage.body().rightHand(), tip.clone().add(stage.forward().multiply(3)), 0.3,
+                    fx.dust(Palette.HOLY, 1.6f).and(fx.particle(Particle.CRIT)));
+            fx.sound(tip, Sfx.PLAYER_ATTACK_STRONG, 2f, 0.5f);
+            Area front = Area.cone(stage.feet(), stage.forward(), Math.toRadians(35), 12, 6);
+            stage.hit(front, thrustDamage, victim -> {
+                victim.fling(stage.forward().multiply(1.8).setY(1.0));
+                fx.impact(victim.chest(), Palette.HOLY, 2);
+            });
+        });
+        recover(t, stage, stab + 8, stab + 24, Poses.GUARD);
+        return t;
+    }
+
+    private static void drawChain(Fx fx, Vector from, Vector to, int tick) {
+        int link = 0;
+        for (Vector point : Shapes.line(from, to, 0.45)) {
+            fx.dust(link % 2 == 0 ? IRON : Palette.EMBER, link % 2 == 0 ? 1.4f : 0.9f).at(point);
+            link++;
+        }
     }
 
     @Override

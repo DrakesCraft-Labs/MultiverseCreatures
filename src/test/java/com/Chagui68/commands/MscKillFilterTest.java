@@ -31,6 +31,14 @@ class MscKillFilterTest {
         }
 
         @Test
+        @DisplayName("JackStar's lowercase tags count too, so /msc kill removes him and his body")
+        void detectsJackStar() {
+            assertTrue(MscKillFilter.hasPluginTag(List.of("msc_jackstar_boss")));
+            assertTrue(MscKillFilter.hasPluginTag(List.of("msc_jackstar_part", "msc_jackstar_part_HEAD")));
+            assertTrue(MscKillFilter.matchesType("jack", List.of("msc_jackstar_part"), null));
+        }
+
+        @Test
         @DisplayName("Unrelated tags and empty input are not ours")
         void rejectsEverythingElse() {
             assertFalse(MscKillFilter.hasPluginTag(List.of()));

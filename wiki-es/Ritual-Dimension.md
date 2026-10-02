@@ -1,6 +1,6 @@
 # 🌌 Dimensión del Ritual
 
-La **Dimensión del Ritual** (mundo `boss_dimension`) es un mundo privado, solo para el jefe, donde se pelea contra el **Centinela de Obsidiana**. Es un coliseo excavado en una llanura destrozada: una arena pavimentada donde se pelea y se montan los círculos de invocación, una muralla aterrazada que la cierra y un cielo rojo eterno sobre un páramo de picos de obsidiana, llanuras de fuego de alma, cañones de lava y esquirlas flotantes. Sin clima, sin ciclo de día/noche y sin spawns de mobs naturales. La dimensión se genera automáticamente la primera vez que un jugador entra en ella.
+La **Dimensión del Ritual** (mundo `boss_dimension`) es un mundo privado, solo para el jefe, donde se pelea contra el **Centinela de Obsidiana**. Es un campo de batalla calcinado de unos 1500 × 1500 bloques: una arena pavimentada en medio de un páramo de ríos y lagos de lava, cráteres, agujas de obsidiana, ruinas y los huesos de algo enorme, cerrado por una cordillera dentada de obsidiana, bajo un cielo rojo eterno. Sin clima, sin ciclo de día/noche y sin spawns de mobs naturales. La dimensión se genera automáticamente la primera vez que un jugador entra en ella.
 
 > La dimensión está restringida a propósito **mientras el jefe está activo**: durante la pelea, los jugadores no pueden colocar ni romper bloques, y casi todos los comandos están bloqueados (solo `/say`, `/me`, `/help`, `/?` y `/msc dimtp` funcionan). Con el Centinela de Obsidiana inactivo, los jugadores vuelven a poder construir (p. ej. montar la Estructura del Ritual de salida) y usar todos los comandos con normalidad. Los administradores evitan las restricciones con el permiso `msc.admin.bypass`.
 
@@ -8,27 +8,23 @@ La **Dimensión del Ritual** (mundo `boss_dimension`) es un mundo privado, solo 
 
 ## 🏛️ El terreno
 
-La generación vive en `ritual/terrain/` y escribe cada chunk únicamente a partir de la semilla del mundo, así que el borde de un chunk siempre encaja con el de su vecino.
-
 ```
-r = 0      sigilo de ocho puntas, anillos y radios luminosos, damero de ladrillos sobre roca
-r ≤ 34     la plaza: pavimentada **solo** con bloques que aceptan las estructuras de invocación
-r ≤ 64     el suelo de la arena: un anillo decorativo de sillería, franjas doradas y tachuelas luminosas
-r ≤ 80     la muralla: cuatro terrazas de 6 bloques cada una, almenas arriba,
-           ocho nervios de contrafuerte subiendo por encima de la corona
-r > 80     el páramo: una explanada al nivel de la muralla y luego repisas, picos de obsidiana,
-           llanuras de fuego de alma, cuencas de sculk y cañones con fondo plano de lava
-           a ~100 bloques: ruinas — monolitos, arcos rotos, portales, pozos de almas, agujas de basalto
-           y ocho esquirlas flotando sobre la corona
+r ≤ 48       la arena: suelo pavimentado totalmente plano en y=40, un sigilo de obsidiana
+             llorosa con anillos y radios, un borde cincelado; nunca hay nada encima
+r ≤ 92       la entrada: escombros del pavimento que se pierden en el páramo, fáciles de caminar
+r ≤ 110      sin lava, cráteres ni estructuras: la pelea siempre empieza en terreno seguro
+más allá     el páramo, con tres tipos de suelo:
+               valles de almas     arena y tierra de almas con fuego de almas azul
+               llanuras calcinadas piedra negra y basalto con parches de magma (queman)
+               campos ardientes    netherrack con fuego
+             peligros: ríos y lagos de lava (superficie en y=34), cráteres (algunos inundados),
+             agujas de obsidiana y basalto, columnatas en ruinas, costillares gigantes
+borde ≥ 630  una cordillera dentada de obsidiana, basalto y piedra negra en franjas, picos de ~y=150
 ```
 
-El suelo de la arena está **exactamente** en y=5 en todas partes y **nunca se construye nada por encima** dentro del anillo: las consultas de suelo de los jefes, el respaldo de recuperación de terreno y la colocación del sello se ajustaron sobre la llanura plana que este mundo era antes.
+La lava solo llena una columna hasta y=34, y todas las columnas por debajo de ese nivel se llenan igual, así que la superficie de lava siempre toca más lava o roca y nunca se derrama. El borde del mundo (`boss-dimension.size`, 1500 por defecto, entre 100 y 1500) queda justo detrás de la cordillera.
 
-> **Por qué la plaza tiene lista de materiales.** Cada estructura de invocación valida el bloque sobre el que se apoya, y la intersección de ambas listas es `ladrillos de piedra negra pulida`, `ladrillos de pizarra profunda` y `obsidiana llorosa`. La plaza se pavimenta con esos tres y con nada más, así que se puede montar cualquier ritual en cualquier punto — y un test cruza el pavimento con las estructuras, así que cambiar una de las dos listas rompe el build en vez del ritual.
-
-> **Luz.** La dimensión está congelada en medianoche (`doDaylightCycle` apagado, tiempo 14000), así que el brillo va dentro del suelo: obsidiana llorosa (luz 10) en la plaza, y tachuelas de shroomlight y froglight ocre fuera de ella. Nunca hay nada luminoso por encima del suelo.
-
-**Regenerar.** Un mundo que ya existe se carga tal cual: los cambios de terreno solo llegan a los chunks que nadie ha visitado. Para ver un generador nuevo desde el spawn, pon `boss-dimension.reset-on-load: true` una vez, reinicia y vuelve a ponerlo en false — el plugin borra la carpeta de la dimensión antes de crearla. Destruye todo lo construido allí, por eso viene desactivado.
+**Regenerar.** El plugin deja un archivo `msc-generator.txt` en la carpeta del mundo con el generador que lo construyó. Una dimensión construida por un generador anterior se borra y se regenera una sola vez, en el siguiente arranque. `boss-dimension.reset-on-load: true` fuerza la regeneración; vuelve a ponerlo en false después. Ambas cosas destruyen todo lo construido en ese mundo.
 
 ---
 
@@ -141,6 +137,39 @@ P . . . P
 
 ---
 
+## ⏱️ Invocación de DIO: El Trono de The World
+
+**DIO** solo se puede invocar dentro de la **Boss Dimension** (`boss_dimension`): las velas y la ofrenda no hacen nada en ningún otro sitio. Las coordenadas son relativas a la esquina suroeste del 5×5 y el suelo no se comprueba.
+
+### Diseño (5×5)
+
+```
+S . . . S        S = Pilar de esquina (3 bloques de alto)
+. . c . .        c = Vela Amarilla (encendida)
+. c G c .        G = Bloque de Oro (el trono)
+. . c . .
+S . . . S
+```
+
+### Materiales necesarios
+- **1 Bloque de Oro** en el centro `(2, 0, 2)`: el trono.
+- **4 Velas Amarillas** (`yellow_candle`) a su lado: Norte `(2, 0, 1)`, Sur `(2, 0, 3)`, Oeste `(1, 0, 2)`, Este `(3, 0, 2)`.
+- **4 Pilares de esquina** en `(0, 0)`, `(4, 0)`, `(0, 4)` y `(4, 4)`, cada uno de **3 bloques de alto**:
+  - `Y=0` — Bloque de Oro.
+  - `Y=1` — Bloque de Esmeralda.
+  - `Y=2` — cualquier cabeza o calavera (de jugador, esqueleto, esqueleto wither o zombi; de pie o en pared). La cabeza de The World también sirve.
+
+### Procedimiento
+1. Construye el trono en cualquier lugar de `boss_dimension`.
+2. Enciende las **4 velas amarillas** y haz clic derecho en una de ellas.
+3. **El trono despierta**: luz dorada y verde va de las cuatro cabezas al trono, y aparece encima una esfera de reloj dorada cuya aguja avanza una vez por segundo con un tic-tac. Si rompes la estructura o se apaga una vela, se cancela.
+4. **La ofrenda**: suelta un **Reloj** sobre el trono (a menos de **3 bloques**).
+5. **ZA WARUDO**: el reloj se consume, una esfera de tiempo detenido sale del trono y todos a menos de 20 bloques quedan retenidos un momento. Dos segundos y medio después cae un rayo y **DIO** aparece sobre el trono con The World detrás.
+
+> Solo una invocación por mundo a la vez, y el trono no despierta si DIO ya está vivo allí. Mientras DIO pelea, se aplican los bloqueos de construcción y comandos de la Boss Dimension como con los otros jefes.
+
+---
+
 ## 🚪 Salir
 
 Con el jefe inactivo puedes salir directamente con **`/msc dimtp`** (los comandos solo se bloquean durante la pelea). Si quieres salir por medios del juego, o si el jefe sigue activo, la única salida es **el mismo ritual usado para entrar**:
@@ -156,8 +185,8 @@ Con el jefe inactivo puedes salir directamente con **`/msc dimtp`** (los comando
 ## 🧰 Notas técnicas
 
 - Nombre del mundo: `boss_dimension` (se crea en la primera entrada, se descarga al desactivar el plugin).
-- Punto de spawn: `0.5, 10, 0.5` — 5 bloques sobre el suelo de la arena, la altura a la que los jugadores siempre han caído.
+- Punto de spawn: `0.5, 41, 0.5`, el centro de la arena.
 - Reglas del mundo: sin ciclo de día/noche, sin ciclo de clima, sin spawns de mobs, reaparición inmediata, sin anuncios de avances.
 - El cielo se fuerza a rojo vía un override de bioma; `boss-dimension.red-sky: false` lo deja como está (el tinte se aplica a un bioma vanilla, así que es global).
-- Config: `boss-dimension.red-sky` y `boss-dimension.reset-on-load`.
-- Clases relevantes: `BossDimensionManager`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure` y el paquete de terreno (`BossArenaGenerator`, `ArenaShape`, `ArenaNoise`, `ArenaPalette`, `ArenaLandmarks`, `TerrainSink`) — ver [Arquitectura](./dev/Architecture.md) y [Tests](./dev/Tests.md).
+- Config: `boss-dimension.red-sky`, `boss-dimension.size` y `boss-dimension.reset-on-load`.
+- Clases relevantes: `BossDimensionManager`, `Wasteland`, `WastelandGenerator`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure` — ver [Arquitectura](./dev/Architecture.md) y [Tests](./dev/Tests.md).

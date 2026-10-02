@@ -198,6 +198,28 @@ public final class NixModel {
         return new Quaternionf();
     }
 
+    /**
+     * How far an arm swings during the guillotine cleave, in radians (positive is forward, PI is
+     * straight up): over the head with the axe, a chop down to the front, then back to rest. The old
+     * curve swung the arms backwards for the "wind-up", so the axe never went over his head.
+     *
+     * @param reach how far over the head the arm goes
+     */
+    public static float cleaveSwing(float progress, float reach) {
+        float p = Math.max(0f, Math.min(1f, progress));
+        if (p < 0.4f) return reach * (float) Math.sin(p / 0.4f * Math.PI / 2);
+        if (p < 0.7f) return reach + (CLEAVE_FINISH - reach) * (float) Math.sin((p - 0.4f) / 0.3f * Math.PI / 2);
+        return CLEAVE_FINISH * (float) (1 - Math.sin((p - 0.7f) / 0.3f * Math.PI / 2));
+    }
+
+    /** Where the arms stop at the end of the chop: in front of him, the axe level with a chest. */
+    private static final float CLEAVE_FINISH = 0.6f;
+
+    /** The countdown value on which the cleave hits: 60% of the way through the swing. */
+    public static int cleaveImpactTick(int animTicks) {
+        return Math.max(1, Math.round(animTicks * 0.4f));
+    }
+
     /** Where a part rests with no limb rotation, in model space. */
     public static Vector3f baseTranslation(NixBoss.NixPart part) {
         return new Vector3f(
@@ -235,6 +257,49 @@ public final class NixModel {
                 .mul(part.rotation);
 
         return new Transformation(translation, rotation, new Vector3f(part.scale), new Quaternionf());
+    }
+
+    /** How big the executioner's axe is drawn: about as long as his arm. */
+    public static final float AXE_SCALE = 1.05f;
+    /** Where the right fist closes at rest: just below the lowest piece of the right arm. */
+    public static final Vector3f HAND_RIGHT = handRest();
+    /**
+     * The axe in a hanging hand: the handle runs on from the arm, down and forward (the model faces
+     * -Z), so it is overhead when the arm is and lands in front of him on the chop. The flat of the
+     * blade faces sideways. An item sprite lies in its XY plane with
+     * the handle along the (1, 1) diagonal.
+     */
+    private static final Quaternionf AXE_GRIP = grip(new Vector3f(0f, -1f, -0.55f), new Vector3f(1f, 0f, 0f));
+    /** The point of the sprite the fist holds, near the bottom of the handle, at scale 1. */
+    private static final Vector3f AXE_HANDLE = new Vector3f(-0.3f, -0.3f, 0f);
+
+    /** The axe's display transform: it rides the right forearm, elbow fold included. */
+    public static Transformation axe(Quaternionf limbRotation, Quaternionf lowerRotation) {
+        Vector3f hand = MscLimb.swingAndFold(new Vector3f(HAND_RIGHT), PIVOT_SHOULDER_RIGHT, PIVOT_ELBOW_RIGHT,
+                limbRotation, lowerRotation);
+        Quaternionf rotation = MscLimb.chain(limbRotation, lowerRotation).mul(AXE_GRIP);
+        Vector3f handle = rotation.transform(new Vector3f(AXE_HANDLE).mul(AXE_SCALE));
+        return new Transformation(hand.sub(handle), rotation, new Vector3f(AXE_SCALE), new Quaternionf());
+    }
+
+    private static Vector3f handRest() {
+        float lowest = Float.POSITIVE_INFINITY;
+        for (NixBoss.NixPart part : NixBoss.NixPart.values()) {
+            if (part.group == NixBoss.LimbGroup.ARM_RIGHT) lowest = Math.min(lowest, baseTranslation(part).y);
+        }
+        Vector3f upper = baseTranslation(NixBoss.NixPart.ARM_R_4);
+        return new Vector3f(upper.x, lowest - 0.08f, upper.z);
+    }
+
+    /** The rotation that lays an item sprite's handle along {@code handle} with its face towards {@code side}. */
+    static Quaternionf grip(Vector3f handle, Vector3f side) {
+        Vector3f a = new Vector3f(handle).normalize();
+        Vector3f n = new Vector3f(side).sub(new Vector3f(a).mul(side.dot(a))).normalize();
+        Vector3f b = new Vector3f(n).cross(a);
+        float k = (float) (1 / Math.sqrt(2));
+        org.joml.Matrix3f target = new org.joml.Matrix3f(a, b, n);
+        org.joml.Matrix3f sprite = new org.joml.Matrix3f(new Vector3f(k, k, 0), new Vector3f(-k, k, 0), new Vector3f(0, 0, 1));
+        return target.mul(sprite.transpose()).getNormalizedRotation(new Quaternionf());
     }
 
     /** The joint between two exported segments, in the re-centred space the parts move in. */

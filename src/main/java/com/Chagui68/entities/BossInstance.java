@@ -37,6 +37,7 @@ public class BossInstance {
     public Entity shieldHolder;
     public int shieldTimer = 0;
     public int shieldCooldown = 0;
+    public int aerialCooldown = 0;
     public int hoverBarrageCooldown = 0;
     public int groundAttackCooldown = 0;
     public boolean hoverBarrageActive = false;
@@ -45,6 +46,18 @@ public class BossInstance {
     public int flyingTimer = 0;
     public double groundY = 0;
     public final Set<String> aerialAttacksDone = new HashSet<>();
+    /** The pose the body was last given, so effects can find its hands and its spear. */
+    public com.Chagui68.entities.boss.fx.Pose pose = com.Chagui68.entities.boss.fx.Pose.REST;
+    /** Ticks the fight has run, counted by the AI loop. */
+    public long clock = 0;
+    /** The clock tick until which an attack owns the body and no other may start. */
+    public long busyUntil = 0;
+
+    /** Whether an attack is still animating the body. */
+    public boolean isBusy() {
+        return clock < busyUntil;
+    }
+
     /** The last few attacks thrown, oldest first, kept out of the next pick so the rotation varies. */
     public final java.util.Deque<String> recentAttacks = new java.util.ArrayDeque<>();
     public boolean shieldSealActive = false;

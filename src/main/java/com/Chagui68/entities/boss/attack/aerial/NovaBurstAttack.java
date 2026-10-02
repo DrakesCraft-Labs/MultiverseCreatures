@@ -1,104 +1,85 @@
 package com.Chagui68.entities.boss.attack.aerial;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.entities.boss.MagicSealListener;
-import com.Chagui68.entities.boss.seal.SealPlane;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Telegraph;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-public class NovaBurstAttack extends BossAttackBase {
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+/**
+ * Nova Burst: the Sentinel folds in on itself in the air, blazing brighter, then throws its arms wide
+ * and a shell of light expands from it in every direction. It hits once as it passes; the floor
+ * shows how far it will reach.
+ */
+public class NovaBurstAttack extends ChoreographedAttack.Aerial {
+
+    private static final int CURL = 22;
+    private static final int EXPAND = 14;
+    private static final double REACH = 22;
+
     public NovaBurstAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        if (!instance.isFlying) return;
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        double groundY = boss.getGroundY(center, 40);
-        Location boomLoc = new Location(world, center.getX(), groundY + 1.0, center.getZ());
-        if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnLargePentagramSeal(boomLoc.clone().add(0, 0.5, 0), 50, 8.0, SealPlane.XZ);
-        }
+    public Timeline choreograph(Stage stage) {
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.7);
+        Vector ground = stage.onGround(stage.feet());
+        Set<UUID> struck = new HashSet<>();
+        Vector[] core = new Vector[1];
+        Timeline t = new Timeline();
 
-        new BukkitRunnable() {
-            int t = 0;
+        tweenTo(t, stage, 0, CURL, Poses.CAST_GROUND.withRightArm(-60, -50, 0).withLeftArm(-60, 50, 0), Ease.IN);
+        t.span(0, CURL, (tick, p) -> {
+            Vector chest = stage.body().chest();
+            if (tick % 2 == 0) Telegraph.circle(stage, ground, REACH * 0.8, p);
+            fx.draw(Shapes.sphere(chest, 4 - p * 2.5, 30), fx.fade(Palette.HOLY, Palette.GOLD, 2.0f));
+            if (tick % 3 == 0) fx.gather(chest, 10, 8, Palette.GOLD, 10);
+        });
+        t.at(0, () -> fx.sound(stage.feet(), Sfx.BEACON_ACTIVATE, 2.5f, 0.6f));
+        t.at(CURL - 8, () -> fx.sound(stage.feet(), Sfx.RESPAWN_ANCHOR_CHARGE, 2.5f, 1.2f));
 
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid()) {
-                    cancel();
-                    return;
-                }
-                if (t < 25) {
-                    double phase = (double) t / 25;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-180 * phase + 90), Math.toRadians(80 * phase), 0));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-180 * phase + 90), Math.toRadians(-80 * phase), 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(-30 * phase), 0, 0));
-                    stand.setBodyPose(new EulerAngle(Math.toRadians(15 * phase), 0, 0));
-                    double r = 1.0 + phase * 5.0;
-                    for (int a = 0; a < 24; a++) {
-                        double angle = (2 * Math.PI * a / 24) + t * 0.05;
-                        double x = center.getX() + Math.cos(angle) * r;
-                        double z = center.getZ() + Math.sin(angle) * r;
-                        double y = center.getY() + Math.sin(angle * 2) * 1.5;
-                        Location pl = new Location(world, x, y, z);
-                        world.spawnParticle(Particle.DUST, pl, 1, 0, 0, 0, 0,
-                                new Particle.DustOptions(Color.fromRGB(0xFF6600), 2.0f * (float) phase));
-                        world.spawnParticle(Particle.FLAME, pl, 1, 0, 0, 0, 0);
-                    }
-                    if (t == 1) world.playSound(center, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.2f, 0.5f);
-                } else if (t == 25) {
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-45), Math.toRadians(90), Math.toRadians(0)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-45), Math.toRadians(-90), Math.toRadians(0)));
-                    stand.setBodyPose(new EulerAngle(Math.toRadians(-20), 0, 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(-30), 0, 0));
-                    world.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 3.0f, 0.4f);
-                    world.spawnParticle(Particle.EXPLOSION, boomLoc, 30, 6, 3, 6, 0);
-                    world.spawnParticle(Particle.FLAME, boomLoc, 80, 4, 2, 4, 0.08);
-                    world.spawnParticle(Particle.CLOUD, boomLoc, 60, 5, 2, 5, 0.15);
-                    double dmg = sealDamage;
-                    for (Player p : boss.getValidPlayers(world)) {
-                        double distSq = p.getLocation().distanceSquared(boomLoc);
-                        if (distSq < 400.0) {
-                            double dist = Math.sqrt(distSq);
-                            MscEntityUtils.damageBy(stand.entidad(), p, dmg * (1 - dist / 20 * 0.6));
-                            boss.launchPlayer(p, 1.0 + (1 - dist / 20) * 0.5);
-                            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
-                        }
-                    }
-                } else if (t < 40) {
-                    for (int a = 0; a < 20; a++) {
-                        double angle = random.nextDouble() * Math.PI * 2;
-                        double r = random.nextDouble() * 8;
-                        double x = center.getX() + Math.cos(angle) * r;
-                        double z = center.getZ() + Math.sin(angle) * r;
-                        world.spawnParticle(Particle.FLAME, new Location(world, x, boomLoc.getY() + random.nextDouble() * 4, z), 2, 0.2, 0.2, 0.2, 0.02);
-                        world.spawnParticle(Particle.SMOKE, new Location(world, x, boomLoc.getY() + random.nextDouble() * 3, z), 1, 0.3, 0.3, 0.3, 0.03);
-                    }
-                } else {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
+        tween(t, stage, CURL, CURL + 3, Poses.CAST_GROUND, Poses.SPREAD, Ease.OUT_BACK);
+        t.at(CURL, () -> {
+            core[0] = stage.body().chest();
+            fx.flash(core[0], Palette.HOLY);
+            fx.sound(core[0], Sfx.EXPLODE, 3f, 0.6f);
+            fx.sound(core[0], Sfx.TOTEM_USE, 1.5f, 0.6f);
+        });
+        t.span(CURL, CURL + EXPAND, (tick, p) -> {
+            double radius = 2 + REACH * Ease.at(Ease.OUT, p);
+            int points = (int) Math.min(220, radius * radius * 0.6);
+            fx.draw(Shapes.sphere(core[0], radius, points), fx.fade(Palette.HOLY, Palette.EMBER, 2.2f).sometimes(0.8));
+            fx.ring(stage.onGround(core[0]).add(new Vector(0, 0.4, 0)), Math.min(radius, REACH), 0.8, 0,
+                    fx.particle(Particle.FLAME).sometimes(0.5));
+            for (Victim victim : stage.victims()) {
+                double d = victim.chest().distance(core[0]);
+                if (d > radius + 1.5 || d < radius - 4 || !struck.add(victim.id())) continue;
+                stage.damage(victim, damage);
+                Vector away = victim.chest().subtract(core[0]);
+                if (away.lengthSquared() > 1e-6) away.normalize();
+                victim.fling(away.multiply(1.3).setY(0.6));
+                victim.ignite(60);
+                victim.effect(Affliction.BLINDNESS, 20, 0);
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+        });
+        tweenTo(t, stage, CURL + EXPAND, CURL + EXPAND + 14, Poses.HOVER, Ease.IN_OUT);
+        return t;
     }
 
     @Override

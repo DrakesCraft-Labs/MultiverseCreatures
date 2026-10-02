@@ -10,8 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The wings are the one seal that is not a flat shape, so the invariants here are about the body:
- * every feather starts at its shoulder, the two wings mirror each other, a turned stand carries its
- * wings around, and a flap rotates them without stretching them.
+ * each wing is a bone with feathers hanging from it, the two wings mirror each other, a turned
+ * stand carries its wings around, and a flap turns a wing about its root without stretching it.
  */
 class WingGeometryTest {
 
@@ -20,25 +20,45 @@ class WingGeometryTest {
             List.of(WingGeometry.GOLDEN_WINGS, WingGeometry.BURNING_WINGS);
 
     @Test
-    @DisplayName("Every feather runs from its shoulder to a reachable, finite tip")
-    void feathersRunFromShoulderToTip() {
+    @DisplayName("Each wing is a bone from its root, with every feather starting on the bone")
+    void feathersHangFromTheBone() {
         for (WingGeometry.Profile profile : PROFILES) {
-            List<List<WingPoint>> wings = WingGeometry.feathers(0, 10, 0, 0, 5, profile);
-            assertEquals(2 * profile.feathers(), wings.size());
-            for (List<WingPoint> feather : wings) {
-                assertEquals(profile.samples() + 1, feather.size());
-                WingPoint shoulder = feather.get(0);
-                assertEquals(10 + profile.shoulderHeight(), shoulder.y(), EPS);
-                assertEquals(profile.shoulderWidth(), Math.abs(shoulder.x()), EPS,
-                        "the shoulders sit half a span either side of the body");
-                assertEquals(0, shoulder.z(), EPS);
-
-                WingPoint tip = feather.get(feather.size() - 1);
-                assertTrue(Double.isFinite(tip.x()) && Double.isFinite(tip.y()) && Double.isFinite(tip.z()),
-                        "a profile evaluated to NaN — the last feather's sine runs negative");
-                assertTrue(Math.abs(tip.y() - shoulder.y()) <= profile.length() + profile.reach() + EPS);
-                assertTrue(Math.abs(tip.z() - shoulder.z()) <= profile.length() + profile.reach() + EPS);
+            List<WingGeometry.Stroke> strokes = WingGeometry.strokes(0, 10, 0, 0, 5, profile);
+            assertEquals(2 * (1 + 2 * profile.feathers()), strokes.size());
+            for (int side = 0; side < 2; side++) {
+                int first = side * (1 + 2 * profile.feathers());
+                WingGeometry.Stroke bone = strokes.get(first);
+                assertEquals(WingGeometry.Part.BONE, bone.part());
+                WingPoint root = WingGeometry.root(0, 10, 0, 0, side == 0 ? -1 : 1, profile);
+                assertEquals(0, distance(root, bone.points().get(0)), EPS, "the bone leaves the wing's root");
+                for (int k = first + 1; k <= first + 2 * profile.feathers(); k++) {
+                    WingGeometry.Stroke feather = strokes.get(k);
+                    assertTrue(feather.part() != WingGeometry.Part.BONE);
+                    WingPoint start = feather.points().get(0);
+                    assertTrue(nearest(start, bone.points()) < profile.length() * 0.1,
+                            "a feather has to start on the bone, not in the air");
+                    for (WingPoint p : feather.points()) {
+                        assertTrue(Double.isFinite(p.x()) && Double.isFinite(p.y()) && Double.isFinite(p.z()));
+                    }
+                    WingPoint tip = feather.points().get(feather.points().size() - 1);
+                    assertTrue(tip.y() < start.y(), "feathers hang down from the bone");
+                }
             }
+        }
+    }
+
+    @Test
+    @DisplayName("The wings sit behind the body and reach out to either side")
+    void theWingsSpreadFromTheBack() {
+        for (WingGeometry.Profile profile : PROFILES) {
+            List<WingGeometry.Stroke> strokes = WingGeometry.strokes(0, 0, 0, 0, 0, profile);
+            WingPoint root = strokes.get(0).points().get(0);
+            // Yaw 0 faces +z, so the back is -z.
+            assertTrue(root.z() < 0, "the roots are on the back, not inside the chest");
+            List<WingPoint> bone = strokes.get(0).points();
+            WingPoint tip = bone.get(bone.size() - 1);
+            assertTrue(Math.abs(tip.x()) > profile.length() * 0.8, "a spread wing reaches out sideways");
+            assertTrue(tip.y() > root.y(), "the wing rises from its root");
         }
     }
 
@@ -47,15 +67,15 @@ class WingGeometryTest {
     void theWingsMirror() {
         for (WingGeometry.Profile profile : PROFILES) {
             for (int ticks : new int[]{0, 7}) {
-                List<List<WingPoint>> wings = WingGeometry.feathers(4, 10, -3, 0, ticks, profile);
-                for (int feather = 0; feather < profile.feathers(); feather++) {
-                    List<WingPoint> left = wings.get(feather);
-                    List<WingPoint> right = wings.get(profile.feathers() + feather);
-                    for (int sample = 0; sample < left.size(); sample++) {
-                        assertEquals(8 - left.get(sample).x(), right.get(sample).x(), EPS,
-                                "feather " + feather + " sample " + sample + " is not mirrored");
-                        assertEquals(left.get(sample).y(), right.get(sample).y(), EPS);
-                        assertEquals(left.get(sample).z(), right.get(sample).z(), EPS);
+                List<WingGeometry.Stroke> strokes = WingGeometry.strokes(4, 10, -3, 0, ticks, profile);
+                int half = strokes.size() / 2;
+                for (int k = 0; k < half; k++) {
+                    List<WingPoint> left = strokes.get(k).points();
+                    List<WingPoint> right = strokes.get(half + k).points();
+                    for (int i = 0; i < left.size(); i++) {
+                        assertEquals(8 - left.get(i).x(), right.get(i).x(), EPS, "stroke " + k + " is not mirrored");
+                        assertEquals(left.get(i).y(), right.get(i).y(), EPS);
+                        assertEquals(left.get(i).z(), right.get(i).z(), EPS);
                     }
                 }
             }
@@ -66,12 +86,12 @@ class WingGeometryTest {
     @DisplayName("A stand that turns carries its wings: the cloud rotates with the yaw")
     void theWingsFollowTheYaw() {
         WingGeometry.Profile profile = WingGeometry.GOLDEN_WINGS;
-        List<List<WingPoint>> straight = WingGeometry.feathers(1, 8, 2, 0, 3, profile);
-        List<List<WingPoint>> turned = WingGeometry.feathers(1, 8, 2, 90, 3, profile);
-        for (int feather = 0; feather < straight.size(); feather++) {
-            for (int sample = 0; sample < straight.get(feather).size(); sample++) {
-                WingPoint before = straight.get(feather).get(sample);
-                WingPoint after = turned.get(feather).get(sample);
+        List<WingGeometry.Stroke> straight = WingGeometry.strokes(1, 8, 2, 0, 3, profile);
+        List<WingGeometry.Stroke> turned = WingGeometry.strokes(1, 8, 2, 90, 3, profile);
+        for (int k = 0; k < straight.size(); k++) {
+            for (int i = 0; i < straight.get(k).points().size(); i++) {
+                WingPoint before = straight.get(k).points().get(i);
+                WingPoint after = turned.get(k).points().get(i);
                 // A quarter turn takes an (x, z) offset to (-z, x).
                 assertEquals(1 - (before.z() - 2), after.x(), EPS, "the wing did not turn with the stand");
                 assertEquals(2 + (before.x() - 1), after.z(), EPS, "the wing did not turn with the stand");
@@ -81,21 +101,21 @@ class WingGeometryTest {
     }
 
     @Test
-    @DisplayName("The flap rotates the wings and never stretches them")
+    @DisplayName("The flap turns each wing rigidly about its root")
     void theFlapRotatesWithoutStretching() {
-        WingGeometry.Profile profile = WingGeometry.GOLDEN_WINGS;
-        List<List<WingPoint>> rest = WingGeometry.feathers(0, 10, 0, 0, 0, profile);
-        List<List<WingPoint>> flapped = WingGeometry.feathers(0, 10, 0, 0, 18, profile);
+        WingGeometry.Profile profile = WingGeometry.BURNING_WINGS;
+        List<WingGeometry.Stroke> rest = WingGeometry.strokes(0, 10, 0, 0, 0, profile);
+        List<WingGeometry.Stroke> flapped = WingGeometry.strokes(0, 10, 0, 0, 18, profile);
+        WingPoint root = rest.get(0).points().get(0);
         boolean moved = false;
-        for (int feather = 0; feather < rest.size(); feather++) {
-            List<WingPoint> still = rest.get(feather);
-            List<WingPoint> movedFeather = flapped.get(feather);
-            WingPoint shoulder = still.get(0);
-            WingPoint restTip = still.get(still.size() - 1);
-            WingPoint flapTip = movedFeather.get(movedFeather.size() - 1);
-            assertEquals(distance(shoulder, restTip), distance(shoulder, flapTip), EPS,
-                    "the flap turns the feather rigidly");
-            if (Math.abs(restTip.y() - flapTip.y()) > 1.0e-6) moved = true;
+        int half = rest.size() / 2;
+        for (int k = 0; k < half; k++) {
+            for (int i = 0; i < rest.get(k).points().size(); i++) {
+                WingPoint still = rest.get(k).points().get(i);
+                WingPoint beat = flapped.get(k).points().get(i);
+                assertEquals(distance(root, still), distance(root, beat), 1e-6, "the flap turns the wing rigidly");
+                if (Math.abs(still.y() - beat.y()) > 1e-6) moved = true;
+            }
         }
         assertTrue(moved, "a non-zero flap amplitude has to move the wings");
     }
@@ -119,24 +139,15 @@ class WingGeometryTest {
         WingGeometry.Profile burning = WingGeometry.BURNING_WINGS;
         assertTrue(burning.feathers() > golden.feathers());
         assertTrue(burning.length() > golden.length());
-        assertTrue(burning.reach() > golden.reach());
+        assertTrue(burning.featherLength() > golden.featherLength());
         assertTrue(burning.flapSpeed() < golden.flapSpeed(), "the bigger wings beat slower");
         assertTrue(burning.flapAmplitude() > golden.flapAmplitude());
     }
 
-    @Test
-    @DisplayName("Profiles describe real wings")
-    void profilesAreSane() {
-        for (WingGeometry.Profile profile : PROFILES) {
-            assertTrue(profile.feathers() >= 2, "a wing needs room for a taper");
-            assertTrue(profile.samples() >= 1);
-            assertTrue(profile.shoulderHeight() > 0 && profile.shoulderWidth() > 0);
-            assertTrue(profile.length() > 0 && profile.reach() >= 0);
-            assertTrue(profile.spreadSpan() > 0);
-            assertTrue(profile.lengthExponent() >= 1);
-            assertTrue(profile.flapAmplitude() > 0 && profile.flapSpeed() > 0);
-            assertTrue(profile.flapFalloff() >= 0 && profile.flapFalloff() < 1);
-        }
+    private static double nearest(WingPoint p, List<WingPoint> line) {
+        double best = Double.MAX_VALUE;
+        for (WingPoint q : line) best = Math.min(best, distance(p, q));
+        return best;
     }
 
     private static double distance(WingPoint first, WingPoint second) {

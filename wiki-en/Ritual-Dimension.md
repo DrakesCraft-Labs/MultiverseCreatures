@@ -1,6 +1,6 @@
 # 🌌 Ritual Dimension
 
-The **Ritual Dimension** (world `boss_dimension`) is a private, boss-only world where the **Obsidian Sentinel** is fought. It is a coliseum carved into a shattered plain: a paved arena the bosses and the invocation circles stand on, a terraced wall that closes it, and an eternal red sky over a wilderness of obsidian peaks, soul-fire flats, lava canyons and floating shards. No weather, no daylight cycle and no natural mob spawning. The dimension is generated automatically the first time a player enters it.
+The **Ritual Dimension** (world `boss_dimension`) is a private, boss-only world where the **Obsidian Sentinel** is fought. It is a scorched battlefield about 1500 × 1500 blocks across: a paved arena in the middle of a wasteland of lava rivers and lakes, craters, obsidian spikes, ruins and the bones of something huge, closed in by a jagged obsidian range, under an eternal red sky. No weather, no daylight cycle and no natural mob spawning. The dimension is generated automatically the first time a player enters it.
 
 > The dimension is heavily restricted on purpose: players cannot place or break blocks, and almost all commands are blocked (only `/say`, `/me`, `/help` and `/?` work — even `/msc dimtp` is blocked inside). Admins bypass these restrictions with the `msc.admin.bypass` permission.
 
@@ -8,27 +8,23 @@ The **Ritual Dimension** (world `boss_dimension`) is a private, boss-only world 
 
 ## 🏛️ The terrain
 
-Generation lives in `ritual/terrain/` and writes every chunk from the world seed alone, so a chunk's edge always matches its neighbour's.
-
 ```
-r = 0      eight-pointed sigil, glowing rings and spokes, brick checker over a deepslate base
-r ≤ 34     the plaza: paved **only** with blocks the invocation structures accept
-r ≤ 64     the arena floor: a decorative ring of masonry, gilded courses and glowing studs
-r ≤ 80     the wall: four terraces rising 6 blocks each, battlements on top,
-           eight buttress ribs climbing over the crown
-r > 80     the wilderness: an esplanade level with the wall, then shelves, obsidian peaks,
-           soul-fire flats, sculk basins and canyons with a flat lava floor
-           ~100 blocks out: ruins — monoliths, broken arches, gateways, soul wells, basalt spires
-           and eight floating shards over the crown
+r ≤ 48       the arena: perfectly flat paved floor at y=40, a crying-obsidian sigil of rings
+             and spokes, a chiselled rim; nothing ever stands on it
+r ≤ 92       the approach: paving rubble thinning out into the wasteland, gentle enough to walk
+r ≤ 110      no lava, crater or structure: the fight always starts on safe ground
+beyond       the wasteland, in three kinds of ground:
+               soul valleys       soul sand and soul soil with blue soul fire
+               scorched plains    blackstone and basalt with magma patches (they burn)
+               burning fields     netherrack with fire
+             hazards: lava rivers and lakes (surface at y=34), craters (some flooded),
+             obsidian and basalt spikes, ruined colonnades, giant ribcages
+edge ≥ 630   a jagged range of banded obsidian, basalt and blackstone, peaks up to ~y=150
 ```
 
-The arena floor is **exactly** at y=5 everywhere and **nothing is ever built above it** inside the ring: the bosses' ground queries, the ground-recovery fallback and the seal placement were all tuned on the flat plain this dimension used to be.
+Lava only ever fills a column up to y=34, and every column below that level is filled the same way, so a lava surface always meets more lava or rock and never runs anywhere. The world border (`boss-dimension.size`, 1500 by default, 100 - 1500) sits just beyond the range.
 
-> **Why the plaza has a material list.** Each invocation structure validates the block it stands on, and the intersection of both lists is `polished blackstone bricks`, `deepslate bricks` and `crying obsidian`. The plaza is paved with those three and nothing else, so a ritual can be built anywhere on it — and a test cross-checks the pavement against the structures, so a change to either list fails the build instead of the ritual.
-
-> **Light.** The dimension is stuck at midnight (`doDaylightCycle` off, time 14000), so the glow is built into the floor: crying obsidian (light 10) inside the plaza, shroomlight and ochre froglight studs outside it. Nothing luminous ever stands above the floor.
-
-**Regenerating.** A world that already exists is loaded as it was: terrain changes only reach the chunks nobody has visited. To see a new generator from the spawn point, set `boss-dimension.reset-on-load: true` once, restart, and set it back — the plugin deletes the dimension folder before creating it. It destroys everything built there, which is why it is off by default.
+**Regenerating.** The plugin leaves a `msc-generator.txt` file in the world folder naming the generator that built it. A dimension built by an older generator is deleted and rebuilt once, on the next start. `boss-dimension.reset-on-load: true` forces a rebuild; set it back to false afterwards. Both destroy everything built in that world.
 
 ---
 
@@ -141,6 +137,39 @@ P . . . P
 
 ---
 
+## ⏱️ Invoking DIO: The World's Throne
+
+**DIO** can only be summoned inside the **Boss Dimension** (`boss_dimension`): the candles and the offering do nothing anywhere else. Coordinates are relative to the south-west corner of the 5×5, and the floor is not checked.
+
+### Layout (5×5 footprint)
+
+```
+S . . . S        S = Corner pillar (3 blocks tall)
+. . c . .        c = Yellow Candle (lit)
+. c G c .        G = Gold Block (the throne)
+. . c . .
+S . . . S
+```
+
+### Required Materials
+- **1 Gold Block** at the centre `(2, 0, 2)`: the throne.
+- **4 Yellow Candles** (`yellow_candle`) next to it: North `(2, 0, 1)`, South `(2, 0, 3)`, West `(1, 0, 2)`, East `(3, 0, 2)`.
+- **4 Corner pillars** at `(0, 0)`, `(4, 0)`, `(0, 4)` and `(4, 4)`, each **3 blocks tall**:
+  - `Y=0` — Gold Block.
+  - `Y=1` — Emerald Block.
+  - `Y=2` — any skull or head (Player, Skeleton, Wither Skeleton or Zombie; standing or on a wall). The World's head works too.
+
+### Invocation Procedure
+1. Build the throne anywhere inside `boss_dimension`.
+2. Light the **4 yellow candles** and right-click one of them.
+3. **The throne wakes**: golden and green light runs from the four heads to the throne, and a golden clock face appears above it, its hand moving once a second with a ticking sound. Breaking the structure or putting a candle out cancels it.
+4. **The offering**: drop a **Clock** on the throne (within **3 blocks**).
+5. **ZA WARUDO**: the clock is consumed, a shell of stopped time bursts out of the throne and everyone within 20 blocks is held for a moment. Two and a half seconds later, lightning strikes and **DIO** stands on the throne with The World behind him.
+
+> Only one invocation per world at a time, and the throne does not wake while DIO is already alive there. While DIO fights, the Boss Dimension's build and command locks apply as for the other bosses.
+
+---
+
 ## 🚪 Leaving
 
 There is no teleport command available inside the dimension — the only way out is the **same ritual used to enter**:
@@ -156,8 +185,8 @@ There is no teleport command available inside the dimension — the only way out
 ## 🧰 Technical notes
 
 - World name: `boss_dimension` (created on first entry, unloaded on plugin disable).
-- Spawn point: `0.5, 10, 0.5` — 5 blocks above the arena floor, the height players have always landed at.
+- Spawn point: `0.5, 41, 0.5`, the centre of the arena.
 - Game rules: no daylight cycle, no weather cycle, no mob spawning, immediate respawn, no advancement announcements.
 - The sky is forced red via a biome override; `boss-dimension.red-sky: false` leaves it alone (the tint is applied to a vanilla biome, so it is global).
-- Config: `boss-dimension.red-sky` and `boss-dimension.reset-on-load`.
-- Relevant classes: `BossDimensionManager`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure`, and the terrain package (`BossArenaGenerator`, `ArenaShape`, `ArenaNoise`, `ArenaPalette`, `ArenaLandmarks`, `TerrainSink`) — see [Architecture](./dev/Architecture.md) and [Tests](./dev/Tests.md).
+- Config: `boss-dimension.red-sky`, `boss-dimension.size` and `boss-dimension.reset-on-load`.
+- Relevant classes: `BossDimensionManager`, `Wasteland`, `WastelandGenerator`, `BossInvocationManager`, `RitualManager`, `RitualStructure`, `BossInvocationStructure` — see [Architecture](./dev/Architecture.md) and [Tests](./dev/Tests.md).

@@ -18,6 +18,7 @@ import org.bukkit.util.Transformation;
 import java.net.URL;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -154,6 +155,49 @@ public final class DisplaySuit {
         for (UUID id : pieces) {
             Entity entity = (world != null) ? world.getEntity(id) : Bukkit.getEntity(id);
             if (entity != null) entity.remove();
+        }
+    }
+
+    /** The stand a piece was made for, read from its owner tag; null when it carries none. */
+    public static UUID ownerOf(Entity piece, String ownerPrefix) {
+        for (String tag : piece.getScoreboardTags()) {
+            if (tag.startsWith(ownerPrefix)) return parseOwner(tag.substring(ownerPrefix.length()));
+        }
+        return null;
+    }
+
+    /** An owner id as the tags write it: a UUID with or without its dashes; null when malformed. */
+    static UUID parseOwner(String id) {
+        String hex = id.replace("-", "");
+        if (hex.length() != 32) return null;
+        try {
+            return new UUID(Long.parseUnsignedLong(hex.substring(0, 16), 16), Long.parseUnsignedLong(hex.substring(16), 16));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Removes every loaded piece tagged {@code partTag} that no live boss is wearing: pieces without
+     * an owner, pieces whose stand is gone, and spare copies a boss left behind when it dressed
+     * itself again (a body frozen where the boss stood while the real one walks off).
+     *
+     * @param worn the pieces each live boss wears, by stand id
+     */
+    public static void sweep(String partTag, String ownerPrefix, Map<UUID, ? extends Collection<UUID>> worn) {
+        for (World world : Bukkit.getWorlds()) {
+            for (ItemDisplay piece : world.getEntitiesByClass(ItemDisplay.class)) {
+                if (!piece.getScoreboardTags().contains(partTag)) continue;
+                UUID owner = ownerOf(piece, ownerPrefix);
+                Collection<UUID> pieces = owner == null ? null : worn.get(owner);
+                if (pieces != null && pieces.contains(piece.getUniqueId())) continue;
+                if (pieces == null && owner != null) {
+                    // A stand that is loaded but not adopted yet keeps its body until it is.
+                    Entity stand = Bukkit.getEntity(owner);
+                    if (stand != null && stand.isValid()) continue;
+                }
+                piece.remove();
+            }
         }
     }
 }

@@ -1,100 +1,87 @@
 package com.Chagui68.entities.boss.attack.ground;
 
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Telegraph;
+import com.Chagui68.entities.boss.fx.Timeline;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 /**
- * Executioner Sweep: devastating wide-arc strike that sweeps everything in
- * front of the boss. Telegraphs, high damage, strong knockback and weakness.
+ * Executioner Sweep: a slow, deliberate wind-up with the spear dragged back and the blade burning
+ * red, then one enormous horizontal cut across the front half-circle. The blade's tip leaves a
+ * crescent of blood-red light in the air.
  */
-public class ExecutionerSweepAttack extends BossAttackBase {
-    private final double sweepDamage;
+public class ExecutionerSweepAttack extends ChoreographedAttack.Ground {
+
+    private static final int WIND = 26;
+    private static final int CUT = 5;
+    private static final double REACH = 15;
+    private static final double HALF = Math.toRadians(75);
 
     public ExecutionerSweepAttack(BossHost boss) {
         super(boss);
-        sweepDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.executioner-sweep-damage", 16.0);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        if (instance.isFlying) return;
-        ArmorStand stand = instance.stand.armorStand();
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
+    public Timeline choreograph(Stage stage) {
+        Fx fx = stage.fx();
+        double damage = stage.config("entities.armor-stand-boss.executioner-sweep-damage", 18.0);
+        Vector feet = stage.feet();
+        Vector forward = stage.forward();
+        double base = Math.atan2(forward.getZ(), forward.getX());
+        Timeline t = new Timeline();
 
-        new BukkitRunnable() {
-            int t = 0;
-            boolean charging = true;
-            boolean done = false;
+        tweenTo(t, stage, 0, WIND, Poses.SWING_BACK.withBody(0, 35, 0).withLeftLeg(-25, 0, 0), Ease.IN_BACK);
+        t.span(0, WIND, (tick, p) -> {
+            if (tick % 2 == 0) Telegraph.cone(stage, feet, forward, HALF, REACH, p);
+            Vector hand = stage.body().rightHand();
+            Vector tip = stage.body().spearTip();
+            fx.line(hand, tip, 0.5, fx.fade(Palette.BLOOD, Palette.EMBER, 1.3f + (float) p));
+            if (tick % 3 == 0) fx.cloud(Particle.LARGE_SMOKE, tip, 2, 0.3, 0.01);
+        });
+        t.at(0, () -> fx.sound(feet, Sfx.ELDER_GUARDIAN_CURSE, 2f, 0.6f));
+        t.at(WIND - 8, () -> fx.sound(feet, Sfx.BELL_RESONATE, 2.5f, 0.5f));
 
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid()) {
-                    cancel();
-                    return;
-                }
-                Location loc = stand.getLocation();
-                Vector dir = loc.getDirection();
-                if (dir.lengthSquared() < 0.01) dir = new Vector(0, 0, 1);
-                dir.setY(0).normalize();
-                final Vector fDir = dir;
-
-                if (charging) {
-                    double phase = Math.min(1.0, (double) t / 25);
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-160 * phase), Math.toRadians(60 * phase), Math.toRadians(20 * phase)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-160 * phase), Math.toRadians(-60 * phase), Math.toRadians(-20 * phase)));
-                    stand.setBodyPose(new EulerAngle(Math.toRadians(-25 * phase), 0, 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(-20 * phase), 0, 0));
-                    world.spawnParticle(Particle.END_ROD, loc.clone().add(0, 7, 0), 3, 2.0, 0.5, 2.0, 0.01);
-                    if (t == 1) world.playSound(loc, Sound.ENTITY_ILLUSIONER_PREPARE_MIRROR, 1.0f, 0.6f);
-                    if (t % 5 == 0 && t > 0) world.playSound(loc, Sound.ENTITY_ENDER_DRAGON_GROWL, 1.2f, 0.5f);
-                    if (t >= 25) {
-                        charging = false;
-                        t = 0;
-                        stand.setRightArmPose(new EulerAngle(Math.toRadians(-170), Math.toRadians(80), Math.toRadians(30)));
-                        stand.setLeftArmPose(new EulerAngle(Math.toRadians(-170), Math.toRadians(-80), Math.toRadians(-30)));
-                        world.playSound(loc, Sound.ENTITY_PLAYER_ATTACK_CRIT, 2.0f, 0.9f);
-                        world.spawnParticle(Particle.SWEEP_ATTACK, loc.clone().add(fDir.clone().multiply(5)), 30, 4.0, 1.5, 2.0, 0);
-                        world.spawnParticle(Particle.CRIT, loc.clone().add(fDir.clone().multiply(6)), 40, 4.0, 2.0, 3.0, 0.1);
-                        world.spawnParticle(Particle.EXPLOSION, loc.clone().add(fDir.clone().multiply(5)), 8, 2.0, 1.0, 2.0, 0);
-
-                        for (Player p : boss.getValidPlayers(world)) {
-                            Vector toP = p.getLocation().toVector().subtract(loc.toVector());
-                            toP.setY(0);
-                            if (toP.lengthSquared() > 81) continue;
-                            if (toP.lengthSquared() < 0.01) continue;
-                            if (toP.normalize().dot(fDir) < 0.0) continue;
-
-                            MscEntityUtils.damageBy(stand, p, sweepDamage);
-                            p.setVelocity(fDir.clone().multiply(2.0).setY(0.9));
-                            p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 1));
-                            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 2));
-                        }
-                    }
-                } else if (t >= 30) {
-                    if (!done) {
-                        done = true;
-                        boss.resetBossPose(instance);
-                    }
-                    cancel();
-                    return;
-                }
-                t++;
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
+        tween(t, stage, WIND, WIND + CUT, Poses.SWING_BACK.withBody(0, 35, 0), Poses.SWING_THROUGH.withBody(0, -35, 0), Ease.OUT);
+        t.span(WIND, WIND + CUT, (tick, p) -> {
+            // The cut itself: a band of light swept behind the blade as it crosses.
+            double angle = base + HALF - 2 * HALF * Ease.at(Ease.OUT, p);
+            double previous = base + HALF - 2 * HALF * Ease.at(Ease.OUT, Math.max(0, p - 0.3));
+            Vector center = feet.clone().add(new Vector(0, 3.2, 0));
+            fx.crescent(center, REACH * 0.35, REACH, previous, angle, Shapes.FLAT_U, Shapes.FLAT_V,
+                    fx.dust(Palette.HOLY, 2.2f), fx.fade(Palette.BLOOD, Palette.VOID_DEEP, 1.8f));
+            fx.cloud(Particle.SWEEP_ATTACK, center.clone().add(Shapes.heading(angle).multiply(REACH * 0.7)), 2, 0.5, 0);
+        });
+        t.at(WIND + 2, () -> {
+            fx.sound(feet, Sfx.PLAYER_ATTACK_SWEEP, 3f, 0.4f);
+            fx.sound(feet, Sfx.WITHER_SHOOT, 2f, 0.5f);
+            stage.hit(Area.cone(feet, forward, HALF, REACH, 8), damage, victim -> {
+                Vector away = victim.position().subtract(feet).setY(0);
+                if (away.lengthSquared() > 1e-6) away.normalize();
+                victim.fling(away.multiply(1.6).setY(0.5));
+                victim.effect(Affliction.WITHER, 80, 1);
+                fx.impact(victim.chest(), Palette.BLOOD, 2);
+            });
+        });
+        // The crescent lingers and fades for a moment after the cut.
+        t.span(WIND + CUT, WIND + CUT + 12, (tick, p) -> {
+            if (tick % 2 != 0) return;
+            Vector center = feet.clone().add(new Vector(0, 3.2 - p, 0));
+            fx.crescent(center, REACH * 0.85, REACH, base - HALF, base + HALF, Shapes.FLAT_U, Shapes.FLAT_V,
+                    fx.fade(Palette.BLOOD, Palette.ASH, 1.4f).sometimes(1 - p), p2 -> { });
+        });
+        recover(t, stage, WIND + CUT + 8, WIND + CUT + 26, Poses.GUARD);
+        return t;
     }
 
     @Override

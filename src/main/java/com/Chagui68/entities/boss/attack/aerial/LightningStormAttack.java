@@ -1,92 +1,88 @@
 package com.Chagui68.entities.boss.attack.aerial;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Bolts;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Telegraph;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-public class LightningStormAttack extends BossAttackBase {
+import java.util.List;
+
+/**
+ * Lightning Storm: a ring of storm cloud gathers over the Sentinel, then bolts come down on the
+ * players, each one called by a crackling circle under their feet a moment before.
+ */
+public class LightningStormAttack extends ChoreographedAttack.Aerial {
+
+    private static final int GATHER = 20;
+    private static final int BOLTS = 10;
+    private static final int GAP = 5;
+    private static final int WARN = 14;
+    private static final double RADIUS = 3;
+
     public LightningStormAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        if (!instance.isFlying) return;
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        double groundY = boss.getGroundY(center, 40);
-        if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnStormSeal(new Location(world, center.getX(), groundY + 0.5, center.getZ()), 80);
+    public Timeline choreograph(Stage stage) {
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.6);
+        Vector feet = stage.feet();
+        Vector cloud = feet.clone().add(new Vector(0, 14, 0));
+        List<Victim> victims = stage.victims();
+        Timeline t = new Timeline();
+
+        tweenTo(t, stage, 0, GATHER, Poses.CAST_SKY, Ease.OUT);
+        t.at(0, () -> fx.sound(feet, Sfx.LIGHTNING_THUNDER, 2f, 0.5f));
+        int end = GATHER + BOLTS * GAP + WARN;
+        t.span(0, end, (tick, p) -> {
+            double radius = 8 + Math.min(1, tick / (double) GATHER) * 16;
+            fx.ring(cloud, radius, 1.6, tick * 0.05,
+                    fx.particle(Particle.LARGE_SMOKE).and(fx.dust(Palette.ASH, 3.0f)).sometimes(0.7));
+            fx.ring(cloud.clone().add(new Vector(0, 1.5, 0)), radius * 0.8, 2.0, -tick * 0.04, fx.dust(Palette.STORM, 2.0f).sometimes(0.4));
+            if (tick % 7 == 0) Bolts.inCloud(fx, cloud, radius, stage.random());
+        });
+
+        for (int i = 0; i < BOLTS; i++) {
+            int strike = GATHER + i * GAP + WARN;
+            int index = i;
+            Vector[] spot = new Vector[1];
+            t.at(strike - WARN, () -> {
+                Vector around = victims.isEmpty() ? stage.onGround(feet)
+                        : victims.get(index % victims.size()).position();
+                spot[0] = stage.onGround(around.add(Shapes.heading(stage.random().nextDouble() * 6.28).multiply(index < victims.size() ? 0 : 4)));
+            });
+            t.span(strike - WARN, strike, (tick, p) -> {
+                if (spot[0] == null || tick % 2 != 0) return;
+                Telegraph.circle(stage, spot[0], RADIUS, p);
+                fx.cloud(Particle.ELECTRIC_SPARK, spot[0].clone().add(new Vector(0, 0.5, 0)), 4, RADIUS * 0.5, 0.05);
+            });
+            t.at(strike, () -> {
+                stage.lightning(spot[0]);
+                Bolts.strike(fx, spot[0], stage.random());
+                fx.flash(spot[0].clone().add(new Vector(0, 1, 0)), Palette.ICE);
+                fx.flatBurst(spot[0], Particle.ELECTRIC_SPARK, 24, 0.5);
+                stage.hit(Area.cylinder(spot[0], RADIUS, 1, 5), damage, victim -> {
+                    victim.effect(Affliction.SLOWNESS, 40, 1);
+                    victim.push(new Vector(0, 0.5, 0));
+                });
+            });
         }
-
-        new BukkitRunnable() {
-            int t = 0;
-
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid()) {
-                    cancel();
-                    return;
-                }
-                if (t < 20) {
-                    double phase = (double) t / 20;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-180 * phase), Math.toRadians(45 * phase), Math.toRadians(20 * phase)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-180 * phase), Math.toRadians(-45 * phase), Math.toRadians(-20 * phase)));
-                    stand.setBodyPose(new EulerAngle(0, Math.toRadians(180 * phase), 0));
-                    for (int a = 0; a < 10; a++) {
-                        double angle = (2 * Math.PI * a / 10) + t * 0.06;
-                        double r = 1.0 + phase * 3.0;
-                        double x = center.getX() + Math.cos(angle) * r;
-                        double z = center.getZ() + Math.sin(angle) * r;
-                        world.spawnParticle(Particle.DUST, new Location(world, x, center.getY(), z), 1, 0, 0, 0, 0,
-                                new Particle.DustOptions(Color.fromRGB(0xFFFF00), 2.0f * (float) phase));
-                    }
-                    if (t == 1) world.playSound(center, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.0f, 0.6f);
-                } else if (t < 80) {
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-180), Math.toRadians(45), Math.toRadians(20)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-180), Math.toRadians(-45), Math.toRadians(-20)));
-                    stand.setBodyPose(new EulerAngle(0, Math.toRadians(180 + (t - 20) * 4), 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(-20), 0, 0));
-                    if (t % 6 == 0) {
-                        double angle = random.nextDouble() * Math.PI * 2;
-                        double r = 3 + random.nextDouble() * 12;
-                        double x = center.getX() + Math.cos(angle) * r;
-                        double z = center.getZ() + Math.sin(angle) * r;
-                        Location strikeLoc = new Location(world, x, boss.getGroundY(new Location(world, x, center.getY(), z), 40), z);
-                        world.strikeLightningEffect(strikeLoc);
-                        world.spawnParticle(Particle.FLAME, strikeLoc, 20, 1, 0.5, 1, 0.05);
-                        world.playSound(strikeLoc, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 0.8f);
-                        double dmg = sealDamage * 0.6;
-                        for (Player p : boss.getValidPlayers(world)) {
-                            if (p.getLocation().distanceSquared(strikeLoc) < 16) {
-                                MscEntityUtils.damageBy(stand.entidad(), p, dmg);
-                                boss.launchPlayer(p, 0.4);
-                                p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2));
-                            }
-                        }
-                    }
-                } else {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
+        tweenTo(t, stage, end - 6, end + 10, Poses.HOVER, Ease.IN_OUT);
+        return t;
     }
 
     @Override

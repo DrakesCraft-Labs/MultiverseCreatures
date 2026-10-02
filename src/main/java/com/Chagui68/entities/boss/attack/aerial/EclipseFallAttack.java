@@ -1,156 +1,87 @@
 package com.Chagui68.entities.boss.attack.aerial;
 
-import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.boss.MagicSealListener;
-import com.Chagui68.entities.boss.seal.SealPlane;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Telegraph;
+import com.Chagui68.entities.boss.fx.Timeline;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 /**
- * Eclipse Fall — the boss conjures an eclipse over his head and drops it on the ground.
- *
- * <p>ANIMATION (what tells it apart on screen)
- * <ul>
- *   <li>0-24: both arms lift straight up while a <b>dark disc</b> forms three blocks above him,
- *       ringed by a pentagram; the boss himself never touches the ground.</li>
- *   <li>25-34: the disc <b>falls</b> — a ball of shadow with a comet trail, telegraphed by the ever
- *       darker sky under it.</li>
- *   <li>35: it lands as a black shockwave that blinds everyone nearby. The boss keeps hovering, so
- *       unlike the air slam this one never drags him down.</li>
- * </ul>
+ * Eclipse Fall: a black sun with a burning corona swells in the sky over the target, blotting it
+ * out, then drops. Darkness spreads from where it lands.
  */
-public class EclipseFallAttack extends BossAttackBase {
+public class EclipseFallAttack extends ChoreographedAttack.Aerial {
 
-    private static final int CHARGE_TICKS = 25;
-    private static final double DISC_HEIGHT = 3.4;
-    private static final double BLAST_RADIUS = 5.0;
-
-    private final double damage;
+    private static final int SWELL = 32;
+    private static final int DROP = 8;
+    private static final double RADIUS = 6.5;
+    private static final double HEIGHT = 22;
 
     public EclipseFallAttack(BossHost boss) {
         super(boss);
-        this.damage = plugin.getConfig().getDouble("entities.armor-stand-boss.eclipse-fall-damage", 16.0);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        if (!instance.isFlying) return;
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Player target = boss.detectTarget(stand);
-        if (target == null) return;
-        LivingEntity attacker = stand.entidad();
+    public Timeline choreograph(Stage stage) {
+        Fx fx = stage.fx();
+        double damage = stage.config("entities.armor-stand-boss.eclipse-fall-damage", 16.0);
+        Vector ground = stage.onGround(aimAt(stage, stage.target(), 10));
+        Vector sky = ground.clone().add(new Vector(0, HEIGHT, 0));
+        Timeline t = new Timeline();
 
-        Location targetGround = target.getLocation().clone();
-        targetGround.setY(boss.getGroundY(targetGround, 6));
-
-        new BukkitRunnable() {
-            int t = 0;
-            Location disc = null;
-            boolean dropped = false;
-
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid() || t > 90) {
-                    cancel();
-                    return;
-                }
-
-                Location center = stand.getLocation();
-
-                if (t < CHARGE_TICKS) {
-                    double p = (double) t / CHARGE_TICKS;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-30 - 130 * p), Math.toRadians(8), Math.toRadians(-10 * p)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-30 - 130 * p), Math.toRadians(-8), Math.toRadians(10 * p)));
-                    stand.setBodyPose(new EulerAngle(Math.toRadians(-14 * p), 0, 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(-16 * p), 0, 0));
-
-                    Location discCenter = center.clone().add(0, DISC_HEIGHT, 0);
-                    double radius = 0.6 + 1.7 * p;
-                    for (int i = 0; i < 28; i++) {
-                        double angle = Math.PI * 2 * i / 28 + t * 0.09;
-                        double r = radius * (0.75 + 0.25 * Math.sin(i));
-                        Location pl = discCenter.clone().add(Math.cos(angle) * r, 0, Math.sin(angle) * r);
-                        world.spawnParticle(Particle.DUST, pl, 1, 0, 0, 0, 0,
-                                new Particle.DustOptions(Color.fromRGB(0x1B0B2A), 1.8f));
-                        if (i % 4 == 0) {
-                            world.spawnParticle(Particle.SOUL_FIRE_FLAME, pl, 1, 0, 0, 0, 0.01);
-                        }
-                    }
-                    world.spawnParticle(Particle.SCULK_SOUL, discCenter, 2, radius * 0.7, 0.2, radius * 0.7, 0.01);
-                    if (t == 0) {
-                        world.playSound(center, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.6f, 0.6f);
-                        world.playSound(center, Sound.ENTITY_PHANTOM_SWOOP, 1.2f, 0.6f);
-                        if (plugin.getMagicSealListener() != null) {
-                            plugin.getMagicSealListener().spawnLargePentagramSeal(
-                                    center.clone().add(0, DISC_HEIGHT + 1.2, 0), 120, 4.0, SealPlane.XZ);
-                        }
-                    }
-                } else if (!dropped) {
-                    dropped = true;
-                    disc = center.clone().add(0, DISC_HEIGHT, 0);
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-20), Math.toRadians(20), Math.toRadians(20)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-20), Math.toRadians(-20), Math.toRadians(-20)));
-                    stand.setBodyPose(new EulerAngle(Math.toRadians(20), 0, 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(24), 0, 0));
-                    world.playSound(center, Sound.ENTITY_ENDER_DRAGON_SHOOT, 1.6f, 0.7f);
-                } else if (disc != null) {
-                    Vector step = targetGround.clone().add(0, 0.4, 0).toVector().subtract(disc.toVector());
-                    double distance = step.length();
-                    if (distance < 0.7) {
-                        detonate(world, targetGround, attacker);
-                        disc = null;
-                        world.playSound(targetGround, Sound.ENTITY_GENERIC_EXPLODE, 2.2f, 0.5f);
-                        world.playSound(targetGround, Sound.BLOCK_ANVIL_DESTROY, 1.4f, 0.6f);
-                    } else {
-                        Vector motion = step.normalize().multiply(Math.min(1.1, 0.35 + distance * 0.1));
-                        disc.add(motion);
-                        world.spawnParticle(Particle.DUST, disc, 6, 0.45, 0.45, 0.45, 0,
-                                new Particle.DustOptions(Color.fromRGB(0x120618), 2.0f));
-                        world.spawnParticle(Particle.SOUL_FIRE_FLAME, disc, 3, 0.3, 0.3, 0.3, 0.02);
-                        world.spawnParticle(Particle.SCULK_SOUL, disc, 2, 0.35, 0.35, 0.35, 0.01);
-                        world.spawnParticle(Particle.SMOKE, disc, 4, 0.3, 0.3, 0.3, 0.01);
-                    }
-                } else if (t > CHARGE_TICKS + 40) {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
+        tweenTo(t, stage, 0, SWELL, Poses.CAST_SKY, Ease.OUT);
+        t.at(0, () -> fx.sound(sky, Sfx.WITHER_SPAWN, 1.5f, 0.6f));
+        t.span(0, SWELL, (tick, p) -> {
+            if (tick % 2 == 0) Telegraph.circle(stage, ground, RADIUS, p);
+            drawEclipse(fx, sky, RADIUS * Ease.at(Ease.OUT, p), tick);
+            fx.line(stage.body().rightHand().midpoint(stage.body().leftHand()), sky, 1.4, fx.dust(Palette.EMBER, 1.0f).sometimes(0.5));
+        });
+        t.span(SWELL, SWELL + DROP, (tick, p) -> {
+            Vector at = sky.clone().add(ground.clone().subtract(sky).multiply(Ease.at(Ease.IN, p)));
+            drawEclipse(fx, at, RADIUS, SWELL + tick);
+            fx.cloud(Particle.LARGE_SMOKE, at.clone().add(new Vector(0, 2, 0)), 10, RADIUS * 0.5, 0.02);
+        });
+        t.at(SWELL, () -> fx.sound(sky, Sfx.DRAGON_SHOOT, 3f, 0.4f));
+        int impact = SWELL + DROP;
+        t.at(impact, () -> {
+            fx.flash(ground.clone().add(new Vector(0, 1, 0)), Palette.EMBER);
+            fx.impact(ground.clone().add(new Vector(0, 1, 0)), Palette.VOID_DEEP, 5);
+            fx.flatBurst(ground, Particle.FLAME, 50, 0.7);
+            fx.burst(ground.clone().add(new Vector(0, 2, 0)), Particle.SQUID_INK, 60, 0.6);
+            fx.sound(ground, Sfx.EXPLODE, 3f, 0.4f);
+            fx.sound(ground, Sfx.WARDEN_SONIC_BOOM, 2f, 0.5f);
+            stage.hit(Area.cylinder(ground, RADIUS, 1, 6), damage, victim -> {
+                victim.effect(Affliction.DARKNESS, 100, 0);
+                victim.ignite(80);
+                victim.fling(new Vector(0, 1.0, 0));
+            });
+        });
+        shockwave(t, stage, impact, 12, ground, RADIUS * 2.2, Palette.VOID, damage * 0.3, victim -> victim.effect(Affliction.DARKNESS, 60, 0));
+        tweenTo(t, stage, impact + 2, impact + 16, Poses.HOVER, Ease.IN_OUT);
+        return t;
     }
 
-    /** The impact: black shockwave, blindness and damage inside the blast radius. */
-    private void detonate(World world, Location center, LivingEntity attacker) {
-        boss.spawnShockwaveWave(attacker, world, center, BLAST_RADIUS * 0.8);
-        world.spawnParticle(Particle.EXPLOSION_EMITTER, center.clone().add(0, 0.4, 0), 2);
-        world.spawnParticle(Particle.SCULK_SOUL, center.clone().add(0, 0.5, 0), 60, 2.0, 0.4, 2.0, 0.05);
-        world.spawnParticle(Particle.DUST, center.clone().add(0, 0.3, 0), 80, 2.2, 0.2, 2.2, 0,
-                new Particle.DustOptions(Color.fromRGB(0x1B0B2A), 2.2f));
-        if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnLargePentagramSeal(center.clone().add(0, 0.3, 0), 100, 5.0,
-                    SealPlane.XZ);
-        }
-
-        for (Player p : boss.getValidPlayers(world)) {
-            if (p.getLocation().distanceSquared(center) > BLAST_RADIUS * BLAST_RADIUS) continue;
-            MscEntityUtils.damageBy(attacker, p, damage);
-            p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 60, 0));
-            world.spawnParticle(Particle.DAMAGE_INDICATOR, p.getLocation().add(0, 1, 0), 10, 0.4, 0.5, 0.4, 0.08);
+    /** A black disc edged by a corona of flame and flickering spikes of light. */
+    private static void drawEclipse(Fx fx, Vector center, double radius, int tick) {
+        if (radius < 0.3) return;
+        fx.disc(center, radius * 0.85, 0.9, fx.dust(Palette.VOID_DEEP, 2.4f));
+        fx.ring(center, radius, 0.6, tick * 0.05, fx.dust(Palette.EMBER, 2.0f));
+        fx.ring(center, radius * 1.12, 0.8, -tick * 0.08, fx.dust(Palette.GOLD, 1.4f).sometimes(0.6));
+        for (int i = 0; i < 12; i++) {
+            double angle = i * Math.PI / 6 + tick * 0.03;
+            double flare = radius * (1.15 + 0.35 * Math.abs(Math.sin(tick * 0.3 + i)));
+            fx.line(Shapes.onCircle(center, radius, angle, Shapes.FLAT_U, Shapes.FLAT_V),
+                    Shapes.onCircle(center, flare, angle, Shapes.FLAT_U, Shapes.FLAT_V), 0.5, fx.dust(Palette.MOLTEN, 1.3f));
         }
     }
 

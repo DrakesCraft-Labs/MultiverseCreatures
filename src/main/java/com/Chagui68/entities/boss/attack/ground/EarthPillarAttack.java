@@ -1,88 +1,97 @@
 package com.Chagui68.entities.boss.attack.ground;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Prop;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Telegraph;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-public class EarthPillarAttack extends BossAttackBase {
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Earth Pillar: the Sentinel crouches with its hands over the floor; the ground cracks and glows
+ * under every player, then obsidian pillars burst out and throw them into the air.
+ */
+public class EarthPillarAttack extends ChoreographedAttack.Ground {
+
+    private static final int CROUCH = 14;
+    private static final int WARN = 20;
+    private static final double RADIUS = 2.6;
+    private static final int MAX_PILLARS = 6;
+
     public EarthPillarAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        if (instance.isFlying) return;
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
+    public Timeline choreograph(Stage stage) {
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.8);
+        Timeline t = new Timeline();
+        List<Prop> props = props(t);
+        List<Vector> spots = new ArrayList<>();
+        for (Victim victim : stage.victims()) {
+            if (spots.size() >= MAX_PILLARS) break;
+            spots.add(stage.onGround(victim.position()));
+        }
+        if (spots.isEmpty()) spots.add(stage.onGround(stage.feet().add(stage.forward().multiply(12))));
 
-        new BukkitRunnable() {
-            int t = 0;
-
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid()) {
-                    cancel();
-                    return;
-                }
-                if (t < 25) {
-                    double phase = (double) t / 25;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-90 * phase), Math.toRadians(60 * phase), 0));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-90 * phase), Math.toRadians(-60 * phase), 0));
-                    world.spawnParticle(Particle.END_ROD, center, 2, 1, 0.2, 1, 0.01);
-                    if (t == 1) world.playSound(center, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.0f, 0.5f);
-                    if (t % 5 == 0) {
-                        for (int a = 0; a < 8; a++) {
-                            double angle = (2 * Math.PI * a / 8);
-                            double x = center.getX() + Math.cos(angle) * 4;
-                            double z = center.getZ() + Math.sin(angle) * 4;
-                            world.spawnParticle(Particle.DUST, new Location(world, x, center.getY(), z), 1, 0, 0, 0, 0,
-                                    new Particle.DustOptions(Color.fromRGB(0x8B4513), 1.5f * (float) phase));
-                        }
-                    }
-                } else if (t < 65) {
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-90), Math.toRadians(60), 0));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-90), Math.toRadians(-60), 0));
-                    stand.setBodyPose(new EulerAngle(Math.toRadians(10), 0, 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(-5), 0, 0));
-                    if (t % 8 == 0) {
-                        Player target = boss.detectTarget(stand);
-                        if (target != null) {
-                            Location tLoc = target.getLocation();
-                            for (int h = 0; h < 8; h++) {
-                                Location pl = tLoc.clone().add(0, h * 0.5, 0);
-                                world.spawnParticle(Particle.BLOCK, pl, 5, 0.3, 0.1, 0.3, 0.1, Material.STONE.createBlockData());
-                                world.spawnParticle(Particle.DUST, pl, 3, 0.2, 0.1, 0.2, 0, new Particle.DustOptions(Color.fromRGB(0x8B4513), 2.0f));
-                            }
-                            world.playSound(tLoc, Sound.BLOCK_STONE_BREAK, 1.0f, 0.7f);
-                            double dmg = sealDamage * 0.8;
-                            MscEntityUtils.damageBy(stand.entidad(), target, dmg);
-                            boss.launchPlayer(target, 1.2);
-                            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2));
-                        }
-                    }
-                } else if (t >= 65) {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
+        tweenTo(t, stage, 0, CROUCH, Poses.CAST_GROUND, Ease.IN_OUT);
+        t.at(0, () -> fx.sound(stage.feet(), Sfx.EVOKER_CAST, 2f, 0.5f));
+        t.span(0, CROUCH + WARN, (tick, p) -> {
+            for (Vector hand : new Vector[]{stage.body().rightHand(), stage.body().leftHand()}) {
+                fx.line(hand, stage.onGround(hand), 0.5, fx.dust(Palette.MOLTEN, 1.2f).sometimes(0.5));
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+            if (tick % 2 != 0) return;
+            double progress = Math.min(1, (double) tick / (CROUCH + WARN));
+            for (Vector spot : spots) {
+                Telegraph.circle(stage, spot, RADIUS, progress);
+                // Cracks running out from the spot as it charges.
+                for (int i = 0; i < 4; i++) {
+                    Vector dir = Shapes.heading(i * Math.PI / 2 + tick * 0.1);
+                    fx.line(spot, spot.clone().add(dir.multiply(RADIUS * progress)), 0.4,
+                            fx.dust(Palette.EMBER, 1.0f));
+                }
+                fx.crumble(stage.groundMaterial(spot), 3, RADIUS * 0.5).at(spot);
+            }
+        });
+        t.at(CROUCH + WARN - 6, () -> fx.sound(stage.feet(), Sfx.RESPAWN_ANCHOR_CHARGE, 2f, 0.5f));
+
+        int burst = CROUCH + WARN;
+        for (Vector spot : spots) {
+            pillar(t, stage, burst, spot, Material.OBSIDIAN, 2.4f, 8, 3, 34, props);
+            pillar(t, stage, burst + 1, spot.clone().add(new Vector(1.6, 0, 0.8)), Material.CRYING_OBSIDIAN, 1.2f, 5, 3, 32, props);
+            t.at(burst + 1, () -> {
+                fx.burst(spot.clone().add(new Vector(0, 1, 0)), Particle.LAVA, 12, 0.6);
+                fx.cloud(Particle.LARGE_SMOKE, spot, 20, 1.5, 0.08);
+                fx.sound(spot, Sfx.WITHER_BREAK_BLOCK, 2f, 0.6f);
+                fx.sound(spot, Sfx.EXPLODE, 1.5f, 0.9f);
+                stage.hit(Area.cylinder(spot, RADIUS + 0.4, 1, 3), damage,
+                        victim -> victim.fling(new Vector(0, 1.6, 0)));
+            });
+        }
+        tween(t, stage, burst - 2, burst + 2, Poses.CAST_GROUND, Poses.CAST_SKY, Ease.OUT_BACK);
+        recover(t, stage, burst + 10, burst + 26, Poses.GUARD);
+        t.hold(burst + 52);
+        return t;
+    }
+
+    @Override
+    public int lockTicks(Timeline timeline) {
+        return CROUCH + WARN + 26;
     }
 
     @Override

@@ -23,7 +23,7 @@ final class AttackCatalogue {
 
     private static final List<Entry> ENTRIES = List.of(
             // Ground
-            new Entry("groundslam", "&7Earth-shattering seismic leap impact", 1),
+            new Entry("groundslam", "&7Shield hurled skyward to judge every player below", 1),
             new Entry("groundshatter", "&7Fissure wave that fractures the terrain", 1),
             new Entry("shieldbash", "&7Forward heavy rush that stuns targets", 1),
             new Entry("lancestorm", "&7Piercing lance barrage across the ground", 1),
@@ -41,6 +41,9 @@ final class AttackCatalogue {
             new Entry("earthmaw", "&7Stone jaws closing on everything in front", 1),
             new Entry("shadowstep", "&7Vanishes through a sigil to strike from behind", 1),
             new Entry("runeward", "&7Plants a pulsing rune ward that outlives the cast", 1),
+            new Entry("sunderingcharge", "&7Spear-dragging charge that leaves an erupting fissure", 1),
+            new Entry("spearcyclone", "&7Whirled spear unleashes a roaming cyclone", 1),
+            new Entry("cataclysm", "&7Three rings of the arena erupt from the inside out", 1),
             // Aerial
             new Entry("starfall", "&7Calling celestial stars crashing down", 2),
             new Entry("aerialrush", "&7High-speed aerial homing strike", 2),
@@ -58,6 +61,8 @@ final class AttackCatalogue {
             new Entry("eclipsefall", "&7Black eclipse disc dropped on the landing zone", 2),
             new Entry("bladering", "&7Orbiting lance ring fired out one by one", 2),
             new Entry("obsidianwings", "&7Wing beats sweeping obsidian shards outward", 2),
+            new Entry("voidmeteor", "&7Obsidian meteor hurled down into a void crater", 2),
+            new Entry("phantomlegion", "&7Spectral copies lunge through the target one by one", 2),
             // Ranged / magic
             new Entry("lancesnipe", "&7High-velocity sniper lance projectile", 3),
             new Entry("meteorstorm", "&7Shower of flaming meteorites", 3),
@@ -74,6 +79,7 @@ final class AttackCatalogue {
             new Entry("soultethers", "&7Visible tethers hook players and reel them in", 3),
             new Entry("plaguebrand", "&7Brands a player with a plague that spreads", 3),
             new Entry("runemines", "&7Scatters armed runes that burst when stepped on", 3),
+            new Entry("obsidianprison", "&7Cages of obsidian spikes collapse on each player", 3),
             // Defensive
             new Entry("stoneskin", "&7Hardens boss defense, reducing all damage", 4),
             new Entry("reflectbarrier", "&7Prismatic shield reflecting projectiles", 4),

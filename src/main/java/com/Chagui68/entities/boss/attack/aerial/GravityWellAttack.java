@@ -1,108 +1,92 @@
 package com.Chagui68.entities.boss.attack.aerial;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Telegraph;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-public class GravityWellAttack extends BossAttackBase {
-    private final double pullDamage;
-    private final double coreDamage;
+/**
+ * Gravity Well: a black singularity opens over the target and the ground lets go — everything near
+ * it is lifted towards the core while matter spirals in. Then gravity returns all at once and slams
+ * everyone it held back into the floor; the closer to the core, the harder.
+ */
+public class GravityWellAttack extends ChoreographedAttack.Aerial {
+
+    private static final int OPEN = 16;
+    private static final int HOLD = 40;
+    private static final double RADIUS = 10;
+    private static final double LIFT = 6;
 
     public GravityWellAttack(BossHost boss) {
         super(boss);
-        pullDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.gravity-well-min-damage", 3.0);
-        coreDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.gravity-well-max-damage", 8.0);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        if (!instance.isFlying) return;
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        double groundY = boss.getGroundY(center, 40);
-        Location wellLoc = new Location(world, center.getX(), groundY, center.getZ());
-        if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnVortexSeal(wellLoc.clone().add(0, 0.5, 0), 100);
-        }
+    public Timeline choreograph(Stage stage) {
+        Fx fx = stage.fx();
+        double maxDamage = stage.config("entities.armor-stand-boss.gravity-well-max-damage", 14.0);
+        double minDamage = stage.config("entities.armor-stand-boss.gravity-well-min-damage", 5.0);
+        Vector ground = stage.onGround(aimAt(stage, stage.target(), 10));
+        Vector core = ground.clone().add(new Vector(0, LIFT, 0));
+        Timeline t = new Timeline();
 
-        new BukkitRunnable() {
-            int t = 0;
+        tweenTo(t, stage, 0, OPEN, Poses.CAST_FORWARD.withRightArm(-50, 10, 0).withLeftArm(-50, -10, 0).withHead(30, 0, 0), Ease.IN_OUT);
+        t.span(0, OPEN, (tick, p) -> {
+            if (tick % 2 == 0) Telegraph.circle(stage, ground, RADIUS, p);
+            Vector hands = stage.body().rightHand().midpoint(stage.body().leftHand());
+            fx.line(hands, core, 1.0, fx.dust(Palette.VOID, 1.2f).sometimes(0.6));
+            fx.draw(Shapes.sphere(core, 0.4 + p * 1.2, 16), fx.dust(Palette.VOID_DEEP, 2.2f));
+        });
+        t.at(0, () -> fx.sound(core, Sfx.RESPAWN_ANCHOR_CHARGE, 2.5f, 0.5f));
 
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid()) {
-                    cancel();
-                    return;
-                }
-                if (t < 30) {
-                    double phase = (double) t / 30;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-180 * phase), Math.toRadians(10), 0));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-180 * phase), Math.toRadians(-10), 0));
-                    stand.setBodyPose(new EulerAngle(0, Math.toRadians(360 * phase), 0));
-                    double r = phase * 6.0;
-                    for (int a = 0; a < 20; a++) {
-                        double angle = (2 * Math.PI * a / 20) + phase * Math.PI * 2;
-                        double x = center.getX() + Math.cos(angle) * r;
-                        double z = center.getZ() + Math.sin(angle) * r;
-                        double y = wellLoc.getY() + Math.abs(Math.sin(angle * 3)) * 3;
-                        Location pl = new Location(world, x, y, z);
-                        world.spawnParticle(Particle.DUST, pl, 1, 0, 0, 0, 0,
-                                new Particle.DustOptions(Color.fromRGB(0x4400AA), 2.0f * (float) phase));
-                        world.spawnParticle(Particle.PORTAL, pl, 1, 0, 0, 0, 0);
-                    }
-                    if (t == 1) world.playSound(center, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.0f, 0.4f);
-                } else if (t < 90) {
-                    stand.setBodyPose(new EulerAngle(0, Math.toRadians(1080), 0));
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-180), Math.toRadians(-20), 0));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-180), Math.toRadians(20), 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(20), 0, 0));
-                    double r = 6.0 + Math.sin(t * 0.1) * 0.5;
-                    for (int a = 0; a < 30; a++) {
-                        double angle = (2 * Math.PI * a / 30) + (t - 30) * 0.05;
-                        double x = center.getX() + Math.cos(angle) * r;
-                        double z = center.getZ() + Math.sin(angle) * r;
-                        double y = wellLoc.getY() + Math.abs(Math.sin(angle * 2 + t * 0.1)) * 4;
-                        Location pl = new Location(world, x, y, z);
-                        world.spawnParticle(Particle.DUST, pl, 1, 0, 0, 0, 0,
-                                new Particle.DustOptions(Color.fromRGB(0x4400AA), 1.8f));
-                        world.spawnParticle(Particle.PORTAL, pl, 1, 0, 0, 0, 0);
-                    }
-                    for (Player p : boss.getValidPlayers(world)) {
-                        Vector toCenter = wellLoc.toVector().subtract(p.getLocation().toVector());
-                        toCenter.setY(0);
-                        double dist = toCenter.length();
-                        if (dist < 10 && dist > 2) {
-                            p.setVelocity(p.getVelocity().add(toCenter.normalize().multiply(0.2)));
-                            MscEntityUtils.damageBy(stand.entidad(), p, pullDamage);
-                        } else if (dist <= 2) {
-                            MscEntityUtils.damageBy(stand.entidad(), p, coreDamage);
-                            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 3));
-                            p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 2));
-                        }
-                    }
-                    world.playSound(center, Sound.BLOCK_BEACON_AMBIENT, 0.5f, 0.3f);
-                } else {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
+        t.span(OPEN, OPEN + HOLD, (tick, p) -> {
+            fx.draw(Shapes.sphere(core, 1.8, 30), fx.dust(Palette.VOID_DEEP, 2.4f));
+            Vector tilt = new Vector(Math.cos(tick * 0.07), 0.25, Math.sin(tick * 0.07)).normalize();
+            Vector[] disk = Shapes.planeAxes(tilt);
+            for (double r = 2.4; r < 6; r += 0.8) {
+                fx.draw(Shapes.circle(core, r, (int) (r * 5), disk[0], disk[1], tick * 0.3 / r),
+                        fx.dust(Palette.mix(Palette.AMETHYST, Palette.EMBER, (r - 2.4) / 3.6), 1.3f));
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+            if (tick % 2 == 0) fx.gather(core, RADIUS, 6, Palette.VOID, 12);
+            fx.cloud(Particle.REVERSE_PORTAL, core, 6, 2, 0.1);
+            // Debris torn from the floor rises towards the core.
+            if (tick % 4 == 0) {
+                Vector from = stage.onGround(ground.clone().add(Shapes.heading(stage.random().nextDouble() * 6.28).multiply(RADIUS * stage.random().nextDouble())));
+                stage.debris(from, core.clone().subtract(from).multiply(0.06).setY(0.35), stage.groundMaterial(from), 18);
+            }
+            for (Victim victim : stage.victimsIn(Area.cylinder(ground, RADIUS, 2, LIFT + 4))) {
+                Vector in = core.clone().subtract(victim.chest());
+                victim.fling(in.multiply(0.08).setY(Math.max(0.05, Math.min(0.25, in.getY() * 0.06))));
+            }
+            if (tick % 10 == 0) fx.sound(core, Sfx.WARDEN_HEARTBEAT, 2f, 0.7f);
+        });
+
+        int slam = OPEN + HOLD;
+        tween(t, stage, slam - 2, slam + 2, Poses.CAST_FORWARD, Poses.DIVE.withHead(40, 0, 0), Ease.OUT_BACK);
+        t.at(slam, () -> {
+            fx.flash(core, Palette.VOID);
+            fx.burst(core, Particle.REVERSE_PORTAL, 80, 1.2);
+            fx.sound(core, Sfx.MACE_SMASH_GROUND, 3f, 0.5f);
+            for (Victim victim : stage.victimsIn(Area.cylinder(ground, RADIUS, 2, LIFT + 6))) {
+                double closeness = 1 - Math.min(1, victim.position().distance(ground) / RADIUS);
+                stage.damage(victim, minDamage + (maxDamage - minDamage) * closeness);
+                victim.fling(new Vector(0, -2.2, 0));
+            }
+        });
+        shockwave(t, stage, slam + 2, 12, ground, RADIUS + 2, Palette.AMETHYST, minDamage, null);
+        tweenTo(t, stage, slam + 6, slam + 20, Poses.HOVER, Ease.IN_OUT);
+        return t;
     }
 
     @Override

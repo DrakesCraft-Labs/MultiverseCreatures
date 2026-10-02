@@ -1,85 +1,96 @@
 package com.Chagui68.entities.boss.attack.ranged;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-public class VoidBeamAttack extends BossAttackBase {
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Void Beam: a dark sphere grows between the Sentinel's hands, then a beam of void pours out of it
+ * and follows the target a step behind. Outrunning its turn is how to escape it.
+ */
+public class VoidBeamAttack extends ChoreographedAttack.Ranged {
+
+    private static final int CHARGE = 24;
+    private static final int FIRE = 44;
+    private static final double TURN = 0.12;
+    private static final double RANGE = 40;
+
     public VoidBeamAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        Player target = boss.detectTarget(stand);
-        if (target == null) return;
+    public Timeline choreograph(Stage stage) {
+        Victim target = stage.target();
+        if (target == null) return null;
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.3);
+        Vector[] aim = new Vector[1];
+        Map<UUID, Integer> lastHit = new HashMap<>();
+        Timeline t = new Timeline();
 
-        new BukkitRunnable() {
-            int t = 0;
-            Location targetLastLoc = target.getLocation();
+        tweenTo(t, stage, 0, CHARGE, Poses.CAST_FORWARD, Ease.IN_OUT);
+        gather(t, stage, 0, CHARGE, () -> core(stage), 7, Palette.VOID);
+        t.span(0, CHARGE, (tick, p) -> {
+            Vector core = core(stage);
+            fx.draw(Shapes.sphere(core, 0.5 + p * 1.6, 24), fx.fade(Palette.VOID, Palette.VOID_DEEP, 2.2f));
+            fx.cloud(Particle.REVERSE_PORTAL, core, 4, 0.6, 0.05);
+            // Aiming line, faint, so the player sees what it will lock on to.
+            if (tick % 3 == 0) fx.line(core, target.chest(), 1.4, fx.dust(Palette.AMETHYST, 0.8f));
+        });
+        t.at(0, () -> fx.sound(stage.feet(), Sfx.WARDEN_SONIC_CHARGE, 2.5f, 0.6f));
 
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid() || !target.isOnline()) {
-                    cancel();
-                    return;
+        t.span(CHARGE, CHARGE + FIRE, (tick, p) -> {
+            Vector core = core(stage);
+            Vector want = target.chest().subtract(core).normalize();
+            aim[0] = aim[0] == null ? want : aim[0].clone().multiply(1 - TURN).add(want.multiply(TURN)).normalize();
+            Vector end = core.clone().add(aim[0].clone().multiply(RANGE));
+            // Stop the beam where it meets the floor.
+            for (Vector point : Shapes.line(core, end, 1.0)) {
+                if (point.getY() <= stage.floorY(point.getX(), point.getY(), point.getZ())) {
+                    end = point;
+                    break;
                 }
-                if (t < 25) {
-                    double phase = (double) t / 25;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-90 * phase), Math.toRadians(60 * phase), 0));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-90 * phase), Math.toRadians(-60 * phase), 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(-30 * phase), 0, 0));
-                    if (t == 1) world.playSound(center, Sound.ENTITY_WITHER_SHOOT, 1.0f, 0.4f);
-                } else if (t < 105) {
-                    targetLastLoc = target.getLocation();
-                    Vector toTarget = targetLastLoc.toVector().subtract(center.toVector());
-                    double dist = toTarget.length();
-                    if (dist > 0.1) toTarget.normalize();
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(-30), 0, 0));
-                    Location beamPos = center.clone().add(0, 1.5, 0);
-                    for (double d = 0; d < Math.min(dist, 30); d += 0.8) {
-                        Location pl = beamPos.clone().add(toTarget.clone().multiply(d));
-                        world.spawnParticle(Particle.PORTAL, pl, 3, 0.2, 0.2, 0.2, 0.05);
-                        world.spawnParticle(Particle.DUST, pl, 1, 0, 0, 0, 0,
-                                new Particle.DustOptions(Color.fromRGB(0x660066), 2.0f));
-                    }
-                    if (t % 5 == 0) world.playSound(center, Sound.BLOCK_BEACON_AMBIENT, 0.6f, 0.3f);
-                    for (Player p : boss.getValidPlayers(world)) {
-                        Vector toP = p.getEyeLocation().toVector().subtract(center.toVector());
-                        if (toP.lengthSquared() < 900) {
-                            Vector norm = toP.clone().normalize();
-                            double proj = norm.dot(toTarget);
-                            if (proj > 0 && proj > 0.95) {
-                                MscEntityUtils.damageBy(stand.entidad(), p, sealDamage * 0.25);
-                                p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 40, 0));
-                                p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 40, 0));
-                            }
-                        }
-                    }
-                } else {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+            fx.beam(core, end, Palette.SPECTRAL, Palette.VOID, 1.6);
+            Vector[] axes = Shapes.planeAxes(aim[0]);
+            for (Vector point : Shapes.line(core, end, 3.0)) {
+                fx.draw(Shapes.circle(point, 0.9, 6, axes[0], axes[1], tick * 0.5 + point.length()), fx.dust(Palette.VOID_DEEP, 1.2f));
+            }
+            fx.impact(end, Palette.VOID, 1);
+            if (tick % 5 == 0) fx.sound(core, Sfx.BEACON_POWER, 1.5f, 0.5f);
+            for (Victim victim : stage.victimsIn(Area.segment(core, end, 1.8))) {
+                Integer last = lastHit.get(victim.id());
+                if (last != null && tick - last < 6) continue;
+                lastHit.put(victim.id(), tick);
+                stage.damage(victim, damage);
+                victim.effect(Affliction.DARKNESS, 40, 0);
+                victim.push(aim[0].clone().multiply(0.25));
+            }
+        });
+        t.at(CHARGE, () -> fx.sound(stage.feet(), Sfx.WARDEN_SONIC_BOOM, 2.5f, 0.6f));
+        recover(t, stage, CHARGE + FIRE, CHARGE + FIRE + 14, Poses.GUARD);
+        return t;
+    }
+
+    private static Vector core(Stage stage) {
+        return stage.body().rightHand().midpoint(stage.body().leftHand()).add(stage.forward().multiply(1.5));
     }
 
     @Override

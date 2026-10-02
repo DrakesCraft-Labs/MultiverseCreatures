@@ -51,8 +51,12 @@ class SchedulerHandleGuardTest {
     /** A {@code cancel(} that ends the runnable itself, not one it happens to hold. */
     private static final Pattern SELF_CANCEL = Pattern.compile("(?<![\\w.])cancel\\s*\\(");
 
-    /** Floor for the site count: the scan has to see the whole project, not a corner of it. */
-    private static final int MIN_SITES = 100;
+    /**
+     * Floor for the site count: the scan has to see the whole project, not a corner of it. The
+     * Sentinel's attacks all play through one choreography runner now, so the project holds about
+     * sixty repeating tasks instead of the hundred-odd it had when every attack scheduled its own.
+     */
+    private static final int MIN_SITES = 45;
 
     /** Floor for the handle count, so a scanner that calls everything self-cancelling fails. */
     private static final int MIN_OWNED_TASKS = 10;

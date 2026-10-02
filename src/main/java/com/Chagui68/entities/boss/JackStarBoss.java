@@ -1,6 +1,11 @@
 package com.Chagui68.entities.boss;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.LiveStage;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
 import com.Chagui68.items.components.ArchitectKernel;
 import com.Chagui68.items.food.ScoobyCookie;
 import com.Chagui68.utils.DisplaySuit;
@@ -123,13 +128,15 @@ public class JackStarBoss implements Listener {
                 new float[]{0.4685f, 0f, 0f, 0.3474315625f, 0f, 0.937f, 0f, 1.170265625f, 0f, 0f, 0.4685f, -0.0164649875f, 0f, 0f, 0f, 1f},
                 LimbGroup.ARM_RIGHT),
 
-        ARM_L_UPPER("OverBigboy123",
-                "ewogICJ0aW1lc3RhbXAiIDogMTc4OTc3NDI4OTU4MSwKICAicHJvZmlsZUlkIiA6ICI5MTEyOTc2ZGJkMTU0MDk4OGM2MjY3OGNkZjU5NTkyMCIsCiAgInByb2ZpbGVOYW1lIiA6ICJPdmVyQmlnYm95MTIzIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzFhMTFhMzQ0MTEzNTFlNTM0MWM5ODRkMzg2ZTQzMDMyODQ0YjM5MGEwMTdhZTYwZjk0YmNkYWEwNGUzZTQ5M2QiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfQogIH0KfQ==",
+        // The left arm wears the right arm's textures: its own skins were deleted from Mojang's
+        // texture server (404), and a skull whose skin is gone renders as a default Steve/Alex face.
+        ARM_L_UPPER("elnadXB",
+                "ewogICJ0aW1lc3RhbXAiIDogMTc4OTc3NDI4NTc1MywKICAicHJvZmlsZUlkIiA6ICI5MTU1ZmYzNTNlMzc0ZmZlYjE0MmE5NmU2MzU2ZjA4NSIsCiAgInByb2ZpbGVOYW1lIiA6ICJlbG5hZFhCIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2I3OGU1NzM2ODQzODNjMTkwMGY3YzBmNTViYzdmNGYzYmNiYjAxMDViMjRiZjdmMjFjYTNjYzI2ZWEzM2YwODEiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfQogIH0KfQ==",
                 new float[]{0.4685f, 0f, 0f, -0.3482909375f, 0f, 0.4685f, 0f, 1.404515625f, 0f, 0f, 0.4685f, -0.0164649875f, 0f, 0f, 0f, 1f},
                 LimbGroup.ARM_LEFT),
 
-        ARM_L_LOWER("colinPAPA",
-                "ewogICJ0aW1lc3RhbXAiIDogMTc4OTc3NDI5MTk4NCwKICAicHJvZmlsZUlkIiA6ICI4MjA5YjA3MDlmZGM0NjBhYmY2MTljYmNmYTFjNWQ4MiIsCiAgInByb2ZpbGVOYW1lIiA6ICJjb2xpblBBUEEiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZTdmZjZkNTY2ZWY5MzBhMjg5NmQ3MWIzNDQzMWZkODlkNzAzYTA3MjhhOWIzZTA0NTYyN2M4ODFjNjU2NTRlNiIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9",
+        ARM_L_LOWER("vexlehaha",
+                "ewogICJ0aW1lc3RhbXAiIDogMTc4OTc3NDI4NzYwNSwKICAicHJvZmlsZUlkIiA6ICJkMTNmODljZmRiMmY0OTUxOWE4YjgxMTUzN2FmZWU2ZSIsCiAgInByb2ZpbGVOYW1lIiA6ICJ2ZXhsZWhhaGEiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjBlY2I4NjA0MDBmOWUwNTNhNGRmOGQ1N2FmN2YwMjgzY2FlNTVkNmVlNGE0MGE3NDg3MTFiNGE5MTRhOTE4MiIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9",
                 new float[]{0.4685f, 0f, 0f, -0.3482909375f, 0f, 0.937f, 0f, 1.170265625f, 0f, 0f, 0.4685f, -0.0164649875f, 0f, 0f, 0f, 1f},
                 LimbGroup.ARM_LEFT);
 
@@ -218,6 +225,11 @@ public class JackStarBoss implements Listener {
     /** Size of the invisible stand the suit is hit through; {@link #MODEL_HITBOX_SCALE} is the default. */
     private double hitboxScale = MODEL_HITBOX_SCALE;
     private double packetLossChance;
+    private double forkBombDamage;
+    private double binaryRainDamage;
+    private double stackOverflowDamage;
+    /** Ticks between two signature moves (fork(), Binary Rain, Stack Overflow); shorter from phase 4. */
+    private int specialCooldownTicks;
 
     public JackStarBoss(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -241,20 +253,47 @@ public class JackStarBoss implements Listener {
         hitboxScale = MscEntityUtils.clampHitboxScale(
                 config.getDouble("entities.jackstar-architect.hitbox-scale", MODEL_HITBOX_SCALE));
         packetLossChance = config.getDouble("entities.jackstar-architect.packet-loss-chance", 0.25);
+        forkBombDamage = config.getDouble("entities.jackstar-architect.fork-bomb-damage", 10.0);
+        binaryRainDamage = config.getDouble("entities.jackstar-architect.binary-rain-damage", 8.0);
+        stackOverflowDamage = config.getDouble("entities.jackstar-architect.stack-overflow-damage", 14.0);
+        specialCooldownTicks = Math.max(20, config.getInt("entities.jackstar-architect.special-cooldown-ticks", 200));
+    }
+
+    /** Takes over a stand a previous run left behind, wearing the parts it already has. */
+    private void adopt(ArmorStand stand) {
+        if (activeInstances.containsKey(stand.getUniqueId())) return;
+        if (!stand.getPersistentDataContainer().has(MscEntityUtils.KEY_VIRTUAL_MAX_HEALTH, org.bukkit.persistence.PersistentDataType.DOUBLE)) {
+            MscEntityUtils.initVirtualHealth(stand, health);
+        }
+        stand.setGravity(false);
+        JackInstance inst = new JackInstance(stand);
+        restorePartDisplays(inst);
+        activeInstances.put(stand.getUniqueId(), inst);
+        setupBossBar(inst);
+    }
+
+    /**
+     * A stand whose chunk loads after startup: without this it stood there with no AI, and its
+     * body was swept as an orphan.
+     */
+    @EventHandler
+    public void onEntitiesLoad(org.bukkit.event.world.EntitiesLoadEvent event) {
+        for (Entity entity : event.getEntities()) {
+            if (entity instanceof ArmorStand stand && stand.getScoreboardTags().contains(TAG)) adopt(stand);
+        }
+    }
+
+    /** Removes body parts no live boss wears: spare copies, and the bodies of bosses that are gone. */
+    private void sweepParts() {
+        java.util.Map<UUID, java.util.Collection<UUID>> worn = new java.util.HashMap<>();
+        for (JackInstance inst : activeInstances.values()) worn.put(inst.stand.getUniqueId(), inst.partDisplays.values());
+        DisplaySuit.sweep(PART_TAG, PART_OWNER_TAG_PREFIX, worn);
     }
 
     private void reloadExisting() {
         for (World world : Bukkit.getWorlds()) {
             for (ArmorStand stand : world.getEntitiesByClass(ArmorStand.class)) {
-                if (!stand.getScoreboardTags().contains(TAG)) continue;
-                if (!stand.getPersistentDataContainer().has(MscEntityUtils.KEY_VIRTUAL_MAX_HEALTH, org.bukkit.persistence.PersistentDataType.DOUBLE)) {
-                    MscEntityUtils.initVirtualHealth(stand, health);
-                }
-                stand.setGravity(false);
-                JackInstance inst = new JackInstance(stand);
-                restorePartDisplays(inst);
-                activeInstances.put(stand.getUniqueId(), inst);
-                setupBossBar(inst);
+                if (stand.getScoreboardTags().contains(TAG)) adopt(stand);
             }
             for (ItemDisplay display : world.getEntitiesByClass(ItemDisplay.class)) {
                 if (!display.getScoreboardTags().contains(PART_TAG)) continue;
@@ -284,6 +323,9 @@ public class JackStarBoss implements Listener {
      * state.
      */
     private BukkitTask ticker;
+    private int sweepClock;
+    /** Ticks between two sweeps for stray body parts. */
+    private static final int SWEEP_INTERVAL = 40;
 
     private void startTicker() {
         if (ticker != null) ticker.cancel();
@@ -293,6 +335,7 @@ public class JackStarBoss implements Listener {
                 for (JackInstance inst : new ArrayList<>(activeInstances.values())) {
                     tick(inst);
                 }
+                if (++sweepClock % SWEEP_INTERVAL == 0) sweepParts();
             }
         }.runTaskTimer(plugin, 0L, 1L);
     }
@@ -376,7 +419,11 @@ public class JackStarBoss implements Listener {
             updateArenaHUD(inst);
         }
 
-        if (target != null) {
+        double targetDist = target == null ? Double.MAX_VALUE
+                : Math.hypot(target.getLocation().getX() - loc.getX(), target.getLocation().getZ() - loc.getZ());
+        // A signature move owns the body while it plays; the regular routine below waits for it.
+        boolean performing = inst.move != JackMoves.Move.NONE || (target != null && performMove(inst, target, targetDist));
+        if (target != null && !performing) {
             Vector toTarget = target.getLocation().toVector().subtract(loc.toVector());
             toTarget.setY(0);
             double dist = toTarget.length();
@@ -501,12 +548,17 @@ public class JackStarBoss implements Listener {
         if (inst.sonicBoomCooldown > 0) inst.sonicBoomCooldown--;
         if (inst.minionCooldown > 0) inst.minionCooldown--;
         if (inst.buildCooldown > 0) inst.buildCooldown--;
+        if (inst.moveCooldown > 0 && inst.move == JackMoves.Move.NONE) inst.moveCooldown--;
 
         inst.animTicks += JackModel.WALK_RATE;
         inst.tickCount++;
 
         // Feet on the floor every tick, whether he walked or not: a dash, a dodge or a block
         // vanishing under him must never leave him standing on air.
+        if (inst.move != JackMoves.Move.NONE) {
+            inst.moving = false;
+            runMove(inst, target, loc);
+        }
         BossArena.settle(loc);
         stand.teleport(loc);
         syncDisplays(inst);
@@ -1282,6 +1334,7 @@ public class JackStarBoss implements Listener {
      */
     private Quaternionf computeLowerQuat(JackPart part, JackInstance inst) {
         if (inst == null) return new Quaternionf();
+        if (inst.move != JackMoves.Move.NONE) return JackMoves.lower(inst.move, part, inst.moveTick);
         if (inst.slashAnimTicks > 0) {
             float prog = 1f - (float) inst.slashAnimTicks / 18f;
             return JackModel.slashLowerRotation(part, prog);
@@ -1297,6 +1350,7 @@ public class JackStarBoss implements Listener {
     }
 
     private Quaternionf computeLimbQuat(LimbGroup group, JackInstance inst) {
+        if (inst.move != JackMoves.Move.NONE) return JackMoves.limb(inst.move, group, inst.moveTick);
         Quaternionf q = new Quaternionf();
         float s = inst.animTicks;
         boolean walking = inst.moving;
@@ -1338,6 +1392,397 @@ public class JackStarBoss implements Listener {
             }
         }
         return q;
+    }
+
+    // ------------------------------------------------------------------ signature moves
+
+    private static final Color CODE = Color.fromRGB(0x39FF6A);
+    private static final Color CODE_DIM = Color.fromRGB(0x0F7A2C);
+    private static final Color GLITCH_CYAN = Color.fromRGB(0x00F0FF);
+    private static final Color GLITCH_MAGENTA = Color.fromRGB(0xFF2BD6);
+
+    /** One hop of a fork() process: it lands at {@code to} after {@code flight} ticks and splits. */
+    record Hop(Vector from, Vector to, int start, int flight, int generation) {}
+
+    /** One falling bit of Binary Rain, landing {@link #RAIN_WARN} + {@link #RAIN_FALL} ticks after {@code born}. */
+    record Bit(Vector at, int born, boolean one) {}
+
+    private static final int RAIN_WARN = 12;
+    private static final int RAIN_FALL = 6;
+
+    /**
+     * Starts or continues a signature move.
+     *
+     * @return whether a move owns JackStar this tick, so the regular combat routine stays out
+     */
+    private boolean performMove(JackInstance inst, Player target, double dist) {
+        if (inst.move == JackMoves.Move.NONE) {
+            if (inst.moveCooldown > 0 || inst.slashAnimTicks > 0 || inst.slamAnimTicks > 0 || dist > aggroRange) {
+                return false;
+            }
+            JackMoves.Move pick = pickMove(inst, dist);
+            if (pick == null) return false;
+            inst.move = pick;
+            inst.moveTick = 0;
+            inst.hops.clear();
+            inst.bits.clear();
+            inst.frames.clear();
+            inst.struck.clear();
+            broadcastToArena(inst, switch (pick) {
+                case FORK_BOMB -> ChatColor.AQUA + "> " + ChatColor.WHITE + "while(true) fork();";
+                case BINARY_RAIN -> ChatColor.GREEN + "> " + ChatColor.WHITE + "cat /dev/urandom > /arena";
+                case STACK_OVERFLOW -> ChatColor.RED + "> " + ChatColor.WHITE + "recurse(jack, ∞);";
+                default -> "";
+            });
+        }
+        inst.moving = false;
+        return true;
+    }
+
+    private JackMoves.Move pickMove(JackInstance inst, double dist) {
+        int roll = random.nextInt(100);
+        if (dist <= 6.0) return roll < 50 ? JackMoves.Move.STACK_OVERFLOW : JackMoves.Move.BINARY_RAIN;
+        if (dist <= 16.0) {
+            if (roll < 40) return JackMoves.Move.FORK_BOMB;
+            return roll < 70 ? JackMoves.Move.STACK_OVERFLOW : JackMoves.Move.BINARY_RAIN;
+        }
+        return roll < 60 ? JackMoves.Move.FORK_BOMB : JackMoves.Move.BINARY_RAIN;
+    }
+
+    /** Plays one tick of the current move; moves the stand's location for the dashes. */
+    private void runMove(JackInstance inst, Player target, Location loc) {
+        Fx fx = LiveStage.fxIn(loc.getWorld());
+        int t = inst.moveTick;
+        switch (inst.move) {
+            case FORK_BOMB -> forkTick(inst, fx, loc, target, t);
+            case BINARY_RAIN -> rainTick(inst, fx, loc, target, t);
+            case STACK_OVERFLOW -> stackTick(inst, fx, loc, target, t);
+            default -> {
+            }
+        }
+        inst.moveTick++;
+        if (inst.moveTick >= inst.move.ticks) {
+            inst.move = JackMoves.Move.NONE;
+            inst.moveTick = 0;
+            inst.hops.clear();
+            inst.bits.clear();
+            inst.frames.clear();
+            inst.struck.clear();
+            int base = inst.currentPhase >= 4 ? 140 : 200;
+            inst.moveCooldown = Math.max(20, specialCooldownTicks * base / 200) + random.nextInt(40);
+            inst.meleeCooldown = Math.max(inst.meleeCooldown, 10);
+        }
+    }
+
+    /** fork(): a glitch cube thrown at the target; every landing bursts and forks into two. */
+    private void forkTick(JackInstance inst, Fx fx, Location loc, Player target, int t) {
+        float scale = inst.currentScale;
+        Vector feet = loc.toVector();
+        Vector right = rightOf(loc);
+        Vector hand = feet.clone().add(new Vector(0, 1.5 * scale, 0)).add(right.clone().multiply(0.5 * scale))
+                .subtract(loc.getDirection().setY(0).normalize().multiply(0.4 * scale));
+        if (t == 0) fx.sound(feet, Sfx.BEACON_ACTIVATE, 1.5f, 1.8f);
+        int release = JackMoves.FORK_WIND + JackMoves.FORK_RELEASE;
+        if (t < release) {
+            if (target != null && t < JackMoves.FORK_WIND) loc.setDirection(target.getLocation().toVector().subtract(feet).setY(0));
+            float p = JackMoves.phase(t, 0, JackMoves.FORK_WIND);
+            drawCube(fx, hand, 0.15 + 0.35 * p, t * 0.3, t);
+            if (t % 3 == 0) fx.gather(hand, 1.6, 3, GLITCH_CYAN, 6);
+            return;
+        }
+        if (t == release) {
+            Vector to = target != null ? groundAt(target.getLocation()) : feet.clone().add(loc.getDirection().setY(0).normalize().multiply(10));
+            inst.hops.add(new Hop(hand.clone(), to, t, JackMoves.FORK_FLIGHT, 0));
+            fx.sound(hand, Sfx.TRIDENT_THROW, 1.8f, 1.4f);
+            fx.sound(hand, Sfx.AMETHYST_CHIME, 2f, 0.6f);
+        }
+        for (Hop hop : new ArrayList<>(inst.hops)) {
+            int age = t - hop.start();
+            if (age < 0 || age > hop.flight()) continue;
+            double p = age / (double) hop.flight();
+            double arc = (hop.generation() == 0 ? 4.0 : 2.5) * 4 * p * (1 - p);
+            Vector at = hop.from().clone().add(hop.to().clone().subtract(hop.from()).multiply(p)).add(new Vector(0, arc + 0.5, 0));
+            drawCube(fx, at, 0.5 - hop.generation() * 0.1, t * 0.35, t + hop.generation());
+            if (age % 2 == 0) {
+                Vector landing = hop.to().clone().add(new Vector(0, 0.15, 0));
+                fx.ring(landing, 2.5 - hop.generation() * 0.3, 0.5, t * 0.2,
+                        fx.dust(Palette.mix(GLITCH_MAGENTA, Palette.WARNING_HOT, p), 1.2f));
+            }
+            if (age < hop.flight()) continue;
+            // Landed: burst, then fork in two unless this is the last generation.
+            Vector blast = hop.to().clone().add(new Vector(0, 0.6, 0));
+            fx.impact(blast, hop.generation() % 2 == 0 ? GLITCH_CYAN : GLITCH_MAGENTA, 1.6);
+            fx.burst(blast, Particle.END_ROD, 14, 0.25);
+            fx.cloud(Particle.ELECTRIC_SPARK, blast, 20, 1.2, 0.1);
+            fx.sound(blast, Sfx.GLASS_BREAK, 1.6f, 1.4f - hop.generation() * 0.2f);
+            fx.sound(blast, Sfx.EXPLODE, 1.0f, 1.6f);
+            double damage = forkBombDamage * (hop.generation() == 0 ? 1.0 : 0.6);
+            for (Player p2 : arenaPlayers(loc.getWorld())) {
+                if (p2.getLocation().toVector().distanceSquared(hop.to()) > 2.6 * 2.6) continue;
+                dealToPlayer(inst.stand, p2, damage, "fork()");
+                Vector away = p2.getLocation().toVector().subtract(hop.to()).setY(0);
+                if (away.lengthSquared() > 0.01) away.normalize().multiply(0.4);
+                p2.setVelocity(p2.getVelocity().add(away.setY(0.45)));
+            }
+            if (hop.generation() >= 2) continue;
+            Vector dir = hop.to().clone().subtract(hop.from()).setY(0);
+            if (dir.lengthSquared() < 0.01) dir = loc.getDirection().setY(0);
+            dir.normalize();
+            double spread = hop.generation() == 0 ? 0.9 : 0.7;
+            double reach = hop.generation() == 0 ? 5.5 : 4.0;
+            for (int side = -1; side <= 1; side += 2) {
+                Vector way = rotateFlat(dir, side * spread).multiply(reach);
+                Vector next = groundAt(hop.to().clone().add(way).toLocation(loc.getWorld()));
+                inst.hops.add(new Hop(hop.to().clone(), next, t + 1, JackMoves.FORK_HOP - hop.generation(), hop.generation() + 1));
+            }
+        }
+    }
+
+    /** Binary Rain: Jack types at the sky and bits fall in telegraphed cells around the players. */
+    private void rainTick(JackInstance inst, Fx fx, Location loc, Player target, int t) {
+        Vector feet = loc.toVector();
+        double sky = 12;
+        if (t == 0) {
+            fx.sound(feet, Sfx.BEACON_POWER, 1.6f, 1.6f);
+            fx.sound(feet, Sfx.ENCHANT, 2f, 0.6f);
+        }
+        if (t < JackMoves.RAIN_END && t % 3 == 0) {
+            // The source: a sheet of code over the arena, scrolling.
+            double size = 4 + 8 * JackMoves.phase(t, 0, JackMoves.RAIN_RAISE);
+            Vector center = feet.clone().add(new Vector(0, sky, 0));
+            for (int i = 0; i < 18; i++) {
+                double x = (random.nextDouble() * 2 - 1) * size;
+                double z = (random.nextDouble() * 2 - 1) * size;
+                fx.dust(random.nextBoolean() ? CODE : CODE_DIM, 1.4f).at(center.clone().add(new Vector(x, random.nextDouble() * 0.4, z)));
+            }
+            fx.ring(center, size, 1.2, t * 0.05, fx.dust(CODE_DIM, 1.0f));
+        }
+        if (t >= JackMoves.RAIN_RAISE && t < JackMoves.RAIN_END - RAIN_WARN - RAIN_FALL && t % 3 == 0) {
+            List<Player> players = arenaPlayers(loc.getWorld());
+            Vector spot;
+            if (!players.isEmpty() && random.nextInt(100) < 75) {
+                Player aim = players.get(random.nextInt(players.size()));
+                Vector lead = aim.getVelocity().clone().setY(0).multiply(RAIN_WARN);
+                spot = aim.getLocation().toVector().add(lead).add(new Vector(random.nextGaussian() * 1.5, 0, random.nextGaussian() * 1.5));
+            } else {
+                spot = feet.clone().add(new Vector(random.nextGaussian() * 7, 0, random.nextGaussian() * 7));
+            }
+            inst.bits.add(new Bit(groundAt(spot.toLocation(loc.getWorld())), t, random.nextBoolean()));
+        }
+        for (Bit bit : inst.bits) {
+            int age = t - bit.born();
+            if (age < 0 || age > RAIN_WARN + RAIN_FALL) continue;
+            Vector cell = bit.at().clone().add(new Vector(0, 0.12, 0));
+            if (age < RAIN_WARN) {
+                if (age % 2 == 0) drawSquare(fx, cell, 1.6, fx.dust(Palette.mix(CODE_DIM, CODE, age / (double) RAIN_WARN), 1.2f));
+                if (age % 4 == 0) fx.line(cell, cell.clone().add(new Vector(0, sky, 0)), 1.5, fx.dust(CODE_DIM, 0.7f).sometimes(0.5));
+                continue;
+            }
+            double fall = (age - RAIN_WARN) / (double) RAIN_FALL;
+            Vector glyph = cell.clone().add(new Vector(0, sky * (1 - fall) + 0.5, 0));
+            drawBit(fx, glyph, bit.one(), loc);
+            fx.line(glyph, glyph.clone().add(new Vector(0, 2.5, 0)), 0.4, fx.dust(CODE_DIM, 1.0f).sometimes(0.6));
+            if (age < RAIN_WARN + RAIN_FALL) continue;
+            fx.impact(cell.clone().add(new Vector(0, 0.4, 0)), CODE, 1.2);
+            fx.flatBurst(cell, Particle.HAPPY_VILLAGER, 10, 0.2);
+            fx.sound(cell, Sfx.AMETHYST_BREAK, 1.4f, bit.one() ? 1.6f : 1.1f);
+            for (Player p : arenaPlayers(loc.getWorld())) {
+                Vector to = p.getLocation().toVector().subtract(bit.at());
+                if (Math.hypot(to.getX(), to.getZ()) > 1.8 || to.getY() < -1 || to.getY() > 3) continue;
+                dealToPlayer(inst.stand, p, binaryRainDamage, "Binary Rain");
+                p.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 60, 0, false, true));
+                p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 1, false, true));
+            }
+        }
+        if (t >= JackMoves.RAIN_RAISE && t < JackMoves.RAIN_END && t % 6 == 0) {
+            fx.sound(feet, Sfx.AMETHYST_CHIME, 0.8f, 1.5f + random.nextFloat() * 0.5f);
+        }
+    }
+
+    /** Stack Overflow: four dashing cuts through the target, then every cut unwinds in reverse order. */
+    private void stackTick(JackInstance inst, Fx fx, Location loc, Player target, int t) {
+        float scale = inst.currentScale;
+        Vector feet = loc.toVector();
+        Vector waist = new Vector(0, 1.0 * scale, 0);
+        if (t == 0) {
+            fx.sound(feet, Sfx.WARDEN_SONIC_CHARGE, 1.5f, 1.8f);
+            fx.sound(feet, Sfx.RESPAWN_ANCHOR_CHARGE, 1.5f, 1.4f);
+        }
+        if (t < JackMoves.STACK_READY) {
+            if (target != null) loc.setDirection(target.getLocation().toVector().subtract(feet).setY(0));
+            fx.cloud(Particle.ELECTRIC_SPARK, feet.clone().add(waist), 3, 0.5 * scale, 0.05);
+            fx.ring(feet.clone().add(new Vector(0, 0.1, 0)), 1.2 * scale, 0.4, t * 0.4, fx.dust(GLITCH_MAGENTA, 1.1f));
+            return;
+        }
+        int dashEnd = JackMoves.STACK_READY + JackMoves.STACK_DASHES * (JackMoves.STACK_DASH + JackMoves.STACK_GAP);
+        if (t < dashEnd) {
+            int local = (t - JackMoves.STACK_READY) % (JackMoves.STACK_DASH + JackMoves.STACK_GAP);
+            int index = (t - JackMoves.STACK_READY) / (JackMoves.STACK_DASH + JackMoves.STACK_GAP);
+            if (local == 0) {
+                // A new frame: aim through the target and past it.
+                Vector aim = target != null ? target.getLocation().toVector() : feet.clone().add(loc.getDirection().setY(0).multiply(6));
+                Vector through = aim.clone().subtract(feet).setY(0);
+                if (through.lengthSquared() < 0.25) through = rotateFlat(loc.getDirection().setY(0).normalize(), 2.0);
+                Vector dir = through.clone().normalize();
+                double length = Math.min(14, through.length() + 5);
+                inst.frames.add(new Vector[]{feet.clone(), feet.clone().add(dir.clone().multiply(length))});
+                inst.struck.clear();
+                loc.setDirection(dir);
+                drawBracket(fx, feet.clone().add(waist), dir, scale);
+                fx.sound(feet, Sfx.BREEZE_WIND_BURST, 1.5f, 1.3f + index * 0.15f);
+            }
+            if (local < JackMoves.STACK_DASH && !inst.frames.isEmpty()) {
+                Vector[] frame = inst.frames.get(inst.frames.size() - 1);
+                Vector step = frame[1].clone().subtract(frame[0]).multiply(1.0 / JackMoves.STACK_DASH);
+                Vector before = loc.toVector();
+                BossArena.walk(loc, step, true);
+                Vector after = loc.toVector();
+                fx.line(before.clone().add(waist), after.clone().add(waist), 0.3,
+                        fx.dust(index % 2 == 0 ? GLITCH_CYAN : GLITCH_MAGENTA, 1.5f).and(fx.particle(Particle.ELECTRIC_SPARK).sometimes(0.3)));
+                fx.cloud(Particle.SWEEP_ATTACK, after.clone().add(waist), 1, 0.4, 0);
+                for (Player p : arenaPlayers(loc.getWorld())) {
+                    if (distanceToSegment(p.getLocation().toVector(), before, after) > 1.6 * scale) continue;
+                    if (!inst.struck.add(p.getUniqueId())) continue;
+                    dealToPlayer(inst.stand, p, stackOverflowDamage * 0.5, "Stack Overflow");
+                    p.setVelocity(p.getVelocity().add(step.clone().normalize().multiply(0.5).setY(0.3)));
+                    fx.impact(p.getLocation().toVector().add(new Vector(0, 1, 0)), GLITCH_MAGENTA, 1.2);
+                }
+                if (local == JackMoves.STACK_DASH - 1) fx.sound(after, Sfx.PLAYER_ATTACK_SWEEP, 1.6f, 1.2f + index * 0.1f);
+            }
+            // Frames already pushed stay on screen, flickering.
+            if (t % 3 == 0) {
+                for (Vector[] frame : inst.frames) {
+                    fx.line(frame[0].clone().add(waist), frame[1].clone().add(waist), 0.6, fx.dust(CODE_DIM, 0.9f).sometimes(0.6));
+                }
+            }
+            return;
+        }
+        if (t == dashEnd) {
+            fx.sound(feet, Sfx.BEACON_DEACTIVATE, 2f, 1.6f);
+            broadcastToArena(inst, ChatColor.RED + "Exception in thread \"arena\" " + ChatColor.WHITE + "java.lang.StackOverflowError");
+        }
+        // The unwind: newest frame first, one every two ticks.
+        int popped = (t - JackMoves.STACK_UNWIND) / 2;
+        boolean popTick = t >= JackMoves.STACK_UNWIND && (t - JackMoves.STACK_UNWIND) % 2 == 0;
+        for (int i = 0; i < inst.frames.size(); i++) {
+            int order = inst.frames.size() - 1 - i;
+            Vector[] frame = inst.frames.get(i);
+            if (order > popped || t < JackMoves.STACK_UNWIND) {
+                if (t % 2 == 0) {
+                    float heat = JackMoves.phase(t, dashEnd, JackMoves.STACK_UNWIND);
+                    fx.line(frame[0].clone().add(waist), frame[1].clone().add(waist), 0.4,
+                            fx.dust(Palette.mix(CODE, Palette.WARNING, heat), 1.3f));
+                }
+                continue;
+            }
+            if (!popTick || order != popped) continue;
+            fx.line(frame[0].clone().add(waist), frame[1].clone().add(waist), 0.35,
+                    fx.dust(Palette.WARNING_HOT, 2.0f).and(fx.particle(Particle.END_ROD, 1, 0.1, 0.05)));
+            fx.burst(frame[1].clone().add(waist), Particle.EXPLOSION, 1, 0);
+            fx.sound(frame[1], Sfx.EXPLODE, 1.4f, 1.3f + order * 0.1f);
+            for (Player p : arenaPlayers(loc.getWorld())) {
+                if (distanceToSegment(p.getLocation().toVector(), frame[0], frame[1]) > 1.8) continue;
+                dealToPlayer(inst.stand, p, stackOverflowDamage, "Stack Overflow");
+                p.setVelocity(p.getVelocity().add(new Vector(0, 0.6, 0)));
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ drawing helpers
+
+    /** A spinning wireframe cube, its edges flickering between the two glitch colours. */
+    private static void drawCube(Fx fx, Vector center, double half, double spin, int flicker) {
+        double c = Math.cos(spin), s = Math.sin(spin);
+        Vector[] corners = new Vector[8];
+        for (int i = 0; i < 8; i++) {
+            double x = (i & 1) == 0 ? -half : half;
+            double y = (i & 2) == 0 ? -half : half;
+            double z = (i & 4) == 0 ? -half : half;
+            // Tumble: spin about Y, tilt about X.
+            double rx = x * c - z * s, rz = x * s + z * c;
+            double ty = y * Math.cos(spin * 0.6) - rz * Math.sin(spin * 0.6);
+            double tz = y * Math.sin(spin * 0.6) + rz * Math.cos(spin * 0.6);
+            corners[i] = center.clone().add(new Vector(rx, ty, tz));
+        }
+        Fx.Brush edge = fx.dust(flicker % 4 < 2 ? GLITCH_CYAN : GLITCH_MAGENTA, 1.0f);
+        int[][] edges = {{0, 1}, {2, 3}, {4, 5}, {6, 7}, {0, 2}, {1, 3}, {4, 6}, {5, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
+        for (int[] e : edges) fx.line(corners[e[0]], corners[e[1]], 0.12 + half * 0.1, edge);
+        fx.dust(Palette.ICE, 1.6f).at(center);
+    }
+
+    /** A flat square outline on the floor. */
+    private static void drawSquare(Fx fx, Vector center, double half, Fx.Brush brush) {
+        Vector a = center.clone().add(new Vector(-half, 0, -half));
+        Vector b = center.clone().add(new Vector(half, 0, -half));
+        Vector c = center.clone().add(new Vector(half, 0, half));
+        Vector d = center.clone().add(new Vector(-half, 0, half));
+        fx.line(a, b, 0.35, brush);
+        fx.line(b, c, 0.35, brush);
+        fx.line(c, d, 0.35, brush);
+        fx.line(d, a, 0.35, brush);
+    }
+
+    /** A falling "1" or "0", drawn upright and turned towards JackStar so the fight can read it. */
+    private static void drawBit(Fx fx, Vector at, boolean one, Location jack) {
+        Vector across = rotateFlat(jack.getDirection().setY(0).normalize(), Math.PI / 2);
+        Fx.Brush glow = fx.dust(CODE, 1.5f);
+        if (one) {
+            fx.line(at.clone().add(new Vector(0, -0.6, 0)), at.clone().add(new Vector(0, 0.6, 0)), 0.15, glow);
+            fx.line(at.clone().add(new Vector(0, 0.6, 0)), at.clone().add(new Vector(0, 0.35, 0)).subtract(across.clone().multiply(0.3)), 0.15, glow);
+            fx.line(at.clone().add(new Vector(0, -0.6, 0)).subtract(across.clone().multiply(0.3)),
+                    at.clone().add(new Vector(0, -0.6, 0)).add(across.clone().multiply(0.3)), 0.15, glow);
+        } else {
+            fx.draw(Shapes.circle(at, 0.4, 14, across, new Vector(0, 1.5, 0), 0), glow);
+        }
+    }
+
+    /** A "[ ]" pushed onto the stack where a dash starts. */
+    private static void drawBracket(Fx fx, Vector at, Vector dir, float scale) {
+        Vector across = rotateFlat(dir, Math.PI / 2).multiply(0.7 * scale);
+        Vector up = new Vector(0, 0.9 * scale, 0);
+        Fx.Brush brush = fx.dust(GLITCH_CYAN, 1.3f);
+        for (int side = -1; side <= 1; side += 2) {
+            Vector bar = at.clone().add(across.clone().multiply(side));
+            Vector in = across.clone().multiply(-side * 0.35);
+            fx.line(bar.clone().subtract(up), bar.clone().add(up), 0.15, brush);
+            fx.line(bar.clone().add(up), bar.clone().add(up).add(in), 0.15, brush);
+            fx.line(bar.clone().subtract(up), bar.clone().subtract(up).add(in), 0.15, brush);
+        }
+    }
+
+    private static Vector rotateFlat(Vector dir, double angle) {
+        double c = Math.cos(angle), s = Math.sin(angle);
+        return new Vector(dir.getX() * c - dir.getZ() * s, 0, dir.getX() * s + dir.getZ() * c).normalize();
+    }
+
+    private static Vector rightOf(Location loc) {
+        double yaw = Math.toRadians(loc.getYaw());
+        return new Vector(-Math.cos(yaw), 0, -Math.sin(yaw));
+    }
+
+    private static double distanceToSegment(Vector p, Vector a, Vector b) {
+        Vector ab = b.clone().subtract(a);
+        double len = ab.lengthSquared();
+        double t = len < 1e-6 ? 0 : Math.max(0, Math.min(1, p.clone().subtract(a).dot(ab) / len));
+        return p.distance(a.clone().add(ab.multiply(t)));
+    }
+
+    /** The floor under a location, as a point on its top face. */
+    private static Vector groundAt(Location at) {
+        Location probe = at.clone().add(0, 3, 0);
+        double y = BossArena.findFloorY(probe, 12);
+        Vector out = at.toVector();
+        if (!Double.isNaN(y)) out.setY(y);
+        return out;
+    }
+
+    private List<Player> arenaPlayers(World world) {
+        List<Player> out = new ArrayList<>();
+        for (Player p : world.getPlayers()) {
+            if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR || p.isDead()) continue;
+            out.add(p);
+        }
+        return out;
     }
 
     private void snapToGround(Location loc) {
@@ -1472,7 +1917,11 @@ public class JackStarBoss implements Listener {
         inst.activeTemporaryBlocks.clear();
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    // Not ignoreCancelled: the server fires the damage event of an invisible armour stand already
+    // cancelled (vanilla stands that are invisible take no hits), so with ignoreCancelled this never
+    // ran for the stand and JackStar could not be hurt at all. The hit is applied to his virtual
+    // health here and the event stays cancelled.
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onDamage(EntityDamageByEntityEvent event) {
         Entity victim = event.getEntity();
 
@@ -1714,6 +2163,14 @@ public class JackStarBoss implements Listener {
         public int failoverTicks;
         public float animTicks;
         public int tickCount;
+        public JackMoves.Move move = JackMoves.Move.NONE;
+        public int moveTick;
+        /** The first signature move waits a few seconds into the fight. */
+        public int moveCooldown = 160;
+        public final List<Hop> hops = new ArrayList<>();
+        public final List<Bit> bits = new ArrayList<>();
+        public final List<Vector[]> frames = new ArrayList<>();
+        public final java.util.Set<UUID> struck = new java.util.HashSet<>();
         public double snapshotHp;
         public Location snapshotLoc;
         public UUID observedBossId;

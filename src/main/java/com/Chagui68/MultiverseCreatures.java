@@ -3,6 +3,7 @@ package com.Chagui68;
 import com.Chagui68.entities.miniboss.Mahoraga;
 import com.Chagui68.entities.boss.ArmorStandBoss;
 import com.Chagui68.entities.boss.BossDamageLog;
+import com.Chagui68.entities.boss.DioBoss;
 import com.Chagui68.entities.boss.JackStarBoss;
 import com.Chagui68.entities.boss.MagicSealListener;
 import com.Chagui68.entities.boss.NixBoss;
@@ -31,6 +32,7 @@ import com.Chagui68.listener.bossdimension.BossDimensionBlockHandler;
 import com.Chagui68.listener.bossdimension.BossDimensionCommandHandler;
 import com.Chagui68.listener.bossdimension.BossInvocationManager;
 import com.Chagui68.listener.bossdimension.JackInvocationManager;
+import com.Chagui68.listener.bossdimension.DioInvocationManager;
 import com.Chagui68.listener.bossdimension.NixInvocationManager;
 import com.Chagui68.listener.combat.ItemCombatHandler;
 import com.Chagui68.listener.CustomItemPlaceHandler;
@@ -90,6 +92,7 @@ public class MultiverseCreatures extends JavaPlugin {
     private Kinger kinger;
     private NixBoss nixBoss;
     private JackStarBoss jackStarBoss;
+    private DioBoss dioBoss;
     private JackInvocationManager jackInvocationManager;
     private DiscTrader discTrader;
     private Warlord warlord;
@@ -182,6 +185,7 @@ public class MultiverseCreatures extends JavaPlugin {
         kinger = new Kinger(this);
         nixBoss = new NixBoss(this);
         jackStarBoss = new JackStarBoss(this);
+        dioBoss = new DioBoss(this);
         discTrader = new DiscTrader(this);
         warlord = new Warlord(this);
 
@@ -215,6 +219,7 @@ public class MultiverseCreatures extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new RitualCandleListener(this), this);
         getServer().getPluginManager().registerEvents(new BossInvocationManager(this), this);
         getServer().getPluginManager().registerEvents(new NixInvocationManager(this), this);
+        getServer().getPluginManager().registerEvents(new DioInvocationManager(this), this);
         jackInvocationManager = new JackInvocationManager(this);
         getServer().getPluginManager().registerEvents(jackInvocationManager, this);
 
@@ -288,6 +293,7 @@ public class MultiverseCreatures extends JavaPlugin {
         if (kinger != null) kinger.stopTasks();
         if (nixBoss != null) nixBoss.stopTasks();
         if (jackStarBoss != null) jackStarBoss.stopTasks();
+        if (dioBoss != null) dioBoss.stopTasks();
         if (itemCombatHandler != null) itemCombatHandler.stopTasks();
         if (wirtsLanternHandler != null) wirtsLanternHandler.stopTasks();
         if (mantisClawsHandler != null) mantisClawsHandler.stopTasks();
@@ -399,11 +405,16 @@ public class MultiverseCreatures extends JavaPlugin {
         return jackStarBoss;
     }
 
-    /** Whether any of the three arena bosses is fighting in {@code world}. */
+    public DioBoss getDioBoss() {
+        return dioBoss;
+    }
+
+    /** Whether any of the arena bosses is fighting in {@code world}. */
     public boolean isBossFightIn(org.bukkit.World world) {
         return (armorStandBoss != null && armorStandBoss.isBossActiveIn(world))
                 || (nixBoss != null && nixBoss.isBossActiveIn(world))
-                || (jackStarBoss != null && jackStarBoss.isBossActiveIn(world));
+                || (jackStarBoss != null && jackStarBoss.isBossActiveIn(world))
+                || (dioBoss != null && dioBoss.isBossActiveIn(world));
     }
 
     public JackInvocationManager getJackInvocationManager() {

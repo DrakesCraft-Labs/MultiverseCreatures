@@ -9,7 +9,7 @@ This page documents **how plugin changes are tested** and **what each suite veri
 - **Java 21** — same compiler as the main code.
 - **Headless**: no Paper/Purpur server is booted. Bukkit classes that get touched (e.g. `World`) are simulated with `java.lang.reflect.Proxy`, or `Location` objects with a `null` world are used to exercise only the arithmetic.
 - **SnakeYAML** (shipped with `purpur-api`) parses `config.yml` and `plugin.yml` in `ConfigFilesGuardTest`, so an invalid indent fails the suite instead of the server start.
-- **Test support** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`, `testsupport/RecordingTerrain`, `testsupport/SourceText`) is the harness the guards share: it finds the project by walking up from the working directory (a source-reading guard used to read `src/main/java` from wherever Maven was started, which found nothing and passed vacuously), names a file by path segments with one failure mode, reads a limb's second joint out of the export instead of trusting the code that hardcodes it, and records what the terrain generator writes so its chunks can be inspected without a server; and `SourceText` reads a method body or strips comments for the source-reading guards, so the three of them cannot drift apart.
+- **Test support** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`, `testsupport/SourceText`) is the harness the guards share: it finds the project by walking up from the working directory (a source-reading guard used to read `src/main/java` from wherever Maven was started, which found nothing and passed vacuously), names a file by path segments with one failure mode, reads a limb's second joint out of the export instead of trusting the code that hardcodes it,; and `SourceText` reads a method body or strips comments for the source-reading guards, so the three of them cannot drift apart.
 
 Commands:
 
@@ -46,6 +46,7 @@ Covers the health math in `utils/MscEntityUtils`:
 - An adoption recognises a piece only when its **suit, piece and owner tags all agree**: a piece of another boss, another piece of the same suit, or a suit tag without the rest is never taken.
 - The search skips entities that are not displays, returns nothing when there is nothing to adopt, and ignores a missing world or location.
 - The suit is built in **one place**: a source guard fails if any of the three dressed bosses builds its own head from the skin texture, zeroes its own display settings or forgets to adopt/remove its pieces.
+- `shouldSync` poses a busy suit every tick and a still one every third tick.
 
 ### `utils/MscLeftoversTest` — Startup sweep of attack props
 - The props of an attack that a restart cut short are removed at enable (orbiting shields, the planted shield holder, the lance ring, the wing panels, the triangle seal, the mirror copies, Kinger's bullets), because their attack object is gone and nothing else would ever remove them.
@@ -63,34 +64,18 @@ Covers the health math in `utils/MscEntityUtils`:
 - A **knee** folds only on the back half of the swing and an **elbow** only on the forward half, both by a documented share of the parent's swing (`1.5×`, capped at `1.2` rad ≈ 69°) and always in the direction the limb is already going, so a joint adds to the swing instead of leading or cancelling it.
 - Posing a limb keeps it rigid — the pivot does not move and both bones keep their lengths — while a fold brings the hand or foot closer to the joint it hangs from than the straight limb reaches. A limb exported in one piece swings rigid and never grows a joint it does not have.
 
-### `ritual/terrain/ArenaNoiseTest` — The noise the wilderness is made of
-- Pins the two properties every height in the dimension leans on: each field (`unit`, `value`, `fbm`, `ridge`) stays inside `[0, 1)`, so no derived height escapes the builder's clamp, and the same coordinates always give the same answer, which is what lets neighbouring chunks agree without talking to each other.
-- Proves the fields are continuous — a one-block step moves `fbm` by less than 0.05 — so the terrain has no lattice creases, and that swapping x and z almost always changes the value: a mirrored field would give the coliseum a diagonal symmetry nobody asked for.
-- `smoothstep` is checked at both ends and in the middle, including the descending form the buttress ribs fade out with.
+### `ritual/BossDimensionTest` — The ritual dimension's world
+- Every vanilla generation stage stays off in `WastelandGenerator`: `shouldGenerateNoise()` returning true would generate overworld terrain under and around the battlefield.
+- The world border is 1500 blocks by default and is clamped to 100 - 1500 whatever the config says.
+- A world folder without the generator marker, or with another generator's name in it, is detected as outdated (and rebuilt); one carrying the current marker is kept.
 
-### `ritual/terrain/ArenaShapeTest` — The shape invariants
-- The arena floor is flat at y=5 for every column inside the radius, the wall rises in four 6-block terraces, each too tall to walk up, and the ring is never lower than the first terrace anywhere: a coliseum a player can climb out of is not a coliseum.
-- The terrace arithmetic (`RIM_FIRST_STEP_Y + 3 × RIM_STEP_HEIGHT == RIM_TOP_Y`, the four terraces exactly filling the ring) is asserted, so a constant edit cannot silently leave a gap in the wall.
-- Canyons never reach inside `CHASM_INNER_RADIUS`, the wilderness really does have canyons deep enough to flood and peaks above y=44, and landmarks never stand closer than `LANDMARK_INNER_RADIUS` — the view from the arena floor stays open.
-- The arena is identical across two world seeds (it is a set piece) while the wilderness differs in hundreds of sampled columns, and `spawnY()` is pinned at 10 because moving it moves where the ritual drops players.
+### `ritual/terrain/WastelandTest` — The battlefield a fight gets
+- The arena is flat at y=40 and nothing stands on it or within 40 blocks of it; around it no step is taller than one block, and there is no lava within the hazard radius.
+- Lava never rises above its level and always meets lava or rock sideways and below; every column has bedrock at y=0 and is solid up to its surface; a mountain range stands all along the edge.
+- Every hazard and structure (lava, magma, both fires, spikes, bones, ruins, all three grounds) appears on the battlefield, the same seed rebuilds the same columns, and another seed grows a different wasteland around the same arena.
 
-### `ritual/terrain/BossArenaTerrainTest` — The terrain a fight actually gets
-- Drives the real generator into a recording sink, chunk by chunk, and checks what players and bosses stand on: the floor is flat and solid, the play volume (above the floor, up to y=34) is empty, and every plaza block is one of the three the invocation structures accept — cross-checked against `JackInvocationStructure.isValidBase` and `NixInvocationStructure.isValidBase`, so changing either list fails here instead of at the invocation circle.
-- The pavement has to be between 5% and 45% glowing blocks: the dimension is stuck at midnight and the floor is the only light the fight has, but too much and the sigil stops reading as a sigil.
-- Proves the world is sealed: bedrock at y=0 in the open world, and `CANYON_ROCK_DEPTH` blocks of rock under a canyon floor, so digging at the bottom of the deepest canyon still cannot reach the void.
-- Soul fire only ever stands on soul sand, lava only ever pools at the canyon floor, and two different window groupings (one 32×32 window against four 16×16 chunks) produce identical blocks column by column — a seam at a chunk border would fail.
-- Also pins the cost: a chunk under a floating shard keeps at least as much as it throws away, so a landmark cannot quietly regenerate the world per chunk.
-
-### `ritual/terrain/BossArenaGeneratorGuardTest` — Terrain guards
-- `generateNoise` must not mention the `Random` the server passes in: reading it would make the same chunk generate differently on every pass and leave seams at the borders.
-- Every generation stage is declared explicitly and only noise is enabled — a stray `true` would sprinkle vanilla decoration over the arena — and `isParallelCapable` must stay true, which is only safe while the generator is stateless.
-- The chunk sink must keep both its chunk-bounds check and its world-height check, and the shape and noise classes must stay free of Bukkit, which is what makes the terrain testable without a server at all.
-- `BossDimensionManager` must install the generator and must not go back to `WorldType.FLAT` or the deleted `CryingObsidianChunkGenerator`.
-- Reads `config.yml` and requires every key documented under `boss-dimension` to be read somewhere in the code: a knob nobody reads is a lie in the one file server owners edit.
-
-### `testsupport/RecordingTerrainTest` — The sink the terrain tests stand on
-- Position keys round-trip for extreme and negative coordinates and stay unique across a large sweep: a key two positions share makes a terrain test read a block that belongs to a neighbour. That is not hypothetical — a version of this class packed 25 bits per coordinate where 21 belonged, and the flat arena floor started reading twenty blocks tall.
-- Writes outside the window are counted rather than kept, and every column tracks its own height, so `topY` cannot report a neighbouring column's ceiling.
+### `ritual/JackInvocationStructureTest` — JACKSTAR's terminal (5×5)
+- The core, candle and base materials accept what the ritual documents and reject anything else; four candles sit next to the core, four pillars mark the corners, and only the candle spots count as candles.
 
 ### `ritual/RitualStructureTest` — Entry ritual (overworld, 7×7)
 - Ritual center at `(3, 0, 3)` with radius 5.
@@ -130,7 +115,6 @@ Covers the health math in `utils/MscEntityUtils`:
 ### `commands/AttackRegistryCoherenceTest` — the five attack lists stay in agreement
 - Reads the attack sources and `ArmorStandBoss` and checks that every attack class is registered in `initAttacks()` and answers to the name derived from its class (with the documented exceptions `executionsweep`, `soultethers`, `runemines`).
 - The aerial/ground sets match the folders the classes live in, no attack sits in both sets, and the ranged/defensive ones stay in neither.
-- Every name quoted by the random rotation arrays is a registered attack.
 - The help catalogue and the sources are the same set of names, so nothing is advertised that cannot run and nothing runnable stays hidden.
 
 ### `commands/MscKillFilterTest` — `/msc kill` predicates
@@ -193,16 +177,6 @@ Covers the health math in `utils/MscEntityUtils`:
 - The numbered pieces are **not** in stacking order, so each **elbow and knee is compared against the split the export actually shows**: the single `_4` piece sits above the joint, the other five fold below it, and the joint itself is where the gap is — the code's answer is never taken on trust. The whole walk, elbows bending included, then has to stay inside the stand's hitbox.
 - The **walk pose** the replay draws is checked as a skeleton: four limbs folding at exactly those joints, rigid bones and a fixed pivot at every phase, all four inside the stand's box at every step, the knee folding the foot behind the straight leg and the elbow the hand in front — each end closer to its joint than the straight limb reaches. A source check keeps the boss stepping at `NixModel.WALK_RATE`.
 
-### `entities/NixModelKinematicsTest` — NIX kinematic model (27 parts)
-- The model has **exactly 27** `ItemDisplay` parts (Blockbench export).
-- Rigid kinematic hierarchy: arms and legs with **6** segments each (so they rotate as rigid bodies around shoulder/hip joints), head, upper and lower torso with **1** each.
-- Every 16-float matrix decomposes into a finite offset, strictly positive scale, and finite quaternion; profile name and `base64` texture are non-blank.
-- The model's horizontal center is finite.
-
-### `entities/KingerOptimizationAndKinematicsTest` — Kinger model + optimization
-- **15** parts (Blockbench spec) with the same matrix-integrity guarantees (16 floats, finite offset/scale/quaternion) and a finite `CENTER`.
-- **Display sync throttling**: stationary with no animation syncs every 3 ticks (**30** of 90, ~66% reduction); while moving or animating it syncs **every tick** (90 of 90). This validates the `!isIdle || tickCount % 3 == 0` rule.
-
 ### `entities/LimbArticulationGuardTest` — Every exported segment is articulated
 - Cross-model guard over the three dressed bosses: it walks **every** limb group of every model's part enum — not the hand-written list the per-model tests use — and asks the export for its answer. Wherever the biggest gap between two stacked pieces is, a joint belongs there, and the code must fold exactly the pieces below it, no more and no fewer.
 - Fails when a limb is exported in two segments the code never articulates (half the limb would swing rigid forever) and when the code folds a limb the export left in one piece. It also proves at least one limb *was* articulated per model, so the guard cannot pass vacuously.
@@ -218,30 +192,42 @@ Covers the health math in `utils/MscEntityUtils`:
 - Every piece's tag is unique and carries its owner, so an adoption cannot mix two pieces up; a source guard keeps the pieces from lagging (`setTeleportDuration`/`setInterpolationDuration`/`setInterpolationDelay`/`setDisplayWidth`/`setDisplayHeight` all zero, configured in one place), requires a reload to **adopt** the suit it already has instead of spawning a second, overlapping one and to **rebuild that boss's boss bar** (with the virtual health its progress is read from), and keeps the animation going through `KingerModel.compose` rather than a per-piece transform.
 - The **walk pose** the replay draws is checked as a skeleton: four limbs — Kinger's knees folding at the export's joint, his one-piece arms rigid and jointless — with both bones keeping their length and the pivot fixed at every phase, every point inside the stand's 0.5-wide box, and the knee folding the foot behind the straight leg and closer to the hip. A source check keeps the mob stepping at `KingerModel.WALK_RATE`.
 
-### `listener/bossdimension/BossDimensionGuardLogicTest` — Boss dimension guard
-- Event handlers **short-circuit**: events outside the `boss_dimension` world never evaluate the permission check (it is only evaluated inside the boss world).
-
 ### `entities/handler/MobHandlerRecountTest` — Population cap cooldown
 - `MobHandler.puedeRecontar` allows re-counting **per world**, respecting an independent failure cooldown per world: `world` with cooldown until `160000` does not re-count at `159999` but does at `160000`; `world_nether` is not blocked by `world`'s cooldown.
 
 ### `entities/EnderKnightWorldGuardTest` — Ender Knight teleport
 - `EnderKnight.sharesWorld` only returns `true` when the worlds match; a `null` world identity is rejected. Guarantees the pull-distance math only happens within the same world.
 
-### `entities/DistanceOptimizationEquivalenceTest` — Squared-distance optimization
-- The `distanceSquared < threshold²` predicate is **equivalent** to Euclidean `distance < threshold` for every threshold used in the code (30, 25, 35, 20, 8, 6, 5, 4, 3, 2, 1.8 blocks), including the boundary (just ±0.001).
-- Distance-dropoff damage computed from `sqrt(dist²)` equals the value computed with direct distance (tolerance 1e-9) for the Sentinel's Storm, Despair, and AirSlam phases.
-- Out-of-range targets are discarded **before** any square root is computed.
+### `entities/boss/attack/ChoreographyTest` — Every Sentinel attack, played offline
+- Finds every class that extends `ChoreographedAttack` in the sources (all 61) and plays it to the end on a `RecordingStage`: it ends, gives at least 20 ticks a player can read, locks the body for no less than 15 ticks and no longer than it plays, draws and sounds, leaves no prop behind and returns to its guard (or hover). The stage refuses a particle spawned without the data it needs.
+- With players standing in the usual fighting spots, every offensive attack hits at least one of them, so a telegraph that warns about a place the blow never reaches is caught.
 
-### `entities/boss/ShockwaveAndCombatOptimizationTest` — Shockwaves and combat
-- Shockwave formulas: the vertical knockback (`Y`) stays bounded in `[0.4, 0.7]` and the damage multiplier in `[0.4, 1.0]` for radii 0–30.
-- **`hitInThisRing` (deduplication)**: several adjacent ring particles fall inside the player's impact radius, but with deduplication the player takes damage **exactly once per ring**.
-- **NIX throttling**: stationary syncs every 3 ticks (30 of 90); during a cleave or chain animation it syncs every tick (90 of 90).
+### `entities/boss/SignatureMovesTest` — NIX's and JackStar's signature moves
+- Every frame of Blood Harvest, Gallows Leap, Condemnation, fork(), Binary Rain and Stack Overflow is a real rotation, no elbow or knee folds past `MscLimb.MAX_BEND`, no limb turns more than 1.2 rad between two ticks, and each move ends close to the rest pose.
+- The blows line up with the body: arms overhead in the air and down on the landing, the condemning arm up while the sentence holds and down when the blades fall, the throwing arm cocked before the release and forward after it.
+
+### `entities/boss/SentinelAttackPoolTest` — The Sentinel's attack rotation
+- Every registered attack is drawn from some pool or driven by the AI loop itself, and every pooled name is a registered attack, so an attack cannot be added and then never used (`doombeam` and `rainoflances` were).
+- Each aerial pool holds enough attacks for a flight to end early, a pick never repeats one of the last six attacks while anything else is left, and a pool smaller than the history still yields an attack.
+
+### `entities/boss/BossWalkTest` — How the bosses walk
+- `BossArena.nextFeetY`: level ground stays level, one block up is a step, anything taller is a wall, and a ledge or a bottomless drop is fallen off gradually instead of hung over; settling converges exactly on the floor.
+
+### `entities/boss/JackStarBossTest` — Jack Star's phases
+- Each health band maps to its phase with the boundaries included, kernel panic is always the last phase, and every limb group has the number of pieces its joints expect.
+
+### `entities/KingerMeleeTest` — Kinger's melee swing
+- The hit lands at the peak of the swing, not on the tick it starts, only reaches players in front of him, and its reach is a sphere rather than a cube.
+
+### `listener/bossdimension/BossFightGuardTest` — Commands during a boss fight
+- `/say`, `/me`, `/help`, `/?` and `/dimtp` still run mid-fight in any case and with a namespace, while a command that merely starts like one of them (`/menu`, `/sayhi`, `/helpop`) is blocked.
 
 ### `entities/boss/BossArenaGroundRecoveryTest` — Ground recovery
 - `findFloorY` returns the floor altitude, and **`NaN`** — not the boss's own Y — when the scan reaches nothing. That distinction is the fix: the old convenience method made "standing on the floor" and "nothing underneath" the same value, so a grounded boss stopped attacking forever.
 - `getGroundY` keeps its documented fallback of returning the current Y, pinned down so the two behaviours cannot drift back together.
 - `ringOffsets` starts at the origin, contains every offset within the radius exactly once and never goes back towards the origin — the nearest usable column must always win.
 - `findUsableColumn` prefers the boss's column, walks outward when it is void, respects the search radius and reports `null` when nothing is usable so the caller can try the target column and then the world spawn.
+- `findFloorY` always answers a block's top face: a boss hovering half a block over the floor is told the floor's height, not its own Y (that kept the Sentinel floating without attacking), a body sunk into a block is lifted onto it, and a slab is stood on at its own height.
 
 ### `utils/MscWorldPolicyTest` — World allowlist
 - An **empty (or missing) allowlist means every world**, which is what `config.yml` documents. The implementation used to treat it as a hardcoded list of five world names, so a server with a custom world name silently got no conversions — and its periodic recount deleted any MSC creature it found there.

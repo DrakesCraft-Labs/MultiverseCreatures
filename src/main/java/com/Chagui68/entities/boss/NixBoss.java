@@ -1,6 +1,11 @@
 package com.Chagui68.entities.boss;
 
 import com.Chagui68.MultiverseCreatures;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.LiveStage;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
 import com.Chagui68.utils.DisplaySuit;
 import com.Chagui68.utils.MscBossBar;
 import com.Chagui68.utils.MscEntityUtils;
@@ -275,6 +280,11 @@ public class NixBoss implements Listener {
      */
     public static final double MODEL_HITBOX_SCALE = 1.9;
 
+    /** Height of his eyes above his feet, for the head to look at a player from. */
+    static final double EYE_HEIGHT = 1.9;
+    /** The executioner's axe is one more piece of the suit, with its own tag. */
+    static final String AXE_TAG = PART_TAG + "_AXE";
+
     /** Joints, rest pose and limb maths live in {@link NixModel}, testable without a server. */
 
     private final MultiverseCreatures plugin;
@@ -303,6 +313,11 @@ public class NixBoss implements Listener {
     private int chainCooldownTicks;
     private int cleaveAnimTicks = 16;
     private int chainAnimTicks = 12;
+    private double harvestDamage;
+    private double gallowsDamage;
+    private double condemnDamage;
+    /** Ticks between two signature moves (Blood Harvest, Gallows Leap, Condemnation). */
+    private int specialCooldownTicks;
 
     public NixBoss(MultiverseCreatures plugin) {
         this.plugin = plugin;
@@ -328,19 +343,50 @@ public class NixBoss implements Listener {
         meleeCooldownTicks = config.getInt("entities.nix-executioner.melee-cooldown-ticks", 24);
         chainCooldownTicks = config.getInt("entities.nix-executioner.chain-cooldown-ticks", 80);
         cleaveAnimTicks = config.getInt("entities.nix-executioner.cleave-anim-ticks", 16);
+        harvestDamage = config.getDouble("entities.nix-executioner.harvest-damage", 9.0);
+        gallowsDamage = config.getDouble("entities.nix-executioner.gallows-damage", 18.0);
+        condemnDamage = config.getDouble("entities.nix-executioner.condemn-damage", 20.0);
+        specialCooldownTicks = Math.max(20, config.getInt("entities.nix-executioner.special-cooldown-ticks", 160));
+    }
+
+    /** Takes over a stand a previous run left behind, wearing the parts it already has. */
+    private void adopt(ArmorStand stand) {
+        if (activeInstances.containsKey(stand.getUniqueId())) return;
+        if (!stand.getPersistentDataContainer().has(MscEntityUtils.KEY_VIRTUAL_MAX_HEALTH, org.bukkit.persistence.PersistentDataType.DOUBLE)) {
+            MscEntityUtils.initVirtualHealth(stand, health);
+        }
+        NixInstance inst = new NixInstance(stand);
+        restorePartDisplays(inst);
+        activeInstances.put(stand.getUniqueId(), inst);
+        setupBossBar(inst);
+    }
+
+    /**
+     * A stand whose chunk loads after startup: without this it stood there with no AI, and its
+     * body was swept as an orphan.
+     */
+    @EventHandler
+    public void onEntitiesLoad(org.bukkit.event.world.EntitiesLoadEvent event) {
+        for (Entity entity : event.getEntities()) {
+            if (entity instanceof ArmorStand stand && stand.getScoreboardTags().contains(TAG)) adopt(stand);
+        }
+    }
+
+    /** Removes body parts no live boss wears: spare copies, and the bodies of bosses that are gone. */
+    private void sweepParts() {
+        java.util.Map<UUID, java.util.Collection<UUID>> worn = new java.util.HashMap<>();
+        for (NixInstance inst : activeInstances.values()) {
+            java.util.List<UUID> pieces = new ArrayList<>(inst.partDisplays.values());
+            if (inst.axeDisplay != null) pieces.add(inst.axeDisplay);
+            worn.put(inst.stand.getUniqueId(), pieces);
+        }
+        DisplaySuit.sweep(PART_TAG, PART_OWNER_TAG_PREFIX, worn);
     }
 
     private void reloadExisting() {
         for (World world : Bukkit.getWorlds()) {
             for (ArmorStand stand : world.getEntitiesByClass(ArmorStand.class)) {
-                if (!stand.getScoreboardTags().contains(TAG)) continue;
-                if (!stand.getPersistentDataContainer().has(MscEntityUtils.KEY_VIRTUAL_MAX_HEALTH, org.bukkit.persistence.PersistentDataType.DOUBLE)) {
-                    MscEntityUtils.initVirtualHealth(stand, health);
-                }
-                NixInstance inst = new NixInstance(stand);
-                restorePartDisplays(inst);
-                activeInstances.put(stand.getUniqueId(), inst);
-                setupBossBar(inst);
+                if (stand.getScoreboardTags().contains(TAG)) adopt(stand);
             }
             for (ItemDisplay display : world.getEntitiesByClass(ItemDisplay.class)) {
                 if (!display.getScoreboardTags().contains(PART_TAG)) continue;
@@ -372,6 +418,10 @@ public class NixBoss implements Listener {
         String ownerTag = partOwnerTag(inst.stand.getUniqueId());
         for (ItemDisplay display : inst.stand.getWorld().getEntitiesByClass(ItemDisplay.class)) {
             if (!display.getScoreboardTags().contains(PART_TAG) || !display.getScoreboardTags().contains(ownerTag)) continue;
+            if (display.getScoreboardTags().contains(AXE_TAG)) {
+                inst.axeDisplay = display.getUniqueId();
+                continue;
+            }
             for (NixPart part : NixPart.values()) {
                 if (display.getScoreboardTags().contains(partTag(part))) {
                     inst.partDisplays.put(part, display.getUniqueId());
@@ -396,6 +446,9 @@ public class NixBoss implements Listener {
      * state.
      */
     private BukkitTask ticker;
+    private int sweepClock;
+    /** Ticks between two sweeps for stray body parts. */
+    private static final int SWEEP_INTERVAL = 40;
 
     private void startTicker() {
         if (ticker != null) ticker.cancel();
@@ -405,6 +458,7 @@ public class NixBoss implements Listener {
                 for (NixInstance inst : new ArrayList<>(activeInstances.values())) {
                     tick(inst);
                 }
+                if (++sweepClock % SWEEP_INTERVAL == 0) sweepParts();
             }
         }.runTaskTimer(plugin, 0L, 1L);
     }
@@ -444,25 +498,33 @@ public class NixBoss implements Listener {
 
             double currentSpeed = inst.bloodlust ? (moveSpeed * 1.35) : moveSpeed;
 
+            // A signature move between swings; while one plays it owns the body, the heading and the feet.
+            if (inst.move == NixMoves.Move.NONE && inst.moveCooldown <= 0 && inst.cleaveAnim <= 0
+                    && inst.chainAnim <= 0 && dist <= aggroRange) {
+                startMove(inst, pickMove(dist));
+            }
+            boolean performing = inst.move != NixMoves.Move.NONE;
+            if (performing) inst.moving = false;
+
             // Smooth face toward target
-            if (dist > 0.05) {
+            if (dist > 0.05 && !performing) {
                 loc.setDirection(toTarget);
             }
 
             // Move toward target
-            if (inst.moving && dist <= aggroRange && inst.cleaveAnim <= 4) {
+            if (!performing && inst.moving && dist <= aggroRange && inst.cleaveAnim <= 4) {
                 Vector dir = toTarget.clone().normalize();
                 double step = Math.min(currentSpeed, dist);
                 BossArena.walk(loc, dir.multiply(step), true);
             }
 
             // Combat triggers
-            if (dist <= meleeRange && inst.meleeCooldown <= 0 && inst.cleaveAnim <= 0) {
+            if (!performing && dist <= meleeRange && inst.meleeCooldown <= 0 && inst.cleaveAnim <= 0) {
                 // Initiate Cleave windup
                 inst.cleaveAnim = cleaveAnimTicks;
                 inst.meleeCooldown = meleeCooldownTicks;
                 stand.getWorld().playSound(loc, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.3f, 0.6f);
-            } else if (dist > 5.0 && dist <= chainRange && inst.chainCooldown <= 0 && inst.cleaveAnim <= 0) {
+            } else if (!performing && dist > 5.0 && dist <= chainRange && inst.chainCooldown <= 0 && inst.cleaveAnim <= 0) {
                 inst.chainAnim = chainAnimTicks;
                 inst.chainCooldown = chainCooldownTicks;
                 castExecutionChains(stand, target);
@@ -472,12 +534,14 @@ public class NixBoss implements Listener {
             inst.bloodlust = false;
         }
 
-        // Single ground settle & teleport for the anchor stand
-        BossArena.settle(loc);
+        // Single ground settle & teleport for the anchor stand (not mid-leap)
+        boolean airborne = inst.move != NixMoves.Move.NONE && runMove(inst, target, loc);
+        if (!airborne) BossArena.settle(loc);
         stand.teleport(loc);
 
-        // Impact moment of the cleave: hit at tick 9 (arms slam down)
-        if (inst.cleaveAnim == 9 && target != null) {
+        // Impact moment of the cleave: when the axe comes down in front of him, at 60% of the swing.
+        // A fixed tick 9 landed before the chop had even started with the configured 14-tick swing.
+        if (inst.cleaveAnim == NixModel.cleaveImpactTick(cleaveAnimTicks) && target != null) {
             executeGuillotineCleaveImpact(stand, target);
         }
 
@@ -488,6 +552,7 @@ public class NixBoss implements Listener {
         if (inst.chainAnim > 0) inst.chainAnim--;
         if (inst.meleeCooldown > 0) inst.meleeCooldown--;
         if (inst.chainCooldown > 0) inst.chainCooldown--;
+        if (inst.moveCooldown > 0 && inst.move == NixMoves.Move.NONE) inst.moveCooldown--;
 
         // Bloodlust eye particle aura
         if (inst.bloodlust) {
@@ -499,7 +564,8 @@ public class NixBoss implements Listener {
         inst.tickCount++;
 
         // Synchronize all 27 display entities locked to stand location (throttled when stationary)
-        if (DisplaySuit.shouldSync(inst.moving || inst.cleaveAnim != 0 || inst.chainAnim != 0, inst.tickCount)) {
+        if (DisplaySuit.shouldSync(inst.moving || inst.cleaveAnim != 0 || inst.chainAnim != 0
+                || inst.move != NixMoves.Move.NONE, inst.tickCount)) {
             syncDisplays(inst);
         }
 
@@ -525,6 +591,12 @@ public class NixBoss implements Listener {
         world.playSound(front, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.8f, 0.5f);
         world.playSound(front, Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 1.2f, 0.6f);
         world.playSound(front, Sound.ITEM_MACE_SMASH_GROUND, 1.2f, 0.8f);
+        // The arc the axe just cut, from over his head down to the floor in front of him.
+        Fx fx = LiveStage.fxIn(world);
+        Vector forward = stand.getLocation().getDirection().setY(0).normalize();
+        Vector shoulder = stand.getLocation().toVector().add(new Vector(0, 1.4, 0));
+        fx.draw(Shapes.arc(shoulder, 1.9, -0.7, 1.5, 26, forward, new Vector(0, 1, 0)), fx.fade(Palette.BLOOD, Palette.ASH, 1.6f));
+        fx.draw(Shapes.arc(shoulder, 1.5, -0.5, 1.2, 18, forward, new Vector(0, 1, 0)), fx.dust(Palette.BLOOD, 1.1f));
         world.spawnParticle(Particle.SWEEP_ATTACK, front, 3, 0.5, 0.3, 0.5, 0);
         world.spawnParticle(Particle.DUST, front, 45, 1.2, 0.8, 1.2, 0,
                 new Particle.DustOptions(Color.fromRGB(0x880000), 2.2f));
@@ -611,6 +683,29 @@ public class NixBoss implements Listener {
                 }
             }
         }
+        Entity axe = inst.axeDisplay != null ? root.getWorld().getEntity(inst.axeDisplay) : null;
+        if (axe instanceof ItemDisplay display && display.isValid()) {
+            display.teleport(root);
+            display.setTransformation(axeTransformation(inst));
+        } else {
+            DisplaySuit.SuitTags tags = axeTags(stand.getUniqueId());
+            ItemDisplay adopted = DisplaySuit.find(stand.getWorld(), stand.getLocation(), tags);
+            inst.axeDisplay = (adopted != null ? adopted : spawnAxe(root, stand.getUniqueId())).getUniqueId();
+        }
+    }
+
+    private ItemDisplay spawnAxe(Location root, UUID ownerId) {
+        ItemStack axe = new ItemStack(Material.NETHERITE_AXE);
+        return DisplaySuit.spawn(root, axe, NixModel.axe(new Quaternionf(), new Quaternionf()), axeTags(ownerId));
+    }
+
+    private static DisplaySuit.SuitTags axeTags(UUID ownerId) {
+        return new DisplaySuit.SuitTags(PART_TAG, AXE_TAG, partOwnerTag(ownerId));
+    }
+
+    /** The axe rides the right forearm: the arm's swing and the elbow's fold, as its lowest piece. */
+    private Transformation axeTransformation(NixInstance inst) {
+        return NixModel.axe(computeLimbQuat(LimbGroup.ARM_RIGHT, inst), computeLowerQuat(NixPart.ARM_R_1, inst));
     }
 
     private ItemDisplay findPartDisplay(NixInstance inst, NixPart part) {
@@ -652,6 +747,7 @@ public class NixBoss implements Listener {
      */
     private Quaternionf computeLowerQuat(NixPart part, NixInstance inst) {
         if (inst == null) return new Quaternionf();
+        if (inst.move != NixMoves.Move.NONE) return NixMoves.lower(inst.move, part, inst.moveTick);
         if (inst.cleaveAnim > 0) {
             float prog = 1f - (float) inst.cleaveAnim / cleaveAnimTicks;
             return NixModel.cleaveLowerRotation(part, prog);
@@ -670,6 +766,7 @@ public class NixBoss implements Listener {
      * Computes clean, realistic, solid rotations for each limb group.
      */
     private Quaternionf computeLimbQuat(LimbGroup group, NixInstance inst) {
+        if (inst.move != NixMoves.Move.NONE) return NixMoves.limb(inst.move, group, inst.moveTick);
         Quaternionf q = new Quaternionf();
         float s = inst.animTicks;
         boolean walking = inst.moving;
@@ -683,22 +780,7 @@ public class NixBoss implements Listener {
             }
             case ARM_RIGHT -> {
                 if (inst.cleaveAnim > 0) {
-                    float prog = 1f - (float) inst.cleaveAnim / cleaveAnimTicks;
-                    float angle;
-                    if (prog < 0.4f) {
-                        // Wind up: raise arms high up
-                        float p = prog / 0.4f;
-                        angle = (float) (-1.1 * Math.sin(p * Math.PI / 2));
-                    } else if (prog < 0.7f) {
-                        // Brutal guillotine chop down forward!
-                        float p = (prog - 0.4f) / 0.3f;
-                        angle = (float) (-1.1 + (1.1 + 0.75) * Math.sin(p * Math.PI / 2));
-                    } else {
-                        // Smooth recovery back to neutral
-                        float p = (prog - 0.7f) / 0.3f;
-                        angle = (float) (0.75 * (1.0 - Math.sin(p * Math.PI / 2)));
-                    }
-                    q.rotateX(angle);
+                    q.rotateX(NixModel.cleaveSwing(1f - (float) inst.cleaveAnim / cleaveAnimTicks, 2.7f));
                 } else if (inst.chainAnim > 0) {
                     float p = 1f - (float) inst.chainAnim / chainAnimTicks;
                     float angle = (float) (Math.sin(p * Math.PI) * 1.0);
@@ -709,19 +791,7 @@ public class NixBoss implements Listener {
             }
             case ARM_LEFT -> {
                 if (inst.cleaveAnim > 0) {
-                    float prog = 1f - (float) inst.cleaveAnim / cleaveAnimTicks;
-                    float angle;
-                    if (prog < 0.4f) {
-                        float p = prog / 0.4f;
-                        angle = (float) (-1.0 * Math.sin(p * Math.PI / 2));
-                    } else if (prog < 0.7f) {
-                        float p = (prog - 0.4f) / 0.3f;
-                        angle = (float) (-1.0 + (1.0 + 0.70) * Math.sin(p * Math.PI / 2));
-                    } else {
-                        float p = (prog - 0.7f) / 0.3f;
-                        angle = (float) (0.70 * (1.0 - Math.sin(p * Math.PI / 2)));
-                    }
-                    q.rotateX(angle);
+                    q.rotateX(NixModel.cleaveSwing(1f - (float) inst.cleaveAnim / cleaveAnimTicks, 2.5f));
                 } else if (walking) {
                     q.rotateX(NixModel.walkSwing(group, s));
                 }
@@ -746,14 +816,16 @@ public class NixBoss implements Listener {
                 }
             }
             case HEAD -> {
+                // He looks at the target's eyes from his own. The angle used to be taken from his feet
+                // and with the sign of a nod, so a player in front of him always had him staring at
+                // the floor, and the cleave forced the same nod on top of that.
                 Player target = inst.targetId != null ? Bukkit.getPlayer(inst.targetId) : null;
-                if (inst.cleaveAnim > 0) {
-                    q.rotateX((float) Math.toRadians(-12));
-                } else if (target != null && target.isOnline()) {
-                    Vector to = target.getEyeLocation().toVector().subtract(inst.stand.getLocation().toVector());
+                if (target != null && target.isOnline()) {
+                    Vector to = target.getEyeLocation().toVector()
+                            .subtract(inst.stand.getLocation().toVector().add(new Vector(0, EYE_HEIGHT, 0)));
                     double horiz = Math.sqrt(to.getX() * to.getX() + to.getZ() * to.getZ());
                     if (horiz > 0.5) {
-                        float pitch = (float) Math.toDegrees(Math.atan2(-to.getY(), horiz));
+                        float pitch = (float) Math.toDegrees(Math.atan2(to.getY(), horiz));
                         pitch = Math.max(-25, Math.min(25, pitch));
                         q.rotateX((float) Math.toRadians(pitch));
                     }
@@ -761,6 +833,325 @@ public class NixBoss implements Listener {
             }
         }
         return q;
+    }
+
+    // ------------------------------------------------------------------ signature moves
+
+    /** Which signature move fits the distance to the target; null keeps to the cleave and the chains. */
+    private NixMoves.Move pickMove(double dist) {
+        int roll = random.nextInt(100);
+        if (dist <= 5.0) return roll < 65 ? NixMoves.Move.HARVEST : NixMoves.Move.CONDEMN;
+        if (dist <= 18.0) return roll < 55 ? NixMoves.Move.GALLOWS : NixMoves.Move.CONDEMN;
+        return NixMoves.Move.CONDEMN;
+    }
+
+    private void startMove(NixInstance inst, NixMoves.Move move) {
+        if (move == null || move == NixMoves.Move.NONE) return;
+        inst.move = move;
+        inst.moveTick = 0;
+        inst.marks.clear();
+        inst.struck.clear();
+        inst.leapFrom = null;
+        inst.leapTo = null;
+        inst.cleaveAnim = 0;
+        inst.chainAnim = 0;
+    }
+
+    /**
+     * Plays one tick of the current signature move.
+     *
+     * @return whether Nix is in the air this tick, so the caller must not settle it on the floor
+     */
+    private boolean runMove(NixInstance inst, Player target, Location loc) {
+        Fx fx = LiveStage.fxIn(loc.getWorld());
+        int t = inst.moveTick;
+        boolean airborne = switch (inst.move) {
+            case HARVEST -> {
+                harvestTick(inst, fx, loc, t);
+                yield false;
+            }
+            case GALLOWS -> gallowsTick(inst, fx, loc, target, t);
+            case CONDEMN -> {
+                condemnTick(inst, fx, loc, target, t);
+                yield false;
+            }
+            default -> false;
+        };
+        inst.moveTick++;
+        if (inst.moveTick >= inst.move.ticks) {
+            inst.move = NixMoves.Move.NONE;
+            inst.moveTick = 0;
+            inst.marks.clear();
+            inst.struck.clear();
+            inst.moveCooldown = specialCooldownTicks + random.nextInt(40);
+            inst.meleeCooldown = Math.max(inst.meleeCooldown, 10);
+        }
+        return airborne;
+    }
+
+    /** Blood Harvest: arms flung wide, three whirling revolutions of blood blades. */
+    private void harvestTick(NixInstance inst, Fx fx, Location loc, int t) {
+        final double radius = 4.5;
+        Vector feet = loc.toVector();
+        Vector floor = feet.clone().add(new Vector(0, 0.15, 0));
+        if (t == 0) {
+            fx.sound(feet, Sfx.RAVAGER_ROAR, 1.8f, 1.3f);
+            fx.sound(feet, Sfx.WARDEN_HEARTBEAT, 2f, 0.6f);
+        }
+        if (t < NixMoves.HARVEST_WIND) {
+            float p = NixMoves.phase(t, 0, NixMoves.HARVEST_WIND);
+            if (t % 2 == 0) fx.ring(floor, radius, 0.6, t * 0.2, fx.dust(Palette.mix(Palette.WARNING, Palette.WARNING_HOT, p), 1.4f));
+            Vector right = rightOf(loc);
+            for (int side = -1; side <= 1; side += 2) {
+                Vector hand = feet.clone().add(new Vector(0, 1.45, 0)).add(right.clone().multiply(side * 1.2 * p));
+                if (t % 3 == 0) fx.gather(hand, 2.2, 3, Palette.BLOOD, 8);
+                fx.dust(Palette.BLOOD, 1.2f, 0.15, 1).at(hand);
+            }
+            if (t == NixMoves.HARVEST_WIND - 3) fx.sound(feet, Sfx.PLAYER_ATTACK_SWEEP, 2f, 0.5f);
+            return;
+        }
+        if (t < NixMoves.HARVEST_SPIN_END) {
+            int s = t - NixMoves.HARVEST_WIND;
+            loc.setYaw(loc.getYaw() + 360f / NixMoves.HARVEST_REVOLUTION);
+            Vector right = rightOf(loc);
+            Vector blades = feet.clone().add(new Vector(0, 1.25, 0));
+            double angle = Math.atan2(right.getZ(), right.getX());
+            for (int side = -1; side <= 1; side += 2) {
+                Vector hand = feet.clone().add(new Vector(0, 1.45, 0)).add(right.clone().multiply(side * 1.2));
+                Vector tip = blades.clone().add(right.clone().multiply(side * radius));
+                fx.line(hand, tip, 0.35, fx.dust(Palette.BLOOD, 1.7f));
+                double a = side > 0 ? angle : angle + Math.PI;
+                fx.draw(Shapes.arc(blades, radius - 0.4, a - 1.1, a, 16, Shapes.FLAT_U, Shapes.FLAT_V),
+                        fx.fade(Palette.BLOOD, Palette.ASH, 1.4f));
+                fx.draw(Shapes.arc(blades, radius * 0.6, a - 0.7, a, 8, Shapes.FLAT_U, Shapes.FLAT_V),
+                        fx.dust(Palette.mix(Palette.BLOOD, Palette.EMBER, 0.3), 1.1f).sometimes(0.7));
+            }
+            if (s % 3 == 0) fx.cloud(Particle.SWEEP_ATTACK, blades, 2, radius * 0.5, 0.2, 0);
+            fx.crumble(groundUnder(loc), 3, radius * 0.4).at(floor);
+            if (s % 4 == 0) fx.sound(feet, Sfx.PLAYER_ATTACK_SWEEP, 1.6f, 0.7f + s * 0.02f);
+            if (s % NixMoves.HARVEST_REVOLUTION == NixMoves.HARVEST_REVOLUTION / 2) {
+                for (Player p : victims(loc.getWorld())) {
+                    Vector to = p.getLocation().toVector().subtract(feet);
+                    double dy = to.getY();
+                    to.setY(0);
+                    if (to.length() > radius + 0.5 || dy < -1.5 || dy > 3) continue;
+                    dealToPlayer(inst.stand, p, harvestDamage, "Blood Harvest");
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 50, 0, false, true));
+                    Vector in = to.lengthSquared() < 0.01 ? new Vector() : to.normalize().multiply(-0.35);
+                    p.setVelocity(p.getVelocity().add(in.setY(0.2)));
+                    fx.impact(p.getLocation().toVector().add(new Vector(0, 1, 0)), Palette.BLOOD, 1.2);
+                }
+            }
+            return;
+        }
+        if (t == NixMoves.HARVEST_SPIN_END) {
+            for (Vector p : Shapes.ring(floor, radius, 0.5, 0)) fx.dust(Palette.BLOOD, 2f, 0.2, 2).at(p.add(new Vector(0, 0.4, 0)));
+            fx.flatBurst(floor, Particle.DAMAGE_INDICATOR, 20, 0.3);
+            fx.sound(feet, Sfx.PLAYER_ATTACK_STRONG, 2f, 0.5f);
+        }
+    }
+
+    /** Gallows Leap: crouch, leap onto the target, slam down with both arms. */
+    private boolean gallowsTick(NixInstance inst, Fx fx, Location loc, Player target, int t) {
+        final double radius = 4.0;
+        final double height = 7.0;
+        Vector feet = loc.toVector();
+        if (t == 0) {
+            inst.leapFrom = feet.clone();
+            fx.sound(feet, Sfx.RAVAGER_ROAR, 1.8f, 0.8f);
+        }
+        if (t < NixMoves.GALLOWS_CROUCH) {
+            float p = NixMoves.phase(t, 0, NixMoves.GALLOWS_CROUCH);
+            Vector want = target != null ? target.getLocation().toVector() : feet.clone().add(loc.getDirection().setY(0).multiply(8));
+            Vector reach = want.clone().subtract(feet).setY(0);
+            if (reach.length() > 18) reach.normalize().multiply(18);
+            Vector landing = feet.clone().add(reach);
+            double floorY = BossArena.findFloorY(landing.toLocation(loc.getWorld()).add(0, 4, 0), 16);
+            landing.setY(Double.isNaN(floorY) ? feet.getY() : floorY);
+            inst.leapTo = landing;
+            if (reach.lengthSquared() > 0.01) loc.setDirection(reach);
+            if (t % 2 == 0) {
+                Vector mark = landing.clone().add(new Vector(0, 0.15, 0));
+                fx.ring(mark, radius, 0.6, t * 0.1, fx.dust(Palette.mix(Palette.WARNING, Palette.WARNING_HOT, p), 1.5f));
+                fx.ring(mark, radius * 0.5, 0.6, -t * 0.1, fx.dust(Palette.BLOOD, 1.1f));
+            }
+            fx.cloud(Particle.CLOUD, feet, 2, 0.6, 0.02);
+            if (t % 4 == 0) fx.crumble(groundUnder(loc), 6, 0.6).at(feet.clone().add(new Vector(0, 0.2, 0)));
+            if (t == NixMoves.GALLOWS_CROUCH - 1) {
+                fx.sound(feet, Sfx.WIND_CHARGE_BURST, 2f, 0.6f);
+                fx.flatBurst(feet, Particle.CLOUD, 25, 0.35);
+            }
+            return false;
+        }
+        if (t < NixMoves.GALLOWS_LAND) {
+            if (inst.leapFrom == null || inst.leapTo == null) return false;
+            double p = (t - NixMoves.GALLOWS_CROUCH + 1) / (double) (NixMoves.GALLOWS_LAND - NixMoves.GALLOWS_CROUCH);
+            Vector at = inst.leapFrom.clone().add(inst.leapTo.clone().subtract(inst.leapFrom).multiply(p))
+                    .add(new Vector(0, height * 4 * p * (1 - p), 0));
+            loc.setX(at.getX());
+            loc.setY(at.getY());
+            loc.setZ(at.getZ());
+            Vector body = at.clone().add(new Vector(0, 1.2, 0));
+            fx.dust(Palette.BLOOD, 1.8f, 0.4, 3).at(body);
+            fx.cloud(Particle.LARGE_SMOKE, body, 2, 0.3, 0.01);
+            if (t % 2 == 0) {
+                Vector mark = inst.leapTo.clone().add(new Vector(0, 0.15, 0));
+                fx.ring(mark, radius, 0.5, t * 0.2, fx.dust(Palette.WARNING_HOT, 1.6f));
+                fx.line(body, mark, 1.0, fx.dust(Palette.BLOOD, 0.8f).sometimes(0.5));
+            }
+            return p < 1;
+        }
+        Vector center = feet.clone();
+        if (t == NixMoves.GALLOWS_LAND) {
+            Vector mid = center.clone().add(new Vector(0, 0.5, 0));
+            fx.impact(mid, Palette.BLOOD, 2.5);
+            fx.flatBurst(center, Particle.CLOUD, 40, 0.5);
+            fx.crumble(groundUnder(loc), 40, radius * 0.5).at(mid);
+            for (int i = 0; i < 8; i++) {
+                Vector way = Shapes.heading(i * Math.PI / 4 + 0.3);
+                fx.line(center.clone().add(new Vector(0, 0.1, 0)), center.clone().add(way.multiply(radius + 2)).add(new Vector(0, 0.1, 0)),
+                        0.4, fx.dust(Palette.ASH, 1.4f).and(fx.dust(Palette.BLOOD, 1f).sometimes(0.3)));
+            }
+            fx.sound(center, Sfx.MACE_SMASH_GROUND, 2.5f, 0.6f);
+            fx.sound(center, Sfx.ANVIL_LAND, 1.5f, 0.5f);
+            fx.sound(center, Sfx.EXPLODE, 1.5f, 0.8f);
+            for (Player p : victims(loc.getWorld())) {
+                Vector to = p.getLocation().toVector().subtract(center);
+                double dy = to.getY();
+                if (Math.hypot(to.getX(), to.getZ()) > radius || dy < -1.5 || dy > 3) continue;
+                inst.struck.add(p.getUniqueId());
+                dealToPlayer(inst.stand, p, gallowsDamage, "Gallows Leap");
+                p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 50, 2, false, true));
+                p.setVelocity(p.getVelocity().add(new Vector(0, 0.9, 0)));
+            }
+        } else if (t < NixMoves.GALLOWS_LAND + 10) {
+            double r = radius + (t - NixMoves.GALLOWS_LAND) * 0.6;
+            Vector floor = center.clone().add(new Vector(0, 0.25, 0));
+            fx.ring(floor, r, 0.7, t, fx.dust(Palette.ASH, 1.8f).and(fx.crumble(groundUnder(loc), 1, 0.2).sometimes(0.5)));
+            for (Player p : victims(loc.getWorld())) {
+                Vector to = p.getLocation().toVector().subtract(center);
+                double flat = Math.hypot(to.getX(), to.getZ());
+                if (Math.abs(flat - r) > 1.0 || Math.abs(to.getY()) > 1.5 || !inst.struck.add(p.getUniqueId())) continue;
+                dealToPlayer(inst.stand, p, gallowsDamage * 0.5, "Gallows Leap");
+                p.setVelocity(p.getVelocity().add(new Vector(0, 0.5, 0)));
+            }
+        }
+        return false;
+    }
+
+    /** Condemnation: a guillotine over every player, falling when the raised arm chops down. */
+    private void condemnTick(NixInstance inst, Fx fx, Location loc, Player target, int t) {
+        final double radius = 1.8;
+        final double top = 5.5;
+        Vector feet = loc.toVector();
+        Vector hand = feet.clone().add(new Vector(0, 3.0, 0));
+        if (t == 0) {
+            fx.sound(feet, Sfx.ELDER_GUARDIAN_CURSE, 1.2f, 0.7f);
+            fx.sound(feet, Sfx.EVOKER_PREPARE_SUMMON, 1.6f, 0.6f);
+        }
+        if (t < NixMoves.CONDEMN_RAISE) {
+            if (target != null) loc.setDirection(target.getLocation().toVector().subtract(feet).setY(0));
+            fx.gather(hand, 1.5, 2, Palette.BLOOD, 6);
+            return;
+        }
+        if (t == NixMoves.CONDEMN_RAISE) {
+            for (Player p : victims(loc.getWorld())) {
+                if (inst.marks.size() >= 4) break;
+                if (p.getLocation().distanceSquared(loc) > aggroRange * aggroRange) continue;
+                Vector at = p.getLocation().toVector();
+                double floorY = BossArena.findFloorY(p.getLocation().add(0, 0.5, 0), 8);
+                if (!Double.isNaN(floorY)) at.setY(floorY);
+                inst.marks.add(at);
+                fx.sound(at, Sfx.BELL_RESONATE, 1.5f, 0.6f);
+                p.sendMessage(ChatColor.DARK_RED + "⚖ You have been condemned. Step out of the circle!");
+            }
+        }
+        if (t < NixMoves.CONDEMN_CHOP) {
+            float p = NixMoves.phase(t, NixMoves.CONDEMN_RAISE, NixMoves.CONDEMN_CHOP);
+            double shake = Math.sin(t * 1.9) * 0.08;
+            for (Vector m : inst.marks) {
+                Vector side = sideOf(feet, m);
+                Vector floor = m.clone().add(new Vector(0, 0.15, 0));
+                if (t % 2 == 0) {
+                    fx.ring(floor, radius, 0.35, t * 0.15, fx.dust(Palette.mix(Palette.WARNING, Palette.WARNING_HOT, p), 1.3f));
+                    drawGallows(fx, m, side, top, 0.5);
+                }
+                Vector blade = m.clone().add(new Vector(0, top - 0.6 + shake, 0));
+                fx.line(blade.clone().subtract(side.clone().multiply(1.3)), blade.clone().add(side.clone().multiply(1.3)).add(new Vector(0, -0.45, 0)),
+                        0.2, fx.dust(Palette.ICE, 1.1f));
+                if (t % 5 == 0) fx.line(hand, m.clone().add(new Vector(0, top, 0)), 0.8, fx.dust(Palette.BLOOD, 0.8f).sometimes(0.6));
+                if (t % 10 == 0) fx.sound(m, Sfx.WARDEN_HEARTBEAT, 1.2f + p, 1.0f + p * 0.5f);
+            }
+            if (t == NixMoves.CONDEMN_CHOP - 2) {
+                for (Vector m : inst.marks) fx.sound(m, Sfx.CHAIN_BREAK, 2f, 0.6f);
+            }
+            return;
+        }
+        if (t < NixMoves.CONDEMN_CHOP + NixMoves.CONDEMN_FALL) {
+            double fall = (t - NixMoves.CONDEMN_CHOP + 1) / (double) NixMoves.CONDEMN_FALL;
+            for (Vector m : inst.marks) {
+                Vector side = sideOf(feet, m);
+                drawGallows(fx, m, side, top, 0.5);
+                Vector blade = m.clone().add(new Vector(0, (top - 0.6) * (1 - fall) + 0.2, 0));
+                fx.line(blade.clone().subtract(side.clone().multiply(1.3)), blade.clone().add(side.clone().multiply(1.3)).add(new Vector(0, -0.45, 0)),
+                        0.15, fx.dust(Palette.ICE, 1.5f).and(fx.particle(Particle.CRIT).sometimes(0.4)));
+            }
+            if (t != NixMoves.CONDEMN_CHOP + NixMoves.CONDEMN_FALL - 1) return;
+            fx.sound(feet, Sfx.PLAYER_ATTACK_CRIT, 2f, 0.5f);
+            for (Vector m : inst.marks) {
+                Vector mid = m.clone().add(new Vector(0, 0.6, 0));
+                fx.impact(mid, Palette.BLOOD, 1.8);
+                fx.flatBurst(m, Particle.DAMAGE_INDICATOR, 12, 0.25);
+                fx.sound(m, Sfx.ANVIL_LAND, 1.6f, 1.4f);
+                fx.sound(m, Sfx.BONE_BREAK, 2f, 0.6f);
+                for (Player p : victims(loc.getWorld())) {
+                    Vector to = p.getLocation().toVector().subtract(m);
+                    if (Math.hypot(to.getX(), to.getZ()) > radius || to.getY() < -1 || to.getY() > 3) continue;
+                    if (!inst.struck.add(p.getUniqueId())) continue;
+                    dealToPlayer(inst.stand, p, condemnDamage, "Condemnation");
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 80, 1, false, true));
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1, false, true));
+                }
+            }
+        }
+    }
+
+    /** A gallows frame in particles: two posts and a crossbar, the blade's rails. */
+    private static void drawGallows(Fx fx, Vector base, Vector side, double top, double spacing) {
+        Vector left = base.clone().subtract(side.clone().multiply(1.6));
+        Vector right = base.clone().add(side.clone().multiply(1.6));
+        Fx.Brush wood = fx.dust(Palette.ASH, 1.3f);
+        fx.line(left, left.clone().add(new Vector(0, top, 0)), spacing, wood);
+        fx.line(right, right.clone().add(new Vector(0, top, 0)), spacing, wood);
+        fx.line(left.clone().add(new Vector(0, top, 0)), right.clone().add(new Vector(0, top, 0)), spacing, fx.dust(Palette.BLOOD, 1.3f));
+    }
+
+    /** Horizontal unit vector across the line from Nix to a mark, so a gallows faces him. */
+    private static Vector sideOf(Vector from, Vector mark) {
+        Vector d = mark.clone().subtract(from).setY(0);
+        if (d.lengthSquared() < 0.01) d = new Vector(0, 0, 1);
+        d.normalize();
+        return new Vector(-d.getZ(), 0, d.getX());
+    }
+
+    /** The stand's right-hand side, flat. */
+    private static Vector rightOf(Location loc) {
+        double yaw = Math.toRadians(loc.getYaw());
+        return new Vector(-Math.cos(yaw), 0, -Math.sin(yaw));
+    }
+
+    private static Material groundUnder(Location loc) {
+        Material type = loc.clone().add(0, -0.5, 0).getBlock().getType();
+        return type.isSolid() ? type : Material.STONE;
+    }
+
+    private static List<Player> victims(World world) {
+        List<Player> out = new ArrayList<>();
+        for (Player p : world.getPlayers()) {
+            if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR || p.isDead()) continue;
+            out.add(p);
+        }
+        return out;
     }
 
     public boolean trySpawn(Location location) {
@@ -811,6 +1202,8 @@ public class NixBoss implements Listener {
         World world = (inst.stand != null) ? inst.stand.getWorld() : null;
         DisplaySuit.remove(world, inst.partDisplays.values());
         inst.partDisplays.clear();
+        if (inst.axeDisplay != null) DisplaySuit.remove(world, List.of(inst.axeDisplay));
+        inst.axeDisplay = null;
         if (inst.bossBar != null) {
             inst.bossBar.removeAll();
             inst.bossBar = null;
@@ -1024,6 +1417,7 @@ public class NixBoss implements Listener {
     public static class NixInstance {
         public final ArmorStand stand;
         public final Map<NixPart, UUID> partDisplays = new EnumMap<>(NixPart.class);
+        public UUID axeDisplay;
         public BossBar bossBar;
         public UUID targetId;
         public int meleeCooldown;
@@ -1034,6 +1428,14 @@ public class NixBoss implements Listener {
         public boolean bloodlust;
         public float animTicks;
         public int tickCount;
+        public NixMoves.Move move = NixMoves.Move.NONE;
+        public int moveTick;
+        /** The first signature move waits a few seconds into the fight. */
+        public int moveCooldown = 100;
+        public Vector leapFrom;
+        public Vector leapTo;
+        public final List<Vector> marks = new ArrayList<>();
+        public final java.util.Set<UUID> struck = new java.util.HashSet<>();
 
         public NixInstance(ArmorStand stand) {
             this.stand = stand;

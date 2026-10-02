@@ -7,8 +7,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import com.Chagui68.MultiverseCreatures;
-import com.Chagui68.ritual.terrain.ArenaShape;
-import com.Chagui68.ritual.terrain.BossArenaGenerator;
+import com.Chagui68.ritual.terrain.WastelandGenerator;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +24,26 @@ public class BossDimensionManager {
     /** Config knob: delete the world once on startup so a regenerated dimension is visible. */
     private static final String RESET_ON_LOAD_KEY = "boss-dimension.reset-on-load";
 
+    /** Config knob: side of the square the world border closes the dimension into, in blocks. */
+    private static final String SIZE_KEY = "boss-dimension.size";
+
+    /** The dimension's default size: the 1500 x 1500 battlefield the terrain is designed for. */
+    public static final int DEFAULT_SIZE = 1500;
+
+    /** Smallest border allowed: room for a boss fight and the invocation structures. */
+    public static final int MIN_SIZE = 100;
+
+    /** Largest border allowed, so the dimension never grows into a full-size world. */
+    public static final int MAX_SIZE = 1500;
+
+    /**
+     * File left in the world folder naming the generator that built it. A world without it (or with
+     * another name in it) was made by an older generator and is rebuilt once, on the next start: a
+     * world that already exists is otherwise loaded as it is, and its old terrain would never go away.
+     */
+    static final String GENERATOR_MARKER = "msc-generator.txt";
+    static final String GENERATOR_ID = "scorched-wasteland-1";
+
     private final MultiverseCreatures plugin;
     private World bossWorld;
 
@@ -36,7 +55,7 @@ public class BossDimensionManager {
         if (plugin.getConfig().getBoolean("boss-dimension.red-sky", true)) {
             BossDimensionSky.apply(plugin);
         }
-        resetDimensionIfRequested();
+        resetDimensionIfNeeded();
 
         if (bossWorld != null) {
             plugin.getLogger().info("Boss dimension already exists: " + WORLD_NAME);
@@ -55,12 +74,13 @@ public class BossDimensionManager {
 
         WorldCreator creator = new WorldCreator(WORLD_NAME);
         creator.environment(World.Environment.NORMAL);
-        creator.generator(new BossArenaGenerator());
+        creator.generator(new WastelandGenerator());
         creator.generateStructures(false);
 
         bossWorld = creator.createWorld();
 
         if (bossWorld != null) {
+            writeGeneratorMarker(bossWorld.getWorldFolder().toPath());
             configureBossWorld(bossWorld);
             plugin.getLogger().info("Boss dimension created successfully!");
         } else {
@@ -68,35 +88,53 @@ public class BossDimensionManager {
         }
     }
 
-    /**
-     * Deletes the dimension folder once, when an operator asks for it.
-     *
-     * <p>A world that already exists is never regenerated: {@code createBossDimension} loads it as
-     * it is, so terrain changes only reach the chunks nobody has visited yet. Setting {@code
-     * boss-dimension.reset-on-load} to true throws the old world away on the next start, which is
-     * the only way to see a new generator at the spawn — it is off by default and documented as a
-     * one-shot switch because it destroys everything players built there.
-     */
-    private void resetDimensionIfRequested() {
-        if (!plugin.getConfig().getBoolean(RESET_ON_LOAD_KEY, false)) return;
-
-        World loaded = Bukkit.getWorld(WORLD_NAME);
-        if (loaded != null) {
-            plugin.getLogger().warning("Boss dimension reset requested, but " + WORLD_NAME
-                    + " is already loaded: unload it first (nothing was deleted).");
-            return;
+    /** Whether a world folder was built by an older generator and has to be rebuilt. */
+    static boolean builtByAnotherGenerator(Path folder) {
+        if (!Files.isDirectory(folder)) return false;
+        try {
+            Path marker = folder.resolve(GENERATOR_MARKER);
+            return !Files.isRegularFile(marker) || !GENERATOR_ID.equals(Files.readString(marker).trim());
+        } catch (IOException e) {
+            return true;
         }
+    }
+
+    /**
+     * Deletes the dimension folder when an operator asks for it, or when an older generator built it.
+     *
+     * <p>Either way it destroys whatever players built in that world, which is why it only happens
+     * once: the rebuilt world carries the current {@link #GENERATOR_MARKER}.
+     */
+    private void resetDimensionIfNeeded() {
         Path folder = new File(Bukkit.getWorldContainer(), WORLD_NAME).toPath();
+        boolean requested = plugin.getConfig().getBoolean(RESET_ON_LOAD_KEY, false);
+        boolean outdated = builtByAnotherGenerator(folder);
+        if (!requested && !outdated) return;
         if (!Files.isDirectory(folder)) return;
 
-        plugin.getLogger().warning("Boss dimension reset requested: deleting " + folder);
+        if (Bukkit.getWorld(WORLD_NAME) != null) {
+            plugin.getLogger().warning("The boss dimension needs to be rebuilt, but " + WORLD_NAME
+                    + " is already loaded by another plugin: unload it first (nothing was deleted).");
+            return;
+        }
+
+        plugin.getLogger().warning((requested ? "Boss dimension reset requested" : "The boss dimension "
+                + "was built by an older generator") + ": deleting " + folder);
         try (Stream<Path> paths = Files.walk(folder)) {
             paths.sorted(Comparator.reverseOrder()).forEach(BossDimensionManager::deleteQuietly);
         } catch (IOException e) {
             plugin.getLogger().severe("Could not walk the boss dimension folder: " + e.getMessage());
         }
-        plugin.getLogger().warning("Boss dimension deleted: it will be regenerated on this start. "
-                + "Set " + RESET_ON_LOAD_KEY + " back to false.");
+        plugin.getLogger().warning("Boss dimension deleted: it will be regenerated on this start."
+                + (requested ? " Set " + RESET_ON_LOAD_KEY + " back to false." : ""));
+    }
+
+    private void writeGeneratorMarker(Path folder) {
+        try {
+            Files.writeString(folder.resolve(GENERATOR_MARKER), GENERATOR_ID);
+        } catch (IOException e) {
+            plugin.getLogger().warning("Could not mark the boss dimension's generator: " + e.getMessage());
+        }
     }
 
     private static void deleteQuietly(Path path) {
@@ -107,9 +145,18 @@ public class BossDimensionManager {
         }
     }
 
+    /** The configured border size, kept inside [{@link #MIN_SIZE}, {@link #MAX_SIZE}]. */
+    static int borderSize(int configured) {
+        return Math.max(MIN_SIZE, Math.min(MAX_SIZE, configured));
+    }
+
     private void configureBossWorld(World world) {
         applyDeprecatedGameRules(world);
-        world.setSpawnLocation(0, ArenaShape.spawnY(), 0);
+        world.setSpawnLocation(WastelandGenerator.spawn(world));
+
+        WorldBorder border = world.getWorldBorder();
+        border.setCenter(0, 0);
+        border.setSize(borderSize(plugin.getConfig().getInt(SIZE_KEY, DEFAULT_SIZE)));
     }
 
     // GameRule API is marked for removal in Bukkit 1.21;
@@ -147,7 +194,8 @@ public class BossDimensionManager {
         Player finalPlayer = player;
         new BukkitRunnable() {
             @Override
-            public void run() {                    Location spawnLocation = new Location(bossWorld, 0.5, ArenaShape.spawnY(), 0.5);
+            public void run() {
+                Location spawnLocation = WastelandGenerator.spawn(bossWorld);
 
                 finalPlayer.teleportAsync(spawnLocation).thenAccept(success -> {
                     if (success) {

@@ -19,8 +19,9 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * <p>Page 1 also gained the three ground attacks that only the wiki documented
  * ({@code lanceflurry}, {@code whirlwindslash}, {@code executionsweep}), so the help menu now
- * advertises all 55 registered attacks: the legacy pages plus the ten attacks of the second wave
- * (four ground, three aerial, three ranged) appended to the page they belong to.
+ * advertises all 61 registered attacks: the legacy pages plus the ten attacks of the second wave
+ * (four ground, three aerial, three ranged) and the six of the third (three ground, two aerial, one
+ * ranged) appended to the page they belong to. The ground slam's line changed with its redesign.
  */
 class AttackCatalogueTest {
 
@@ -29,7 +30,7 @@ class AttackCatalogueTest {
      * never listed ({@code lanceflurry}, {@code whirlwindslash}, {@code executionsweep}).
      */
     private static final List<String> LEGACY_PAGE_1 = List.of(
-            " &e• groundslam &8- &7Earth-shattering seismic leap impact",
+            " &e• groundslam &8- &7Shield hurled skyward to judge every player below",
             " &e• groundshatter &8- &7Fissure wave that fractures the terrain",
             " &e• shieldbash &8- &7Forward heavy rush that stuns targets",
             " &e• lancestorm &8- &7Piercing lance barrage across the ground",
@@ -46,7 +47,10 @@ class AttackCatalogueTest {
             " &e• obsidianspire &8- &7Line of volcanic pillars shattering the ground ahead",
             " &e• earthmaw &8- &7Stone jaws closing on everything in front",
             " &e• shadowstep &8- &7Vanishes through a sigil to strike from behind",
-            " &e• runeward &8- &7Plants a pulsing rune ward that outlives the cast");
+            " &e• runeward &8- &7Plants a pulsing rune ward that outlives the cast",
+            " &e• sunderingcharge &8- &7Spear-dragging charge that leaves an erupting fissure",
+            " &e• spearcyclone &8- &7Whirled spear unleashes a roaming cyclone",
+            " &e• cataclysm &8- &7Three rings of the arena erupt from the inside out");
 
     private static final List<String> LEGACY_PAGE_2 = List.of(
             " &e• starfall &8- &7Calling celestial stars crashing down",
@@ -64,7 +68,9 @@ class AttackCatalogueTest {
             " &e• hoverbarrage &8- &7Levitating volley of energy projectiles",
             " &e• eclipsefall &8- &7Black eclipse disc dropped on the landing zone",
             " &e• bladering &8- &7Orbiting lance ring fired out one by one",
-            " &e• obsidianwings &8- &7Wing beats sweeping obsidian shards outward");
+            " &e• obsidianwings &8- &7Wing beats sweeping obsidian shards outward",
+            " &e• voidmeteor &8- &7Obsidian meteor hurled down into a void crater",
+            " &e• phantomlegion &8- &7Spectral copies lunge through the target one by one");
 
     private static final List<String> LEGACY_PAGE_3 = List.of(
             " &e• lancesnipe &8- &7High-velocity sniper lance projectile",
@@ -81,7 +87,8 @@ class AttackCatalogueTest {
             " &e• spiritbeam &8- &7Piercing spectral light beam",
             " &e• soultethers &8- &7Visible tethers hook players and reel them in",
             " &e• plaguebrand &8- &7Brands a player with a plague that spreads",
-            " &e• runemines &8- &7Scatters armed runes that burst when stepped on");
+            " &e• runemines &8- &7Scatters armed runes that burst when stepped on",
+            " &e• obsidianprison &8- &7Cages of obsidian spikes collapse on each player");
 
     private static final List<String> LEGACY_PAGE_4 = List.of(
             " &e• stoneskin &8- &7Hardens boss defense, reducing all damage",
@@ -92,7 +99,7 @@ class AttackCatalogueTest {
             " &e• trianglecall &8- &7Sacred geometric barrier summoning reinforcements");
 
     @Test
-    @DisplayName("Help pages match the 55 registered attacks, pages 2-4 byte-for-byte")
+    @DisplayName("Help pages match the 61 registered attacks")
     void helpPagesMatchLegacyText() {
         assertEquals(LEGACY_PAGE_1, AttackCatalogue.helpLines(1));
         assertEquals(LEGACY_PAGE_2, AttackCatalogue.helpLines(2));

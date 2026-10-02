@@ -208,19 +208,48 @@ public class MagicSealListener {
     private BukkitRunnable wings(World world, Supplier<Location> pose, BooleanSupplier alive,
                                  WingGeometry.Profile profile, int durationTicks,
                                  Color primary, Color secondary, Particle accent, float size) {
+        Color bone = darken(secondary, 0.45);
         return repeat(2, durationTicks, (ticks, frame) -> {
             if (!alive.getAsBoolean()) return false;
             Location at = pose.get();
-            for (List<WingPoint> feather : WingGeometry.feathers(
+            for (WingGeometry.Stroke stroke : WingGeometry.strokes(
                     at.getX(), at.getY(), at.getZ(), at.getYaw(), ticks, profile)) {
-                for (int sample = 0; sample < feather.size(); sample++) {
-                    WingPoint point = feather.get(sample);
-                    dust(world, point.x(), point.y(), point.z(), sample % 2 == 0 ? primary : secondary, size);
-                    spark(world, point.x(), point.y(), point.z(), accent);
+                List<WingPoint> points = stroke.points();
+                for (int i = 0; i < points.size(); i++) {
+                    WingPoint point = points.get(i);
+                    double f = points.size() == 1 ? 1 : i / (double) (points.size() - 1);
+                    switch (stroke.part()) {
+                        // A heavy, dark leading edge so the shape reads from a distance.
+                        case BONE -> wingDust(world, point, bone, size * 1.35f);
+                        // Flight feathers burn from the base colour to the accent towards their tips.
+                        case FEATHER -> wingDust(world, point, mix(primary, secondary, f), f > 0.8 ? size * 0.8f : size);
+                        case COVERT -> wingDust(world, point, mix(bone, primary, 0.6), size * 0.9f);
+                    }
+                }
+                if (stroke.part() == WingGeometry.Part.FEATHER && ticks % 4 == 0) {
+                    WingPoint tip = points.get(points.size() - 1);
+                    world.spawnParticle(accent, tip.x(), tip.y(), tip.z(), 1, 0.1, 0.1, 0.1, 0.01, null, true);
                 }
             }
             return true;
         });
+    }
+
+    /** Wing dust is forced: the Sentinel is fourteen blocks tall and its wings are seen from afar. */
+    private static void wingDust(World world, WingPoint at, Color color, float size) {
+        world.spawnParticle(Particle.DUST, at.x(), at.y(), at.z(), 1, 0, 0, 0, 0,
+                new Particle.DustOptions(color, size), true);
+    }
+
+    private static Color mix(Color a, Color b, double t) {
+        return Color.fromRGB(
+                (int) Math.round(a.getRed() + (b.getRed() - a.getRed()) * t),
+                (int) Math.round(a.getGreen() + (b.getGreen() - a.getGreen()) * t),
+                (int) Math.round(a.getBlue() + (b.getBlue() - a.getBlue()) * t));
+    }
+
+    private static Color darken(Color c, double factor) {
+        return Color.fromRGB((int) (c.getRed() * factor), (int) (c.getGreen() * factor), (int) (c.getBlue() * factor));
     }
 
     // ------------------------------------------------------------------ signature seals

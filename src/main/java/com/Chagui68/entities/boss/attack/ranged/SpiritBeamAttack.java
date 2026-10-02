@@ -1,97 +1,92 @@
 package com.Chagui68.entities.boss.attack.ranged;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Telegraph;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class SpiritBeamAttack extends BossAttackBase {
+/**
+ * Spirit Beam: the Sentinel looks up and calls a column of spectral light down on each player in
+ * turn. A ring of light marks the spot, then the beam lands from high above and stays for a moment.
+ */
+public class SpiritBeamAttack extends ChoreographedAttack.Ranged {
+
+    private static final int CALL = 16;
+    private static final int WARN = 18;
+    private static final int GAP = 8;
+    private static final int BEAM = 12;
+    private static final double RADIUS = 2.8;
+
     public SpiritBeamAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnDivineSeal(center.clone().add(0, 0.5, 0), 60);
+    public Timeline choreograph(Stage stage) {
+        List<Vector> spots = new ArrayList<>();
+        for (Victim victim : stage.victims()) {
+            if (spots.size() >= 5) break;
+            spots.add(stage.onGround(victim.position()));
         }
-        List<Player> targets = boss.getValidPlayersNear(center, 10000);
+        if (spots.isEmpty()) return null;
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.8);
+        Timeline t = new Timeline();
 
-        new BukkitRunnable() {
-            int t = 0;
+        tweenTo(t, stage, 0, CALL, Poses.CAST_SKY, Ease.OUT);
+        t.at(0, () -> fx.sound(stage.feet(), Sfx.BEACON_ACTIVATE, 2.5f, 1.2f));
+        t.span(0, CALL + spots.size() * GAP + WARN, (tick, p) -> {
+            if (tick % 2 == 0) fx.line(stage.body().head(), stage.body().head().add(new Vector(0, 30, 0)), 1.2,
+                    fx.dust(Palette.HOLY, 1.4f).sometimes(0.6));
+        });
 
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid() || t > 95) {
-                    cancel();
-                    return;
+        for (int i = 0; i < spots.size(); i++) {
+            Vector spot = spots.get(i);
+            int warn = CALL + i * GAP;
+            int strike = warn + WARN;
+            t.span(warn, strike, (tick, p) -> {
+                if (tick % 2 == 0) Telegraph.circle(stage, spot, RADIUS, p);
+                fx.line(spot.clone().add(new Vector(0, 40 - 30 * p, 0)), spot.clone().add(new Vector(0, 40, 0)), 1.0,
+                        fx.dust(Palette.HOLY, 1.0f).sometimes(0.5));
+            });
+            t.span(strike, strike + BEAM, (tick, p) -> {
+                double radius = RADIUS * (1 - 0.6 * p);
+                for (int k = 0; k < 6; k++) {
+                    Vector offset = Shapes.heading(k * Math.PI / 3 + tick * 0.3).multiply(radius * 0.7);
+                    fx.line(spot.clone().add(offset), spot.clone().add(offset).add(new Vector(0, 40, 0)), 1.2,
+                            fx.dust(Palette.HOLY, 2.0f));
                 }
-                if (t < 35) {
-                    double phase = (double) t / 35;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-180 * phase), Math.toRadians(45), Math.toRadians(40 * phase)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-180 * phase), Math.toRadians(-45), Math.toRadians(-40 * phase)));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(-30 * phase), 0, 0));
-                    for (int a = 0; a < 16; a++) {
-                        double angle = (2 * Math.PI * a / 16) + t * 0.05;
-                        double r = 3.0 + phase * 4;
-                        double x = center.getX() + Math.cos(angle) * r;
-                        double z = center.getZ() + Math.sin(angle) * r;
-                        Location pl = new Location(world, x, center.getY() + 1, z);
-                        world.spawnParticle(Particle.SOUL, pl, 1, 0.1, 0.3, 0.1, 0.02);
-                        world.spawnParticle(Particle.DUST, pl, 1, 0, 0, 0, 0,
-                                new Particle.DustOptions(Color.fromRGB(0x44FFCC), 1.5f * (float) phase));
-                    }
-                    if (t == 1) world.playSound(center, Sound.ENTITY_WITHER_SHOOT, 1.0f, 0.5f);
-                    if (t % 6 == 0) world.playSound(center, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 0.8f, 0.4f);
-                } else if (t < 90) {
-                    if (t == 35) {
-                        world.spawnParticle(Particle.FLASH, center.clone().add(0, 1, 0), 1,
-                                Color.WHITE);
-                        world.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 1.5f);
-                    }
-                    for (Player p : targets) {
-                        if (!p.isOnline() || p.isDead()) continue;
-                        Vector toP = p.getEyeLocation().toVector().subtract(center.toVector());
-                        double dist = toP.length();
-                        if (dist > 0.1) toP.normalize();
-                        for (double d = 0; d < Math.min(dist, 25); d += 0.6) {
-                            Location pl = center.clone().add(0, 1.5, 0).add(toP.clone().multiply(d));
-                            world.spawnParticle(Particle.SOUL, pl, 2, 0.2, 0.2, 0.2, 0.05);
-                            world.spawnParticle(Particle.DUST, pl, 1, 0, 0, 0, 0,
-                                    new Particle.DustOptions(Color.fromRGB(0x44FFCC), 2.0f));
-                            world.spawnParticle(Particle.END_ROD, pl, 1, 0, 0, 0, 0);
-                        }
-                        if (t % 10 == 0) {
-                            MscEntityUtils.damageBy(stand.entidad(), p, sealDamage * 0.4);
-                            p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 50, 1));
-                            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 50, 1));
-                        }
-                    }
-                } else {
-                    boss.resetBossPose(instance);
-                    cancel();
+                fx.line(spot, spot.clone().add(new Vector(0, 40, 0)), 0.6, fx.dust(Palette.SPECTRAL, 2.4f));
+                fx.ring(spot, radius, 0.4, tick * 0.5, fx.particle(Particle.END_ROD));
+                if (tick == 0) {
+                    fx.flash(spot.clone().add(new Vector(0, 1, 0)), Palette.HOLY);
+                    fx.sound(spot, Sfx.BEACON_POWER, 2.5f, 1.6f);
+                    fx.sound(spot, Sfx.TOTEM_USE, 1f, 1.4f);
+                    stage.hit(Area.cylinder(spot, RADIUS, 1, 40), damage, victim -> {
+                        victim.effect(Affliction.GLOWING, 80, 0);
+                        victim.effect(Affliction.WEAKNESS, 60, 0);
+                    });
                 }
-                t++;
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
+            });
+        }
+        int end = CALL + spots.size() * GAP + WARN + BEAM;
+        recover(t, stage, end - 4, end + 12, Poses.GUARD);
+        return t;
     }
 
     @Override

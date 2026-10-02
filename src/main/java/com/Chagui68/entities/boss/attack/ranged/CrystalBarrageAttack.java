@@ -1,98 +1,115 @@
 package com.Chagui68.entities.boss.attack.ranged;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Missile;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Pose;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Prop;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
+import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-public class CrystalBarrageAttack extends BossAttackBase {
+/**
+ * Crystal Barrage: amethyst crystals grow out of thin air around the Sentinel's raised hand and
+ * circle it, then are flung at the players one by one, shattering into shards where they land.
+ */
+public class CrystalBarrageAttack extends ChoreographedAttack.Ranged {
+
+    private static final int GROW = 20;
+    private static final int CRYSTALS = 8;
+    private static final int GAP = 3;
+    private static final double SPEED = 1.9;
+    private static final Pose CONJURE = Poses.GUARD.withLeftArm(-150, 0, -25).withHead(-15, 0, 0);
+
     public CrystalBarrageAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        Player target = boss.detectTarget(stand);
-        if (target == null) return;
+    public Timeline choreograph(Stage stage) {
+        if (stage.victims().isEmpty()) return null;
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.45);
+        List<Victim> victims = stage.victims();
+        Timeline t = new Timeline();
+        List<Prop> props = props(t);
+        Prop[] crystals = new Prop[CRYSTALS];
+        boolean[] launched = new boolean[CRYSTALS];
 
-        new BukkitRunnable() {
-            int t = 0;
-            int shots = 0;
-            final List<Location> crystals = new ArrayList<>();
-            final List<Vector> directions = new ArrayList<>();
-
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid() || t > 90) {
-                    cancel();
-                    return;
-                }
-                if (t < 15) {
-                    double phase = (double) t / 15;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-100 * phase), Math.toRadians(20), 0));
-                    if (t == 1) world.playSound(center, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.5f);
-                } else if (shots < 3) {
-                    if (t % 10 == 0) {
-                        shots++;
-                        Vector dir = target.getLocation().toVector().subtract(center.toVector()).normalize();
-                        crystals.add(center.clone().add(0, 1.5, 0));
-                        directions.add(dir);
-                        world.playSound(center, Sound.ENTITY_ARROW_SHOOT, 1.0f, 1.8f);
-                    }
-                }
-                Iterator<Location> it = crystals.iterator();
-                Iterator<Vector> itd = directions.iterator();
-                while (it.hasNext() && itd.hasNext()) {
-                    Location p = it.next();
-                    Vector d = itd.next();
-                    p.add(d.clone().multiply(1.4));
-                    world.spawnParticle(Particle.END_ROD, p, 3, 0.05, 0.05, 0.05, 0);
-                    world.spawnParticle(Particle.DUST, p, 2, 0, 0, 0, 0,
-                            new Particle.DustOptions(Color.fromRGB(0xAA66FF), 1.5f));
-                    boolean removed = false;
-                    for (Player pl : boss.getValidPlayers(world)) {
-                        if (pl.getLocation().distanceSquared(p) < 9) {
-                            MscEntityUtils.damageBy(stand.entidad(), pl, sealDamage * 0.55);
-                            pl.setVelocity(d.clone().setY(0.4).multiply(0.4));
-                            world.spawnParticle(Particle.EXPLOSION, p, 8, 0.5, 0.5, 0.5, 0);
-                            world.playSound(p, Sound.BLOCK_GLASS_BREAK, 1.5f, 0.7f);
-                            it.remove();
-                            itd.remove();
-                            removed = true;
-                            break;
-                        }
-                    }
-                    if (removed) continue;
-                    if (p.distanceSquared(center) > 1600) {
-                        it.remove();
-                        itd.remove();
-                    }
-                }
-                if (shots >= 3 && crystals.isEmpty()) {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
+        tweenTo(t, stage, 0, GROW, CONJURE, Ease.IN_OUT);
+        for (int i = 0; i < CRYSTALS; i++) {
+            int index = i;
+            t.at(2 + i * 2, () -> {
+                Vector at = orbit(stage, index, 0);
+                crystals[index] = stage.item(Material.AMETHYST_CLUSTER, at, 2.6f, new org.joml.Quaternionf());
+                crystals[index].glow(Palette.AMETHYST);
+                props.add(crystals[index]);
+                fx.burst(at, Particle.END_ROD, 8, 0.15);
+                fx.sound(at, Sfx.AMETHYST_CHIME, 1.5f, 0.8f + index * 0.1f);
+            });
+        }
+        int end = GROW + CRYSTALS * GAP;
+        t.span(0, end, (tick, p) -> {
+            for (int i = 0; i < CRYSTALS; i++) {
+                if (crystals[i] == null || launched[i]) continue;
+                Vector at = orbit(stage, i, tick * 0.12);
+                crystals[i].moveTo(at, 2);
+                crystals[i].reshape(2.6f, new org.joml.Quaternionf().rotationY(tick * 0.2f + i), 2);
+                if (tick % 3 == 0) fx.dust(Palette.SPECTRAL, 1.2f).at(at);
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+        });
+
+        for (int i = 0; i < CRYSTALS; i++) {
+            int index = i;
+            int launch = GROW + i * GAP;
+            t.at(launch, () -> {
+                if (crystals[index] == null) return;
+                launched[index] = true;
+                Victim mark = victims.get(index % victims.size());
+                Vector from = orbit(stage, index, launch * 0.12);
+                Vector velocity = mark.chest().subtract(from).normalize().multiply(SPEED);
+                fx.sound(from, Sfx.SHULKER_SHOOT, 1.5f, 1.2f);
+                Missile missile = new Missile(from, velocity, 1.3)
+                        .homing(mark, 0.05)
+                        .carrying(crystals[index])
+                        .look((at, dir, age) -> fx.line(at, at.clone().subtract(dir.clone().multiply(2)), 0.4,
+                                fx.fade(Palette.SPECTRAL, Palette.AMETHYST, 1.2f)))
+                        .onHit(victim -> stage.damage(victim, damage))
+                        .onBurst(at -> {
+                            fx.burst(at, Particle.END_ROD, 16, 0.3);
+                            fx.draw(Shapes.sphere(at, 1.2, 18), fx.dust(Palette.AMETHYST, 1.6f));
+                            fx.sound(at, Sfx.AMETHYST_BREAK, 2f, 0.9f);
+                        });
+                fly(t, stage, launch + 1, 45, missile);
+            });
+        }
+        recover(t, stage, end, end + 14, Poses.GUARD);
+        t.hold(end + 46);
+        return t;
+    }
+
+    /** Crystal {@code i}'s place on the ring around the raised hand. */
+    private static Vector orbit(Stage stage, int i, double spin) {
+        Vector hand = stage.body().leftHand().add(new Vector(0, 2, 0));
+        return Shapes.onCircle(hand, 4, spin + 2 * Math.PI * i / CRYSTALS, Shapes.FLAT_U, Shapes.FLAT_V)
+                .add(new Vector(0, Math.sin(spin * 2 + i) * 0.8, 0));
+    }
+
+    @Override
+    public int lockTicks(Timeline timeline) {
+        return GROW + CRYSTALS * GAP + 14;
     }
 
     @Override

@@ -32,7 +32,8 @@ The ladder is data, not code: `armor-stand-boss.phase-thresholds` holds the heal
 ### AI behaviour
 
 - **Ground mode** chooses between HealingCircle (<40% HP, 25%), FlyUp (15%), ShieldSeal (35%), GroundAttack (55%), HoverBarrage (default).
-- **Flying mode** executes random aerial attacks every 80 ticks; lands via AirSlam when ≥10 unique attacks have been performed.
+- **Flying mode** throws an aerial attack 50 ticks after the previous one has finished; after five different ones (and 10–20 s in the air) it lands or dives down with AirSlam, and never stays up more than 40 s.
+- **One attack at a time** — while an attack is animating the AI neither turns him nor starts the next one; the cooldowns only count while he is free, so a long attack never eats the pause after it.
 - **Defense states** (random, only below 50% HP, on ground): **Stone Skin** (×0.5 dmg taken), **Reflect Barrier** (×0.7 dmg + 30% reflect), **Absorb Shield** (100-HP absorber that visually shifts blue → red). Their durations come from `defense-duration-stone-skin-ticks` (200), `defense-duration-reflect-barrier-ticks` (160) and `defense-duration-absorb-shield-ticks` (300).
 - **Ground recovery** — a grounded boss only attacks while `isOnGround` is true. If it ends up with no solid block under it (void, water, a hole, a cliff edge), it hovers silently forever. After `ground-recovery-grace-ticks` (40) without ground it teleports to the nearest column with a floor and headroom, preferring the area around its current target and falling back to the world spawn, then resumes attacking with its cooldowns reset.
 - **Despawn** — with nobody inside a 100-block radius the boss keeps fighting for `no-player-despawn-ticks` (200, ~10 s) before it despawns and cleans up its tasks, seals, music and boss bar. Set it to `0` to remove the boss as soon as the arena empties.
@@ -40,28 +41,31 @@ The ladder is data, not code: `armor-stand-boss.phase-thresholds` holds the heal
 
 ### Special mechanics
 
-- **Plant Shield / Ground Slam** — plants the shield as an ItemDisplay (7.5 scale), performs delayed GroundSlam, retrieves later.
-- **Shield Seal** — hemispherical dust+END_ROD shield sphere for 200 ticks, ×0.7 incoming damage, with 12 orbiting ItemDisplay shields.
-- **Healing Circle** — 35-tick cast, green circle, heals up to 5% max HP over 200 ticks, ×0.8 dmg taken while active.
-- **Hover Barrage ("CrossBarrage")** — rises to y+15, traces an X-shape, fires X-beams that explode for `hover-barrage-damage` (12) + knockback.
-- **Triangle Call** — spawns magic triangle seal + reinforcements (scales with player count):
+- **Aegis Judgment** (`groundslam`) — on its own clock, outside the pools: he hurls his shield into the sky, where it turns and casts a burning pentagram under every player for two seconds; when his spear comes down, columns of light fall from the shield into every pentagram — `seal-damage` (15) in a 4-block radius + knock-up — and the shield drops back into his hand.
+- **Wings** — burning wings built like real ones: a dark bone that leaves his back between the shoulder blades and rises through an elbow and a wrist, long flight feathers hanging from it that glow from red to orange towards their tips, and a shorter row of coverts. They beat slowly, the whole wing turning about its root.
+- **Shield Seal** — six great shields of light wheel around him at chest height for 200 ticks, ×0.7 incoming damage; they fold back into one at the end.
+- **Healing Circle** — he kneels in a circle of green runes for 200 ticks with threads of light rising into him, healing 0.15% a tick up to 3% of his max HP. Hurting him inside the circle is the counter.
+- **Hover Barrage ("CrossBarrage")** — rises if grounded and fires volleys of X-shaped beams from the air, `hover-barrage-damage` (12) + knockback.
+- **Triangle Call** — he plants the spear and raises two standing seals of fire; columns of light come down through them and reinforcements step out (scales with player count):
   - Air mode: Infernal Ghast + Night Stalker Phantom (carrying Sniper Skeleton with Power V Infinity bow).
   - Ground mode: War Beast Ravager (300 HP, 24 dmg) carrying a Dark Priest Evoker (40 HP, Speed I).
   - Summons are `MSC_ArmorBossSummoned` tagged; friendly-fire between the boss and its summons is disabled.
-- **Sky Pentagram** — per-player pentagram seals 30 blocks above, exploding in a column after 80 ticks — `seal-damage` (15) within 6-block radius + knockup.
-- **Shockwave Rings** — 10 expanding rings, ground damage falls off with distance, knockup, FallingBlock debris.
 
-### Attack registry — 55 attacks total
+### Animated attacks
 
-All attacks are classes extending `BossAttackBase` under `entities/boss/attack/<aerial|ground|ranged|defensive>/`, registered in `ArmorStandBoss.initAttacks()` and dispatched polymorphically via `attackRegistry.get(name).execute(instance)`. Trigger any one manually:
+Every attack is a **choreography**: a telegraph on the floor that says *where* (red to yellow as it heats up), a wind-up of the body that says *when*, the blow, and a recovery back to the guard. The Sentinel's arms, legs, head and body move through real poses computed from the armor stand model, so the spear tip, the shield face and the hands are where the effects come from. While an attack plays, it owns the body: the AI does not turn him or start another attack until it is done. Props (shields, spears, obsidian pillars, meteors) are display entities tagged `MSC_AttackProp` and are removed when the attack ends or the server restarts.
+
+### Attack registry — 61 attacks total
+
+All attacks are classes extending `ChoreographedAttack` under `entities/boss/attack/<aerial|ground|ranged|defensive>/`, registered in `ArmorStandBoss.initAttacks()` and dispatched polymorphically via `attackRegistry.get(name).execute(instance)`. Trigger any one manually:
 
 ```
 /msc attack <attack-name> [range]
 ```
 
-All 55 names are listed by `/msc attack help` (four pages, one per category) and offered by tab completion. `/msc attack` also accepts the mechanics above (`flyup`, `land`, `heal`, `reset`, the four `phase*` transitions) plus `hoverbarrage`'s legacy alias `crossbarrage`.
+All 61 names are listed by `/msc attack help` (four pages, one per category) and offered by tab completion. `/msc attack` also accepts the mechanics above (`flyup`, `land`, `heal`, `reset`, the four `phase*` transitions) plus `hoverbarrage`'s legacy alias `crossbarrage`.
 
-| Ground (18) | Aerial (16) | Ranged (15) | Defensive (6) |
+| Ground (21) | Aerial (18) | Ranged (16) | Defensive (6) |
 |---|---|---|---|
 | groundslam | starfall | lancesnipe | stoneskin |
 | groundshatter | aerialrush | meteorstorm | reflectbarrier |
@@ -79,8 +83,11 @@ All 55 names are listed by `/msc attack help` (four pages, one per category) and
 | executionsweep | eclipsefall | plaguebrand |  |
 | obsidianspire | bladering | runemines |  |
 | earthmaw | obsidianwings |  |  |
-| shadowstep |  |  |  |
-| runeward |  |  |  |
+| shadowstep | voidmeteor | obsidianprison |  |
+| runeward | phantomlegion |  |  |
+| sunderingcharge |  |  |  |
+| spearcyclone |  |  |  |
+| cataclysm |  |  |  |
 
 Additional `/msc attack` targets for **mechanics & phase transitions**: `flyup`, `land`, `heal`, `reset`, `phaserage`, `phasebarrier`, `phasestorm`, `phasedespair`.
 
@@ -102,6 +109,19 @@ Each of the ten additions is animated around one unmistakable tell, so a player 
 | `runemines` | Ranged | A low arm sweep across the ground under a runic triangle, then six runes are **flung out around the target**. They arm for 25 ticks (dim, flat) before turning violet and pulsing, and burst upward when stepped on — or fade out on their own after 140 ticks. | `rune-mine-damage` (8) |
 
 The random rotations pick them up as well: `obsidianspire`, `earthmaw`, `shadowstep` and `runeward` in the ground tables, `eclipsefall`, `bladering` and `obsidianwings` in the aerial ones, and `soultethers`, `plaguebrand` and `runemines` in the ranged table. The three ranged attacks fire both on the ground and in the air; the seven others require the matching state.
+
+### Third wave — six more attacks
+
+| Attack | Category | Animation signature | Damage key (default) |
+|---|---|---|---|
+| `sunderingcharge` | Ground | Spear point dropped to the floor, weight back, the lane glowing ahead; then a sprint that **rips a molten fissure** behind the tip. At the end a rising cut throws a fan of obsidian blades out of the ground, and a moment later the whole fissure erupts in fire. | `sundering-charge-damage` (14) |
+| `spearcyclone` | Ground | He whirls the spear overhead faster and faster inside a growing spiral of wind, then sweeps it down: a **cyclone** rolls after the target, dragging and lifting anyone near it, and bursts at the end of its run. | `spear-cyclone-damage` (4 per hit, ×3 on the burst) |
+| `cataclysm` | Ground | Ultimate: he drives the spear into the earth and three bands of the floor glow, with **safe rings** of dark ground between them. From the inside out each band bursts in walls of fire and obsidian spikes. Stand in the gaps. | `cataclysm-damage` (20) |
+| `voidmeteor` | Aerial | Both arms raised while a boulder of crying obsidian forms over his head in a shell of void; he hurls it at the target, it crashes down with a shockwave and leaves a **void crater** that blinds and weakens. | `void-meteor-damage` (18) |
+| `phantomlegion` | Aerial | Four **spectral copies** of himself climb out of the floor around the target. One after another each marks its line and lunges straight through the ring; the last two strike together. | `phantom-legion-damage` (11) |
+| `obsidianprison` | Ranged | He points the spear at each player: a rune circle opens under them, then a **cage of obsidian spikes** bursts up around it, leaning in, and collapses on itself. Leave the circle before the bars close. | `obsidian-prison-damage` (16) |
+
+They are in the random rotations too: `sunderingcharge` in the medium and far ground tables, `spearcyclone` and `cataclysm` in the close and medium ones, `voidmeteor` and `phantomlegion` in the aerial tables and `obsidianprison` in the ranged one.
 
 ### Drops
 
@@ -195,6 +215,15 @@ A towering, ruthless executioner constructed from a custom **27-piece ItemDispla
   When within melee reach, Nix winds up both arms and delivers a crushing downward cleave. Deals `cleave-damage` (22) in a 3.2-block frontal radius, knocks players back, and inflicts **Wither II (Bleed)** and **Slowness II**.
 - **Chains of Judgment (Ranged Pull):**
   When a target tries to flee (between 5 and 24 blocks away), Nix casts spectral iron chains (`Sound.BLOCK_CHAIN_PLACE`) that bind the victim, pulling them violently toward Nix while inflicting **Darkness** and **Slowness III**.
+- **Blood Harvest (Signature):**
+  He flings both arms out to the sides while blood gathers in his hands and a warning ring closes on the floor, then whirls three full turns with blades of blood trailing from his hands. Every revolution cuts everyone within 4.5 blocks for `harvest-damage` (9) with Wither and drags them in; it ends in a ring of blood.
+- **Gallows Leap (Signature):**
+  A deep crouch with the arms thrown back while the landing spot glows under the target, then a leap of up to 18 blocks with both arms raised overhead. He lands with a two-handed slam: `gallows-damage` (18) within 4 blocks plus a knock-up, and a shockwave that hits for half on its way out.
+- **Condemnation (Signature):**
+  He raises his right arm and points at his victims: a gallows of particles stands over every player within aggro range (up to four), the blade trembling at the top and a red circle on the floor. 1.5 seconds later the arm chops down and every blade falls — `condemn-damage` (20), Wither II and Slowness for whoever is still in the circle.
+  One signature move every `special-cooldown-ticks` (160) + up to 2 s, picked by distance; while one plays it owns the body.
+- **The Executioner's Axe:**
+  Nix carries a netherite axe in his right hand that follows his forearm and elbow. The basic attack is a guillotine chop: the axe goes up over his head and comes down in front of him, and the hit lands as the axe falls (60% of the swing). His head follows the player's eyes from his own instead of staring at the floor.
 - **Execution Frenzy (Passive):**
   When target player health drops below **25%**, Nix enters an execution frenzy: movement speed increases by +30%, eyes emit crimson dust particles, and walking stride tempo accelerates.
 - **Procedural Model Animations:**
@@ -229,6 +258,16 @@ Five phases, three lives and a body built out of eleven skin heads.
 
 Eleven skin heads (`ItemDisplay`, tag `msc_jackstar_part`) form the head, the torso and two segments per arm and leg. They follow an **invisible armour stand** (`msc_jackstar_boss`) that carries the real health pool and the hitbox, so the visible body is what players aim at while the stand keeps the bookkeeping. The joints live in `JackModel` (shoulders at x = ±0.35, hips at ∓0.12, neck at 1.87) and every limb swings around its own joint, with counter-rotations while walking. Both arms and both legs are exported in two segments, so the **elbows and knees fold on top of that swing**: the forearm and shin hinge on their own joint while walking and during sword slashes (elbows folding through the swing arc and knees sinking into a combat stance). The parts are re-centred on the hitbox, which is why the body lines up with the stand instead of drifting most of a block to the side.
 
+### Signature moves
+
+One every `special-cooldown-ticks` (200) + up to 2 s, 30% sooner from phase 4, picked by distance and announced in the arena chat as a line of code. While one plays it owns the body and the regular routine waits.
+
+| Move | Animation signature | Damage key (default) |
+|---|---|---|
+| **fork()** | He cocks his right arm back with a spinning wireframe cube in his hand, the left hand aiming, and throws it. Every time the cube lands it bursts and **forks into two** that hop sideways, three generations deep: 1 + 2 + 4 explosions, each with its landing ring shown in advance. | `fork-bomb-damage` (10; ×0.6 for the forks) |
+| **Binary Rain** | Both hands raised, fingers typing at the sky while a sheet of green code scrolls over the arena. Glowing cells light up under and ahead of the players and a falling **1 or 0** crashes into each one. | `binary-rain-damage` (8) |
+| **Stack Overflow** | A low sprinting stance with both blades swept back, then **four dashing cuts** through the target, each one pushed as a "[ ]" frame that stays drawn on the floor. When the stack is full it overflows: every frame detonates along its line in reverse order. | `stack-overflow-damage` (14; half on the dash itself) |
+
 ### Subprocesses
 
 Three seconds after spawning, and again on every phase change — five times at most — Jack Star summons another boss 14 blocks away: Garou, Mahoraga, Chaos Mage, Obsidian Guard, Soul Reaper or NIX, drawn at random until one accepts. He stays on the field throughout: a subprocess is extra pressure, **never a shield**, so he keeps fighting and keeps taking damage while one is alive.
@@ -239,3 +278,25 @@ Hits pass one door: the **Ultra Instinct** dodge first (0.22, raised to 0.45 in 
 
 **Drops:** 950 XP and the `ArchitectKernel`, with a final title for every player within 60 blocks.
 
+---
+
+## ⏱️ DIO — JoJo's Bizarre Adventure
+
+DIO walks in menacingly (ゴゴゴ letters drift up around him) with his Stand **The World** floating behind his right shoulder. DIO is a visible armor stand in his yellow Part 3 outfit with his own face; The World is a larger stand with its own head, gold armour with emerald trim and a golden aura. Health is virtual, like Nix and Jack Star. Summoned at **The World's Throne** in the Boss Dimension (see [Ritual Dimension](Ritual-Dimension)) or with `/msc spawn dio` (OP).
+
+| Field | Value |
+|---|---|
+| Health | `dio-brando.health` (900) — below 50% he enrages ("WRYYYY!"): shorter pauses, longer time stop, more knives |
+| Aggro / speed | `aggro-range` (32) · `move-speed` (0.26) |
+| Damage cap taken | `max-damage-per-hit` (100) |
+
+| Attack | What happens | Damage key (default) |
+|---|---|---|
+| **ZA WARUDO** | The World rises with its arms spread and a sphere of stopped time sweeps out `time-stop-radius` (40) blocks. For `time-stop-ticks` (100) players cannot move, attack, use items or shoot; mobs and projectiles freeze too, and he counts the seconds ("1-byō keika..."). He throws knives that stop in the air in a ring around everyone. "Toki wa ugokidasu": time moves again and every knife flies. Cooldown `time-stop-cooldown-ticks` (700). | `knife-damage` (5) per knife |
+| **MUDA MUDA MUDA** | The World rushes up to 10 blocks in and buries the target under a barrage of fists, then a last two-fisted "MUDAAA!" that launches them. | `barrage-damage` (2.5 every 3 ticks) · `barrage-finisher-damage` (14) |
+| **ROAD ROLLER DA!** | He leaps high over the target, a road roller appears and falls with him on its roof; The World pounds it into the ground ("MUDA MUDA") and it explodes. The landing ring is shown the whole time. | `road-roller-damage` (26; half on the explosion) |
+| **Knife fan** | Knives drawn behind his head and thrown in a fan of 7 (9 enraged). | `knife-damage` (5) |
+| **Space Ripper Stingy Eyes** | His eyes glow red, then two jets of pressurised fluid sweep across the arena. | `eye-beam-damage` (5 every 3 ticks) |
+| **The World's punch** | His basic attack at close range: a heavy punch with knockback. | `punch-damage` (12) |
+
+He greets anyone who walks up to him ("Oh? You're approaching me?"). His knives, the road roller and the menacing letters are display props removed when an attack ends, the boss dies or the server restarts; `/msc kill` removes DIO and The World.

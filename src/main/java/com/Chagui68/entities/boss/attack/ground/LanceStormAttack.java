@@ -1,81 +1,132 @@
 package com.Chagui68.entities.boss.attack.ground;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Prop;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Telegraph;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
+import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-public class LanceStormAttack extends BossAttackBase {
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Lance Storm: the spear is raised to the sky and a crown of spectral lances forms over the Sentinel,
+ * turning. Circles light up on the floor — under every player and around the boss — and the lances
+ * come down one after another, each into its circle.
+ */
+public class LanceStormAttack extends ChoreographedAttack.Ground {
+
+    private static final int RAISE = 18;
+    private static final int WARN = 22;
+    private static final int LANCES = 14;
+    private static final double CROWN_HEIGHT = 20;
+    private static final double HIT_RADIUS = 2.6;
+
     public LanceStormAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        if (instance.isFlying) return;
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        if (plugin.getMagicSealListener() != null) {
-            if (stand.armorStand() != null) {
-            plugin.getMagicSealListener().spawnRunicTriangleSeal(stand.armorStand(), 60);
+    public Timeline choreograph(Stage stage) {
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.6);
+        Vector feet = stage.feet();
+        Vector crownCenter = feet.clone().add(new Vector(0, CROWN_HEIGHT, 0));
+        Timeline t = new Timeline();
+        List<Prop> props = props(t);
+
+        // Where the lances land: one on each player, the rest scattered around the boss.
+        List<Vector> spots = new ArrayList<>();
+        for (Victim victim : stage.victims()) {
+            if (spots.size() >= LANCES / 2) break;
+            spots.add(stage.onGround(victim.position()));
         }
+        while (spots.size() < LANCES) {
+            double angle = stage.random().nextDouble() * Math.PI * 2;
+            double radius = 6 + stage.random().nextDouble() * 12;
+            spots.add(stage.onGround(feet.clone().add(Shapes.heading(angle).multiply(radius))));
         }
 
-        new BukkitRunnable() {
-            int t = 0;
-
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid()) {
-                    cancel();
-                    return;
-                }
-                if (t < 15) {
-                    double phase = (double) t / 15;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-160 * phase), Math.toRadians(10), 0));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-160 * phase), Math.toRadians(-10), 0));
-                    if (t == 1) world.playSound(center, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.0f, 0.6f);
-                } else if (t < 45) {
-                    double angle = (t - 15) * 0.3;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-160 + Math.sin(angle) * 40), Math.toRadians(10 + Math.cos(angle) * 20), Math.toRadians(Math.sin(angle) * 15)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-160 + Math.sin(angle + Math.PI) * 40), Math.toRadians(-10 + Math.cos(angle + Math.PI) * 20), Math.toRadians(-Math.sin(angle + Math.PI) * 15)));
-                    stand.setBodyPose(new EulerAngle(Math.toRadians(Math.sin(angle * 0.5) * 10), 0, 0));
-                    for (int a = 0; a < 12; a++) {
-                        double a2 = (2 * Math.PI * a / 12) + angle;
-                        double r = 3.0 + Math.sin(angle + a) * 1.5;
-                        double x = center.getX() + Math.cos(a2) * r;
-                        double z = center.getZ() + Math.sin(a2) * r;
-                        Location pl = new Location(world, x, center.getY() + 1 + Math.sin(angle + a * 0.3) * 0.5, z);
-                        world.spawnParticle(Particle.CRIT, pl, 2, 0.2, 0.2, 0.2, 0.03);
-                        world.spawnParticle(Particle.SWEEP_ATTACK, pl, 1, 0, 0, 0, 0);
-                    }
-                    world.playSound(center, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5f, 0.8f + (float) Math.sin(angle) * 0.2f);
-                    double dmg = sealDamage * 0.3;
-                    for (Player p : boss.getValidPlayers(world)) {
-                        if (p.getLocation().distanceSquared(center) < 36) {
-                            MscEntityUtils.damageBy(stand.entidad(), p, dmg);
-                            Vector away = p.getLocation().toVector().subtract(center.toVector());
-                            if (away.lengthSquared() > 0) p.setVelocity(away.normalize().multiply(0.5).setY(0.2));
-                        }
-                    }
-                } else {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
+        tweenTo(t, stage, 0, RAISE, Poses.SPEAR_RAISED, Ease.OUT);
+        t.at(0, () -> fx.sound(feet, Sfx.EVOKER_PREPARE_SUMMON, 2.5f, 0.6f));
+        // The crown assembles lance by lance.
+        Prop[] lances = new Prop[LANCES];
+        for (int i = 0; i < LANCES; i++) {
+            int index = i;
+            t.at(2 + i, () -> {
+                Vector at = crownPoint(crownCenter, index, 0);
+                lances[index] = spear(stage, Material.NETHERITE_SPEAR, at, new Vector(0, -1, 0), 4.5f);
+                lances[index].glow(Palette.AMETHYST);
+                props.add(lances[index]);
+                fx.draw(Shapes.sphere(at, 0.8, 10), fx.dust(Palette.SPECTRAL, 1.6f));
+                fx.sound(at, Sfx.AMETHYST_CHIME, 1.5f, 0.6f + index * 0.08f);
+            });
+        }
+        t.span(0, RAISE + WARN, (tick, p) -> {
+            Vector tip = stage.body().spearTip();
+            if (tick % 2 == 0) fx.line(tip, crownCenter, 0.7, fx.dust(Palette.AMETHYST, 1.3f).sometimes(0.6));
+            for (int i = 0; i < LANCES; i++) {
+                if (lances[i] != null) lances[i].moveTo(crownPoint(crownCenter, i, tick * 0.05), 2);
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+            fx.draw(Shapes.ring(crownCenter, 7, 0.9, tick * 0.05), fx.dust(Palette.VOID, 1.2f).sometimes(0.5));
+        });
+        t.span(RAISE, RAISE + WARN, (tick, p) -> {
+            if (tick % 2 != 0) return;
+            for (Vector spot : spots) Telegraph.circle(stage, spot, HIT_RADIUS, p);
+        });
+
+        // The fall: each lance to its spot, a tick apart.
+        int fall = RAISE + WARN;
+        for (int i = 0; i < LANCES; i++) {
+            int index = i;
+            int launch = fall + i;
+            t.at(launch, () -> {
+                if (lances[index] == null) return;
+                lances[index].moveTo(spots.get(index).clone().add(new Vector(0, 2.5, 0)), 3);
+                fx.trail(crownPoint(crownCenter, index, 0), spots.get(index), Palette.AMETHYST, 4);
+                fx.sound(spots.get(index), Sfx.TRIDENT_THROW, 1.5f, 0.6f);
+            });
+            t.at(launch + 3, () -> {
+                Vector spot = spots.get(index);
+                fx.impact(spot.clone().add(new Vector(0, 0.6, 0)), Palette.AMETHYST, 2);
+                fx.draw(Shapes.ring(spot, HIT_RADIUS, 0.4, 0), fx.crumble(stage.groundMaterial(spot), 3, 0.2));
+                fx.flatBurst(spot, Particle.END_ROD, 12, 0.3);
+                fx.sound(spot, Sfx.TRIDENT_THUNDER, 1.2f, 1.2f);
+                stage.hit(Area.cylinder(spot, HIT_RADIUS, 1, 3.5), damage, victim -> {
+                    victim.push(new Vector(0, 0.5, 0));
+                    victim.effect(Affliction.SLOWNESS, 30, 1);
+                });
+            });
+            t.at(launch + 30, () -> {
+                if (lances[index] != null) lances[index].remove();
+            });
+        }
+        tweenTo(t, stage, fall, fall + 6, Poses.SPEAR_SLAM, Ease.OUT_BACK);
+        recover(t, stage, fall + LANCES + 6, fall + LANCES + 22, Poses.GUARD);
+        t.hold(fall + LANCES + 32);
+        return t;
+    }
+
+    @Override
+    public int lockTicks(Timeline timeline) {
+        return RAISE + WARN + LANCES + 22;
+    }
+
+    private static Vector crownPoint(Vector center, int index, double spin) {
+        return Shapes.onCircle(center, 7, spin + 2 * Math.PI * index / LANCES, Shapes.FLAT_U, Shapes.FLAT_V);
     }
 
     @Override

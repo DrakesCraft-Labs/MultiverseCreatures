@@ -37,7 +37,8 @@ public final class MscLeftovers {
             "MSC_ShieldHolder",
             "MSC_TriangleSeal",
             "MSC_BossMirror",
-            "MSC_KingerBullet");
+            "MSC_KingerBullet",
+            com.Chagui68.entities.boss.fx.LiveStage.PROP_TAG);
 
     private MscLeftovers() {
     }

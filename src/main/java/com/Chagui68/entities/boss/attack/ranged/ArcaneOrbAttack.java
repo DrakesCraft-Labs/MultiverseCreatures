@@ -1,91 +1,99 @@
 package com.Chagui68.entities.boss.attack.ranged;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Missile;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-public class ArcaneOrbAttack extends BossAttackBase {
+/**
+ * Arcane Orb: a large, slow orb wrapped in turning rings is pushed out from the Sentinel's hands. It
+ * hunts its target patiently and detonates in a wide sphere when it reaches anyone.
+ */
+public class ArcaneOrbAttack extends ChoreographedAttack.Ranged {
+
+    private static final int FORM = 24;
+    private static final double SPEED = 0.55;
+    private static final double SIZE = 1.8;
+    private static final double BLAST = 5.5;
+
     public ArcaneOrbAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        Player target = boss.detectTarget(stand);
-        if (target == null) return;
+    public Timeline choreograph(Stage stage) {
+        Victim target = stage.target();
+        if (target == null) return null;
+        Fx fx = stage.fx();
+        double damage = seal(stage, 1.0);
+        Timeline t = new Timeline();
 
-        new BukkitRunnable() {
-            int t = 0;
-            Location pos = center.clone().add(0, 1.5, 0);
-            Vector vel = target.getLocation().toVector().subtract(pos.toVector()).normalize().multiply(0.8);
+        tweenTo(t, stage, 0, FORM, Poses.CHANNEL, Ease.IN_OUT);
+        gather(t, stage, 0, FORM, () -> core(stage), 6, Palette.AMETHYST);
+        t.span(0, FORM, (tick, p) -> drawOrb(fx, core(stage), SIZE * p, tick));
+        t.at(0, () -> fx.sound(stage.feet(), Sfx.ILLUSIONER_CAST, 2f, 0.6f));
 
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid() || t > 120) {
-                    cancel();
-                    return;
-                }
-                if (t < 25) {
-                    double phase = (double) t / 25;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-90 * phase), Math.toRadians(45), Math.toRadians(45 * phase)));
-                    if (t == 1) world.playSound(center, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.0f, 0.4f);
-                    if (t % 3 == 0)
-                        world.spawnParticle(Particle.END_ROD, center.clone().add(0, 1.5, 0), 3, 0.3, 0.3, 0.3, 0.01);
-                } else {
-                    if (target.isOnline()) {
-                        Vector toTarget = target.getLocation().toVector().subtract(pos.toVector());
-                        double dist = toTarget.length();
-                        if (dist > 0.5) {
-                            vel.add(toTarget.normalize().multiply(0.06));
-                        }
-                        if (vel.lengthSquared() > 1.2) vel.normalize().multiply(1.1);
-                    }
-                    pos.add(vel);
-                    world.spawnParticle(Particle.PORTAL, pos, 5, 0.3, 0.3, 0.3, 0.05);
-                    world.spawnParticle(Particle.DUST, pos, 2, 0, 0, 0, 0,
-                            new Particle.DustOptions(Color.fromRGB(0xBB44FF), 2.0f));
-                    world.spawnParticle(Particle.END_ROD, pos, 1, 0.1, 0.1, 0.1, 0);
-                    for (Player p : boss.getValidPlayers(world)) {
-                        if (p.getLocation().distanceSquared(pos) < 6) {
-                            world.spawnParticle(Particle.EXPLOSION, pos, 12, 1, 0.5, 1, 0);
-                            world.playSound(pos, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.5f);
-                            for (Player near : boss.getValidPlayers(world)) {
-                                if (near.getLocation().distanceSquared(pos) < 25) {
-                                    MscEntityUtils.damageBy(stand.entidad(), near, sealDamage * 0.6);
-                                    Vector away = near.getLocation().toVector().subtract(pos.toVector());
-                                    if (away.lengthSquared() > 0)
-                                        near.setVelocity(away.normalize().multiply(0.8).setY(0.4));
-                                }
-                            }
-                            boss.resetBossPose(instance);
-                            cancel();
-                            return;
-                        }
-                    }
-                    if (pos.distanceSquared(center) > 2500) {
-                        boss.resetBossPose(instance);
-                        cancel();
-                        return;
-                    }
-                }
-                t++;
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
+        tween(t, stage, FORM, FORM + 4, Poses.CHANNEL, Poses.CAST_FORWARD, Ease.OUT_BACK);
+        t.at(FORM + 1, () -> {
+            Vector from = core(stage);
+            fx.sound(from, Sfx.EVOKER_CAST, 2f, 0.5f);
+            Missile orb = new Missile(from, target.chest().subtract(from).normalize().multiply(SPEED), SIZE + 0.4)
+                    .homing(target, 0.08)
+                    .look((at, dir, age) -> {
+                        drawOrb(fx, at, SIZE, age);
+                        if (age % 2 == 0) fx.line(at, at.clone().subtract(dir.clone().multiply(5)), 0.6, fx.fade(Palette.SPECTRAL, Palette.VOID, 1.0f));
+                        if (age % 20 == 0) fx.sound(at, Sfx.BEACON_POWER, 1f, 1.6f);
+                    })
+                    .onBurst(at -> {
+                        fx.flash(at, Palette.SPECTRAL);
+                        fx.draw(Shapes.sphere(at, BLAST, 90), fx.fade(Palette.SPECTRAL, Palette.VOID, 2.2f));
+                        fx.burst(at, Particle.END_ROD, 50, 0.8);
+                        fx.burst(at, Particle.REVERSE_PORTAL, 40, 1.0);
+                        fx.sound(at, Sfx.EXPLODE, 2.5f, 0.9f);
+                        fx.sound(at, Sfx.GLASS_BREAK, 2f, 0.5f);
+                        stage.hit(Area.sphere(at, BLAST), damage, victim -> {
+                            Vector away = victim.position().subtract(at);
+                            if (away.lengthSquared() > 1e-6) away.normalize();
+                            victim.fling(away.multiply(1.2).setY(0.7));
+                        });
+                    });
+            fly(t, stage, FORM + 2, 120, orb);
+        });
+        recover(t, stage, FORM + 8, FORM + 22, Poses.GUARD);
+        t.hold(FORM + 124);
+        return t;
+    }
+
+    private static void drawOrb(Fx fx, Vector at, double size, int age) {
+        if (size < 0.2) return;
+        fx.draw(Shapes.sphere(at, size * 0.6, 14), fx.dust(Palette.SPECTRAL, 2.0f));
+        double spin = age * 0.25;
+        Vector a = new Vector(Math.cos(spin), 0.4, Math.sin(spin)).normalize();
+        Vector b = new Vector(-Math.sin(spin * 0.7), 1, Math.cos(spin * 0.7)).normalize();
+        Vector[] ringA = Shapes.planeAxes(a);
+        Vector[] ringB = Shapes.planeAxes(b);
+        fx.draw(Shapes.circle(at, size, 16, ringA[0], ringA[1], spin), fx.dust(Palette.AMETHYST, 1.4f));
+        fx.draw(Shapes.circle(at, size * 1.15, 16, ringB[0], ringB[1], -spin), fx.dust(Palette.VOID, 1.4f));
+    }
+
+    private static Vector core(Stage stage) {
+        return stage.body().rightHand().midpoint(stage.body().leftHand()).add(stage.forward().multiply(2));
+    }
+
+    @Override
+    public int lockTicks(Timeline timeline) {
+        return FORM + 22;
     }
 
     @Override

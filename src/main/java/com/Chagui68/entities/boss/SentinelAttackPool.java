@@ -29,33 +29,36 @@ public final class SentinelAttackPool {
     public static final List<String> GROUND_CLOSE = List.of(
             "shieldbash", "warstomp", "chaingrapple", "armorspikes", "mirrorimage", "vortexpull",
             "groundshatter", "lanceflurry", "whirlwindslash", "executionsweep", "earthmaw",
-            "shadowstep", "runeward");
+            "shadowstep", "runeward", "spearcyclone", "cataclysm");
 
     /** Ground attacks for the usual fighting distance. */
     public static final List<String> GROUND_MEDIUM = List.of(
             "lancestorm", "earthpillar", "groundshatter", "armorspikes", "vortexpull", "lanceflurry",
             "whirlwindslash", "obsidianspire", "earthmaw", "runeward", "doombeam", "chaingrapple",
-            "shadowstep");
+            "shadowstep", "sunderingcharge", "spearcyclone", "cataclysm");
 
     /** Ground attacks that reach a player keeping their distance. */
     public static final List<String> GROUND_FAR = List.of(
-            "shieldbash", "obsidianspire", "doombeam", "chaingrapple", "shadowstep", "earthpillar");
+            "shieldbash", "obsidianspire", "doombeam", "chaingrapple", "shadowstep", "earthpillar",
+            "sunderingcharge");
 
     /** Projectiles and beams, thrown from the ground at medium and long range. */
     public static final List<String> RANGED = List.of(
             "lancesnipe", "meteorstorm", "voidbeam", "frostlance", "lightningspear", "shadowvolley",
             "chainlightning", "crystalbarrage", "arcaneorb", "voidrift", "arcanemissiles", "spiritbeam",
-            "soultethers", "plaguebrand", "runemines");
+            "soultethers", "plaguebrand", "runemines", "obsidianprison");
 
     public static final List<String> AERIAL_CLOSE = List.of(
-            "aerialrush", "crossslash", "novaburst", "obsidianwings", "bladering", "rainoflances");
+            "aerialrush", "crossslash", "novaburst", "obsidianwings", "bladering", "rainoflances",
+            "phantomlegion");
 
     public static final List<String> AERIAL_MEDIUM = List.of(
             "sonicboom", "windcutter", "gravitywell", "darkorb", "aerialrush", "eclipsefall",
-            "rainoflances");
+            "rainoflances", "voidmeteor", "phantomlegion");
 
     public static final List<String> AERIAL_FAR = List.of(
-            "starfall", "lightningstorm", "heavenlyjudgment", "darkorb", "eclipsefall", "rainoflances");
+            "starfall", "lightningstorm", "heavenlyjudgment", "darkorb", "eclipsefall", "rainoflances",
+            "voidmeteor");
 
     private SentinelAttackPool() {
     }

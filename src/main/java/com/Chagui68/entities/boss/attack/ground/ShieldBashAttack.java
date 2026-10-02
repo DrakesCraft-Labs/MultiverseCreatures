@@ -1,103 +1,119 @@
 package com.Chagui68.entities.boss.attack.ground;
 
-import com.Chagui68.entities.boss.BossArena;
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Telegraph;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-public class ShieldBashAttack extends BossAttackBase {
-    private final double bashDamage;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+/**
+ * Shield Bash: the shield comes up glowing while wind gathers behind it, then the Sentinel charges
+ * down the telegraphed lane, over the terrain, flattening whoever stands in it, and ends with a slam
+ * of the shield. A wall stops the charge early, in a shower of sparks.
+ */
+public class ShieldBashAttack extends ChoreographedAttack.Ground {
+
+    private static final int BRACE = 16;
+    private static final int CHARGE = 12;
+    private static final double STEP = 1.9;
 
     public ShieldBashAttack(BossHost boss) {
         super(boss);
-        bashDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.shield-bash-damage", 12.0);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        if (instance.isFlying) return;
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        if (plugin.getMagicSealListener() != null) {
-            if (stand.armorStand() != null) {
-            plugin.getMagicSealListener().spawnRunicTriangleSeal(stand.armorStand(), 60);
-        }
-        }
-        Vector dir = center.getDirection();
-        if (dir.lengthSquared() < 0.01) dir = new Vector(0, 0, 1);
-        dir.setY(0).normalize();
-        Vector right = dir.clone().crossProduct(new Vector(0, 1, 0)).normalize();
-        final Vector fDir = dir;
+    public Timeline choreograph(Stage stage) {
+        Fx fx = stage.fx();
+        double damage = stage.config("entities.armor-stand-boss.shield-bash-damage", 12.0);
+        Vector start = stage.feet();
+        Vector dir = stage.forward();
+        Vector laneEnd = start.clone().add(dir.clone().multiply(STEP * CHARGE + 4));
+        Set<UUID> struck = new HashSet<>();
+        boolean[] stopped = {false};
+        int[] chargeEnd = {BRACE + CHARGE};
+        Timeline t = new Timeline();
 
-        new BukkitRunnable() {
-            int t = 0;
-            int chargeTicks = 0;
-            boolean charging = true;
+        tweenTo(t, stage, 0, BRACE, Poses.SHIELD_WALL, Ease.IN_OUT);
+        t.span(0, BRACE, (tick, p) -> {
+            if (tick % 2 == 0) Telegraph.line(stage, start, laneEnd, 7, p);
+            Vector shield = stage.body().shieldFace();
+            fx.draw(Shapes.circle(shield, 1.2 + p * 0.8, 14, stage.body().right(), Shapes.UP, tick * 0.3),
+                    fx.dust(Palette.mix(Palette.STORM, Palette.ICE, p), 1.5f));
+            Vector behind = stage.feet().subtract(dir.clone().multiply(3)).add(new Vector(0, 2, 0));
+            fx.moving(Particle.CLOUD, behind.clone().add(Vector.getRandom().multiply(3)), dir.clone().multiply(0.4));
+        });
+        t.at(0, () -> fx.sound(start, Sfx.ZOMBIE_IRON_DOOR, 2f, 0.5f));
+        t.at(10, () -> fx.sound(start, Sfx.RAVAGER_ROAR, 2.5f, 0.6f));
 
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid()) {
-                    cancel();
-                    return;
-                }
-                if (charging) {
-                    if (t < 20) {
-                        double phase = (double) t / 20;
-                        stand.setLeftArmPose(new EulerAngle(Math.toRadians(-90 * phase), Math.toRadians(-45 * phase), Math.toRadians(-30 * phase)));
-                        stand.setRightArmPose(new EulerAngle(Math.toRadians(-90 * phase), Math.toRadians(45 * phase), Math.toRadians(30 * phase)));
-                        stand.setBodyPose(new EulerAngle(Math.toRadians(-15 * phase), 0, 0));
-                        world.spawnParticle(Particle.END_ROD, center, 3, 0.5, 1, 0.5, 0.01);
-                        if (t == 1) world.playSound(center, Sound.ENTITY_ILLUSIONER_PREPARE_MIRROR, 1.0f, 0.8f);
-                    } else {
-                        charging = false;
-                        stand.setRightArmPose(new EulerAngle(Math.toRadians(-90), Math.toRadians(45), Math.toRadians(30)));
-                        stand.setLeftArmPose(new EulerAngle(Math.toRadians(-90), Math.toRadians(-45), Math.toRadians(-30)));
-                        stand.setBodyPose(new EulerAngle(Math.toRadians(-30), 0, 0));
-                        world.playSound(center, Sound.ENTITY_ENDER_DRAGON_FLAP, 2.0f, 0.5f);
-                    }
-                    t++;
-                } else if (chargeTicks < 15) {
-                    Location loc = stand.getLocation();
-                    // Two one-block strides over the terrain: the charge used to teleport two blocks
-                    // straight ahead, through walls and off cliffs, and ended wherever that was.
-                    boolean blocked = !BossArena.walk(loc, fDir.clone(), false)
-                            || !BossArena.walk(loc, fDir.clone(), false);
-                    stand.teleport(loc);
-                    world.spawnParticle(Particle.CLOUD, loc, 5, 1, 0.2, 1, 0.02);
-                    world.spawnParticle(Particle.CRIT, loc, 3, 0.5, 1, 0.5, 0.03);
-                    world.playSound(loc, Sound.ITEM_SHIELD_BLOCK, 1.0f, 1.5f);
-                    for (Player p : boss.getValidPlayers(world)) {
-                        if (p.getLocation().distanceSquared(loc) < 16) {
-                            MscEntityUtils.damageBy(stand.entidad(), p, bashDamage);
-                            p.setVelocity(fDir.clone().multiply(2.0).setY(0.5));
-                            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 3));
-                            p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1));
-                        }
-                    }
-                    // A wall ends the charge here, with its impact on the next tick.
-                    chargeTicks = blocked ? 15 : chargeTicks + 1;
-                } else {
-                    world.playSound(stand.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.7f);
-                    world.spawnParticle(Particle.EXPLOSION, stand.getLocation(), 10, 2, 1, 2, 0);
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
+        t.span(BRACE, BRACE + CHARGE, (tick, p) -> {
+            if (stopped[0]) return;
+            Vector before = stage.feet();
+            boolean moved = stage.walk(dir.clone().multiply(STEP));
+            Vector after = stage.feet();
+            Vector shield = stage.body().shieldFace();
+            fx.line(before.clone().add(new Vector(0, 2, 0)), after.clone().add(new Vector(0, 2, 0)), 0.6,
+                    fx.particle(Particle.GUST).sometimes(0.3).and(fx.dust(Palette.ICE, 1.4f, 1.2, 2)));
+            fx.cloud(Particle.SWEEP_ATTACK, shield, 3, 1.2, 0);
+            fx.crumble(stage.groundMaterial(after), 10, 1.2).at(stage.onGround(after));
+            if (tick % 3 == 0) fx.sound(after, Sfx.IRON_GOLEM_ATTACK, 1.5f, 0.6f);
+            Area swept = Area.segment(before, after.clone().add(dir.clone().multiply(2.5)), 3.6);
+            for (Victim victim : stage.victimsIn(swept)) {
+                if (!struck.add(victim.id())) continue;
+                stage.damage(victim, damage);
+                victim.fling(dir.clone().multiply(2.2).setY(0.7));
+                victim.effect(Affliction.SLOWNESS, 60, 3);
+                victim.effect(Affliction.WEAKNESS, 60, 1);
+                fx.impact(victim.chest(), Palette.STORM, 2);
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+            if (!moved) {
+                stopped[0] = true;
+                chargeEnd[0] = BRACE + tick;
+                fx.burst(shield, Particle.ELECTRIC_SPARK, 40, 0.6);
+                fx.sound(shield, Sfx.ANVIL_LAND, 2f, 0.6f);
+            }
+        });
+        // The finishing slam happens where the charge ended.
+        t.at(BRACE + CHARGE, () -> {
+            fx.sound(stage.feet(), Sfx.MACE_SMASH_GROUND, 2.5f, 0.8f);
+            fx.flash(stage.body().shieldFace(), Palette.ICE);
+        });
+        shockwaveAtEnd(t, stage, damage * 0.5);
+        tweenTo(t, stage, BRACE + CHARGE, BRACE + CHARGE + 4, Poses.STOMP_DOWN, Ease.OUT_BACK);
+        recover(t, stage, BRACE + CHARGE + 8, BRACE + CHARGE + 24, Poses.GUARD);
+        return t;
+    }
+
+    /** A small ring from wherever the boss stands when the charge ends. */
+    private static void shockwaveAtEnd(Timeline t, Stage stage, double damage) {
+        Vector[] center = new Vector[1];
+        t.at(BRACE + CHARGE, () -> center[0] = stage.feet());
+        Set<UUID> struck = new HashSet<>();
+        t.span(BRACE + CHARGE, BRACE + CHARGE + 10, (tick, p) -> {
+            if (center[0] == null) return;
+            double radius = 1 + p * 8;
+            Fx fx = stage.fx();
+            fx.draw(Shapes.ring(center[0], radius, 0.8, tick), fx.dust(Palette.STORM, 1.8f));
+            for (Victim victim : stage.victimsIn(Area.ring(center[0], radius - 1.2, radius + 1.2, 1.5))) {
+                if (!struck.add(victim.id())) continue;
+                stage.damage(victim, damage);
+                victim.push(new Vector(0, 0.6, 0));
+            }
+        });
     }
 
     @Override

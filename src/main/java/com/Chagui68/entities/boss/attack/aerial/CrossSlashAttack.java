@@ -1,90 +1,95 @@
 package com.Chagui68.entities.boss.attack.aerial;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Missile;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-public class CrossSlashAttack extends BossAttackBase {
+/**
+ * Cross Slash: two cuts in the air — one high-left to low-right, one back across — leave an X of
+ * light that tears loose and flies at the target, spinning as it goes.
+ */
+public class CrossSlashAttack extends ChoreographedAttack.Aerial {
+
+    private static final int WIND = 10;
+    private static final int CUT = 5;
+    private static final double SIZE = 4.5;
+    private static final double SPEED = 1.5;
+
     public CrossSlashAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        if (!instance.isFlying) return;
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        double baseY = boss.getGroundY(center, 40) + 0.5;
+    public Timeline choreograph(Stage stage) {
+        Victim target = stage.target();
+        if (target == null) return null;
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.8);
+        Timeline t = new Timeline();
 
-        new BukkitRunnable() {
-            int t = 0;
+        tweenTo(t, stage, 0, WIND, Poses.SWING_BACK.withRightArm(-120, 60, 30), Ease.IN_BACK);
+        t.at(0, () -> fx.sound(stage.feet(), Sfx.BREEZE_SHOOT, 2f, 0.7f));
+        tween(t, stage, WIND, WIND + CUT, Poses.SWING_BACK.withRightArm(-120, 60, 30), Poses.SWING_THROUGH.withRightArm(-20, -60, -10), Ease.OUT);
+        tween(t, stage, WIND + CUT + 2, WIND + 2 * CUT + 2, Poses.SWING_THROUGH.withRightArm(-20, -60, -10), Poses.SWING_BACK.withRightArm(-120, 60, 10), Ease.OUT);
+        // The two strokes, drawn where the boss is facing, in front of its chest.
+        t.span(WIND, WIND + 2 * CUT + 2, (tick, p) -> {
+            Vector center = stage.body().chest().add(stage.forward().multiply(4));
+            drawCross(fx, center, stage.forward(), SIZE, 0, Math.min(1, tick / (double) CUT), Math.max(0, (tick - CUT - 2) / (double) CUT));
+        });
+        t.at(WIND + 1, () -> fx.sound(stage.feet(), Sfx.PLAYER_ATTACK_SWEEP, 2.5f, 0.8f));
+        t.at(WIND + CUT + 3, () -> fx.sound(stage.feet(), Sfx.PLAYER_ATTACK_SWEEP, 2.5f, 1.1f));
 
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid()) {
-                    cancel();
-                    return;
-                }
-                if (t < 30) {
-                    double phase = (double) t / 30;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-180 * phase), Math.toRadians(30 * phase), Math.toRadians(-20 * phase)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-180 * phase), Math.toRadians(-30 * phase), Math.toRadians(20 * phase)));
-                    stand.setBodyPose(new EulerAngle(0, 0, Math.toRadians(10 * phase)));
-                    double r = 1.5 + phase * 3.0;
-                    for (int a = 0; a < 12; a++) {
-                        double angle = (2 * Math.PI * a / 12) + t * 0.04;
-                        double x = center.getX() + Math.cos(angle) * r;
-                        double z = center.getZ() + Math.sin(angle) * r;
-                        Location pl = new Location(world, x, center.getY(), z);
-                        world.spawnParticle(Particle.END_ROD, pl, 2, 0.2, 0.2, 0.2, 0.01);
-                    }
-                    if (t == 1) world.playSound(center, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.0f, 1.0f);
-                } else if (t < 50) {
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-160 + Math.sin((t - 30) * 0.3) * 30), Math.toRadians(30), Math.toRadians(-20)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-160 + Math.sin((t - 30) * 0.3 + Math.PI) * 30), Math.toRadians(-30), Math.toRadians(20)));
-                    stand.setBodyPose(new EulerAngle(0, 0, Math.toRadians(10)));
-                    double sz = 3.0 + (t - 30) * 0.5;
-                    for (int d = 0; d < (int) sz; d++) {
-                        double h = 0.5 + d * 0.3;
-                        Location p1 = new Location(world, center.getX() + d * 0.5, baseY + h, center.getZ());
-                        Location p2 = new Location(world, center.getX() - d * 0.5, baseY + h, center.getZ());
-                        Location p3 = new Location(world, center.getX(), baseY + h, center.getZ() + d * 0.5);
-                        Location p4 = new Location(world, center.getX(), baseY + h, center.getZ() - d * 0.5);
-                        for (Location pl : new Location[]{p1, p2, p3, p4}) {
-                            world.spawnParticle(Particle.CRIT, pl, 2, 0.1, 0.1, 0.1, 0.03);
-                            world.spawnParticle(Particle.SWEEP_ATTACK, pl, 1, 0, 0, 0, 0);
-                        }
-                    }
-                    world.playSound(center, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.8f, 0.6f);
-                    double dmg = sealDamage * 0.6;
-                    for (Player p : boss.getValidPlayers(world)) {
-                        Location pLoc = p.getLocation();
-                        Vector diff = pLoc.toVector().subtract(center.toVector());
-                        diff.setY(0);
-                        if (diff.length() < sz && Math.abs(pLoc.getY() - baseY) < 3.5) {
-                            MscEntityUtils.damageBy(stand.entidad(), p, dmg);
-                            boss.launchPlayer(p, 0.8);
-                        }
-                    }
-                } else {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
+        int launch = WIND + 2 * CUT + 3;
+        t.at(launch, () -> {
+            Vector from = stage.body().chest().add(stage.forward().multiply(4));
+            Vector velocity = target.chest().subtract(from).normalize().multiply(SPEED);
+            fx.sound(from, Sfx.WIND_CHARGE_BURST, 2f, 1.2f);
+            Missile cross = new Missile(from, velocity, SIZE * 0.6)
+                    .look((at, dir, age) -> drawCross(fx, at, dir, SIZE, age * 0.35, 1, 1))
+                    .onHit(victim -> {
+                        stage.damage(victim, damage);
+                        victim.effect(Affliction.WEAKNESS, 60, 0);
+                        victim.push(velocity.clone().normalize().multiply(0.8).setY(0.4));
+                    })
+                    .onBurst(at -> {
+                        fx.flash(at, Palette.HOLY);
+                        fx.burst(at, Particle.SWEEP_ATTACK, 8, 0.3);
+                        fx.sound(at, Sfx.PLAYER_ATTACK_CRIT, 2f, 0.8f);
+                    });
+            fly(t, stage, launch + 1, 40, cross);
+        });
+        tweenTo(t, stage, launch + 4, launch + 18, Poses.HOVER, Ease.IN_OUT);
+        t.hold(launch + 42);
+        return t;
+    }
+
+    /** An X of light facing along {@code facing}, turned by {@code spin}; each stroke drawn up to its progress. */
+    private static void drawCross(Fx fx, Vector center, Vector facing, double size, double spin, double first, double second) {
+        Vector[] axes = Shapes.planeAxes(facing);
+        Vector u = axes[0].clone().multiply(Math.cos(spin)).add(axes[1].clone().multiply(Math.sin(spin)));
+        Vector v = axes[1].clone().multiply(Math.cos(spin)).subtract(axes[0].clone().multiply(Math.sin(spin)));
+        Vector a = u.clone().add(v).multiply(size * 0.7);
+        Vector b = u.clone().subtract(v).multiply(size * 0.7);
+        if (first > 0) stroke(fx, center.clone().add(a), center.clone().subtract(a), first);
+        if (second > 0) stroke(fx, center.clone().add(b), center.clone().subtract(b), second);
+    }
+
+    private static void stroke(Fx fx, Vector from, Vector to, double progress) {
+        Vector end = from.clone().add(to.clone().subtract(from).multiply(progress));
+        fx.line(from, end, 0.3, fx.dust(Palette.HOLY, 1.8f));
+        fx.line(from, end, 0.7, fx.dust(Palette.ICE, 2.4f, 0.15, 1));
     }
 
     @Override

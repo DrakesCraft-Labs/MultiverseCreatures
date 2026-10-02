@@ -35,6 +35,7 @@ Summons a single entity (or a tactical formation) at the executor's location. Th
 | `kinger` | Kinger miniboss |
 | `garou` | Garou [Hero Hunter] miniboss |
 | `nix` (`executioner`, `nixelverdugo`) | NIX - The Executioner (custom 27-part model boss) |
+| `dio` (`diobrando`, `theworld`) | DIO with his Stand The World (JoJo's Bizarre Adventure boss) |
 | `armorstand` (`armorstandboss`) | THE OBSIDIAN SENTINEL final boss |
 | `jack` | JACK STAR — The System Architect (5 phases, 3 lives) |
 | `creeperjr` | Creeper Jr. (×3 — spawns in trio) |
@@ -206,17 +207,17 @@ Manipulates an ArmorStand dummy used for posing/content preview. Useful for desi
 
 Triggers an ArmorStandBoss attack, defense, or phase-transition mechanic by name. Finds the nearest boss within `range` blocks (default `aggro-range` = 50) and executes.
 
-### Ground attacks (18)
+### Ground attacks (21)
 
-`groundslam`, `groundshatter`, `shieldbash`, `lancestorm`, `earthpillar`, `chaingrapple`, `warstomp`, `armorspikes`, `vortexpull`, `mirrorimage`, `doombeam`, `lanceflurry`, `whirlwindslash`, `executionsweep`, `obsidianspire`, `earthmaw`, `shadowstep`, `runeward`
+`groundslam`, `groundshatter`, `shieldbash`, `lancestorm`, `earthpillar`, `chaingrapple`, `warstomp`, `armorspikes`, `vortexpull`, `mirrorimage`, `doombeam`, `lanceflurry`, `whirlwindslash`, `executionsweep`, `obsidianspire`, `earthmaw`, `shadowstep`, `runeward`, `sunderingcharge`, `spearcyclone`, `cataclysm`
 
-### Aerial attacks (16)
+### Aerial attacks (18)
 
-`starfall`, `aerialrush`, `sonicboom`, `lightningstorm`, `gravitywell`, `crossslash`, `novaburst`, `darkorb`, `windcutter`, `heavenlyjudgment`, `rainoflances`, `airslam`, `hoverbarrage` (alias `crossbarrage`), `eclipsefall`, `bladering`, `obsidianwings`
+`starfall`, `aerialrush`, `sonicboom`, `lightningstorm`, `gravitywell`, `crossslash`, `novaburst`, `darkorb`, `windcutter`, `heavenlyjudgment`, `rainoflances`, `airslam`, `hoverbarrage` (alias `crossbarrage`), `eclipsefall`, `bladering`, `obsidianwings`, `voidmeteor`, `phantomlegion`
 
-### Ranged attacks (15)
+### Ranged attacks (16)
 
-`lancesnipe`, `meteorstorm`, `voidbeam`, `frostlance`, `lightningspear`, `shadowvolley`, `chainlightning`, `crystalbarrage`, `arcaneorb`, `voidrift`, `arcanemissiles`, `spiritbeam`, `soultethers`, `plaguebrand`, `runemines`
+`lancesnipe`, `meteorstorm`, `voidbeam`, `frostlance`, `lightningspear`, `shadowvolley`, `chainlightning`, `crystalbarrage`, `arcaneorb`, `voidrift`, `arcanemissiles`, `spiritbeam`, `soultethers`, `plaguebrand`, `runemines`, `obsidianprison`
 
 ### Phase transitions
 

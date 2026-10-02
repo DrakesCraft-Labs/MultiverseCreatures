@@ -9,7 +9,7 @@ Esta página documenta **cómo se prueban** los cambios del plugin y **qué veri
 - **Java 21** — mismo compilador que el código principal.
 - **Headless**: no se arranca un servidor Paper/Purpur. Las clases de Bukkit que se tocan (p. ej. `World`) se simulan con `java.lang.reflect.Proxy` o se usan objetos `Location` con mundo `null` para ejercitar solo la aritmética.
 - **SnakeYAML** (viene con `purpur-api`) parsea `config.yml` y `plugin.yml` en `ConfigFilesGuardTest`, así una indentación inválida falla en la suite y no al arrancar el servidor.
-- El **soporte de tests** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`, `testsupport/RecordingTerrain`, `testsupport/SourceText`) es el arnés que comparten las guardias: encuentra el proyecto subiendo desde el directorio de trabajo (una guardia de fuentes leía `src/main/java` desde donde se lanzara Maven, no encontraba nada y pasaba de forma vacua), nombra un archivo por segmentos con un único modo de fallo, lee la segunda articulación de una extremidad del propio export en vez de fiarse del código que la fija, graba lo que escribe el generador de terreno para poder inspeccionar sus chunks sin servidor, y `SourceText` lee el cuerpo de un método o quita comentarios para las guardias de fuentes, así que las tres no pueden separarse.
+- El **soporte de tests** (`testsupport/ProjectPaths`, `testsupport/LimbGeometry`, `testsupport/SourceText`) es el arnés que comparten las guardias: encuentra el proyecto subiendo desde el directorio de trabajo (una guardia de fuentes leía `src/main/java` desde donde se lanzara Maven, no encontraba nada y pasaba de forma vacua), nombra un archivo por segmentos con un único modo de fallo, lee la segunda articulación de una extremidad del propio export en vez de fiarse del código que la fija, y `SourceText` lee el cuerpo de un método o quita comentarios para las guardias de fuentes, así que las tres no pueden separarse.
 
 Comandos:
 
@@ -46,6 +46,7 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Una adopción reconoce una pieza solo cuando coinciden sus **etiquetas de traje, pieza y propietario**: una pieza de otro jefe, otra pieza del mismo traje, o la etiqueta de traje sin las demás nunca se adoptan.
 - La búsqueda salta las entidades que no son displays, no devuelve nada cuando no hay qué adoptar, e ignora un mundo o una localización ausentes.
 - El traje se construye en **un solo sitio**: una guardia de fuentes falla si alguno de los tres jefes vestidos construye su propia cabeza desde la textura, pone a cero sus propios ajustes de display u olvida adoptar/quitar sus piezas.
+- `shouldSync` actualiza un traje ocupado cada tick y uno quieto cada tres ticks.
 
 ### `utils/MscLeftoversTest` — Barrido de sobrantes de ataques al arrancar
 - Los props de un ataque que un reinicio cortó se eliminan al habilitar (escudos orbitando, el portador de escudo plantado, el anillo de lanzas, los paneles de alas, el sello triangular, las copias espejo, las balas de Kinger), porque su ataque ya no existe y nada más los quitaría.
@@ -63,34 +64,18 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Una **rodilla** se dobla solo en la mitad trasera del balanceo y un **codo** solo en la delantera, ambos por una fracción documentada del balanceo del padre (`1.5×`, con tope en `1.2` rad ≈ 69°) y siempre en la dirección en la que ya va la extremidad, así la articulación suma al balanceo en vez de adelantarlo o cancelarlo.
 - Posar una extremidad la mantiene rígida —el pivote no se mueve y ambos huesos conservan sus longitudes— mientras que un plegado acerca la mano o el pie a la articulación de la que cuelga más de lo que llega la extremidad recta. Una extremidad exportada de una pieza gira rígida y nunca le crece una articulación que no tiene.
 
-### `ritual/terrain/ArenaNoiseTest` — El ruido con el que se esculpe el páramo
-- Fija las dos propiedades de las que depende cada altura de la dimensión: cada campo (`unit`, `value`, `fbm`, `ridge`) se queda dentro de `[0, 1)`, así que ninguna altura derivada se escapa del recorte del constructor, y las mismas coordenadas dan siempre la misma respuesta, que es lo que permite que dos chunks vecinos encajen sin hablarse.
-- Demuestra que los campos son continuos — un paso de un bloque mueve `fbm` menos de 0.05 — así que el terreno no tiene pliegues de rejilla, y que intercambiar x por z cambia el valor casi siempre: un campo espejado le daría al coliseo una simetría diagonal que nadie pidió.
-- `smoothstep` se comprueba en ambos extremos y en el centro, incluida la forma descendente con la que se desvanecen los nervios de contrafuerte.
+### `ritual/BossDimensionTest` — El mundo de la dimensión del ritual
+- Todas las etapas de generación vanilla siguen apagadas en `WastelandGenerator`: si `shouldGenerateNoise()` devolviera true se generaría terreno del overworld bajo y alrededor del campo de batalla.
+- El borde del mundo mide 1500 bloques por defecto y se limita a 100 - 1500 diga lo que diga el config.
+- Una carpeta de mundo sin la marca del generador, o con el nombre de otro generador, se detecta como antigua (y se regenera); una con la marca actual se conserva.
 
-### `ritual/terrain/ArenaShapeTest` — Las invariantes de la forma
-- El suelo de la arena está plano en y=5 en todas sus columnas, la muralla sube en cuatro terrazas de 6 bloques, cada una demasiado alta para escalarla, y el anillo nunca baja de la primera terraza: un coliseo del que se puede salir no es un coliseo.
-- Se comprueba la aritmética de las terrazas (`RIM_FIRST_STEP_Y + 3 × RIM_STEP_HEIGHT == RIM_TOP_Y`, las cuatro terrazas llenando el anillo), así que tocar una constante no puede dejar un hueco en la muralla sin que salte.
-- Los cañones nunca llegan dentro de `CHASM_INNER_RADIUS`, el páramo sí tiene cañones lo bastante hondos para inundarse y picos por encima de y=44, y ninguna ruina se acerca más que `LANDMARK_INNER_RADIUS`: la vista desde el suelo de la arena queda despejada.
-- La arena es idéntica con dos semillas distintas (es un decorado) mientras el páramo difiere en cientos de columnas muestreadas, y `spawnY()` está fijado en 10 porque moverlo mueve el punto donde el ritual deja a los jugadores.
+### `ritual/terrain/WastelandTest` — El campo de batalla que recibe la pelea
+- La arena es plana en y=40 y no hay nada encima ni a menos de 40 bloques; a su alrededor ningún escalón supera un bloque, y no hay lava dentro del radio de peligro.
+- La lava nunca sube de su nivel y siempre toca lava o roca a los lados y debajo; toda columna tiene bedrock en y=0 y es sólida hasta su superficie; hay cordillera a lo largo de todo el borde.
+- Todos los peligros y estructuras (lava, magma, ambos fuegos, agujas, huesos, ruinas, los tres suelos) aparecen en el campo de batalla, la misma semilla reconstruye las mismas columnas, y otra semilla genera un páramo distinto alrededor de la misma arena.
 
-### `ritual/terrain/BossArenaTerrainTest` — El terreno que recibe la pelea
-- Conduce el generador real a un sumidero que graba, chunk a chunk, y comprueba lo que pisan jugadores y jefes: el suelo está plano y es sólido, el volumen de juego (por encima del suelo, hasta y=34) está vacío, y cada bloque de la plaza es uno de los tres que aceptan las estructuras de invocación — cruzado contra `JackInvocationStructure.isValidBase` y `NixInvocationStructure.isValidBase`, así que cambiar una de las dos listas falla aquí y no en el círculo de invocación.
-- El pavimento tiene que ser entre un 5% y un 45% bloque luminoso: la dimensión está congelada en medianoche y el suelo es la única luz de la pelea, pero con demasiada el sigilo deja de leerse como un sigilo.
-- Demuestra que el mundo está sellado: bedrock en y=0 en campo abierto, y `CANYON_ROCK_DEPTH` bloques de roca bajo el fondo de un cañón, así que picar en el fondo del cañón más profundo no llega al vacío.
-- El fuego de alma solo se apoya en arena de almas, la lava solo se estanca en el fondo de los cañones, y dos agrupaciones distintas de ventanas (una de 32×32 contra cuatro chunks de 16×16) producen bloques idénticos columna a columna — una costura en el borde de un chunk fallaría.
-- También fija el coste: un chunk bajo una esquirla flotante conserva al menos tanto como descarta, así que una ruina no puede ponerse a regenerar el mundo por chunk.
-
-### `ritual/terrain/BossArenaGeneratorGuardTest` — Guardias del terreno
-- `generateNoise` no puede mencionar el `Random` que le pasa el servidor: leerlo haría que el mismo chunk se generase distinto en cada pasada y dejaría costuras en los bordes.
-- Cada etapa de generación se declara explícitamente y solo el ruido está activo — un `true` suelto espolvorearía decoración vanilla por la arena — y `isParallelCapable` debe seguir en true, algo que solo es seguro mientras el generador no tenga estado.
-- El sumidero de chunk tiene que conservar tanto la comprobación de límites del chunk como la de altura del mundo, y las clases de forma y ruido tienen que quedarse sin Bukkit, que es justo lo que hace testeable el terreno sin servidor.
-- `BossDimensionManager` debe instalar el generador y no puede volver a `WorldType.FLAT` ni al eliminado `CryingObsidianChunkGenerator`.
-- Lee `config.yml` y exige que toda clave documentada en `boss-dimension` se lea en algún punto del código: un ajuste que nadie lee es una mentira en el único archivo que editan los dueños del servidor.
-
-### `testsupport/RecordingTerrainTest` — El sumidero sobre el que se apoyan los tests de terreno
-- Las claves de posición van y vuelven con coordenadas extremas y negativas y se mantienen únicas en un barrido grande: una clave compartida por dos posiciones hace que un test de terreno lea un bloque de su vecino. No es hipotético — una versión de esta clase empaquetaba 25 bits por coordenada donde iban 21 y el suelo plano de la arena empezó a leerse veinte bloques alto.
-- Las escrituras fuera de la ventana se cuentan en vez de guardarse, y cada columna lleva su propia altura, así que `topY` no puede devolver el techo de la columna de al lado.
+### `ritual/JackInvocationStructureTest` — La terminal de JACKSTAR (5×5)
+- Los materiales del núcleo, las velas y la base aceptan lo que documenta el ritual y rechazan todo lo demás; cuatro velas junto al núcleo, cuatro pilares en las esquinas, y solo las casillas de vela cuentan como velas.
 
 ### `ritual/RitualStructureTest` — Ritual de entrada (overworld, 7×7)
 - Centro del ritual en `(3, 0, 3)` con radio 5.
@@ -130,7 +115,6 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 ### `commands/AttackRegistryCoherenceTest` — las cinco listas de ataques siguen de acuerdo
 - Lee las fuentes de los ataques y `ArmorStandBoss` y comprueba que cada clase de ataque está registrada en `initAttacks()` y responde al nombre derivado de su clase (con las excepciones documentadas `executionsweep`, `soultethers`, `runemines`).
 - Los conjuntos aéreo/suelo coinciden con las carpetas donde viven las clases, ningún ataque está en ambos conjuntos, y los de distancia/defensivos no están en ninguno.
-- Todos los nombres citados por los arrays de rotación aleatoria son ataques registrados.
 - El catálogo de ayuda y las fuentes son el mismo conjunto de nombres, así que no se anuncia nada que no pueda ejecutarse ni queda oculto nada ejecutable.
 
 ### `commands/MscKillFilterTest` — Predicados de `/msc kill`
@@ -193,16 +177,6 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - Las piezas numeradas **no** están en orden de apilado, así que cada **codo y rodilla se compara con el corte que el export muestra de verdad**: la única pieza `_4` queda por encima de la articulación, las otras cinco se pliegan por debajo, y la articulación está donde está el hueco — la respuesta del código nunca se da por buena. Después, todo el ciclo de caminar, con codos incluidos, tiene que caber dentro de la hitbox del stand.
 - La **pose de caminar** que dibuja la repetición se comprueba como esqueleto: cuatro extremidades que se pliegan exactamente en esas articulaciones, huesos rígidos y pivote fijo en cada fase, las cuatro dentro de la caja del stand en cada paso, la rodilla plegando el pie detrás de la pierna recta y el codo la mano delante — cada extremo más cerca de su articulación de lo que llega la extremidad recta. Un chequeo de fuentes mantiene al jefe avanzando a `NixModel.WALK_RATE`.
 
-### `entities/NixModelKinematicsTest` — Modelo cinemático de NIX (27 partes)
-- El modelo tiene **exactamente 27** partes `ItemDisplay` (export de Blockbench).
-- La jerarquía cinemática es rígida: brazos y piernas con **6** segmentos cada uno (para rotar como cuerpo rígido en hombro/cadera), cabeza, torso superior e inferior con **1**.
-- Cada matriz de 16 floats se descompone en offset finito, escala estrictamente positiva y cuaternión finito; nombre de perfil y textura `base64` no vacíos.
-- El centro horizontal del modelo es finito.
-
-### `entities/KingerOptimizationAndKinematicsTest` — Modelo de Kinger + optimización
-- **15** partes (spec de Blockbench) con las mismas garantías de integridad de matrices (16 floats, offset/scale/quaternion finitos) y `CENTER` finito.
-- **Throttling de sync de displays**: parado y sin animación sincroniza cada 3 ticks (**30** de 90, ~66% menos); moviéndose o en animación sincroniza **a cada tick** (90 de 90). Esto valida la regla `!isIdle || tickCount % 3 == 0`.
-
 ### `entities/LimbArticulationGuardTest` — Cada segmento exportado está articulado
 - Guardia cruzada sobre los tres jefes vestidos: recorre **todas** las agrupaciones de extremidad del enum de piezas de cada modelo — no la lista escrita a mano que usan los tests de cada modelo — y le pregunta la respuesta al export. Donde está el hueco más grande entre dos piezas apiladas, ahí va una articulación, y el código tiene que plegar exactamente las piezas de debajo, ni una más ni una menos.
 - Falla cuando una extremidad viene exportada en dos segmentos que el código nunca articula (media extremidad se quedaría rígida para siempre) y cuando el código pliega una extremidad que el export dejó de una pieza. También demuestra que al menos una extremidad *sí* quedó articulada por modelo, así que la guardia no puede pasar de forma vacua.
@@ -218,30 +192,42 @@ Cubre la aritmética de salud de `utils/MscEntityUtils`:
 - La etiqueta de cada pieza es única y lleva su propietario, así que una adopción no puede confundir dos piezas; una guardia de fuentes impide que las piezas vuelvan a retrasarse (`setTeleportDuration`/`setInterpolationDuration`/`setInterpolationDelay`/`setDisplayWidth`/`setDisplayHeight` a cero, configurados en un solo sitio), exige que un recargue **adopte** el traje que ya tiene en vez de crear un segundo superpuesto y que **reconstruya la barra de jefe** de ese jefe (con la salud virtual de la que se lee su progreso), y mantiene la animación pasando por `KingerModel.compose` en lugar de una transformación por pieza.
 - La **pose de caminar** que dibuja la repetición se comprueba como esqueleto: cuatro extremidades —las rodillas de Kinger plegando en la articulación del export, sus brazos de una pieza rígidos y sin articulación— con ambos huesos conservando su longitud y el pivote fijo en cada fase, cada punto dentro de la caja de 0.5 del stand, y la rodilla plegando el pie detrás de la pierna recta y más cerca de la cadera. Un chequeo de fuentes mantiene al mob avanzando a `KingerModel.WALK_RATE`.
 
-### `listener/bossdimension/BossDimensionGuardLogicTest` — Guardia de la dimensión del jefe
-- Los manejadores de eventos hacen **short-circuit**: en mundos que no son la `boss_dimension` nunca se evalúa la comprobación de permiso (solo se evalúa dentro del mundo del jefe).
-
 ### `entities/handler/MobHandlerRecountTest` — Cooldown del tope de población
 - `MobHandler.puedeRecontar` permite el recontado **por mundo** y respeta un cooldown de fallo independiente por mundo: `world` con cooldown hasta `160000` no re-cuenta en `159999` pero sí en `160000`; `world_nether` no se bloquea por el cooldown de `world`.
 
 ### `entities/EnderKnightWorldGuardTest` — Teleport del Caballero Ender
 - `EnderKnight.sharesWorld` solo devuelve `true` si los mundos coinciden; rechaza identidad de mundo `null`. Garantiza que los cálculos de distancia del tira-tira solo ocurran dentro del mismo mundo.
 
-### `entities/DistanceOptimizationEquivalenceTest` — Optimización distancia²
-- El predicado `distanceSquared < threshold²` es **equivalente** a `distance < threshold` (Euclídeo) para todos los umbrales usados en el código (30, 25, 35, 20, 8, 6, 5, 4, 3, 2, 1.8 bloques), incluida la frontera (justo a menos/más de 0.001).
-- El daño con caída por distancia calculado desde `sqrt(distancia²)` equivale al calculado con distancia directa (tolerancia 1e-9) para las fases Storm, Despair y AirSlam del Centinela.
-- Los objetivos fuera de rango se descartan **antes** de calcular ninguna raíz cuadrada.
+### `entities/boss/attack/ChoreographyTest` — Cada ataque del Centinela, sin servidor
+- Encuentra en las fuentes cada clase que extiende `ChoreographedAttack` (las 61) y la reproduce hasta el final sobre un `RecordingStage`: termina, da al menos 20 ticks que un jugador pueda leer, bloquea el cuerpo no menos de 15 ticks ni más de lo que dura, dibuja y suena, no deja objetos atrás y vuelve a su guardia (o a flotar). El stage rechaza una partícula lanzada sin los datos que necesita.
+- Con jugadores en los puntos habituales de combate, cada ataque ofensivo golpea al menos a uno, así que un aviso que señala un sitio al que el golpe nunca llega se detecta.
 
-### `entities/boss/ShockwaveAndCombatOptimizationTest` — Ondas de choque y combate
-- Fórmulas de la onda: el empuje vertical (`Y`) queda acotado en `[0.4, 0.7]` y el multiplicador de daño en `[0.4, 1.0]` para radios 0–30.
-- **`hitInThisRing` (deduplicación)**: varios alts de partículas adyacentes del mismo anillo caen dentro del radio de impacto del jugador, pero con la deduplicación el jugador recibe daño **exactamente una vez por anillo**.
-- **Throttling de NIX**: parado sincroniza cada 3 ticks (30 de 90); durante el cleave o las cadenas sincroniza a cada tick (90 de 90).
+### `entities/boss/SignatureMovesTest` — Los movimientos de firma de NIX y JackStar
+- Cada fotograma de Cosecha de Sangre, Salto del Patíbulo, Condena, fork(), Lluvia Binaria y Stack Overflow es una rotación real, ningún codo ni rodilla se pliega más allá de `MscLimb.MAX_BEND`, ninguna extremidad gira más de 1.2 rad entre dos ticks y cada movimiento termina cerca de la pose de reposo.
+- Los golpes coinciden con el cuerpo: brazos sobre la cabeza en el aire y abajo al aterrizar, el brazo de la condena arriba mientras dura la sentencia y abajo cuando caen las hojas, el brazo que lanza echado atrás antes de soltar y adelante después.
+
+### `entities/boss/SentinelAttackPoolTest` — La rotación de ataques del Centinela
+- Todo ataque registrado sale de algún pool o lo maneja el propio bucle de IA, y todo nombre de un pool es un ataque registrado, así que no se puede añadir un ataque que luego nunca se usa (`doombeam` y `rainoflances` estaban así).
+- Cada pool aéreo tiene ataques suficientes para que un vuelo termine antes, una elección nunca repite uno de los últimos seis ataques mientras quede otro, y un pool más pequeño que el historial sigue dando un ataque.
+
+### `entities/boss/BossWalkTest` — Cómo caminan los jefes
+- `BossArena.nextFeetY`: el suelo llano sigue llano, un bloque de subida es un escalón, algo más alto es una pared, y un borde o una caída sin fondo se bajan poco a poco en vez de quedarse flotando; asentarse converge exactamente sobre el suelo.
+
+### `entities/boss/JackStarBossTest` — Las fases de Jack Star
+- Cada tramo de vida corresponde a su fase con los límites incluidos, el kernel panic es siempre la última fase, y cada grupo de extremidad tiene las piezas que esperan sus articulaciones.
+
+### `entities/KingerMeleeTest` — El golpe cuerpo a cuerpo de Kinger
+- El golpe entra en el punto más alto del swing, no en el tick en que empieza, solo alcanza a quien está delante, y su alcance es una esfera, no un cubo.
+
+### `listener/bossdimension/BossFightGuardTest` — Comandos durante una pelea de jefe
+- `/say`, `/me`, `/help`, `/?` y `/dimtp` siguen funcionando en plena pelea en cualquier mayúscula y con namespace, mientras que un comando que solo empieza como ellos (`/menu`, `/sayhi`, `/helpop`) se bloquea.
 
 ### `entities/boss/BossArenaGroundRecoveryTest` — Recuperación de suelo
 - `findFloorY` devuelve la altura del piso, y **`NaN`** — no la `Y` propia del jefe — cuando el escaneo no alcanza nada. Esa distinción es el arreglo: antes "estar apoyado en el piso" y "no haber nada debajo" eran el mismo valor, así que un jefe en modo suelo dejaba de atacar para siempre.
 - `getGroundY` conserva su comportamiento documentado de devolver la `Y` actual, fijado por test para que los dos comportamientos no vuelvan a confundirse.
 - `ringOffsets` empieza en el origen, contiene cada desplazamiento del radio exactamente una vez y nunca retrocede hacia el origen: la columna usable más cercana debe ganar siempre.
 - `findUsableColumn` prefiere la columna del propio jefe, camina hacia fuera si está vacía, respeta el radio de búsqueda y devuelve `null` cuando no hay nada usable, para que el llamante pueda probar la columna del objetivo y después el spawn del mundo.
+- `findFloorY` siempre responde la cara superior de un bloque: a un jefe que flota medio bloque sobre el suelo se le da la altura del suelo, no su propia Y (eso dejaba al Centinela flotando sin atacar), un cuerpo hundido en un bloque se sube encima, y una losa se pisa a su propia altura.
 
 ### `utils/MscWorldPolicyTest` — Lista blanca de mundos
 - Una lista **vacía (o ausente) significa todos los mundos**, que es lo que documenta `config.yml`. La implementación la trataba como una lista fija de cinco nombres, así que un servidor con un mundo de nombre propio no tenía conversiones — y su recuento periódico borraba cualquier criatura MSC que encontrara ahí.

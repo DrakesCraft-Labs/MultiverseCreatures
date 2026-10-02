@@ -1,200 +1,116 @@
 package com.Chagui68.entities.boss.attack.ranged;
 
-import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.boss.MagicSealListener;
-import com.Chagui68.entities.boss.seal.SealPlane;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Soul Tethers — the boss hooks several players at once and reels them in.
- *
- * <p>ANIMATION (what tells it apart on screen)
- * <ul>
- *   <li>0-13: both arms rise overhead while soul embers drain out of every nearby player and fly into
- *       his chest. This is the only channel that visibly <b>takes</b> something from the players.</li>
- *   <li>14-88: a glowing tether is drawn from his chest to every hooked player. The line is visible
- *       the whole time — nothing else in the arsenal stays connected to several targets — and it
- *       yanks them a step closer on every pulse.</li>
- *   <li>89: the tethers snap taut and reel everyone in hard, then recoil and let go.</li>
- * </ul>
+ * Soul Tethers: soul-fire chains shoot from the Sentinel's chest into every player. Straining
+ * against them hurts and drags you back; at the end they snap, and the snap hurts everyone still
+ * bound. The chains sag and burn brighter the tighter they are pulled.
  */
-public class SoulTetherAttack extends BossAttackBase {
+public class SoulTetherAttack extends ChoreographedAttack.Ranged {
 
-    private static final int CHARGE_TICKS = 14;
-    private static final int TETHER_TICKS = 75;
-    private static final int MAX_TARGETS = 4;
-    private static final double RANGE = 26.0;
-    private static final int PULSE_EVERY = 10;
-
-    private final double pulseDamage;
-    private final double snapDamage;
+    private static final int CAST = 14;
+    private static final int BOUND = 90;
+    private static final double SLACK = 16;
 
     public SoulTetherAttack(BossHost boss) {
         super(boss);
-        this.pulseDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.soul-tether-damage", 3.0);
-        this.snapDamage = plugin.getConfig().getDouble("entities.armor-stand-boss.soul-tether-snap-damage", 13.0);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        LivingEntity attacker = stand.entidad();
-        List<Player> hooked = nearestTargets(stand.getLocation());
+    public Timeline choreograph(Stage stage) {
+        List<Victim> bound = stage.victims();
+        if (bound.isEmpty()) return null;
+        Fx fx = stage.fx();
+        double strainDamage = stage.config("entities.armor-stand-boss.soul-tether-damage", 3.0);
+        double snapDamage = stage.config("entities.armor-stand-boss.soul-tether-snap-damage", 8.0);
+        Timeline t = new Timeline();
 
-        if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnPentagramSeal(stand.getLocation().clone().add(0, 0.2, 0), 100,
-                    SealPlane.XZ);
-        }
-
-        new BukkitRunnable() {
-            int t = 0;
-            boolean snapped = false;
-
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid() || t > CHARGE_TICKS + TETHER_TICKS + 25) {
-                    cancel();
-                    return;
-                }
-
-                Location center = stand.getLocation();
-                hooked.removeIf(p -> !p.isOnline() || p.isDead()
-                        || p.getLocation().distanceSquared(center) > RANGE * RANGE);
-
-                if (t < CHARGE_TICKS) {
-                    double p = (double) t / CHARGE_TICKS;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-30 - 150 * p), Math.toRadians(10), 0));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-30 - 150 * p), Math.toRadians(-10), 0));
-                    stand.setBodyPose(new EulerAngle(Math.toRadians(-14 * p), 0, 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(-22 * p), 0, 0));
-
-                    for (Player p2 : hooked) {
-                        Vector toBoss = center.clone().add(0, 1.4, 0).toVector().subtract(p2.getEyeLocation().toVector());
-                        double distance = toBoss.length();
-                        if (distance > 0.2) toBoss.normalize();
-                        double travelled = Math.min(distance, 6.0 * p);
-                        Location ember = p2.getEyeLocation().clone().add(toBoss.multiply(travelled));
-                        world.spawnParticle(Particle.SOUL, ember, 2, 0.05, 0.05, 0.05, 0.01);
-                        world.spawnParticle(Particle.SCULK_SOUL, ember, 1, 0.05, 0.05, 0.05, 0);
-                    }
-                    if (t == 0) {
-                        world.playSound(center, Sound.BLOCK_SOUL_SAND_BREAK, 1.4f, 0.6f);
-                        world.playSound(center, Sound.ENTITY_ENDERMAN_SCREAM, 1.0f, 0.6f);
-                    }
-                } else if (!snapped) {
-                    if (t == CHARGE_TICKS) {
-                        world.playSound(center, Sound.ENTITY_WITHER_SHOOT, 1.6f, 0.6f);
-                        world.playSound(center, Sound.ITEM_TOTEM_USE, 1.0f, 1.4f);
-                    }
-                    boolean release = t >= CHARGE_TICKS + TETHER_TICKS;
-                    if (release) {
-                        snapped = true;
-                        snap(world, center, hooked, attacker);
-                    } else {
-                        int since = t - CHARGE_TICKS;
-                        stand.setRightArmPose(new EulerAngle(Math.toRadians(-15), Math.toRadians(70), Math.toRadians(20)));
-                        stand.setLeftArmPose(new EulerAngle(Math.toRadians(-15), Math.toRadians(-70), Math.toRadians(-20)));
-                        stand.setBodyPose(new EulerAngle(Math.toRadians(10), 0, 0));
-                        stand.setHeadPose(new EulerAngle(Math.toRadians(12), 0, 0));
-                        drawTethers(world, center, hooked);
-                        if (since % PULSE_EVERY == 0 && since > 0) {
-                            for (Player p2 : hooked) {
-                                MscEntityUtils.damageBy(attacker, p2, pulseDamage);
-                                pull(p2, center, 0.1, 0.05);
-                                p2.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 25, 0));
-                                world.spawnParticle(Particle.SOUL_FIRE_FLAME, p2.getLocation().add(0, 1, 0),
-                                        6, 0.3, 0.4, 0.3, 0.01);
-                            }
-                            world.playSound(center, Sound.BLOCK_SOUL_SAND_BREAK, 0.9f, 0.7f);
-                        }
-                    }
-                } else if (t > CHARGE_TICKS + TETHER_TICKS + 18) {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
+        tweenTo(t, stage, 0, CAST, Poses.ROAR, Ease.OUT_BACK);
+        t.at(0, () -> fx.sound(stage.feet(), Sfx.SCULK_SHRIEK, 2.5f, 0.7f));
+        t.span(0, CAST, (tick, p) -> {
+            Vector chest = stage.body().chest();
+            for (Victim victim : bound) {
+                Vector reach = chest.clone().add(victim.chest().subtract(chest).multiply(p));
+                drawChain(fx, chest, reach, 0, tick);
             }
-        }.runTaskTimer(plugin, 0L, 1L);
-    }
-
-    /** The visible line: a rope of soul embers sampled along every tether. */
-    private void drawTethers(World world, Location center, List<Player> hooked) {
-        Location chest = center.clone().add(0, 1.4, 0);
-        for (Player p : hooked) {
-            Location eye = p.getEyeLocation();
-            Vector step = eye.toVector().subtract(chest.toVector());
-            double distance = step.length();
-            if (distance < 0.2) continue;
-            Vector unit = step.normalize();
-            for (double d = 0.0; d < distance; d += 0.9) {
-                Location point = chest.clone().add(unit.clone().multiply(d));
-                world.spawnParticle(Particle.SOUL, point, 1, 0.05, 0.05, 0.05, 0.005);
-                world.spawnParticle(Particle.DUST, point, 1, 0, 0, 0, 0,
-                        new Particle.DustOptions(Color.fromRGB(0x66DDFF), 1.0f));
+            fx.cloud(Particle.SOUL, chest, 4, 1.5, 0.05);
+        });
+        t.at(CAST, () -> {
+            for (Victim victim : bound) {
+                fx.burst(victim.chest(), Particle.SOUL_FIRE_FLAME, 16, 0.2);
+                victim.effect(Affliction.SLOWNESS, BOUND, 0);
             }
-            world.spawnParticle(Particle.END_ROD, eye, 2, 0.15, 0.15, 0.15, 0);
-        }
-    }
+            fx.sound(stage.feet(), Sfx.CHAIN_BREAK, 2f, 0.5f);
+        });
 
-    /** Every tether goes taut at once and drags its victim to the boss. */
-    private void snap(World world, Location center, List<Player> hooked, LivingEntity attacker) {
-        world.playSound(center, Sound.ENTITY_WITHER_HURT, 1.6f, 0.5f);
-        world.playSound(center, Sound.BLOCK_CHAIN_BREAK, 1.2f, 1.1f);
-        world.spawnParticle(Particle.REVERSE_PORTAL, center.clone().add(0, 1.4, 0), 40, 0.6, 0.8, 0.6, 0.1);
-
-        for (Player p : hooked) {
-            MscEntityUtils.damageBy(attacker, p, snapDamage);
-            pull(p, center, 0.95, 0.3);
-            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1));
-            world.spawnParticle(Particle.DAMAGE_INDICATOR, p.getLocation().add(0, 1, 0), 10, 0.4, 0.4, 0.4, 0.08);
-            world.spawnParticle(Particle.SOUL, p.getLocation().add(0, 1, 0), 20, 0.4, 0.5, 0.4, 0.05);
-        }
-    }
-
-    private void pull(Player p, Location center, double strength, double lift) {
-        Vector toBoss = center.toVector().subtract(p.getLocation().toVector()).setY(0);
-        if (toBoss.lengthSquared() < 0.01) return;
-        Vector add = toBoss.normalize().multiply(strength).setY(lift);
-        p.setVelocity(p.getVelocity().add(add));
-    }
-
-    private List<Player> nearestTargets(Location center) {
-        List<Player> candidates = new ArrayList<>(boss.getValidPlayers(center.getWorld()));
-        candidates.removeIf(p -> p.getLocation().distanceSquared(center) > RANGE * RANGE);
-        List<Player> sorted = new ArrayList<>();
-        while (!candidates.isEmpty() && sorted.size() < MAX_TARGETS) {
-            Player best = null;
-            double bestDistance = Double.MAX_VALUE;
-            for (Player p : candidates) {
-                double d = p.getLocation().distanceSquared(center);
-                if (d < bestDistance) {
-                    bestDistance = d;
-                    best = p;
+        t.span(CAST, CAST + BOUND, (tick, p) -> {
+            Vector chest = stage.body().chest();
+            for (Victim victim : bound) {
+                double distance = victim.position().distance(stage.feet());
+                double strain = Math.max(0, (distance - SLACK) / 8);
+                drawChain(fx, chest, victim.chest(), strain, tick);
+                if (strain > 0) {
+                    Vector back = stage.feet().subtract(victim.position()).setY(0);
+                    if (back.lengthSquared() > 1e-6) victim.push(back.normalize().multiply(0.12 * Math.min(1, strain)));
+                    if (tick % 10 == 0) {
+                        stage.damage(victim, strainDamage);
+                        fx.burst(victim.chest(), Particle.SOUL, 6, 0.1);
+                    }
                 }
             }
-            candidates.remove(best);
-            sorted.add(best);
+            if (tick % 20 == 0) fx.sound(stage.feet(), Sfx.SOUL_ESCAPE, 1.5f, 0.6f);
+        });
+
+        int snap = CAST + BOUND;
+        tween(t, stage, snap - 4, snap, Poses.ROAR, Poses.SPREAD, Ease.OUT_BACK);
+        t.at(snap, () -> {
+            Vector chest = stage.body().chest();
+            for (Victim victim : bound) {
+                for (Vector point : Shapes.line(chest, victim.chest(), 1.2)) {
+                    fx.burst(point, Particle.SOUL_FIRE_FLAME, 2, 0.15);
+                }
+                stage.damage(victim, snapDamage);
+                victim.effect(Affliction.WEAKNESS, 60, 0);
+                fx.flash(victim.chest(), Palette.SOUL);
+            }
+            fx.sound(chest, Sfx.CHAIN_BREAK, 3f, 0.4f);
+            fx.sound(chest, Sfx.EXPLODE, 1.5f, 1.4f);
+        });
+        recover(t, stage, CAST + 4, CAST + 20, Poses.GUARD);
+        return t;
+    }
+
+    /** A soul-fire chain that sags when slack and pulls straight and bright when strained. */
+    private static void drawChain(Fx fx, Vector from, Vector to, double strain, int tick) {
+        double sag = Math.max(0, 2.5 - strain * 2.5);
+        List<Vector> points = Shapes.line(from, to, 0.6);
+        for (int i = 0; i < points.size(); i++) {
+            double t = (double) i / Math.max(1, points.size() - 1);
+            Vector point = points.get(i).clone().subtract(new Vector(0, Math.sin(Math.PI * t) * sag, 0));
+            fx.dust(i % 2 == 0 ? Palette.SOUL : Palette.mix(Palette.SOUL, Palette.HOLY, Math.min(1, strain)), 1.2f + (float) Math.min(1, strain)).at(point);
+            if ((i + tick) % 9 == 0) fx.cloud(Particle.SOUL_FIRE_FLAME, point, 1, 0.05, 0.01);
         }
-        return sorted;
+    }
+
+    @Override
+    public int lockTicks(Timeline timeline) {
+        return CAST + 20;
     }
 
     @Override

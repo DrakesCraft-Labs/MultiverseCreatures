@@ -1,185 +1,114 @@
 package com.Chagui68.entities.boss.attack.ground;
 
-import com.Chagui68.entities.BossInstance;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Area;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Prop;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Telegraph;
+import com.Chagui68.entities.boss.fx.Timeline;
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Earth Maw — the ground opens as a pair of jaws in a frontal cone and snaps shut.
- *
- * <p>ANIMATION (what tells it apart on screen)
- * <ul>
- *   <li>0-15: the boss crouches with both arms drawn inward while two rows of jagged teeth appear in
- *       the cone ahead, opening wider every tick. A Quake Seal cracks the ground under them.</li>
- *   <li>16: the rows <b>snap shut</b> — the only attack in the arsenal with a closing bite — and pull
- *       everyone caught inside towards the centre before chewing for another second.</li>
- * </ul>
+ * Earth Maw: the ground around the target splits into two rows of teeth that rise and snap shut
+ * like a jaw. Getting out of the circle before it closes is the counter.
  */
-public class EarthMawAttack extends BossAttackBase {
+public class EarthMawAttack extends ChoreographedAttack.Ground {
 
-    private static final int WIND_UP_TICKS = 16;
-    private static final double CONE_LENGTH = 5.2;
-    private static final double CONE_ANGLE_DEG = 34.0;
-    private static final double HALF_ANGLE_COS = Math.cos(Math.toRadians(CONE_ANGLE_DEG));
-
-    private final double damage;
+    private static final int WARN = 22;
+    private static final int TEETH = 7;
+    private static final double RADIUS = 6;
 
     public EarthMawAttack(BossHost boss) {
         super(boss);
-        this.damage = plugin.getConfig().getDouble("entities.armor-stand-boss.earth-maw-damage", 9.0);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        if (instance.isFlying) return;
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location origin = stand.getLocation().clone();
-        LivingEntity attacker = stand.entidad();
+    public Timeline choreograph(Stage stage) {
+        Fx fx = stage.fx();
+        double damage = stage.config("entities.armor-stand-boss.earth-maw-damage", 16.0);
+        Vector center = stage.onGround(aimAt(stage, stage.target(), 14));
+        Vector across = Shapes.flat(center.clone().subtract(stage.feet()));
+        Vector along = new Vector(-across.getZ(), 0, across.getX());
+        Timeline t = new Timeline();
+        List<Prop> props = props(t);
+        List<Prop> left = new ArrayList<>();
+        List<Prop> right = new ArrayList<>();
 
-        Vector facing = origin.getDirection().setY(0);
-        if (facing.lengthSquared() < 0.01) facing = new Vector(0, 0, 1);
-        final Vector direction = facing.normalize();
-        Vector side = direction.clone().crossProduct(new Vector(0, 1, 0));
-        final Vector right = side.lengthSquared() < 0.01 ? new Vector(1, 0, 0) : side.normalize();
+        tweenTo(t, stage, 0, WARN, Poses.CAST_GROUND, Ease.IN_OUT);
+        t.span(0, WARN, (tick, p) -> {
+            if (tick % 2 == 0) Telegraph.circle(stage, center, RADIUS, p);
+            fx.line(stage.body().rightHand(), center.clone().add(new Vector(0, 0.5, 0)), 1.2,
+                    fx.dust(Palette.MOLTEN, 1.0f).sometimes(0.5));
+            fx.crumble(stage.groundMaterial(center), 4, RADIUS * 0.6).at(center);
+        });
+        t.at(0, () -> fx.sound(center, Sfx.RAVAGER_ROAR, 2f, 0.5f));
 
-        if (plugin.getMagicSealListener() != null) {
-            plugin.getMagicSealListener().spawnQuakeSeal(
-                    origin.clone().add(direction.clone().multiply(2.6)).add(0, 0.3, 0), 60);
-        }
-
-        new BukkitRunnable() {
-            int t = 0;
-
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid() || t > 70) {
-                    cancel();
-                    return;
-                }
-
-                Location center = stand.getLocation();
-
-                if (t < WIND_UP_TICKS) {
-                    double p = (double) t / WIND_UP_TICKS;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-55 * p), Math.toRadians(55 * p), Math.toRadians(45 * p)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-55 * p), Math.toRadians(-55 * p), Math.toRadians(-45 * p)));
-                    stand.setBodyPose(new EulerAngle(Math.toRadians(26 * p), 0, 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(24 * p), 0, 0));
-                    stand.setRightLegPose(new EulerAngle(Math.toRadians(-14 * p), 0, 0));
-                    stand.setLeftLegPose(new EulerAngle(Math.toRadians(14 * p), 0, 0));
-
-                    drawJaws(world, center, direction, right, 0.15 + p * 0.85, p);
-                    if (t == 0) world.playSound(center, Sound.BLOCK_BASALT_BREAK, 1.3f, 0.6f);
-                    if (t % 6 == 0) world.playSound(center, Sound.ENTITY_RAVAGER_ROAR, 0.7f, 0.7f + (float) p * 0.3f);
-                } else if (t == WIND_UP_TICKS) {
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-20), Math.toRadians(20), Math.toRadians(80)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-20), Math.toRadians(-20), Math.toRadians(-80)));
-                    stand.setBodyPose(new EulerAngle(Math.toRadians(32), 0, 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(18), 0, 0));
-
-                    world.playSound(center, Sound.ENTITY_RAVAGER_ATTACK, 2.0f, 0.6f);
-                    world.playSound(center, Sound.ENTITY_PHANTOM_BITE, 1.6f, 0.5f);
-                    world.playSound(center, Sound.BLOCK_ANVIL_LAND, 1.2f, 0.7f);
-                    drawSnap(world, center, direction, right);
-                    bite(center, direction, attacker);
-                } else if (t < WIND_UP_TICKS + 26) {
-                    if (t % 8 == 0) {
-                        world.playSound(center, Sound.ENTITY_RAVAGER_ATTACK, 0.8f, 0.4f);
-                    }
-                    world.spawnParticle(Particle.BLOCK, center.clone().add(direction.clone().multiply(3.0)).add(0, 0.2, 0),
-                            6, 1.4, 0.2, 1.4, 0.02, Material.COARSE_DIRT.createBlockData());
-                } else {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
-    }
-
-    /** Two rows of teeth along the cone, opening as {@code open} grows from 0 to 1. */
-    private void drawJaws(World world, Location center, Vector direction, Vector right, double open, double charge) {
-        double spread = CONE_ANGLE_DEG * (0.35 + 0.65 * open);
-        double gap = 1.15 * open;
-
-        for (double dist = 1.4; dist <= CONE_LENGTH; dist += 0.55) {
-            for (double angle = -spread; angle <= spread; angle += spread / 3.0) {
-                double rad = Math.toRadians(angle);
-                Vector offset = direction.clone().multiply(Math.cos(rad) * dist)
-                        .add(right.clone().multiply(Math.sin(rad) * dist));
-                double taper = 1.0 - (dist / CONE_LENGTH) * 0.45;
-
-                Location upper = center.clone().add(offset).add(0, 0.95 + gap, 0);
-                Location lower = center.clone().add(offset).add(0, 0.1 - gap * 0.4, 0);
-                world.spawnParticle(Particle.BLOCK, upper, 1, 0.05, 0.05, 0.05, 0,
-                        Material.DEEPSLATE.createBlockData());
-                world.spawnParticle(Particle.BLOCK, lower, 1, 0.05, 0.05, 0.05, 0,
-                        Material.DEEPSLATE.createBlockData());
-                if (charge > 0.7) {
-                    world.spawnParticle(Particle.FALLING_DUST, upper, 1, 0.05, 0.05, 0.05, 0,
-                            Material.GRAVEL.createBlockData());
-                }
-                if (taper < 0.6) {
-                    world.spawnParticle(Particle.DUST, upper, 1, 0.1, 0.05, 0.1, 0,
-                            new org.bukkit.Particle.DustOptions(org.bukkit.Color.fromRGB(0x6B4A2B), 0.8f));
+        // Two rows of teeth, one on each side of the circle.
+        t.at(WARN, () -> {
+            for (int side = -1; side <= 1; side += 2) {
+                for (int i = 0; i < TEETH; i++) {
+                    double offset = (i - (TEETH - 1) / 2.0) * 1.7;
+                    Vector base = stage.onGround(center.clone().add(along.clone().multiply(offset)).add(across.clone().multiply(side * RADIUS)));
+                    Vector lean = across.clone().multiply(-side * 0.25).add(new Vector(0, 1, 0)).normalize();
+                    Prop tooth = stage.block(i % 2 == 0 ? Material.BONE_BLOCK : Material.BASALT, base.subtract(new Vector(0, 0.3, 0)), 1.0f, Prop.pointing(lean));
+                    tooth.resize(1.0f, 0.1f, Prop.pointing(lean), 0);
+                    props.add(tooth);
+                    (side < 0 ? left : right).add(tooth);
                 }
             }
-        }
-    }
-
-    /** The rows collapse inwards and a dust wave closes the cone. */
-    private void drawSnap(World world, Location center, Vector direction, Vector right) {
-        for (double dist = 1.4; dist <= CONE_LENGTH; dist += 0.5) {
-            for (double angle = -CONE_ANGLE_DEG; angle <= CONE_ANGLE_DEG; angle += 10.0) {
-                double rad = Math.toRadians(angle);
-                Vector offset = direction.clone().multiply(Math.cos(rad) * dist)
-                        .add(right.clone().multiply(Math.sin(rad) * dist));
-                world.spawnParticle(Particle.BLOCK, center.clone().add(offset).add(0, 0.5, 0), 4, 0.2, 0.35, 0.2, 0.05,
-                        Material.DEEPSLATE.createBlockData());
+            fx.sound(center, Sfx.WITHER_BREAK_BLOCK, 2f, 0.6f);
+        });
+        t.at(WARN + 1, () -> {
+            for (int i = 0; i < props.size(); i++) {
+                int side = i < TEETH ? -1 : 1;
+                Vector lean = across.clone().multiply(-side * 0.25).add(new Vector(0, 1, 0)).normalize();
+                props.get(i).resize(1.0f, (float) (3.5 + (i % 3) * 0.8), Prop.pointing(lean), 5);
             }
-            world.spawnParticle(Particle.CLOUD, center.clone().add(direction.clone().multiply(dist)).add(0, 0.3, 0),
-                    6, 0.5, 0.15, 0.5, 0.04);
-        }
-        world.spawnParticle(Particle.EXPLOSION, center.clone().add(direction.clone().multiply(2.5)).add(0, 0.4, 0),
-                8, 1.4, 0.3, 1.4, 0);
+        });
+        // The jaw snaps: both rows tip inwards over the circle.
+        int snap = WARN + 8;
+        t.at(snap, () -> {
+            for (int i = 0; i < props.size(); i++) {
+                int side = i < TEETH ? -1 : 1;
+                Vector bite = across.clone().multiply(-side).add(new Vector(0, 0.35, 0)).normalize();
+                props.get(i).resize(1.0f, (float) (RADIUS + 0.5), Prop.pointing(bite), 3);
+            }
+            fx.sound(center, Sfx.EVOKER_FANGS, 3f, 0.5f);
+        });
+        t.at(snap + 3, () -> {
+            fx.draw(Shapes.ring(center, RADIUS * 0.5, 0.6, 0), fx.crumble(Material.BONE_BLOCK, 4, 0.4));
+            fx.burst(center.clone().add(new Vector(0, 1.5, 0)), Particle.CRIT, 30, 0.6);
+            fx.sound(center, Sfx.BONE_BREAK, 2.5f, 0.6f);
+            stage.hit(Area.cylinder(center, RADIUS, 1, 4), damage, victim -> {
+                victim.effect(Affliction.SLOWNESS, 80, 3);
+                victim.push(new Vector(0, 0.4, 0));
+            });
+        });
+        t.at(snap + 30, () -> {
+            for (Prop tooth : props) tooth.reshape(0.1f, new org.joml.Quaternionf(), 10);
+            fx.draw(Shapes.ring(center, RADIUS, 0.8, 0), fx.crumble(Material.BASALT, 3, 0.4));
+        });
+        recover(t, stage, WARN + 4, WARN + 20, Poses.GUARD);
+        t.hold(snap + 42);
+        return t;
     }
 
-    /** Everyone inside the cone is bitten, dragged towards the centre and slowed. */
-    private void bite(Location center, Vector direction, LivingEntity attacker) {
-        World world = center.getWorld();
-        for (Player p : boss.getValidPlayers(world)) {
-            Location pl = p.getLocation();
-            Vector toPlayer = pl.toVector().subtract(center.toVector());
-            double dy = toPlayer.getY();
-            Vector flat = toPlayer.clone().setY(0);
-            double distance = flat.length();
-            if (distance > CONE_LENGTH || dy < -1.5 || dy > 2.8) continue;
-
-            Vector flatDir = distance < 0.01 ? direction.clone() : flat.clone().normalize();
-            if (flatDir.dot(direction) < HALF_ANGLE_COS) continue;
-
-            MscEntityUtils.damageBy(attacker, p, damage);
-            // Dragged inwards, into the jaws: the cone points away from the boss, so the pull is reversed.
-            Vector pull = direction.clone().multiply(-0.34).setY(0.22);
-            p.setVelocity(p.getVelocity().add(pull));
-            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0));
-            world.spawnParticle(Particle.DAMAGE_INDICATOR, pl.clone().add(0, 1, 0), 8, 0.35, 0.4, 0.35, 0.08);
-        }
+    @Override
+    public int lockTicks(Timeline timeline) {
+        return WARN + 20;
     }
 
     @Override

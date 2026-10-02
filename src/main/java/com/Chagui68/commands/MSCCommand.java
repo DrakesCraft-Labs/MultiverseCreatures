@@ -441,6 +441,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         if (plugin.getWarlord() != null) plugin.getWarlord().reloadConfig();
         if (plugin.getNixBoss() != null) plugin.getNixBoss().reloadConfig();
         if (plugin.getJackStarBoss() != null) plugin.getJackStarBoss().reloadConfig();
+        if (plugin.getDioBoss() != null) plugin.getDioBoss().reloadConfig();
         if (added.isEmpty()) {
             sender.sendMessage(GREEN + "Configuration reloaded. All changes have been applied.");
         } else {

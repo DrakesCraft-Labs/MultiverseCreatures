@@ -1,75 +1,99 @@
 package com.Chagui68.entities.boss.attack.ranged;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Bolts;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
+import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class ChainLightningAttack extends BossAttackBase {
+/**
+ * Chain Lightning: crackling rings mark every player in reach, then a bolt leaves the spear and
+ * jumps from one marked player to the next, nearest first, losing strength with each jump.
+ */
+public class ChainLightningAttack extends ChoreographedAttack.Ranged {
+
+    private static final int MARK = 20;
+    private static final int JUMP = 3;
+    private static final int MAX_JUMPS = 5;
+
     public ChainLightningAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        List<Player> targets = boss.getValidPlayersNear(center, 10000);
-        if (targets.isEmpty()) return;
+    public Timeline choreograph(Stage stage) {
+        List<Victim> chain = order(stage);
+        if (chain.isEmpty()) return null;
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.75);
+        Timeline t = new Timeline();
 
-        new BukkitRunnable() {
-            int t = 0;
-            int strikes = 0;
-
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid() || t > 100) {
-                    cancel();
-                    return;
-                }
-                if (t < 25) {
-                    double phase = (double) t / 25;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-180 * phase), Math.toRadians(60), 0));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-180 * phase), Math.toRadians(-60), 0));
-                    stand.setHeadPose(new EulerAngle(Math.toRadians(-20 * phase), 0, 0));
-                    world.spawnParticle(Particle.ELECTRIC_SPARK, center.clone().add(0, 1, 0), 2, 1, 0.5, 1, 0.02);
-                    if (t == 1) world.playSound(center, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.5f, 1.5f);
-                } else if (strikes < targets.size()) {
-                    if (t % 12 == 0) {
-                        Player p = targets.get(strikes % targets.size());
-                        strikes++;
-                        world.strikeLightningEffect(p.getLocation());
-                        MscEntityUtils.damageBy(stand.entidad(), p, sealDamage * 0.5);
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 80, 1));
-                        for (Player near : boss.getValidPlayers(world)) {
-                            if (near != p && near.getLocation().distanceSquared(p.getLocation()) < 16) {
-                                MscEntityUtils.damageBy(stand.entidad(), near, sealDamage * 0.3);
-                                world.spawnParticle(Particle.ELECTRIC_SPARK, near.getLocation(), 8, 0.3, 0.5, 0.3, 0.1);
-                            }
-                        }
-                        world.playSound(p.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.5f, 0.7f);
-                    }
-                } else {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
+        tweenTo(t, stage, 0, MARK, Poses.SPEAR_RAISED, Ease.OUT);
+        t.span(0, MARK, (tick, p) -> {
+            Vector tip = stage.body().spearTip();
+            fx.cloud(Particle.ELECTRIC_SPARK, tip, 5, 0.5, 0.1);
+            if (tick % 3 == 0) Bolts.bolt(fx, stage.body().rightHand(), tip, stage.random());
+            for (Victim victim : chain) {
+                fx.draw(Shapes.circle(victim.chest(), 1.2, 10, Shapes.FLAT_U, Shapes.FLAT_V, tick * 0.4),
+                        fx.dust(Palette.mix(Palette.STORM, Palette.ICE, p), 1.2f));
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+        });
+        t.at(0, () -> fx.sound(stage.feet(), Sfx.BEACON_POWER, 2f, 1.6f));
+        t.at(MARK - 6, () -> fx.sound(stage.feet(), Sfx.TRIDENT_THUNDER, 2f, 1.4f));
+
+        for (int i = 0; i < chain.size(); i++) {
+            int index = i;
+            double hitDamage = damage * Math.pow(0.8, i);
+            t.span(MARK + i * JUMP, MARK + i * JUMP + JUMP, (tick, p) -> {
+                Vector from = index == 0 ? stage.body().spearTip() : chain.get(index - 1).chest();
+                Bolts.bolt(fx, from, chain.get(index).chest(), stage.random());
+                if (tick == 0) {
+                    Victim victim = chain.get(index);
+                    stage.damage(victim, hitDamage);
+                    victim.effect(Affliction.SLOWNESS, 30, 2);
+                    fx.flash(victim.chest(), Palette.ICE);
+                    fx.burst(victim.chest(), Particle.ELECTRIC_SPARK, 20, 0.4);
+                    fx.sound(victim.position(), Sfx.LIGHTNING_IMPACT, 1.5f, 1.2f + index * 0.1f);
+                }
+            });
+        }
+        int end = MARK + chain.size() * JUMP;
+        tween(t, stage, MARK, MARK + 4, Poses.SPEAR_RAISED, Poses.CAST_FORWARD, Ease.OUT);
+        recover(t, stage, end + 2, end + 16, Poses.GUARD);
+        return t;
+    }
+
+    /** The chain's order: the nearest player to the boss, then each next nearest to the last. */
+    private static List<Victim> order(Stage stage) {
+        List<Victim> left = new ArrayList<>(stage.victims());
+        List<Victim> chain = new ArrayList<>();
+        Vector from = stage.feet();
+        while (!left.isEmpty() && chain.size() < MAX_JUMPS) {
+            Victim nearest = null;
+            for (Victim victim : left) {
+                if (nearest == null || victim.position().distanceSquared(from) < nearest.position().distanceSquared(from)) {
+                    nearest = victim;
+                }
+            }
+            if (!chain.isEmpty() && nearest.position().distance(from) > 16) break;
+            chain.add(nearest);
+            left.remove(nearest);
+            from = nearest.position();
+        }
+        return chain;
     }
 
     @Override

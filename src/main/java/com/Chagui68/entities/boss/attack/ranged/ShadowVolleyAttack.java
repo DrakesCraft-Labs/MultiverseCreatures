@@ -1,105 +1,104 @@
 package com.Chagui68.entities.boss.attack.ranged;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Affliction;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Missile;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-public class ShadowVolleyAttack extends BossAttackBase {
+/**
+ * Shadow Volley: shards of darkness gather in a fan behind the Sentinel's hands, then fly one after
+ * another, each bending a little towards its mark and leaving a smear of shadow behind it.
+ */
+public class ShadowVolleyAttack extends ChoreographedAttack.Ranged {
+
+    private static final int GATHER = 16;
+    private static final int BOLTS = 9;
+    private static final double SPEED = 1.5;
+
     public ShadowVolleyAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        Player target = boss.detectTarget(stand);
-        if (target == null) return;
+    public Timeline choreograph(Stage stage) {
+        if (stage.victims().isEmpty()) return null;
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.35);
+        List<Victim> victims = stage.victims();
+        Timeline t = new Timeline();
+        List<Missile> missiles = new ArrayList<>();
+        cleanupMissiles(t, missiles);
 
-        Vector baseDir = target.getLocation().toVector().subtract(center.toVector()).normalize();
-        Vector right = baseDir.clone().crossProduct(new Vector(0, 1, 0)).normalize();
-        final double spreadAngle = 0.45;
-
-        new BukkitRunnable() {
-            int t = 0;
-            int volley = 0;
-            final List<Location> projectiles = new ArrayList<>();
-            final List<Vector> directions = new ArrayList<>();
-
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid() || t > 80) {
-                    cancel();
-                    return;
-                }
-                if (t < 20) {
-                    double phase = (double) t / 20;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-120 * phase), Math.toRadians(30), Math.toRadians(40 * phase)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-120 * phase), Math.toRadians(-30), Math.toRadians(-40 * phase)));
-                    if (t == 1) world.playSound(center, Sound.ENTITY_WITHER_SHOOT, 0.8f, 0.4f);
-                } else if (volley < 5) {
-                    if (t % 3 == 0) {
-                        double offset = (volley - 2) * spreadAngle;
-                        Vector dir = baseDir.clone();
-                        Vector finalDir = dir.clone().multiply(Math.cos(offset))
-                                .add(right.clone().multiply(Math.sin(offset))).normalize();
-                        projectiles.add(center.clone().add(0, 1.5, 0));
-                        directions.add(finalDir);
-                        volley++;
-                        world.playSound(center, Sound.ENTITY_ARROW_SHOOT, 0.7f, 0.6f);
-                    }
-                }
-                Iterator<Location> it = projectiles.iterator();
-                Iterator<Vector> itd = directions.iterator();
-                while (it.hasNext()) {
-                    Location p = it.next();
-                    Vector d = itd.next();
-                    p.add(d.clone().multiply(1.3));
-                    world.spawnParticle(Particle.PORTAL, p, 3, 0.1, 0.1, 0.1, 0.05);
-                    world.spawnParticle(Particle.DUST, p, 1, 0, 0, 0, 0,
-                            new Particle.DustOptions(Color.fromRGB(0x330044), 1.5f));
-                    for (Player pl : boss.getValidPlayers(world)) {
-                        if (pl.getLocation().distanceSquared(p) < 4) {
-                            MscEntityUtils.damageBy(stand.entidad(), pl, sealDamage * 0.5);
-                            pl.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 1));
-                            pl.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0));
-                            world.spawnParticle(Particle.EXPLOSION, p, 3, 0.3, 0.3, 0.3, 0);
-                            it.remove();
-                            itd.remove();
-                            break;
-                        }
-                    }
-                    if (p.distanceSquared(center) > 1600) {
-                        it.remove();
-                        itd.remove();
-                    }
-                }
-                if (volley >= 5 && projectiles.isEmpty()) {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
+        tweenTo(t, stage, 0, GATHER, Poses.CAST_FORWARD, Ease.IN_OUT);
+        t.span(0, GATHER, (tick, p) -> {
+            for (int i = 0; i < BOLTS; i++) {
+                Vector at = fanPoint(stage, i);
+                fx.draw(Shapes.sphere(at, 0.3 + p * 0.4, 6), fx.dust(Palette.VOID_DEEP, 1.6f));
+                if (tick % 3 == 0) fx.cloud(Particle.SQUID_INK, at, 1, 0.1, 0.01);
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+        });
+        t.at(0, () -> fx.sound(stage.feet(), Sfx.EVOKER_CAST, 2f, 0.8f));
+
+        for (int i = 0; i < BOLTS; i++) {
+            int index = i;
+            t.at(GATHER + i * 2, () -> {
+                Victim mark = victims.get(index % victims.size());
+                Vector from = fanPoint(stage, index);
+                Vector velocity = mark.chest().subtract(from).normalize().multiply(SPEED)
+                        .add(stage.body().right().multiply((index - BOLTS / 2) * 0.08));
+                Missile missile = new Missile(from, velocity, 1.2)
+                        .homing(mark, 0.06)
+                        .look((at, dir, age) -> {
+                            fx.dust(Palette.VOID_DEEP, 2.0f).at(at);
+                            fx.line(at, at.clone().subtract(dir.clone().multiply(2.5)), 0.5, fx.fade(Palette.VOID, Palette.VOID_DEEP, 1.2f));
+                            if (age % 2 == 0) fx.cloud(Particle.SMOKE, at, 1, 0.1, 0);
+                        })
+                        .onHit(victim -> {
+                            stage.damage(victim, damage);
+                            victim.effect(Affliction.DARKNESS, 50, 0);
+                        })
+                        .onBurst(at -> {
+                            fx.burst(at, Particle.SQUID_INK, 10, 0.2);
+                            fx.draw(Shapes.sphere(at, 0.9, 12), fx.dust(Palette.AMETHYST, 1.4f));
+                            fx.sound(at, Sfx.WITHER_SHOOT, 0.8f, 1.6f);
+                        });
+                missiles.add(missile);
+                fly(t, stage, GATHER + index * 2 + 1, 50, missile);
+                fx.sound(from, Sfx.BREEZE_SHOOT, 1f, 1.4f);
+            });
+        }
+        recover(t, stage, GATHER + BOLTS * 2, GATHER + BOLTS * 2 + 14, Poses.GUARD);
+        t.hold(GATHER + BOLTS * 2 + 52);
+        return t;
+    }
+
+    /** Where shard {@code i} waits: a fan spread behind and above the hands. */
+    private static Vector fanPoint(Stage stage, int i) {
+        Vector hands = stage.body().rightHand().midpoint(stage.body().leftHand());
+        double angle = Math.PI * (i + 0.5) / BOLTS;
+        return hands.clone()
+                .add(stage.body().right().multiply(Math.cos(angle) * 5))
+                .add(new Vector(0, Math.sin(angle) * 4, 0))
+                .subtract(stage.forward().multiply(1));
+    }
+
+    @Override
+    public int lockTicks(Timeline timeline) {
+        return GATHER + BOLTS * 2 + 14;
     }
 
     @Override

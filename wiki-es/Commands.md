@@ -35,6 +35,7 @@ Invoca una sola entidad (o una formación táctica) en la ubicación del ejecuto
 | `kinger` | Minijefe Kinger |
 | `garou` | Minijefe Garou [Hero Hunter] |
 | `nix` (`executioner`, `nixelverdugo`) | NIX - El Verdugo (jefe con modelo custom de 27 piezas) |
+| `dio` (`diobrando`, `theworld`) | DIO con su Stand The World (jefe de JoJo's Bizarre Adventure) |
 | `armorstand` (`armorstandboss`) | EL CENTINELA DE OBSIDIANA, jefe final |
 | `jack` | JACK STAR — El Arquitecto del Sistema (5 fases, 3 vidas) |
 | `creeperjr` | Creeper Jr. (×3 — aparece en trío) |
@@ -206,17 +207,17 @@ Manipula un ArmorStand de prueba usado para posar/vista previa de contenido. Út
 
 Dispara un ataque, defensa o mecánica de transición de fase del ArmorStandBoss por nombre. Encuentra el jefe más cercano dentro de `rango` bloques (por defecto `aggro-range` = 50) y lo ejecuta.
 
-### Ataques de suelo (18)
+### Ataques de suelo (21)
 
-`groundslam`, `groundshatter`, `shieldbash`, `lancestorm`, `earthpillar`, `chaingrapple`, `warstomp`, `armorspikes`, `vortexpull`, `mirrorimage`, `doombeam`, `lanceflurry`, `whirlwindslash`, `executionsweep`, `obsidianspire`, `earthmaw`, `shadowstep`, `runeward`
+`groundslam`, `groundshatter`, `shieldbash`, `lancestorm`, `earthpillar`, `chaingrapple`, `warstomp`, `armorspikes`, `vortexpull`, `mirrorimage`, `doombeam`, `lanceflurry`, `whirlwindslash`, `executionsweep`, `obsidianspire`, `earthmaw`, `shadowstep`, `runeward`, `sunderingcharge`, `spearcyclone`, `cataclysm`
 
-### Ataques aéreos (16)
+### Ataques aéreos (18)
 
-`starfall`, `aerialrush`, `sonicboom`, `lightningstorm`, `gravitywell`, `crossslash`, `novaburst`, `darkorb`, `windcutter`, `heavenlyjudgment`, `rainoflances`, `airslam`, `hoverbarrage` (alias `crossbarrage`), `eclipsefall`, `bladering`, `obsidianwings`
+`starfall`, `aerialrush`, `sonicboom`, `lightningstorm`, `gravitywell`, `crossslash`, `novaburst`, `darkorb`, `windcutter`, `heavenlyjudgment`, `rainoflances`, `airslam`, `hoverbarrage` (alias `crossbarrage`), `eclipsefall`, `bladering`, `obsidianwings`, `voidmeteor`, `phantomlegion`
 
-### Ataques a distancia (15)
+### Ataques a distancia (16)
 
-`lancesnipe`, `meteorstorm`, `voidbeam`, `frostlance`, `lightningspear`, `shadowvolley`, `chainlightning`, `crystalbarrage`, `arcaneorb`, `voidrift`, `arcanemissiles`, `spiritbeam`, `soultethers`, `plaguebrand`, `runemines`
+`lancesnipe`, `meteorstorm`, `voidbeam`, `frostlance`, `lightningspear`, `shadowvolley`, `chainlightning`, `crystalbarrage`, `arcaneorb`, `voidrift`, `arcanemissiles`, `spiritbeam`, `soultethers`, `plaguebrand`, `runemines`, `obsidianprison`
 
 ### Transiciones de fase
 

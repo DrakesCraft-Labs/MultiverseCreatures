@@ -1,102 +1,96 @@
 package com.Chagui68.entities.boss.attack.ranged;
 
-import com.Chagui68.entities.boss.BossPuppet;
-import com.Chagui68.entities.BossInstance;
-import com.Chagui68.entities.boss.attack.BossAttackBase;
 import com.Chagui68.entities.boss.BossHost;
-import com.Chagui68.utils.MscEntityUtils;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import com.Chagui68.entities.boss.attack.ChoreographedAttack;
+import com.Chagui68.entities.boss.fx.Ease;
+import com.Chagui68.entities.boss.fx.Fx;
+import com.Chagui68.entities.boss.fx.Missile;
+import com.Chagui68.entities.boss.fx.Palette;
+import com.Chagui68.entities.boss.fx.Poses;
+import com.Chagui68.entities.boss.fx.Sfx;
+import com.Chagui68.entities.boss.fx.Shapes;
+import com.Chagui68.entities.boss.fx.Stage;
+import com.Chagui68.entities.boss.fx.Timeline;
+import com.Chagui68.entities.boss.fx.Victim;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-public class ArcaneMissilesAttack extends BossAttackBase {
+/**
+ * Arcane Missiles: a ring of sparks spins up around the Sentinel's hands and spits a dozen small
+ * homing missiles, each thrown out sideways before it curls round onto its mark.
+ */
+public class ArcaneMissilesAttack extends ChoreographedAttack.Ranged {
+
+    private static final int SPIN = 14;
+    private static final int MISSILES = 12;
+    private static final double SPEED = 1.1;
+
     public ArcaneMissilesAttack(BossHost boss) {
         super(boss);
     }
 
     @Override
-    public void execute(BossInstance instance) {
-        BossPuppet stand = instance.stand;
-        World world = stand.getWorld();
-        Location center = stand.getLocation();
-        Player target = boss.detectTarget(stand);
-        if (target == null) return;
+    public Timeline choreograph(Stage stage) {
+        if (stage.victims().isEmpty()) return null;
+        Fx fx = stage.fx();
+        double damage = seal(stage, 0.25);
+        List<Victim> victims = stage.victims();
+        Timeline t = new Timeline();
+        List<Missile> missiles = new ArrayList<>();
+        cleanupMissiles(t, missiles);
 
-        new BukkitRunnable() {
-            int t = 0;
-            int missilesFired = 0;
-            final List<Location> missiles = new ArrayList<>();
-            final List<Vector> missileDirs = new ArrayList<>();
+        tweenTo(t, stage, 0, SPIN, Poses.CAST_FORWARD, Ease.IN_OUT);
+        t.span(0, SPIN + MISSILES * 2, (tick, p) -> {
+            Vector core = core(stage);
+            Vector[] axes = Shapes.planeAxes(stage.forward());
+            fx.draw(Shapes.circle(core, 2.2, 12, axes[0], axes[1], tick * 0.4), fx.dust(Palette.SPECTRAL, 1.4f));
+            fx.draw(Shapes.circle(core, 1.4, 8, axes[0], axes[1], -tick * 0.6), fx.dust(Palette.AMETHYST, 1.2f));
+        });
+        t.at(0, () -> fx.sound(stage.feet(), Sfx.ENCHANT, 2f, 1.4f));
 
-            @Override
-            public void run() {
-                if (stand.isDead() || !stand.isValid() || t > 110) {
-                    cancel();
-                    return;
-                }
-                if (t < 22) {
-                    double phase = (double) t / 22;
-                    stand.setRightArmPose(new EulerAngle(Math.toRadians(-120 * phase), Math.toRadians(45), Math.toRadians(30 * phase)));
-                    stand.setLeftArmPose(new EulerAngle(Math.toRadians(-120 * phase), Math.toRadians(-45), Math.toRadians(-30 * phase)));
-                    if (t == 1) world.playSound(center, Sound.ENTITY_BLAZE_SHOOT, 1.0f, 0.5f);
-                } else if (missilesFired < 4) {
-                    if (t % 8 == 0) {
-                        missilesFired++;
-                        Vector dir = target.getLocation().toVector().subtract(center.toVector()).normalize();
-                        missiles.add(center.clone().add(0, 1.5, 0));
-                        missileDirs.add(dir);
-                        world.playSound(center, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.8f, 0.5f);
-                    }
-                }
-                Iterator<Location> it = missiles.iterator();
-                Iterator<Vector> itd = missileDirs.iterator();
-                while (it.hasNext()) {
-                    Location p = it.next();
-                    Vector d = itd.next();
-                    if (target.isOnline()) {
-                        Vector toT = target.getLocation().toVector().subtract(p.toVector());
-                        if (toT.lengthSquared() > 0.1) {
-                            d.add(toT.normalize().multiply(0.04));
-                            if (d.lengthSquared() > 1.5) d.normalize().multiply(1.2);
-                        }
-                    }
-                    p.add(d);
-                    world.spawnParticle(Particle.FLAME, p, 3, 0.05, 0.05, 0.05, 0);
-                    world.spawnParticle(Particle.DUST, p, 1, 0, 0, 0, 0,
-                            new Particle.DustOptions(Color.fromRGB(0xFF6644), 1.5f));
-                    for (Player pl : boss.getValidPlayers(world)) {
-                        if (pl.getLocation().distanceSquared(p) < 5) {
-                            MscEntityUtils.damageBy(stand.entidad(), pl, sealDamage * 0.4);
-                            pl.setFireTicks(40);
-                            world.spawnParticle(Particle.EXPLOSION, p, 4, 0.3, 0.3, 0.3, 0);
-                            it.remove();
-                            itd.remove();
-                            break;
-                        }
-                    }
-                    if (p.distanceSquared(center) > 2500) {
-                        it.remove();
-                        itd.remove();
-                    }
-                }
-                if (missilesFired >= 4 && missiles.isEmpty()) {
-                    boss.resetBossPose(instance);
-                    cancel();
-                }
-                t++;
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
+        for (int i = 0; i < MISSILES; i++) {
+            int index = i;
+            t.at(SPIN + i * 2, () -> {
+                Victim mark = victims.get(index % victims.size());
+                Vector core = core(stage);
+                Vector[] axes = Shapes.planeAxes(stage.forward());
+                Vector out = Shapes.onCircle(new Vector(), 1, index * 2.4, axes[0], axes[1]);
+                Vector from = core.clone().add(out.clone().multiply(2.2));
+                Vector velocity = out.clone().multiply(0.8).add(stage.forward().multiply(0.6)).normalize().multiply(SPEED);
+                Missile missile = new Missile(from, velocity, 1.0)
+                        .homing(mark, 0.14)
+                        .look((at, dir, age) -> {
+                            fx.dust(Palette.SPECTRAL, 1.6f).at(at);
+                            fx.line(at, at.clone().subtract(dir.clone().multiply(1.6)), 0.4, fx.dust(Palette.AMETHYST, 1.0f));
+                            if (age % 3 == 0) fx.cloud(Particle.END_ROD, at, 1, 0.05, 0);
+                        })
+                        .onHit(victim -> stage.damage(victim, damage))
+                        .onBurst(at -> {
+                            fx.burst(at, Particle.END_ROD, 8, 0.2);
+                            fx.draw(Shapes.sphere(at, 0.8, 10), fx.dust(Palette.SPECTRAL, 1.4f));
+                            fx.sound(at, Sfx.AMETHYST_CHIME, 1f, 1.6f);
+                        });
+                missiles.add(missile);
+                fly(t, stage, SPIN + index * 2 + 1, 60, missile);
+                fx.sound(from, Sfx.SHULKER_SHOOT, 0.8f, 1.8f);
+            });
+        }
+        int end = SPIN + MISSILES * 2;
+        recover(t, stage, end, end + 14, Poses.GUARD);
+        t.hold(end + 62);
+        return t;
+    }
+
+    private static Vector core(Stage stage) {
+        return stage.body().rightHand().midpoint(stage.body().leftHand()).add(stage.forward().multiply(2));
+    }
+
+    @Override
+    public int lockTicks(Timeline timeline) {
+        return SPIN + MISSILES * 2 + 14;
     }
 
     @Override

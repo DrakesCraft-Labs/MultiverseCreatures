@@ -13,6 +13,8 @@ import java.util.List;
 final class MscKillFilter {
 
     private static final String TAG_PREFIX = "MSC_";
+    /** JackStar predates the prefix convention: his stand, body, minions and props are tagged in lowercase. */
+    private static final String JACK_TAG_PREFIX = "msc_jackstar_";
 
     /**
      * Fallback names for creatures that historically spawned without the {@code MSC_} tag. Kept
@@ -28,7 +30,7 @@ final class MscKillFilter {
     static boolean hasPluginTag(Collection<String> scoreboardTags) {
         if (scoreboardTags == null) return false;
         for (String tag : scoreboardTags) {
-            if (tag != null && tag.startsWith(TAG_PREFIX)) return true;
+            if (tag != null && (tag.startsWith(TAG_PREFIX) || tag.startsWith(JACK_TAG_PREFIX))) return true;
         }
         return false;
     }
