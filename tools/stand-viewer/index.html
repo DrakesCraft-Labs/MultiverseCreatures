@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stand Model Viewer</title>
+<style>
+  :root { --bg: #15171c; --panel: #1f232b; --text: #e6e8ec; --muted: #9aa3b2; --accent: #f2c230; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #bar { position: fixed; top: 0; left: 0; right: 0; display: flex; flex-wrap: wrap; gap: 12px;
+    align-items: center; padding: 10px 16px; background: var(--panel); z-index: 2; }
+  #bar h1 { font-size: 15px; margin: 0 8px 0 0; color: var(--accent); }
+  select, button { background: #2a2f39; color: var(--text); border: 1px solid #3a404c; border-radius: 6px;
+    padding: 6px 10px; font: inherit; }
+  label { color: var(--muted); display: flex; gap: 6px; align-items: center; }
+  #info { position: fixed; left: 16px; bottom: 12px; color: var(--muted); font-size: 12px; z-index: 2; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <h1>Stand Model Viewer</h1>
+  <label>Stand <select id="stand"></select></label>
+  <label>Pose <select id="pose"></select></label>
+  <label><input type="checkbox" id="all"> All Stands side by side</label>
+  <label><input type="checkbox" id="spin" checked> Turn</label>
+  <label title="Draw the Stands with the skins of tools/stand-skins on The World's eleven heads"><input type="checkbox" id="painted"> Painted skins</label>
+  <button id="front">Front</button><button id="side">Side</button><button id="back">Back</button>
+</div>
+<div id="info"></div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+// Approximate colours of the blocks the Stands are built from.
+const COLORS = {
+  LIGHT_BLUE_TERRACOTTA: 0x716c89, BLUE_TERRACOTTA: 0x4a3b5b, GOLD_BLOCK: 0xf6d03d, YELLOW_TERRACOTTA: 0xba8523,
+  RED_TERRACOTTA: 0x8f3d2e, BROWN_TERRACOTTA: 0x4d3324, SHROOMLIGHT: 0xf09040, PINK_CONCRETE: 0xd5658e,
+  MAGENTA_TERRACOTTA: 0x96586c, LIGHT_BLUE_CONCRETE: 0x2389c6, WHITE_TERRACOTTA: 0xd1b2a1,
+  PURPLE_TERRACOTTA: 0x764656, WHITE_CONCRETE: 0xcfd5d6, CYAN_CONCRETE: 0x157788, BLACK_CONCRETE: 0x080a0f,
+  RED_CONCRETE: 0x8e2020, EMERALD_BLOCK: 0x2acb57, LIGHT_GRAY_CONCRETE: 0x7d7d73, GRAY_CONCRETE: 0x36393d,
+  ORANGE_TERRACOTTA: 0xa15325, YELLOW_CONCRETE: 0xf0af15, ORANGE_CONCRETE: 0xe06101, DIAMOND_BLOCK: 0x62ede4,
+  PURPLE_CONCRETE: 0x64209c, MAGENTA_CONCRETE: 0xa9309f, PINK_TERRACOTTA: 0xa14e4e, IRON_BLOCK: 0xdcdcdc,
+  NETHERITE_BLOCK: 0x42393a, QUARTZ_BLOCK: 0xece6df, BONE_BLOCK: 0xe5e1cf, GREEN_CONCRETE: 0x495b24,
+  LIME_CONCRETE: 0x5ea918, BLUE_CONCRETE: 0x2c2e8f, PURPLE_STAINED_GLASS: 0x7f3fb2, YELLOW_STAINED_GLASS: 0xe5e533,
+  RED_STAINED_GLASS: 0x993333, PINK_STAINED_GLASS: 0xf27fa5, MAGENTA_STAINED_GLASS: 0xb24cd8,
+  ORANGE_STAINED_GLASS: 0xd87f33, LIGHT_BLUE_STAINED_GLASS: 0x6699d8, WHITE_STAINED_GLASS: 0xffffff,
+  BLACK_TERRACOTTA: 0x251610, GRAY_TERRACOTTA: 0x392a23, CYAN_TERRACOTTA: 0x575b5b, LIME_TERRACOTTA: 0x677534,
+  GREEN_TERRACOTTA: 0x4c532a, LIGHT_GRAY_TERRACOTTA: 0x876b62, POLISHED_BLACKSTONE: 0x35303a,
+  CRYING_OBSIDIAN: 0x200a3c, AMETHYST_BLOCK: 0x8561c1, PEARLESCENT_FROGLIGHT: 0xf5f0f0, OCHRE_FROGLIGHT: 0xfbf2b5,
+  VERDANT_FROGLIGHT: 0xe5f4e4, SEA_LANTERN: 0xacc7be, GLOWSTONE: 0xfcd57a, REDSTONE_BLOCK: 0xaf1805,
+  COPPER_BLOCK: 0xc06c50, RAW_GOLD_BLOCK: 0xdda92e, LAPIS_BLOCK: 0x1f43a0, PRISMARINE: 0x63a39b,
+  CHISELED_QUARTZ_BLOCK: 0xe8e3d9, SMOOTH_QUARTZ: 0xece6df, OBSIDIAN: 0x0f0b19, TUFF: 0x6c6d66,
+};
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x15171c);
+const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.05, 100);
+camera.position.set(0, 1.2, 4.2);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.95, 0);
+controls.update();
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x404050, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(3, 6, 4);
+sun.castShadow = true;
+scene.add(sun);
+const grid = new THREE.GridHelper(12, 12, 0x3a404c, 0x262a33);
+scene.add(grid);
+
+const loader = new THREE.TextureLoader();
+loader.setCrossOrigin("anonymous");
+const skins = new Map();
+function skin(url) {
+  if (!skins.has(url)) {
+    const tex = loader.load(url, undefined, undefined, () => { tex.userData.failed = true; refresh(); });
+    tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.colorSpace = THREE.SRGBColorSpace;
+    skins.set(url, tex);
+  }
+  return skins.get(url);
+}
+
+// A player head: a 0.5 cube hanging below its anchor, its skin's face on -z.
+// Box faces are +x, -x, +y, -y, +z, -z; each gets its 8x8 square of the 64x64 skin.
+function headGeometry(layer) {
+  const size = layer ? 0.5 * 1.125 : 0.5;
+  const g = new THREE.BoxGeometry(size, size, size);
+  g.translate(0, -0.25, 0);
+  const ox = layer ? 32 : 0;
+  const faces = [[0, 8], [16, 8], [8, 0], [16, 0], [24, 8], [8, 8]];
+  const uv = g.attributes.uv;
+  faces.forEach(([px, py], f) => {
+    const u0 = (px + ox) / 64, u1 = (px + ox + 8) / 64, v0 = 1 - py / 64, v1 = 1 - (py + 8) / 64;
+    const quad = [[u0, v0], [u1, v0], [u0, v1], [u1, v1]];
+    for (let i = 0; i < 4; i++) uv.setXY(f * 4 + i, quad[i][0], quad[i][1]);
+  });
+  return g;
+}
+const HEAD = headGeometry(false), HAT = headGeometry(true);
+const CUBE = new THREE.BoxGeometry(1, 1, 1).translate(0.5, 0.5, 0.5);
+
+function place(object, p) {
+  object.position.set(p.t[0], p.t[1], p.t[2]);
+  object.quaternion.set(p.q[0], p.q[1], p.q[2], p.q[3]);
+  object.scale.set(p.s[0], p.s[1], p.s[2]);
+}
+
+// A Stand painted in tools/stand-skins wears The World's eleven heads with its own skins.
+function painted(stand) {
+  const files = paintedBox.checked && manifest && manifest[stand.key];
+  const base = files && data.stands.find(s => s.kind === "heads");
+  return base ? { files, base } : null;
+}
+
+function buildStand(stand, poseName) {
+  const group = new THREE.Group();
+  const paint = painted(stand);
+  const pieces = paint
+      ? (paint.base.poses[poseName] || paint.base.poses.idle).map((p, i) => ({ ...p, skin: "../stand-skins/out/" + paint.files[i] }))
+      : (stand.poses[poseName] || stand.poses.idle);
+  for (const p of pieces) {
+    let mesh;
+    if (p.skin !== undefined) {
+      const tex = skin(p.skin);
+      const failed = tex.userData.failed;
+      const base = new THREE.MeshStandardMaterial(failed ? { color: 0xd4a62a } : { map: tex });
+      mesh = new THREE.Group();
+      mesh.add(new THREE.Mesh(HEAD, base));
+      if (!failed) {
+        mesh.add(new THREE.Mesh(HAT, new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.5 })));
+      }
+    } else {
+      const glass = p.m.includes("GLASS");
+      const material = new THREE.MeshStandardMaterial({
+        color: COLORS[p.m] ?? 0xff00ff, transparent: glass, opacity: glass ? 0.5 : 1,
+        emissive: p.glow ? COLORS[p.m] ?? 0 : 0, emissiveIntensity: p.glow ? 0.6 : 0, roughness: 0.85 });
+      mesh = new THREE.Mesh(CUBE, material);
+      mesh.castShadow = true;
+    }
+    place(mesh, p);
+    group.add(mesh);
+  }
+  return group;
+}
+
+let data, manifest, current = new THREE.Group();
+scene.add(current);
+const standSelect = document.getElementById("stand"), poseSelect = document.getElementById("pose");
+const allBox = document.getElementById("all"), spinBox = document.getElementById("spin");
+const paintedBox = document.getElementById("painted");
+
+function refresh() {
+  if (!data) return;
+  scene.remove(current);
+  current = new THREE.Group();
+  const pose = poseSelect.value;
+  if (allBox.checked) {
+    data.stands.forEach((stand, i) => {
+      const g = buildStand(stand, pose);
+      g.position.x = (i - (data.stands.length - 1) / 2) * 1.6;
+      current.add(g);
+    });
+  } else {
+    current.add(buildStand(data.stands[standSelect.value], pose));
+  }
+  scene.add(current);
+  const stand = data.stands[standSelect.value];
+  const count = allBox.checked ? data.stands.reduce((n, s) => n + (s.poses[pose] || s.poses.idle).length, 0)
+      : (stand.poses[pose] || stand.poses.idle).length;
+  document.getElementById("info").textContent = `${count} display entities · drag to orbit, scroll to zoom`
+      + (allBox.checked ? "" : ` · ${stand.name} drawn with ${painted(stand) ? "painted skins" : stand.kind}`);
+}
+
+function fillPoses() {
+  const poses = new Set();
+  (allBox.checked ? data.stands : [data.stands[standSelect.value]]).forEach(s => Object.keys(s.poses).forEach(k => poses.add(k)));
+  const keep = poseSelect.value;
+  poseSelect.innerHTML = "";
+  poses.forEach(p => poseSelect.add(new Option(p, p)));
+  if (poses.has(keep)) poseSelect.value = keep;
+}
+
+const manifestLoad = fetch(new URL("../stand-skins/out/manifest.json", location.href)).then(r => r.json())
+    .catch(() => { paintedBox.disabled = true; return null; });
+Promise.all([fetch(new URL("../../target/stand-viewer/models.json", location.href)).then(r => r.json()), manifestLoad])
+    .then(([json, m]) => {
+  data = json;
+  manifest = m;
+  // Skins with no Stand of their own (DIO himself) are shown on the same eleven heads.
+  const base = data.stands.find(s => s.kind === "heads");
+  for (const key of Object.keys(manifest || {})) {
+    if (base && !data.stands.some(s => s.key === key)) {
+      const name = key.split("-").map(w => w[0].toUpperCase() + w.slice(1)).join(" ");
+      data.stands.push({ key, name, kind: "heads", poses: base.poses });
+    }
+  }
+  data.stands.forEach((s, i) => standSelect.add(new Option(s.name, i)));
+  const wanted = new URLSearchParams(location.search);
+  if (wanted.has("stand")) {
+    const i = data.stands.findIndex(s => s.key === wanted.get("stand"));
+    if (i >= 0) standSelect.value = i;
+  }
+  if (wanted.has("all")) allBox.checked = true;
+  if (wanted.has("still")) spinBox.checked = false;
+  if (wanted.has("painted")) paintedBox.checked = true;
+  fillPoses();
+  if (wanted.has("pose")) poseSelect.value = wanted.get("pose");
+  if (allBox.checked) { camera.position.set(0, 1.4, 9); }
+  refresh();
+}).catch(e => { document.getElementById("info").textContent = "Run mvn test first: " + e; });
+
+standSelect.onchange = () => { fillPoses(); refresh(); };
+poseSelect.onchange = refresh;
+paintedBox.onchange = refresh;
+allBox.onchange = () => { fillPoses(); camera.position.set(0, 1.4, allBox.checked ? 9 : 4.2); refresh(); };
+const view = (x, z) => () => { spinBox.checked = false; current.rotation.y = 0;
+  const d = allBox.checked ? 9 : 4.2; camera.position.set(x * d, 1.2, z * d); controls.update(); };
+document.getElementById("front").onclick = view(0, 1);
+document.getElementById("side").onclick = view(1, 0);
+document.getElementById("back").onclick = view(0, -1);
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+renderer.setAnimationLoop(() => {
+  if (spinBox.checked) current.rotation.y += 0.006;
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

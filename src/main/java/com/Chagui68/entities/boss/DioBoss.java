@@ -112,6 +112,7 @@ public class DioBoss implements Listener {
     private static final double ARMOR_STAND_HEIGHT = 1.975;
     /** Tag of the heads The World is drawn with; "Boss" keeps them out of a player's time stop. */
     private static final String WORLD_PART_TAG = "MSC_DioBoss_TheWorldPart";
+    private static final String DIO_PART_TAG = "MSC_DioBoss_DioPart";
     private static final Color GOLD = Color.fromRGB(0xFFD23F);
     private static final Color GREEN = Color.fromRGB(0x3CCB5A);
     private static final Color FROZEN = Color.fromRGB(0x6E6A86);
@@ -209,7 +210,7 @@ public class DioBoss implements Listener {
         Location at = location.clone();
         BossArena.settle(at);
         ArmorStand stand = world.spawn(at, ArmorStand.class, s -> {
-            s.setVisible(true);
+            s.setVisible(dioModel() == null);
             s.setArms(true);
             s.setBasePlate(false);
             s.setGravity(false);
@@ -242,6 +243,8 @@ public class DioBoss implements Listener {
                 org.bukkit.persistence.PersistentDataType.DOUBLE)) {
             MscEntityUtils.initVirtualHealth(stand, health);
         }
+        // A DIO adopted after a restart takes the body this release draws him with.
+        if (dioModel() != null) dressDio(stand);
         DioInstance inst = new DioInstance(stand);
         for (ArmorStand candidate : stand.getWorld().getEntitiesByClass(ArmorStand.class)) {
             if (candidate.getScoreboardTags().contains(STAND_TAG)
@@ -284,6 +287,13 @@ public class DioBoss implements Listener {
     private void dressDio(ArmorStand stand) {
         var eq = stand.getEquipment();
         if (eq == null) return;
+        if (dioModel() != null) {
+            // Drawn with his own heads: the stand is only the hitbox they ride.
+            stand.setVisible(false);
+            eq.clear();
+            lock(stand);
+            return;
+        }
         eq.setHelmet(DisplaySuit.head("Dio_Over_Heaven", DIO_TEXTURE, "DIO"));
         eq.setChestplate(leather(Material.LEATHER_CHESTPLATE, Color.fromRGB(0xE8B923), TrimPattern.SILENCE));
         eq.setLeggings(leather(Material.LEATHER_LEGGINGS, Color.fromRGB(0xE2B21E), TrimPattern.WILD));
@@ -398,6 +408,7 @@ public class DioBoss implements Listener {
         }
         stand.teleport(loc);
         pose(stand, inst.dioPose);
+        bodyOfDio(inst, loc);
 
         if (!inst.worldControlled) {
             Vector forward = DioMoves.flat(loc.getDirection());
@@ -1193,6 +1204,31 @@ public class DioBoss implements Listener {
 
     // ------------------------------------------------------------------ body
 
+    /** DIO's own head model, or null when he is drawn as a dressed armour stand. */
+    private static com.Chagui68.stand.HeadModel dioModel() {
+        return com.Chagui68.stand.HeadModels.of("dio-brando");
+    }
+
+    /** DIO's body of textured heads, on his armour stand and in its pose. */
+    private void bodyOfDio(DioInstance inst, Location at) {
+        com.Chagui68.stand.HeadModel model = dioModel();
+        if (model == null) return;
+        Pose p = inst.dioPose;
+        var pose = com.Chagui68.stand.StandRig.fromArmorStand(p.head(), p.body(), p.leftArm(), p.rightArm(),
+                p.leftLeg(), p.rightLeg());
+        Location feet = at.clone();
+        feet.setPitch(0);
+        if (inst.dioBody == null || !inst.dioBody.alive()) {
+            if (inst.dioBody != null) inst.dioBody.remove();
+            inst.dioBody = new com.Chagui68.stand.HeadPuppet(model,
+                    com.Chagui68.stand.HeadPuppet.scaleFor(model, ARMOR_STAND_HEIGHT * DIO_SCALE), DIO_PART_TAG, 1);
+            inst.dioBody.spawn(feet, pose, 1f);
+            return;
+        }
+        inst.dioBody.moveTo(feet);
+        inst.dioBody.pose(pose, new org.joml.Vector3f(), 1);
+    }
+
     /** The head model of The World, or null when it is drawn as a dressed armour stand. */
     private static com.Chagui68.stand.HeadModel worldModel() {
         return com.Chagui68.stand.HeadModels.of(com.Chagui68.stand.StandType.THE_WORLD);
@@ -1316,6 +1352,7 @@ public class DioBoss implements Listener {
         }
         if (inst.world != null) inst.world.remove();
         if (inst.worldBody != null) inst.worldBody.remove();
+        if (inst.dioBody != null) inst.dioBody.remove();
         inst.stand.remove();
         cleanup(inst);
     }
@@ -1325,6 +1362,7 @@ public class DioBoss implements Listener {
         removeProps(inst);
         if (inst.world != null && inst.world.isValid()) inst.world.remove();
         if (inst.worldBody != null) inst.worldBody.remove();
+        if (inst.dioBody != null) inst.dioBody.remove();
         if (inst.bossBar != null) inst.bossBar.removeAll();
         active.remove(inst.stand.getUniqueId());
     }
@@ -1423,6 +1461,8 @@ public class DioBoss implements Listener {
         ArmorStand world;
         /** The World's textured body, when it has a head model. */
         com.Chagui68.stand.HeadPuppet worldBody;
+        /** DIO's own textured body, when he has a head model. */
+        com.Chagui68.stand.HeadPuppet dioBody;
         BossBar bossBar;
         Timeline attack;
         String attackName;

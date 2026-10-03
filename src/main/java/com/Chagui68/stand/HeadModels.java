@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -23,7 +23,7 @@ import java.util.Optional;
  */
 public final class HeadModels {
 
-    private static final Map<StandType, Optional<HeadModel>> CACHE = new EnumMap<>(StandType.class);
+    private static final Map<String, Optional<HeadModel>> CACHE = new HashMap<>();
     private static Plugin plugin;
 
     private HeadModels() {
@@ -54,12 +54,20 @@ public final class HeadModels {
     }
 
     /** The head model of a Stand, or null when it is drawn with blocks. */
-    public static synchronized HeadModel of(StandType type) {
-        return CACHE.computeIfAbsent(type, HeadModels::load).orElse(null);
+    public static HeadModel of(StandType type) {
+        return of(type.key());
     }
 
-    private static Optional<HeadModel> load(StandType type) {
-        String name = type.key() + ".txt";
+    /**
+     * The head model called {@code key} ({@code dio-brando} for DIO himself, a Stand's key for a
+     * Stand), or null when there is none.
+     */
+    public static synchronized HeadModel of(String key) {
+        return CACHE.computeIfAbsent(key, HeadModels::load).orElse(null);
+    }
+
+    private static Optional<HeadModel> load(String key) {
+        String name = key + ".txt";
         if (plugin != null) {
             File file = new File(new File(plugin.getDataFolder(), "stands"), name);
             if (file.isFile()) {
@@ -75,7 +83,7 @@ public final class HeadModels {
                 return Optional.of(HeadModel.parse(new String(in.readAllBytes(), StandardCharsets.UTF_8)));
             }
         } catch (IOException | RuntimeException e) {
-            MscLog.warn("The built-in model of " + type.displayName() + " could not be read", e);
+            MscLog.warn("The built-in model " + name + " could not be read", e);
         }
         return Optional.empty();
     }
@@ -94,6 +102,8 @@ public final class HeadModels {
             exactly as it is. The pose it was exported in does not matter: the plugin stands the
             model up straight and animates it itself (breathing, the head following its user,
             the barrage punches).
+
+            dio-brando.txt draws DIO himself, the boss, the same way.
 
             The World already ships with a model; a the-world.txt here replaces it. Use
             /msc reload after adding or changing a file. A file that cannot be read is reported
