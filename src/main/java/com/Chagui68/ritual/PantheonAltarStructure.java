@@ -48,13 +48,13 @@ public final class PantheonAltarStructure {
 
     /** The four families of gods, each with its own altar. */
     public enum Pantheon {
-        OLYMPUS("Olimpo", Material.WHITE_CANDLE, Material.CHISELED_QUARTZ_BLOCK, Material.QUARTZ_PILLAR,
+        OLYMPUS("Olympus", Material.WHITE_CANDLE, Material.CHISELED_QUARTZ_BLOCK, Material.QUARTZ_PILLAR,
                 Color.fromRGB(0xF4F1E6), Color.fromRGB(0xFFD23F)),
         ASGARD("Asgard", Material.GREEN_CANDLE, Material.CHISELED_DEEPSLATE, Material.SPRUCE_LOG,
                 Color.fromRGB(0x3E8E4A), Color.fromRGB(0x9FD8FF)),
         DUAT("Duat", Material.ORANGE_CANDLE, Material.CHISELED_SANDSTONE, Material.SMOOTH_SANDSTONE,
                 Color.fromRGB(0xF2A33A), Color.fromRGB(0x2FB8A6)),
-        VOID("el Vacío", Material.PURPLE_CANDLE, Material.END_STONE_BRICKS, Material.PURPUR_PILLAR,
+        VOID("the Void", Material.PURPLE_CANDLE, Material.END_STONE_BRICKS, Material.PURPUR_PILLAR,
                 Color.fromRGB(0x8E3CFF), Color.fromRGB(0x1A0B2E));
 
         private final String displayName;

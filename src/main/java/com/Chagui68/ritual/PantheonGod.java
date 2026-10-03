@@ -17,20 +17,20 @@ import java.util.function.Function;
  */
 public enum PantheonGod {
     ZEUS("zeus", "Zeus", Pantheon.OLYMPUS, Material.LIGHTNING_ROD),
-    POSEIDON("poseidon", "Poseidón", Pantheon.OLYMPUS, Material.HEART_OF_THE_SEA),
+    POSEIDON("poseidon", "Poseidon", Pantheon.OLYMPUS, Material.HEART_OF_THE_SEA),
     HADES("hades", "Hades", Pantheon.OLYMPUS, Material.WITHER_SKELETON_SKULL),
     ARES("ares", "Ares", Pantheon.OLYMPUS, Material.NETHERITE_SWORD),
-    ARTEMISA("artemisa", "Artemisa", Pantheon.OLYMPUS, Material.SPECTRAL_ARROW),
-    PROMETEO("prometeo", "Prometeo", Pantheon.OLYMPUS, Material.FIRE_CHARGE),
+    ARTEMISA("artemisa", "Artemis", Pantheon.OLYMPUS, Material.SPECTRAL_ARROW),
+    PROMETEO("prometeo", "Prometheus", Pantheon.OLYMPUS, Material.FIRE_CHARGE),
     CIRCE("circe", "Circe", Pantheon.OLYMPUS, Material.AMETHYST_SHARD),
-    POLIFEMO("polifemo", "Polifemo", Pantheon.OLYMPUS, Material.FERMENTED_SPIDER_EYE),
+    POLIFEMO("polifemo", "Polyphemus", Pantheon.OLYMPUS, Material.FERMENTED_SPIDER_EYE),
     KRATOS("kratos", "Kratos", Pantheon.OLYMPUS, Material.NETHERITE_AXE),
-    TIFON("tifon", "Tifón", Pantheon.OLYMPUS, Material.MAGMA_BLOCK),
-    HIDRA("hidra", "Hidra", Pantheon.OLYMPUS, Material.PRISMARINE_SHARD),
-    CERBERO("cerbero", "Cerbero", Pantheon.OLYMPUS, Material.BONE_BLOCK),
+    TIFON("tifon", "Typhon", Pantheon.OLYMPUS, Material.MAGMA_BLOCK),
+    HIDRA("hidra", "Hydra", Pantheon.OLYMPUS, Material.PRISMARINE_SHARD),
+    CERBERO("cerbero", "Cerberus", Pantheon.OLYMPUS, Material.BONE_BLOCK),
 
     THOR("thor", "Thor", Pantheon.ASGARD, Material.IRON_BLOCK),
-    ODIN("odin", "Odín", Pantheon.ASGARD, Material.GOLD_BLOCK),
+    ODIN("odin", "Odin", Pantheon.ASGARD, Material.GOLD_BLOCK),
     LOKI("loki", "Loki", Pantheon.ASGARD, Material.ENDER_PEARL),
     HEIMDALL("heimdall", "Heimdall", Pantheon.ASGARD, Material.BLAZE_ROD),
 
@@ -39,11 +39,11 @@ public enum PantheonGod {
     ANUBIS("anubis", "Anubis", Pantheon.DUAT, Material.ROTTEN_FLESH),
     SET("set", "Set", Pantheon.DUAT, Material.REDSTONE_BLOCK),
 
-    COLOSO_END("coloso_end", "Coloso del End", Pantheon.VOID, Material.ECHO_SHARD),
-    GAROU_COSMICO("garou_cosmico", "Garou Cósmico", Pantheon.VOID, Material.NETHER_STAR),
-    DIOS_CORRUPTO("dios_corrupto", "Dios Corrupto", Pantheon.VOID, Material.TOTEM_OF_UNDYING),
+    COLOSO_END("coloso_end", "End Colossus", Pantheon.VOID, Material.ECHO_SHARD),
+    GAROU_COSMICO("garou_cosmico", "Cosmic Garou", Pantheon.VOID, Material.NETHER_STAR),
+    DIOS_CORRUPTO("dios_corrupto", "Corrupted God", Pantheon.VOID, Material.TOTEM_OF_UNDYING),
     WITHER_STORM("wither_storm", "Wither Storm", Pantheon.VOID, Material.WITHER_ROSE),
-    DRAGON_ANCESTRAL("dragon_ancestral", "Dragón Ancestral", Pantheon.VOID, Material.DRAGON_BREATH),
+    DRAGON_ANCESTRAL("dragon_ancestral", "Ancestral Dragon", Pantheon.VOID, Material.DRAGON_BREATH),
     JAX("jax", "Jax", Pantheon.VOID, Material.LANTERN);
 
     /** Config section holding the offering overrides, one key per {@link #id()}. */

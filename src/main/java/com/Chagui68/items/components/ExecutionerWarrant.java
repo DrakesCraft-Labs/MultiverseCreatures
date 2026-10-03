@@ -14,13 +14,14 @@ public class ExecutionerWarrant {
     public static final ItemStack EXECUTIONER_WARRANT = ItemBuilder.of(Material.PAPER)
             .name(MscText.title(DARK_RED, "Execution Warrant"))
             .lore(
-                    MscText.line(GRAY, "A grim decree of capital punishment sealed in dried blood."),
-                    MscText.line(GRAY, "Bearing the mark of an unforgiving executioner."),
+                    MscText.line(GRAY, "A grim decree of capital punishment,"),
+                    MscText.line(GRAY, "sealed in dried blood and bearing the"),
+                    MscText.line(GRAY, "mark of an unforgiving executioner."),
                     MscText.blank(),
                     MscText.line(WHITE, "Boss Invocation Catalyst"),
-                    MscText.blank(),
-                    MscText.line(YELLOW, "Drop upon the Executioner's Scaffold anvil"),
-                    MscText.line(YELLOW, "within the Boss Dimension to summon NIX."),
+                    MscText.rich(YELLOW, "  ▸ ", GRAY, "Drop it on the ", RED, "Executioner's Scaffold"),
+                    MscText.rich(GRAY, "    anvil in the Boss Dimension to summon ", DARK_RED, "NIX"),
+                    MscText.rich(YELLOW, "  ▸ ", GRAY, "Binds the ", DARK_RED, "Executioner's Guillotine"),
                     MscText.blank(),
                     MscText.quote(DARK_PURPLE, "\"The sentence has been passed...\""),
                     MscText.blank(),

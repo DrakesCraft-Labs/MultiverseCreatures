@@ -33,8 +33,14 @@ public final class MusicDisc {
         ItemMeta meta = disc.getItemMeta();
         meta.displayName(MscText.rich(AQUA, "Music Disc", WHITE, " - " + title));
         List<Component> lore = new ArrayList<>();
-        lore.add(MscText.line(GRAY, "Song: " + title));
-        lore.add(MscText.line(DARK_GRAY, "Jukebox use only."));
+        lore.add(MscText.line(GRAY, "A record pressed somewhere"));
+        lore.add(MscText.line(GRAY, "else in the multiverse."));
+        lore.add(MscText.blank());
+        lore.add(MscText.line(WHITE, "Music Disc"));
+        lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Song: ", AQUA, title));
+        lore.add(MscText.rich(YELLOW, "  ▸ ", GRAY, "Play it in a ", GOLD, "Jukebox"));
+        lore.add(MscText.blank());
+        lore.add(MscText.footer("Multiverse"));
         meta.lore(lore);
         meta.getPersistentDataContainer().set(SONG_KEY, PersistentDataType.STRING, songKey.toLowerCase());
         disc.setItemMeta(meta);

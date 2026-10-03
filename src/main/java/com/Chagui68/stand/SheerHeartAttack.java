@@ -213,7 +213,7 @@ public final class SheerHeartAttack {
             TextDisplay text = world.spawn(shout, TextDisplay.class, entity -> {
                 entity.setPersistent(false);
                 entity.addScoreboardTag(TAG);
-                entity.text(Component.text("¡Mira aquí!", NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD));
+                entity.text(Component.text("Look over here!", NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD));
                 entity.setBillboard(Display.Billboard.CENTER);
                 entity.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
             });
@@ -233,9 +233,9 @@ public final class SheerHeartAttack {
                 .withDamageLocation(at).build()
                 : DamageSource.builder(DamageType.EXPLOSION).withDamageLocation(at).build();
         prey.damage(damage, source);
-        prey.sendActionBar(Component.text("☠ Sheer Heart Attack te alcanzó", NamedTextColor.LIGHT_PURPLE));
+        prey.sendActionBar(Component.text("☠ Sheer Heart Attack caught you", NamedTextColor.LIGHT_PURPLE));
         if (bomber != null) {
-            bomber.sendActionBar(Component.text("☠ Sheer Heart Attack alcanzó a " + prey.getName(),
+            bomber.sendActionBar(Component.text("☠ Sheer Heart Attack caught " + prey.getName(),
                     NamedTextColor.LIGHT_PURPLE));
         }
         remove();

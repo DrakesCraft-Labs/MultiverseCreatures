@@ -299,7 +299,7 @@ public class Mahoraga implements Listener {
     public boolean trySpawn(Location location) {
         if (!plugin.isEnabled("entities.mahoraga")) return false;
         if (DrakesBossesIntegration.isArenaWorld(location.getWorld())) {
-            plugin.getLogger().warning("[Mahoraga] Spawn rechazado dentro de boss_arena; DrakesBosses controla ese mundo.");
+            plugin.getLogger().warning("[Mahoraga] Spawn refused inside boss_arena; DrakesBosses controls that world.");
             return false;
         }
         Zombie zombie = (Zombie) location.getWorld().spawnEntity(location, org.bukkit.entity.EntityType.ZOMBIE);

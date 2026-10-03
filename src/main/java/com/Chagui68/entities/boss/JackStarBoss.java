@@ -594,27 +594,27 @@ public class JackStarBoss implements Listener {
         switch (newP) {
             case 2 -> {
                 broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] JackStar: " + ChatColor.AQUA
-                        + "\"Fase 2: Iniciando subprocesos del Multiverso... ¡Criaturas, asistan al Arquitecto!\"");
+                        + "\"Phase 2: Spawning Multiverse subprocesses... Creatures, assist the Architect!\"");
                 summonMultiverseMinions(inst);
                 enterCreativeModeAndSummonBoss(inst);
             }
             case 3 -> {
                 broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] JackStar: " + ChatColor.DARK_RED
-                        + "\"Fase 3: Protocolo Warden activado. Desplegando levitación y oscuridad dimensional.\"");
+                        + "\"Phase 3: Warden protocol online. Deploying levitation and dimensional darkness.\"");
                 inst.isLevitating = true;
                 world.playSound(loc, Sound.ENTITY_WARDEN_ROAR, 2.0f, 0.6f);
                 enterCreativeModeAndSummonBoss(inst);
             }
             case 4 -> {
                 broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] JackStar: " + ChatColor.LIGHT_PURPLE
-                        + "\"Fase 4: Alquimia de Hitbox. Desbordamiento y compresión de escala en tiempo real.\"");
+                        + "\"Phase 4: Hitbox alchemy. Real-time scale overflow and compression.\"");
                 inst.isLevitating = false;
                 inst.targetScale = 2.2f;
                 enterCreativeModeAndSummonBoss(inst);
             }
             case 5 -> {
                 broadcastToArena(inst, ChatColor.RED + "" + ChatColor.BOLD
-                        + "[KERNEL PANIC] JACKSTAR: MODO RAÍZ DESATADO. EL SERVIDOR ME PERTENECE.");
+                        + "[KERNEL PANIC] JACKSTAR: ROOT MODE UNLEASHED. THIS SERVER BELONGS TO ME.");
                 inst.isKernelPanic = true;
                 inst.targetScale = 1.0f;
                 inst.isLevitating = true;
@@ -628,12 +628,12 @@ public class JackStarBoss implements Listener {
         if (inst.targetScale > 1.2f) {
             // Shift to micro form
             inst.targetScale = 0.6f;
-            broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] " + ChatColor.AQUA + "Comprimiendo espacio de memoria: Micro-Modo Cuántico (Velocidad +50%)");
+            broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] " + ChatColor.AQUA + "Compressing memory space: Quantum Micro-Mode (Speed +50%)");
             inst.stand.getWorld().playSound(inst.stand.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.5f, 1.8f);
         } else {
             // Shift to giant form
             inst.targetScale = 2.2f;
-            broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] " + ChatColor.RED + "Desbordamiento de buffer: Asignación Masiva 220% (Modo Titán)");
+            broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] " + ChatColor.RED + "Buffer overflow: Massive 220% allocation (Titan Mode)");
             inst.stand.getWorld().playSound(inst.stand.getLocation(), Sound.ENTITY_WARDEN_ROAR, 1.8f, 0.5f);
         }
     }
@@ -743,7 +743,7 @@ public class JackStarBoss implements Listener {
             if (e instanceof Player p && p.getGameMode() != GameMode.CREATIVE && p.getGameMode() != GameMode.SPECTATOR) {
                 dealToPlayer(stand, p, 18.0, "Giant Stomp");
                 p.setVelocity(new Vector(0, 0.85, 0));
-                p.sendMessage(ChatColor.RED + "[SÍSMICA] ¡La pisada colosal de JackStar te arrojó por los aires!");
+                p.sendMessage(ChatColor.RED + "[SEISMIC] JackStar's colossal stomp threw you into the air!");
             }
         }
     }
@@ -805,7 +805,7 @@ public class JackStarBoss implements Listener {
 
         target.setVelocity(new Vector(0, 1.4, 0));
         target.sendMessage(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "⛓ [VECTOR OVERRIDE] "
-                + ChatColor.GRAY + "JackStar ha tomado control de tu gravedad.");
+                + ChatColor.GRAY + "JackStar has taken control of your gravity.");
 
         new BukkitRunnable() {
             @Override
@@ -853,7 +853,7 @@ public class JackStarBoss implements Listener {
                         if (e instanceof Player p && p.getGameMode() != GameMode.CREATIVE && p.getGameMode() != GameMode.SPECTATOR) {
                             dealToPlayer(stand, p, sigkillDamage, "Sigkill -9");
                             p.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "[SIGKILL -9] "
-                                    + ChatColor.DARK_RED + "Proceso terminado con señal de aniquilación forzada.");
+                                    + ChatColor.DARK_RED + "Process terminated with a forced annihilation signal.");
                         }
                     }
                     cancel();
@@ -925,7 +925,7 @@ public class JackStarBoss implements Listener {
         world.playSound(behind, Sound.BLOCK_BEACON_POWER_SELECT, 0.9f, 2.0f);
 
         stand.teleport(behind);
-        attacker.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "⚡ ¡ESQUIVE INSTINTIVO! " + ChatColor.GRAY + "(Ultra Instinct)");
+        attacker.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "⚡ INSTINCTIVE DODGE! " + ChatColor.GRAY + "(Ultra Instinct)");
     }
 
     /** Where a player is looking, flattened onto the ground; straight up or down falls back to their yaw. */
@@ -995,7 +995,7 @@ public class JackStarBoss implements Listener {
         }
         world.playSound(mid, Sound.BLOCK_STONE_PLACE, 1.5f, 0.8f);
         world.spawnParticle(Particle.SOUL_FIRE_FLAME, mid.clone().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0.05);
-        broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] JackStar: " + ChatColor.AQUA + "\"Desplegando muro cortafuegos temporal...\"");
+        broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] JackStar: " + ChatColor.AQUA + "\"Deploying a temporary firewall...\"");
     }
 
     public void buildFirejailCage(JackInstance inst, Player target) {
@@ -1011,7 +1011,7 @@ public class JackStarBoss implements Listener {
                 }
             }
         }
-        target.sendMessage(ChatColor.DARK_AQUA + "[FIREJAIL] " + ChatColor.AQUA + "¡JackStar te ha aislado dentro de un sandbox de procesos!");
+        target.sendMessage(ChatColor.DARK_AQUA + "[FIREJAIL] " + ChatColor.AQUA + "JackStar has isolated you inside a process sandbox!");
         world.playSound(pLoc, Sound.BLOCK_IRON_DOOR_CLOSE, 1.6f, 0.7f);
     }
 
@@ -1020,7 +1020,7 @@ public class JackStarBoss implements Listener {
         placeTemporaryBlock(inst, bLoc.getBlock(), Material.COBWEB, 80);
         placeTemporaryBlock(inst, bLoc.clone().add(0, 1, 0).getBlock(), Material.COBWEB, 80);
         target.getWorld().playSound(bLoc, Sound.BLOCK_WOOL_PLACE, 1.2f, 1.4f);
-        target.sendMessage(ChatColor.DARK_PURPLE + "[SNARE] " + ChatColor.GRAY + "Búfer atascado con telaraña de datos.");
+        target.sendMessage(ChatColor.DARK_PURPLE + "[SNARE] " + ChatColor.GRAY + "Buffer jammed with a web of data.");
     }
 
     private void triggerWatchdog(JackInstance inst) {
@@ -1040,14 +1040,14 @@ public class JackStarBoss implements Listener {
                 new Particle.DustOptions(Color.fromRGB(0x00CCCC), 2.2f));
 
         String rebootTitle = switch (rebootNum) {
-            case 1 -> ChatColor.RED + "[WATCHDOG 1/3] Nexus Inoperante";
-            case 2 -> ChatColor.RED + "[WATCHDOG 2/3] Falla en Hyperion";
-            default -> ChatColor.DARK_RED + "[WATCHDOG 3/3] ¡TODOS LOS NODOS CAÍDOS!";
+            case 1 -> ChatColor.RED + "[WATCHDOG 1/3] Nexus Down";
+            case 2 -> ChatColor.RED + "[WATCHDOG 2/3] Hyperion Failure";
+            default -> ChatColor.DARK_RED + "[WATCHDOG 3/3] ALL NODES DOWN!";
         };
         String rebootSubtitle = switch (rebootNum) {
-            case 1 -> ChatColor.YELLOW + "Conmutando al nodo secundario 'Hyperion'...";
-            case 2 -> ChatColor.LIGHT_PURPLE + "Migrando a 'StarCluster Quantum'...";
-            default -> ChatColor.RED + "Modo Singularidad: KERNEL PANIC FORZADO";
+            case 1 -> ChatColor.YELLOW + "Failing over to secondary node 'Hyperion'...";
+            case 2 -> ChatColor.LIGHT_PURPLE + "Migrating to 'StarCluster Quantum'...";
+            default -> ChatColor.RED + "Singularity Mode: FORCED KERNEL PANIC";
         };
 
         for (Player p : world.getPlayers()) {
@@ -1082,14 +1082,14 @@ public class JackStarBoss implements Listener {
         // and replayed that phase's transition on the way.
         if (rebootNum == 1) {
             if (inst.bossBar != null) inst.bossBar.setColor(BarColor.PURPLE);
-            broadcastToArena(inst, ChatColor.AQUA + "[SYS] Nodo 'Hyperion' activado. JackStar ha revivido (Vidas restantes: 2)");
+            broadcastToArena(inst, ChatColor.AQUA + "[SYS] Node 'Hyperion' online. JackStar has revived (Lives left: 2)");
         } else if (rebootNum == 2) {
             if (inst.bossBar != null) inst.bossBar.setColor(BarColor.YELLOW);
-            broadcastToArena(inst, ChatColor.GOLD + "[SYS] Nodo 'StarCluster' en línea. JackStar ha revivido (Vidas restantes: 1)");
+            broadcastToArena(inst, ChatColor.GOLD + "[SYS] Node 'StarCluster' online. JackStar has revived (Lives left: 1)");
         } else {
             inst.isKernelPanic = true;
             if (inst.bossBar != null) inst.bossBar.setColor(BarColor.RED);
-            broadcastToArena(inst, ChatColor.RED + "[SYS] ¡ÚLTIMA VIDA! Modo Kernel Panic activado. ¡Destrucción total!");
+            broadcastToArena(inst, ChatColor.RED + "[SYS] LAST LIFE! Kernel Panic mode engaged. Total destruction!");
         }
 
         syncDisplays(inst);
@@ -1165,9 +1165,9 @@ public class JackStarBoss implements Listener {
             inst.creativeTicks = 0;
             spawnFloatingCommandBlocks(inst);
             broadcastToArena(inst, ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD
-                    + "[SUBPROCESO] " + ChatColor.AQUA
-                    + "JackStar despliega a " + ChatColor.WHITE + summoned.getName()
-                    + ChatColor.AQUA + ". El Arquitecto sigue en pie y sigue siendo golpeable.");
+                    + "[SUBPROCESS] " + ChatColor.AQUA
+                    + "JackStar deploys " + ChatColor.WHITE + summoned.getName()
+                    + ChatColor.AQUA + ". The Architect is still standing and can still be hit.");
             world.playSound(origin, Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, 2.0f, 0.65f);
             for (int bolt = 0; bolt < 5; bolt++) {
                 double boltAngle = Math.toRadians(bolt * 72.0);
@@ -1205,9 +1205,9 @@ public class JackStarBoss implements Listener {
         for (Entity entity : world.getNearbyEntities(spawn, 5.0, 6.0, 5.0)) {
             if (entity.getScoreboardTags().contains(tag)) return new ObservedSpawn(entity, true);
         }
-        plugin.getLogger().warning("[JackStar] Subjefe invocado sin localizar junto a "
+        plugin.getLogger().warning("[JackStar] Sub-boss summoned but not found near "
                 + spawn.getBlockX() + ", " + spawn.getBlockY() + ", " + spawn.getBlockZ()
-                + "; no se encadena otro ritual.");
+                + "; no further ritual is chained.");
         return new ObservedSpawn(null, true);
     }
 
@@ -1232,7 +1232,7 @@ public class JackStarBoss implements Listener {
         if (inst.creativeTicks % 100 == 0) {
             stand.getWorld().strikeLightningEffect(observed.getLocation());
             broadcastToArena(inst, ChatColor.DARK_AQUA + "[SYS] " + ChatColor.GRAY
-                    + "Subproceso activo: " + observed.getName() + ". JackStar sigue en ejecución.");
+                    + "Subprocess running: " + observed.getName() + ". JackStar keeps running.");
         }
     }
 
@@ -1272,7 +1272,7 @@ public class JackStarBoss implements Listener {
         inst.observedBossId = null;
         inst.stand.getWorld().playSound(inst.stand.getLocation(), Sound.ENTITY_WARDEN_ROAR, 1.6f, 0.9f);
         broadcastToArena(inst, ChatColor.RED + "[SYS] " + ChatColor.GRAY
-                + "Subproceso cerrado. JackStar vuelve a ejecutarse en solitario.");
+                + "Subprocess closed. JackStar runs alone again.");
     }
 
     private void throwScoobySnack(JackInstance inst, Player target) {
@@ -1284,7 +1284,7 @@ public class JackStarBoss implements Listener {
             if (snack.isValid()) snack.remove();
         }, 50L);
         broadcastToArena(inst, ChatColor.GOLD + "[SCOOBY PACKET] " + ChatColor.GRAY
-                + "JackStar lanzó una galleta de depuración. No alimentes procesos desconocidos.");
+                + "JackStar threw a debug cookie. Do not feed unknown processes.");
     }
 
     static String partOwnerTag(UUID ownerId) {
@@ -1820,7 +1820,7 @@ public class JackStarBoss implements Listener {
         stand.setInvulnerable(false);
         stand.setCollidable(true);
         stand.setCanPickupItems(false);
-        stand.customName(MscText.title(DARK_AQUA, "JackStar — El Arquitecto del Sistema"));
+        stand.customName(MscText.title(DARK_AQUA, "JackStar — The System Architect"));
         stand.setCustomNameVisible(true);
         stand.addScoreboardTag(TAG);
 
@@ -1847,7 +1847,7 @@ public class JackStarBoss implements Listener {
 
     private void setupBossBar(JackInstance inst) {
         inst.bossBar = MscBossBar.create(
-                ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "JackStar — El Arquitecto del Sistema",
+                ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "JackStar — The System Architect",
                 BarColor.BLUE,
                 BarStyle.SEGMENTED_10,
                 BarFlag.CREATE_FOG
@@ -1968,7 +1968,7 @@ public class JackStarBoss implements Listener {
                 stand.getWorld().playSound(loc, Sound.BLOCK_BEACON_DEACTIVATE, 0.8f, 2.0f);
                 stand.getWorld().spawnParticle(Particle.PORTAL, loc, 12, 0.3, 0.3, 0.3, 0.05);
                 if (player != null) {
-                    player.sendMessage(ChatColor.DARK_AQUA + "[PACKET LOSS] " + ChatColor.GRAY + "Tu proyectil fue descartado en el buffer de red.");
+                    player.sendMessage(ChatColor.DARK_AQUA + "[PACKET LOSS] " + ChatColor.GRAY + "Your projectile was dropped in the network buffer.");
                 }
                 return;
             }
@@ -2112,7 +2112,7 @@ public class JackStarBoss implements Listener {
         for (Player p : world.getPlayers()) {
             if (p.getLocation().distanceSquared(loc) <= 60 * 60) {
                 p.sendTitle(ChatColor.AQUA + "" + ChatColor.BOLD + "JACKSTAR",
-                        ChatColor.GRAY + "El sistema ha finalizado su ejecución con éxito.", 10, 70, 20);
+                        ChatColor.GRAY + "The system has finished its execution successfully.", 10, 70, 20);
             }
         }
         stand.remove();

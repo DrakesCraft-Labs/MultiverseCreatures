@@ -4,7 +4,7 @@
 # Version of this file. A server that updates the plugin keeps its own config.yml and the plugin
 # adds whatever keys are missing on start (values you edited are never touched), stamping the new
 # version here. See MscConfigMigration.CONFIG_VERSION — keep the two in step.
-config-version: 3
+config-version: 4
 #
 # All paths match the code:
 #   general.*                          -> MultiverseCreatures, MobHandler, MscWorldPolicy
@@ -83,10 +83,10 @@ boss-dimension:
 #   . . c . .
 #   P . . . P
 #
-#   Olimpo   : white candles,  chiseled quartz core,   quartz pillars
+#   Olympus  : white candles,  chiseled quartz core,   quartz pillars
 #   Asgard   : green candles,  chiseled deepslate core, spruce log pillars
 #   Duat     : orange candles, chiseled sandstone core, smooth sandstone pillars
-#   el Vacío : purple candles, end stone bricks core,  purpur pillars
+#   the Void : purple candles, end stone bricks core,  purpur pillars
 #
 # Light the four candles, then drop (Q) one god's offering on the core. DrakesBosses spawns the god,
 # with its own stats, skills, loot and rewards. Without DrakesBosses the altar does nothing.
@@ -99,7 +99,7 @@ drakes-bosses:
   no-player-despawn-seconds: 300
   # Item each god takes, by DrakesBosses id. Keep them unique: an item calls the first god listing it.
   offerings:
-    # Olimpo
+    # Olympus
     zeus: LIGHTNING_ROD
     poseidon: HEART_OF_THE_SEA
     hades: WITHER_SKELETON_SKULL
@@ -122,7 +122,7 @@ drakes-bosses:
     isis: FEATHER
     anubis: ROTTEN_FLESH
     set: REDSTONE_BLOCK
-    # el Vacío
+    # the Void
     coloso_end: ECHO_SHARD
     garou_cosmico: NETHER_STAR
     dios_corrupto: TOTEM_OF_UNDYING
@@ -351,9 +351,9 @@ entities:
     time-stop-radius: 40.0
     time-stop-cooldown-ticks: 700
     death-messages:
-      - "&6%player% &efue aplastado por la Road Roller de DIO"
-      - "&6%player% &eno pudo moverse en el tiempo detenido de DIO"
-      - "&6%player% &erecibió un MUDA MUDA MUDA de The World"
+      - "&6%player% &ewas flattened by DIO's Road Roller"
+      - "&6%player% &ecould not move in DIO's stopped time"
+      - "&6%player% &etook a MUDA MUDA MUDA from The World"
     # Vampire Blood dropped when DIO falls: the ingredient of the Bearer's Elixir.
     vampire-blood-min: 1
     vampire-blood-max: 2
@@ -417,10 +417,10 @@ entities:
     binary-rain-damage: 8.0
     stack-overflow-damage: 14.0
     death-messages:
-      - "&b%player% &7fue desmantelado por &3JackStar — El Arquitecto del Sistema"
-      - "&b%player% &7recibió un &cSIGKILL (kill -9) &7de &3JackStar"
-      - "&b%player% &7no pudo escapar del &5Vector Override &7de &3JackStar"
-      - "&b%player% &7fue eliminado como proceso huérfano por el &eGarbage Collector"
+      - "&b%player% &7was dismantled by &3JackStar — The System Architect"
+      - "&b%player% &7received a &cSIGKILL (kill -9) &7from &3JackStar"
+      - "&b%player% &7could not escape the &5Vector Override &7of &3JackStar"
+      - "&b%player% &7was reaped as an orphan process by the &eGarbage Collector"
 
   # -------------------------------------------------------------------------
   # Head Slime
@@ -467,7 +467,7 @@ entities:
   # Bone Shield
   # -------------------------------------------------------------------------
   # -------------------------------------------------------------------------
-  # Arquero de la Flecha - the skeleton that carries the Stand Arrow
+  # Archer of the Arrow - the skeleton that carries the Stand Arrow
   # -------------------------------------------------------------------------
   arrow-skeleton:
     enabled: true
@@ -476,17 +476,18 @@ entities:
     speed: 0.28
     # Chance that a shot is the Stand Arrow.
     stand-arrow-chance: 0.02
-    # Chance that the Arrow kills the player it pierces. The rest are chosen: a player who
-    # drank the Bearer's Elixir awakens a Stand, anybody else only survives.
+    # Chance that the Arrow kills a player who is not a Stand bearer; the survivors awaken a Stand.
+    # A bearer (who drank the Bearer's Elixir) is never killed and always awakens one. A player the
+    # Arrow killed is marked unworthy and gets no Stand from it until they drink the Elixir.
     death-chance: 0.7
     arrow-death-messages:
-      - "&6%player% &efue atravesado por la Flecha y no resultó digno"
-      - "&6%player% &eno sobrevivió al juicio de la Flecha"
-      - "&6%player% &equiso un Stand, pero la Flecha solo le dio el final"
+      - "&6%player% &ewas pierced by the Arrow and found unworthy"
+      - "&6%player% &edid not survive the judgment of the Arrow"
+      - "&6%player% &ewanted a Stand, but the Arrow only gave them the end"
     death-messages:
-      - "&6%player% &ecayó ante el Arquero de la Flecha"
-      - "&6%player% &efue cazado por el Arquero de la Flecha"
-      - "&6%player% &eestaba en la mira del Arquero de la Flecha"
+      - "&6%player% &efell to the Archer of the Arrow"
+      - "&6%player% &ewas hunted down by the Archer of the Arrow"
+      - "&6%player% &ewas in the sights of the Archer of the Arrow"
 
   bone-shield:
     enabled: true
@@ -721,12 +722,12 @@ items:
 
   # NIX's axe, forged from two Executioner's Edges.
   executioner-guillotine:
-    execute-threshold: 0.3    # Sentencia: targets below this share of their health...
+    execute-threshold: 0.3    # Sentence: targets below this share of their health...
     execute-bonus: 0.4        # ...take this much extra damage
-    bleed-chance: 0.25        # Sangrado: chance of Wither I for 3 seconds
-    chains-range: 18.0        # Cadenas del Juicio (right click)
+    bleed-chance: 0.25        # Bleed: chance of Wither I for 3 seconds
+    chains-range: 18.0        # Chains of Judgment (right click)
     chains-cooldown-ms: 15000
-    slam-damage: 14.0         # Caida de la Guillotina (sneak + right click)
+    slam-damage: 14.0         # Guillotine Drop (sneak + right click)
     slam-radius: 4.0
     slam-cooldown-ms: 25000
 
@@ -931,9 +932,9 @@ vampire:
   # Share of the melee damage dealt that heals the vampire.
   lifesteal: 0.15
   sun-death-messages:
-    - "&6%player% &cse convirtió en cenizas bajo el sol"
-    - "&6%player% &colvidó que el amanecer no perdona a los hijos de la noche"
-    - "&6%player% &cquiso desafiar al sol como DIO... y el sol ganó"
+    - "&6%player% &cturned to ashes under the sun"
+    - "&6%player% &cforgot that dawn never forgives the children of the night"
+    - "&6%player% &ctried to defy the sun like DIO... and the sun won"
 
 merchant:
   enabled: true

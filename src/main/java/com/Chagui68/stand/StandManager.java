@@ -120,11 +120,11 @@ public final class StandManager implements Listener {
         StandData.setStand(player, stand);
         player.showTitle(Title.title(
                 Component.text("「" + stand.displayName() + "」", stand.textColor(), TextDecoration.BOLD),
-                Component.text("Tu Stand ha despertado", GRAY),
+                Component.text("Your Stand has awakened", GRAY),
                 Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(4), Duration.ofMillis(800))));
-        player.sendMessage(MscText.rich(GOLD, "✦ ", GRAY, "Tu Stand es ", stand.textColor(), stand.displayName(),
-                GRAY, ". Agáchate y pulsa ", YELLOW, "F", GRAY, " para invocarlo; ", YELLOW, "/stand", GRAY,
-                " para ver sus habilidades."));
+        player.sendMessage(MscText.rich(GOLD, "✦ ", GRAY, "Your Stand is ", stand.textColor(), stand.displayName(),
+                GRAY, ". Sneak and press ", YELLOW, "F", GRAY, " to summon it; ", YELLOW, "/stand", GRAY,
+                " shows its abilities."));
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 0.8f);
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 80, 0.6, 1.0, 0.6, 0,
                 new Particle.DustOptions(stand.aura(), 1.6f));
@@ -147,16 +147,16 @@ public final class StandManager implements Listener {
     public void toggle(Player player) {
         StandType stand = StandData.stand(player);
         if (stand == null) {
-            player.sendActionBar(Component.text("No tienes ningún Stand", GRAY));
+            player.sendActionBar(Component.text("You have no Stand", GRAY));
             return;
         }
         if (isSummoned(player)) {
             dismiss(player);
-            player.sendActionBar(Component.text(stand.displayName() + " regresa", stand.textColor()));
+            player.sendActionBar(Component.text(stand.displayName() + " returns", stand.textColor()));
             return;
         }
         if (!enabled()) {
-            player.sendActionBar(Component.text("Los Stands están desactivados", RED));
+            player.sendActionBar(Component.text("Stands are disabled", RED));
             return;
         }
         StandModel model = new StandModel(plugin, stand);
@@ -184,7 +184,7 @@ public final class StandManager implements Listener {
     private boolean ready(Player player, String ability, String label) {
         long left = remaining(player, ability);
         if (left > 0) {
-            player.sendActionBar(Component.text(label + " en enfriamiento: " + left + "s", RED));
+            player.sendActionBar(Component.text(label + " on cooldown: " + left + "s", RED));
             return false;
         }
         return true;
@@ -203,11 +203,11 @@ public final class StandManager implements Listener {
     public void ability(Player player, int which) {
         StandType stand = StandData.stand(player);
         if (stand == null) {
-            player.sendActionBar(Component.text("No tienes ningún Stand", GRAY));
+            player.sendActionBar(Component.text("You have no Stand", GRAY));
             return;
         }
         if (!isSummoned(player)) {
-            player.sendActionBar(Component.text("Invoca a tu Stand primero (agáchate + F)", GRAY));
+            player.sendActionBar(Component.text("Summon your Stand first (sneak + F)", GRAY));
             return;
         }
         if (timeStop.frozen(player)) {
@@ -230,7 +230,7 @@ public final class StandManager implements Listener {
 
     /** Star Platinum's ORA and The World's MUDA: a storm of fists on whoever stands in front. */
     private void barrage(Player player, StandType stand) {
-        if (!ready(player, "barrage", "La ráfaga")) {
+        if (!ready(player, "barrage", "The barrage")) {
             return;
         }
         double range = number(stand, "range", 4.0);
@@ -294,7 +294,7 @@ public final class StandManager implements Listener {
 
     /** ZA WARUDO: everything nearby stands still for a few seconds, except the user. */
     private void stopTime(Player player, StandType stand) {
-        if (!ready(player, "time-stop", "La detención del tiempo")) {
+        if (!ready(player, "time-stop", "The time stop")) {
             return;
         }
         double seconds = number(stand, "time-stop-seconds", stand == StandType.THE_WORLD ? 3 : 1.5);
@@ -331,7 +331,7 @@ public final class StandManager implements Listener {
 
     /** Hermit Purple: a spirit photograph that shows every living thing nearby. */
     private void spiritPhotography(Player player) {
-        if (!ready(player, "photo", "La fotografía espiritual")) {
+        if (!ready(player, "photo", "Spirit Photography")) {
             return;
         }
         StandType stand = StandType.HERMIT_PURPLE;
@@ -357,11 +357,11 @@ public final class StandManager implements Listener {
         }
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_GRINDSTONE_USE, 0.8f, 1.6f);
         player.getWorld().spawnParticle(Particle.FLASH, player.getEyeLocation(), 1);
-        Component line = MscText.rich(DARK_PURPLE, "✦ Hermit Purple ", GRAY, "revela ", GOLD, found + "", GRAY,
-                " seres a tu alrededor");
+        Component line = MscText.rich(DARK_PURPLE, "✦ Hermit Purple ", GRAY, "reveals ", GOLD, found + "", GRAY,
+                " beings around you");
         if (nearest != null) {
-            line = line.append(MscText.rich(GRAY, " · más cercano: ", LIGHT_PURPLE, nearest.getName(), GRAY,
-                    " a " + (int) Math.sqrt(best) + " bloques"));
+            line = line.append(MscText.rich(GRAY, " · nearest: ", LIGHT_PURPLE, nearest.getName(), GRAY,
+                    " at " + (int) Math.sqrt(best) + " blocks"));
         }
         player.sendMessage(line);
     }
@@ -388,7 +388,7 @@ public final class StandManager implements Listener {
 
     /** Crazy Diamond: heals whoever it points at (or its user) and mends what they hold. */
     private void restoration(Player player) {
-        if (!ready(player, "restore", "La restauración")) {
+        if (!ready(player, "restore", "Restoration")) {
             return;
         }
         StandType stand = StandType.CRAZY_DIAMOND;
@@ -422,12 +422,12 @@ public final class StandManager implements Listener {
     /** Opens the target menu of Sheer Heart Attack (also {@code /stand sha}). */
     public void openSheerHeartAttack(Player player) {
         if (StandData.stand(player) != StandType.KILLER_QUEEN) {
-            player.sendMessage(Component.text("Solo el usuario de Killer Queen puede usar Sheer Heart Attack.", RED));
+            player.sendMessage(Component.text("Only Killer Queen's user can send Sheer Heart Attack.", RED));
             return;
         }
         SheerHeartAttack running = attacks.get(player.getUniqueId());
         if (running != null && !running.done()) {
-            player.sendMessage(Component.text("Sheer Heart Attack ya está persiguiendo a alguien.", RED));
+            player.sendMessage(Component.text("Sheer Heart Attack is already chasing someone.", RED));
             return;
         }
         if (!ready(player, "sha", "Sheer Heart Attack")) {
@@ -444,7 +444,7 @@ public final class StandManager implements Listener {
         attacks.put(owner.getUniqueId(), attack);
         cool(owner, "sha", number(stand, "sha-cooldown-seconds", 300));
         owner.sendMessage(MscText.rich(LIGHT_PURPLE, "☠ ", GRAY, "Killer Queen: ", LIGHT_PURPLE,
-                "Sheer Heart Attack", GRAY, " va tras ", WHITE, target.getName(), GRAY, "."));
+                "Sheer Heart Attack", GRAY, " is after ", WHITE, target.getName(), GRAY, "."));
         owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_PISTON_EXTEND, 1.0f, 0.6f);
     }
 
@@ -530,7 +530,7 @@ public final class StandManager implements Listener {
             } finally {
                 bombing = false;
             }
-            attacker.sendActionBar(Component.text("Killer Queen ya ha tocado", LIGHT_PURPLE, TextDecoration.ITALIC));
+            attacker.sendActionBar(Component.text("Killer Queen has already touched it", LIGHT_PURPLE, TextDecoration.ITALIC));
         });
     }
 
@@ -646,24 +646,24 @@ public final class StandManager implements Listener {
     public static List<Component> describe(StandType stand) {
         List<Component> lines = new ArrayList<>();
         switch (stand) {
-            case HERMIT_PURPLE -> lines.add(MscText.rich(YELLOW, "F: ", WHITE, "Fotografía espiritual ",
-                    GRAY, "(hace brillar a todo ser cercano y señala al jugador más próximo)"));
+            case HERMIT_PURPLE -> lines.add(MscText.rich(YELLOW, "F: ", WHITE, "Spirit Photography ",
+                    GRAY, "(makes every nearby being glow and points out the nearest player)"));
             case MAGICIANS_RED -> lines.add(MscText.rich(YELLOW, "F: ", WHITE, "Crossfire Hurricane ",
-                    GRAY, "(abanico de cruces de fuego)"));
-            case CRAZY_DIAMOND -> lines.add(MscText.rich(YELLOW, "F: ", WHITE, "Restauración ",
-                    GRAY, "(cura al jugador que miras o a ti y repara lo que sostiene)"));
+                    GRAY, "(a fan of burning ankhs)"));
+            case CRAZY_DIAMOND -> lines.add(MscText.rich(YELLOW, "F: ", WHITE, "Restoration ",
+                    GRAY, "(heals the player you look at, or you, and mends what they hold)"));
             case KILLER_QUEEN -> {
-                lines.add(MscText.rich(YELLOW, "Pasiva: ", WHITE, "Primera Bomba ",
-                        GRAY, "(cada jugador que golpeas recibe una explosión)"));
-                lines.add(MscText.rich(YELLOW, "F o /stand sha: ", WHITE, "Sheer Heart Attack ",
-                        GRAY, "(una bomba inmortal persigue al jugador que elijas)"));
+                lines.add(MscText.rich(YELLOW, "Passive: ", WHITE, "First Bomb ",
+                        GRAY, "(every player you hit takes an explosion)"));
+                lines.add(MscText.rich(YELLOW, "F or /stand sha: ", WHITE, "Sheer Heart Attack ",
+                        GRAY, "(an unstoppable bomb chases the player you choose)"));
             }
             case STAR_PLATINUM, THE_WORLD -> {
                 lines.add(MscText.rich(YELLOW, "F: ", WHITE, stand == StandType.THE_WORLD ? "MUDA MUDA " : "ORA ORA ",
-                        GRAY, "(ráfaga de puñetazos al que tienes delante)"));
-                lines.add(MscText.rich(YELLOW, "Agachado + clic izquierdo con la mano vacía: ", WHITE,
+                        GRAY, "(a storm of punches on whoever is in front of you)"));
+                lines.add(MscText.rich(YELLOW, "Sneak + left-click with an empty hand: ", WHITE,
                         stand == StandType.THE_WORLD ? "ZA WARUDO " : "Star Platinum: The World ",
-                        GRAY, "(detiene el tiempo a tu alrededor)"));
+                        GRAY, "(stops time around you)"));
             }
         }
         return lines;

@@ -435,6 +435,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         // handlers below read their values, so this reload applies everything the jar ships.
         Set<String> added = MscConfigMigration.run(plugin);
         mobHandler.reloadConfig();
+        com.Chagui68.wiki.WikiRecipes.reset();
         if (plugin.getMahoraga() != null) plugin.getMahoraga().reloadConfig();
         if (plugin.getArmorStandBoss() != null) plugin.getArmorStandBoss().reloadConfig();
         if (plugin.getHeadSlime() != null) plugin.getHeadSlime().reloadConfig();

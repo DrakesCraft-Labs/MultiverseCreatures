@@ -70,7 +70,7 @@ public class ExecutionerGuillotineHandler implements Listener {
         if (player.isSneaking()) {
             long until = slamCooldowns.getOrDefault(player.getUniqueId(), 0L);
             if (until > now) {
-                player.sendActionBar(Component.text("Caída de la Guillotina en enfriamiento: "
+                player.sendActionBar(Component.text("Guillotine Drop on cooldown: "
                         + (until - now + 999) / 1000 + "s", NamedTextColor.RED));
                 return;
             }
@@ -81,7 +81,7 @@ public class ExecutionerGuillotineHandler implements Listener {
         }
         long until = chainCooldowns.getOrDefault(player.getUniqueId(), 0L);
         if (until > now) {
-            player.sendActionBar(Component.text("Cadenas del Juicio en enfriamiento: "
+            player.sendActionBar(Component.text("Chains of Judgment on cooldown: "
                     + (until - now + 999) / 1000 + "s", NamedTextColor.RED));
             return;
         }

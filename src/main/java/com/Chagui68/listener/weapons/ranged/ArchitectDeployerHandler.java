@@ -137,7 +137,7 @@ public class ArchitectDeployerHandler implements Listener {
         long now = System.currentTimeMillis();
         long until = beamCooldowns.getOrDefault(player.getUniqueId(), 0L);
         if (until > now) {
-            player.sendActionBar(Component.text("sudo rm -rf en enfriamiento: " + (until - now + 999) / 1000 + "s",
+            player.sendActionBar(Component.text("sudo rm -rf on cooldown: " + (until - now + 999) / 1000 + "s",
                     NamedTextColor.RED));
             return;
         }

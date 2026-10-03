@@ -118,13 +118,13 @@ public class PantheonInvocationManager implements Listener {
                     if (activeInvocations.containsKey(world.getUID())) continue;
                     if (!PantheonAltarStructure.areAllCandlesLit(origin, pantheon)) continue;
                     if (!DrakesBossesIntegration.isAvailable()) {
-                        player.sendMessage(Component.text("Los dioses de " + pantheon.displayName()
-                                + " no responden: DrakesBosses no está instalado.", NamedTextColor.RED));
+                        player.sendMessage(Component.text("The gods of " + pantheon.displayName()
+                                + " do not answer: DrakesBosses is not installed.", NamedTextColor.RED));
                         return;
                     }
                     if (plugin.isBossFightIn(world)) {
-                        player.sendMessage(Component.text("El altar no despierta mientras otro jefe combate "
-                                + "en la dimensión.", NamedTextColor.RED));
+                        player.sendMessage(Component.text("The altar does not wake while another boss fights "
+                                + "in the dimension.", NamedTextColor.RED));
                         return;
                     }
                     startInvocation(origin, pantheon);
@@ -149,8 +149,8 @@ public class PantheonInvocationManager implements Listener {
 
         Player player = event.getPlayer();
         if (god.pantheon() != data.pantheon) {
-            player.sendMessage(Component.text(god.displayName() + " pertenece a " + god.pantheon().displayName()
-                    + ": este altar solo escucha a " + data.pantheon.displayName() + ".", NamedTextColor.RED));
+            player.sendMessage(Component.text(god.displayName() + " belongs to " + god.pantheon().displayName()
+                    + ": this altar only listens to " + data.pantheon.displayName() + ".", NamedTextColor.RED));
             return;
         }
 
@@ -191,7 +191,7 @@ public class PantheonInvocationManager implements Listener {
             p.showTitle(Title.title(
                     Component.text("✦ " + god.displayName() + " ✦", TextColor.color(pantheon.primary().asRGB()),
                             TextDecoration.BOLD),
-                    Component.text(summoner.getName() + " ha despertado a un dios de " + pantheon.displayName(),
+                    Component.text(summoner.getName() + " has awakened a god of " + pantheon.displayName(),
                             NamedTextColor.GRAY),
                     Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(2500), Duration.ofMillis(600))));
         }
@@ -203,8 +203,8 @@ public class PantheonInvocationManager implements Listener {
             if (boss == null) {
                 // The offering was not spent: give it back on the altar.
                 world.dropItemNaturally(altar, new ItemStack(god.offering(this::configuredOffering)));
-                summoner.sendMessage(Component.text("La ofrenda a " + god.displayName()
-                        + " se disipó sin respuesta (revisa la consola).", NamedTextColor.RED));
+                summoner.sendMessage(Component.text("The offering to " + god.displayName()
+                        + " faded without an answer (check the console).", NamedTextColor.RED));
                 return;
             }
             world.strikeLightningEffect(altar);
@@ -225,7 +225,7 @@ public class PantheonInvocationManager implements Listener {
         fx.sound(altar.toVector(), Sfx.BELL_RESONATE, 2f, 0.7f);
         for (Player p : world.getPlayers()) {
             if (p.getLocation().distanceSquared(altar) > 40 * 40) continue;
-            p.sendMessage(Component.text("✦ El altar de " + pantheon.displayName() + " despierta. Ofrece:",
+            p.sendMessage(Component.text("✦ The altar of " + pantheon.displayName() + " awakens. Offer:",
                     TextColor.color(pantheon.primary().asRGB())));
             p.sendMessage(Component.text(offeringsOf(pantheon), NamedTextColor.GRAY));
         }

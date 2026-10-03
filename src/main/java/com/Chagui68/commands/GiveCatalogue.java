@@ -193,6 +193,8 @@ final class GiveCatalogue {
             new Entry(List.of("executionerwarrant", "warrant", "deathwarrant"),
                     () -> ExecutionerWarrant.EXECUTIONER_WARRANT),
             new Entry(List.of("architectkernel", "kernel", "architect"), () -> ArchitectKernel.ARCHITECT_KERNEL),
+            new Entry(List.of("garoucosmiccore", "garoucore"),
+                    () -> com.Chagui68.items.components.GarouCosmicCore.GAROU_COSMIC_CORE),
             new Entry(List.of("multiversalcore", "multiverse"), () -> MultiversalCore.MULTIVERSAL_CORE),
             new Entry(List.of("compressedgoldblock", "goldblock"), () -> CompressedGoldBlock.COMPRESSED_GOLD_BLOCK),
             new Entry(List.of("wheelcore"), () -> WheelCore.WHEEL_CORE),
