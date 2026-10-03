@@ -36,16 +36,16 @@ public final class StandViewerExport {
         StringBuilder json = new StringBuilder("{\"stands\":[");
         boolean first = true;
         for (StandType type : StandType.values()) {
-            if (!type.hasBody()) {
+            HeadModel heads = type.hasBody() ? builtIn(type) : null;
+            if (heads == null) {
                 continue;
             }
             if (!first) {
                 json.append(',');
             }
             first = false;
-            HeadModel heads = builtIn(type);
             json.append("{\"key\":\"").append(type.key()).append("\",\"name\":\"").append(type.displayName())
-                    .append("\",\"kind\":\"").append(heads == null ? "blocks" : "heads").append("\",\"poses\":{");
+                    .append("\",\"kind\":\"heads\",\"poses\":{");
             Map<String, Map<Part, Quaternionf>> poses = poses(type);
             boolean firstPose = true;
             for (Map.Entry<String, Map<Part, Quaternionf>> pose : poses.entrySet()) {
@@ -54,7 +54,7 @@ public final class StandViewerExport {
                 }
                 firstPose = false;
                 json.append('"').append(pose.getKey()).append("\":[");
-                json.append(heads == null ? blocks(type, pose.getValue()) : heads(heads, pose.getValue()));
+                json.append(heads(heads, pose.getValue()));
                 json.append(']');
             }
             json.append("}}");
@@ -104,20 +104,6 @@ public final class StandViewerExport {
                     new double[]{-150, 0, -55}, new double[]{-150, 0, 55}, zero, zero));
         }
         return poses;
-    }
-
-    private static String blocks(StandType type, Map<Part, Quaternionf> pose) {
-        Map<Part, Frame> frames = StandRig.solve(pose, new Vector3f());
-        StringBuilder out = new StringBuilder();
-        for (StandDesign.Piece piece : StandDesign.of(type)) {
-            Transformation t = StandRig.place(piece.center(), piece.size(), piece.spin(), frames.get(piece.part()), 0.9f);
-            if (out.length() > 0) {
-                out.append(',');
-            }
-            out.append("{\"m\":\"").append(piece.material().name()).append("\",\"glow\":").append(piece.bright())
-                    .append(',').append(transform(t)).append('}');
-        }
-        return out.toString();
     }
 
     private static String heads(HeadModel model, Map<Part, Quaternionf> pose) {

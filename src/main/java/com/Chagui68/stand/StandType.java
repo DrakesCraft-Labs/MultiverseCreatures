@@ -10,7 +10,7 @@ import java.util.function.ToIntFunction;
 
 /**
  * The Stands the Arrow can awaken, with how often each one appears and its colours. What each one
- * looks like lives in {@link StandDesign}.
+ * looks like is its head model in {@code stands/<key>.txt} (see {@link HeadModels}).
  *
  * <p>The weights are the defaults; {@code stands.<key>.weight} in config.yml overrides them. A
  * Stand with weight 0 is never rolled.</p>

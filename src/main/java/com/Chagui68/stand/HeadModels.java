@@ -17,8 +17,7 @@ import java.util.Optional;
  *
  * <p>A Stand uses the head model in {@code plugins/MultiverseCreatures/stands/<stand>.txt} when the
  * server has one: the {@code /summon} command BDEngine exports, pasted as it is. Without one it uses
- * the model the jar ships for it (The World), and without that the block figure of
- * {@link StandDesign}. So a new Stand model is a file away, with no code and no restart beyond
+ * the model the jar ships for it. So a new Stand model is a file away, with no code and no restart beyond
  * {@code /msc reload}.</p>
  */
 public final class HeadModels {
@@ -92,10 +91,11 @@ public final class HeadModels {
             Stand models drawn with textured player heads
             =============================================
 
-            Put a file here named after a Stand to draw it with player heads instead of blocks:
+            Every Stand with a body, and DIO, ships with its own model. Put a file here named
+            after one of them to replace it:
 
-              hermit-purple.txt   magicians-red.txt   crazy-diamond.txt
-              killer-queen.txt    star-platinum.txt   the-world.txt
+              star-platinum.txt   the-world.txt       magicians-red.txt
+              crazy-diamond.txt   killer-queen.txt    dio-brando.txt
 
             The file holds the /summon command BDEngine exports for an eleven-head humanoid
             (head, chest, belly, two upper arms, two forearms, two thighs and two shins), pasted
@@ -103,10 +103,7 @@ public final class HeadModels {
             model up straight and animates it itself (breathing, the head following its user,
             the barrage punches).
 
-            dio-brando.txt draws DIO himself, the boss, the same way.
-
-            The World already ships with a model; a the-world.txt here replaces it. Use
-            /msc reload after adding or changing a file. A file that cannot be read is reported
-            in the console and the Stand keeps its previous model.
+            Use /msc reload after adding or changing a file. A file that cannot be read is
+            reported in the console and the built-in model is used instead.
             """;
 }

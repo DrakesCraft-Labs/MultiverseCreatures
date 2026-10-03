@@ -1,7 +1,7 @@
 package com.Chagui68.stand;
 
-import com.Chagui68.stand.StandRig.Frame;
 import com.Chagui68.stand.StandRig.Part;
+import com.Chagui68.utils.DisplaySuit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -12,6 +12,7 @@ import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Display;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.util.Transformation;
@@ -25,10 +26,10 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * A summoned Stand: a detailed figure of block displays floating behind its user's right
- * shoulder (see {@link StandDesign} for what each one looks like and {@link StandRig} for the
- * skeleton). It follows its user every tick, breathes, turns its head where its user looks and,
- * for a barrage, steps in front and throws punch after punch, leaving afterimages of its fists.
+ * A summoned Stand: its figure of eleven textured player heads ({@link HeadModel}, posed on the
+ * skeleton of {@link StandRig}) floating behind its user's right shoulder. It follows its user
+ * every tick, breathes, turns its head where its user looks and, for a barrage, steps in front and
+ * throws punch after punch, leaving afterimages of its own forearm.
  *
  * <p>It materialises out of its aura when summoned, with the menacing ゴゴゴ rising round it.
  * Hermit Purple has no body: it is a double coil of thorned vines turning round its user's
@@ -41,7 +42,7 @@ public final class StandModel {
     public static final String TAG = "MSC_StandPart";
 
     private static final float SCALE = 0.9f;
-    /** How tall a Stand drawn with heads stands, the same as the block figures. */
+    /** How tall a Stand stands, in blocks. */
     private static final double HEIGHT = 2.0 * SCALE;
     /** Ticks the body takes to grow out of its aura. */
     private static final int MATERIALISE_TICKS = 7;
@@ -51,10 +52,8 @@ public final class StandModel {
 
     private final org.bukkit.plugin.Plugin plugin;
     private final StandType type;
-    private final List<StandDesign.Piece> pieces;
-    private final List<BlockDisplay> parts = new ArrayList<>();
     private final List<BlockDisplay> vines = new ArrayList<>();
-    /** The textured head model of this Stand, or null when it is drawn with blocks. */
+    /** The Stand's head model, or null for Hermit Purple (or a model that could not be read). */
     private final HeadModel heads;
     private HeadPuppet puppet;
     private int age;
@@ -64,8 +63,10 @@ public final class StandModel {
     public StandModel(org.bukkit.plugin.Plugin plugin, StandType type) {
         this.plugin = plugin;
         this.type = type;
-        this.pieces = StandDesign.of(type);
         this.heads = type.hasBody() ? HeadModels.of(type) : null;
+        if (type.hasBody() && heads == null) {
+            plugin.getLogger().warning(type.displayName() + " has no head model in stands/" + type.key() + ".txt");
+        }
     }
 
     public StandType type() {
@@ -80,7 +81,7 @@ public final class StandModel {
             for (int i = 0; i < VINE_SEGMENTS * 2 + VINE_SEGMENTS / 2; i++) {
                 Material material = i >= VINE_SEGMENTS * 2 ? Material.MAGENTA_TERRACOTTA
                         : (i % 2 == 0 ? Material.PURPLE_CONCRETE : Material.PURPLE_TERRACOTTA);
-                vines.add(display(world, at, material, false, null));
+                vines.add(vine(world, at, material));
             }
             twistVines(2);
             world.spawnParticle(Particle.DUST, at.clone().add(0, 1, 0), 30, 0.3, 0.5, 0.3, 0,
@@ -88,22 +89,14 @@ public final class StandModel {
             return;
         }
         Location at = anchor(user, false);
-        Map<Part, Quaternionf> rest = StandRig.idle(type, 0, user.getLocation().getPitch());
         if (heads != null) {
             puppet = new HeadPuppet(heads, HeadPuppet.scaleFor(heads, HEIGHT), TAG, 2);
-            puppet.spawn(at, rest, 0.05f);
-        } else {
-            Map<Part, Frame> frames = StandRig.solve(rest, new Vector3f());
-            for (StandDesign.Piece piece : pieces) {
-                Transformation seed = StandRig.place(piece.center(), piece.size(), piece.spin(),
-                        frames.get(piece.part()), SCALE * 0.05f);
-                parts.add(display(world, at, piece.material(), piece.bright(), seed));
+            puppet.spawn(at, StandRig.idle(type, 0, user.getLocation().getPitch()), 0.05f);
+            // Next tick, grow to full size so the client interpolates the whole way.
+            if (plugin.isEnabled()) {
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> apply(
+                        StandRig.idle(type, age, user.getLocation().getPitch()), MATERIALISE_TICKS), 1L);
             }
-        }
-        // Next tick, grow to full size so the client interpolates the whole way.
-        if (plugin.isEnabled()) {
-            plugin.getServer().getScheduler().runTaskLater(plugin, () -> apply(
-                    StandRig.idle(type, age, user.getLocation().getPitch()), MATERIALISE_TICKS), 1L);
         }
         world.spawnParticle(Particle.DUST, at.clone().add(0, 1, 0), 60, 0.4, 0.9, 0.4, 0,
                 new Particle.DustOptions(type.aura(), 1.5f));
@@ -111,8 +104,7 @@ public final class StandModel {
         menace(user, at);
     }
 
-    private BlockDisplay display(World world, Location at, Material material, boolean bright,
-                                 Transformation transformation) {
+    private BlockDisplay vine(World world, Location at, Material material) {
         return world.spawn(at, BlockDisplay.class, entity -> {
             entity.setPersistent(false);
             entity.addScoreboardTag(TAG);
@@ -121,10 +113,6 @@ public final class StandModel {
             entity.setTeleportDuration(2);
             entity.setInterpolationDuration(2);
             entity.setShadowRadius(0f);
-            entity.setViewRange(bright ? 1.2f : 1.0f);
-            if (transformation != null) {
-                entity.setTransformation(transformation);
-            }
         });
     }
 
@@ -182,11 +170,6 @@ public final class StandModel {
         }
         boolean front = barrageTicks > 0;
         Location at = anchor(user, front);
-        for (BlockDisplay part : parts) {
-            if (part.isValid()) {
-                part.teleport(at);
-            }
-        }
         if (puppet != null) {
             puppet.moveTo(at);
         }
@@ -215,59 +198,36 @@ public final class StandModel {
         }
     }
 
-    /** Poses every piece, the displays sliding there over {@code ticks}. */
+    /** Poses every head, the displays sliding there over {@code ticks}. */
     private void apply(Map<Part, Quaternionf> pose, int ticks) {
-        float lift = (float) Math.sin(age / 14.0) * 0.015f;
         if (puppet != null) {
+            float lift = (float) Math.sin(age / 14.0) * 0.015f;
             puppet.pose(pose, new Vector3f(0, lift, 0), ticks);
-            return;
-        }
-        Map<Part, Frame> frames = StandRig.solve(pose, new Vector3f(0, lift, 0));
-        for (int i = 0; i < parts.size(); i++) {
-            BlockDisplay part = parts.get(i);
-            if (!part.isValid()) {
-                continue;
-            }
-            StandDesign.Piece piece = pieces.get(i);
-            part.setInterpolationDelay(0);
-            part.setInterpolationDuration(ticks);
-            part.setTransformation(StandRig.place(piece.center(), piece.size(), piece.spin(),
-                    frames.get(piece.part()), SCALE));
         }
     }
 
-    /** Ghost fists flickering round the real ones while the Stand hits. */
+    /** Ghosts of the Stand's own forearm flickering round its fists while it hits. */
     private void afterimages(Location at) {
-        if (!plugin.isEnabled()) {
+        if (!plugin.isEnabled() || heads == null) {
             return;
         }
         ThreadLocalRandom random = ThreadLocalRandom.current();
-        Material fist = StandDesign.fist(type);
+        String skin = heads.pieces().stream().filter(p -> p.part() == Part.FOREARM_R)
+                .findFirst().map(HeadModel.Piece::texture).orElse(heads.pieces().get(0).texture());
         for (int i = 0; i < 3; i++) {
             Vector3f where = new Vector3f((float) random.nextDouble(-0.55, 0.55), (float) random.nextDouble(0.95, 1.55),
                     (float) random.nextDouble(0.55, 1.25)).mul(SCALE);
-            float size = 0.2f * SCALE;
-            org.bukkit.entity.Entity ghost;
-            if (heads != null) {
-                // A Stand of heads throws ghosts of its own forearm, skin and all.
-                String skin = heads.pieces().stream().filter(p -> p.part() == Part.FOREARM_R)
-                        .findFirst().map(HeadModel.Piece::texture).orElse(heads.pieces().get(0).texture());
-                float k = size * 2f;
-                Transformation pose = new Transformation(new Vector3f(where).add(0, size / 2, 0),
-                        new Quaternionf().rotationY((float) Math.PI), new Vector3f(k, k, k * 1.1f), new Quaternionf());
-                ghost = at.getWorld().spawn(at, org.bukkit.entity.ItemDisplay.class, entity -> {
-                    entity.setPersistent(false);
-                    entity.addScoreboardTag(TAG);
-                    entity.setItemStack(com.Chagui68.utils.DisplaySuit.head("MSC_Stand", skin, "Stand"));
-                    entity.setItemDisplayTransform(org.bukkit.entity.ItemDisplay.ItemDisplayTransform.NONE);
-                    entity.setBrightness(new Display.Brightness(15, 15));
-                    entity.setTransformation(pose);
-                });
-            } else {
-                Transformation pose = new Transformation(new Vector3f(where).sub(size / 2, size / 2, size / 2),
-                        new Quaternionf(), new Vector3f(size, size, size * 1.1f), new Quaternionf());
-                ghost = display(at.getWorld(), at, fist, false, pose);
-            }
+            float size = 0.4f * SCALE;
+            Transformation pose = new Transformation(new Vector3f(where).add(0, size / 4, 0),
+                    new Quaternionf().rotationY((float) Math.PI), new Vector3f(size, size, size * 1.1f), new Quaternionf());
+            ItemDisplay ghost = at.getWorld().spawn(at, ItemDisplay.class, entity -> {
+                entity.setPersistent(false);
+                entity.addScoreboardTag(TAG);
+                entity.setItemStack(DisplaySuit.head("MSC_Stand", skin, "Stand"));
+                entity.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+                entity.setBrightness(new Display.Brightness(15, 15));
+                entity.setTransformation(pose);
+            });
             plugin.getServer().getScheduler().runTaskLater(plugin, ghost::remove, 3L);
         }
     }
@@ -333,12 +293,6 @@ public final class StandModel {
         if (puppet != null) {
             puppet.remove();
         }
-        for (BlockDisplay part : parts) {
-            if (part != null && part.isValid()) {
-                part.remove();
-            }
-        }
-        parts.clear();
         for (BlockDisplay vine : vines) {
             if (vine != null && vine.isValid()) {
                 vine.remove();
@@ -348,16 +302,15 @@ public final class StandModel {
     }
 
     public boolean alive() {
-        if (puppet != null) {
-            return puppet.alive();
+        if (type.hasBody()) {
+            return puppet == null || puppet.alive();
         }
-        List<BlockDisplay> all = type.hasBody() ? parts : vines;
-        for (BlockDisplay part : all) {
-            if (part == null || !part.isValid()) {
+        for (BlockDisplay vine : vines) {
+            if (vine == null || !vine.isValid()) {
                 return false;
             }
         }
-        return !all.isEmpty();
+        return !vines.isEmpty();
     }
 
     /** Where the Stand floats: behind the right shoulder, or a step in front while it hits. */

@@ -69,23 +69,20 @@ class StandRigTest {
     }
 
     @Test
-    @DisplayName("Every Stand with a body is a detailed figure, mirrored on both sides")
-    void designsAreDetailedAndSymmetric() {
+    @DisplayName("Every Stand with a body, and DIO, ships an eleven-head model the plugin can read")
+    void everyBodyShipsAHeadModel() throws Exception {
+        List<String> models = new java.util.ArrayList<>();
         for (StandType type : StandType.values()) {
-            List<StandDesign.Piece> pieces = StandDesign.of(type);
-            if (!type.hasBody()) {
-                assertTrue(pieces.isEmpty(), "Hermit Purple has no body");
-                continue;
+            if (type.hasBody()) {
+                models.add(type.key());
             }
-            assertTrue(pieces.size() >= 60, type + " has only " + pieces.size() + " pieces");
-            for (StandDesign.Piece piece : pieces) {
-                String side = piece.part().name();
-                if (side.endsWith("_R")) {
-                    assertTrue(piece.center().x < 0.05f, type + " right piece on the left: " + piece);
-                } else if (side.endsWith("_L")) {
-                    assertTrue(piece.center().x > -0.05f, type + " left piece on the right: " + piece);
-                }
-                assertTrue(piece.size().x > 0 && piece.size().y > 0 && piece.size().z > 0, "empty box " + piece);
+        }
+        models.add("dio-brando");
+        for (String name : models) {
+            try (java.io.InputStream in = StandRigTest.class.getResourceAsStream("/stands/" + name + ".txt")) {
+                assertNotNull(in, name + " has no model in stands/");
+                HeadModel model = HeadModel.parse(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
+                assertEquals(11, model.pieces().size(), name);
             }
         }
     }

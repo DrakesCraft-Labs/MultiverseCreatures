@@ -108,10 +108,11 @@ forearms, thighs and shins); DIO's armour stand is only his hitbox now. The mode
 the plugin reads each one as it is, stands it up straight and animates it on its own skeleton (breathing, the head following its
 user, elbows and knees bending, the barrage, every move of DIO's The World).
 
-Any Stand can be drawn the same way: put its BDEngine `/summon` export, pasted as it is, in
-`plugins/MultiverseCreatures/stands/<stand>.txt` (`star-platinum.txt`, `killer-queen.txt`, ...)
-and run `/msc reload`. A Stand without a file keeps its block figure; a file that cannot be read
-is reported in the console. The folder's `README.txt` repeats this.
+A server can replace any of them: put a BDEngine `/summon` export, pasted as it is, in
+`plugins/MultiverseCreatures/stands/<name>.txt` (`star-platinum.txt`, `dio-brando.txt`, ...) and
+run `/msc reload`. A file that cannot be read is reported in the console and the built-in model is
+used instead. The folder's `README.txt` repeats this. Hermit Purple has no body: it stays a coil of
+thorned vines round its user's arm.
 
 ## ⚔️ Boss weapons
 

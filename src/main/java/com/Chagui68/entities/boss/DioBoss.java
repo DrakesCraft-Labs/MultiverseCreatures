@@ -52,11 +52,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ArmorMeta;
-import org.bukkit.inventory.meta.LeatherArmorMeta;
-import org.bukkit.inventory.meta.trim.ArmorTrim;
-import org.bukkit.inventory.meta.trim.TrimMaterial;
-import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -93,18 +88,6 @@ public class DioBoss implements Listener {
     static final String OWNER_PREFIX = "MSC_DioOwner_";
     /** Knives, the road roller and the menacing letters: swept on restart like every attack prop. */
     private static final String PROP_TAG = LiveStage.PROP_TAG;
-
-    /**
-     * DIO's face: the skin of the account Dio_Over_Heaven, a Part 3 DIO (blond hair, red eyes,
-     * green hearts), checked against textures.minecraft.net.
-     */
-    private static final String DIO_TEXTURE = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDllOWI0NGIyNGVhODFhZjNkNmI3MWQxZWMyMzMxYmFmNDAzYWU2ODRiY2U2NzQ0NzkwMzMzNDFkOTBlMGVkZSJ9fX0=";
-
-    /**
-     * The World's face: minecraft-heads.com custom head 33919, checked against textures.minecraft.net.
-     * The profile name belongs to no account, so the head can only ever show this texture.
-     */
-    private static final String WORLD_TEXTURE = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNThiMDI5ZjAyYjIyODIyZDE5OWFiOWE5YTgyZGRiMjZiODQyMTNiNDMzYzFkNmFmMmYyMTdlYWVmYTc1ZDU1NSJ9fX0=";
 
     private static final double DIO_SCALE = 1.15;
     private static final double WORLD_SCALE = 1.35;
@@ -210,7 +193,7 @@ public class DioBoss implements Listener {
         Location at = location.clone();
         BossArena.settle(at);
         ArmorStand stand = world.spawn(at, ArmorStand.class, s -> {
-            s.setVisible(dioModel() == null);
+            s.setVisible(false);
             s.setArms(true);
             s.setBasePlate(false);
             s.setGravity(false);
@@ -244,7 +227,7 @@ public class DioBoss implements Listener {
             MscEntityUtils.initVirtualHealth(stand, health);
         }
         // A DIO adopted after a restart takes the body this release draws him with.
-        if (dioModel() != null) dressDio(stand);
+        dressDio(stand);
         DioInstance inst = new DioInstance(stand);
         for (ArmorStand candidate : stand.getWorld().getEntitiesByClass(ArmorStand.class)) {
             if (candidate.getScoreboardTags().contains(STAND_TAG)
@@ -265,7 +248,7 @@ public class DioBoss implements Listener {
     private ArmorStand spawnTheWorld(ArmorStand dio) {
         Location at = dio.getLocation().clone().add(0, 0.6, 0);
         return dio.getWorld().spawn(at, ArmorStand.class, s -> {
-            s.setVisible(worldModel() == null);
+            s.setVisible(false);
             s.setArms(true);
             s.setBasePlate(false);
             s.setGravity(false);
@@ -283,39 +266,20 @@ public class DioBoss implements Listener {
         });
     }
 
-    /** His Part 3 outfit: the yellow jacket and trousers, green hearts at the knees. */
+    /** DIO is drawn with his own heads: his armour stand is only the hitbox they ride. */
     private void dressDio(ArmorStand stand) {
-        var eq = stand.getEquipment();
-        if (eq == null) return;
-        if (dioModel() != null) {
-            // Drawn with his own heads: the stand is only the hitbox they ride.
-            stand.setVisible(false);
-            eq.clear();
-            lock(stand);
-            return;
-        }
-        eq.setHelmet(DisplaySuit.head("Dio_Over_Heaven", DIO_TEXTURE, "DIO"));
-        eq.setChestplate(leather(Material.LEATHER_CHESTPLATE, Color.fromRGB(0xE8B923), TrimPattern.SILENCE));
-        eq.setLeggings(leather(Material.LEATHER_LEGGINGS, Color.fromRGB(0xE2B21E), TrimPattern.WILD));
-        eq.setBoots(leather(Material.LEATHER_BOOTS, Color.fromRGB(0xC99A12), null));
-        lock(stand);
+        hide(stand);
     }
 
-    /** Its own head on a golden body with green trim: the colours The World is drawn in. */
+    /** The World is drawn with its own heads: its armour stand is only the anchor they ride. */
     private void dressTheWorld(ArmorStand stand) {
+        hide(stand);
+    }
+
+    private static void hide(ArmorStand stand) {
+        stand.setVisible(false);
         var eq = stand.getEquipment();
-        if (eq == null) return;
-        if (worldModel() != null) {
-            // Drawn with its own heads: the stand is only the anchor they ride.
-            stand.setVisible(false);
-            eq.clear();
-            lock(stand);
-            return;
-        }
-        eq.setHelmet(DisplaySuit.head("MSC_TheWorld", WORLD_TEXTURE, "The World"));
-        eq.setChestplate(trimmed(new ItemStack(Material.GOLDEN_CHESTPLATE), TrimPattern.RIB));
-        eq.setLeggings(trimmed(new ItemStack(Material.GOLDEN_LEGGINGS), TrimPattern.WILD));
-        eq.setBoots(trimmed(new ItemStack(Material.GOLDEN_BOOTS), TrimPattern.SNOUT));
+        if (eq != null) eq.clear();
         lock(stand);
     }
 
@@ -325,28 +289,6 @@ public class DioBoss implements Listener {
             stand.addEquipmentLock(slot, ArmorStand.LockType.REMOVING_OR_CHANGING);
             stand.addEquipmentLock(slot, ArmorStand.LockType.ADDING_OR_CHANGING);
         }
-    }
-
-    private ItemStack leather(Material material, Color color, TrimPattern pattern) {
-        ItemStack item = new ItemStack(material);
-        if (item.getItemMeta() instanceof LeatherArmorMeta meta) {
-            meta.setColor(color);
-            item.setItemMeta(meta);
-        }
-        return pattern == null ? item : trimmed(item, pattern);
-    }
-
-    private ItemStack trimmed(ItemStack item, TrimPattern pattern) {
-        if (item.getItemMeta() instanceof ArmorMeta meta) {
-            try {
-                meta.setTrim(new ArmorTrim(TrimMaterial.EMERALD, pattern));
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().fine("DIO's armour trim was refused: " + e.getMessage());
-            }
-            meta.setUnbreakable(true);
-            item.setItemMeta(meta);
-        }
-        return item;
     }
 
     // ------------------------------------------------------------------ the tick
@@ -1204,7 +1146,7 @@ public class DioBoss implements Listener {
 
     // ------------------------------------------------------------------ body
 
-    /** DIO's own head model, or null when he is drawn as a dressed armour stand. */
+    /** DIO's own head model (stands/dio-brando.txt). */
     private static com.Chagui68.stand.HeadModel dioModel() {
         return com.Chagui68.stand.HeadModels.of("dio-brando");
     }
@@ -1229,7 +1171,7 @@ public class DioBoss implements Listener {
         inst.dioBody.pose(pose, new org.joml.Vector3f(), 1);
     }
 
-    /** The head model of The World, or null when it is drawn as a dressed armour stand. */
+    /** The World's head model (stands/the-world.txt). */
     private static com.Chagui68.stand.HeadModel worldModel() {
         return com.Chagui68.stand.HeadModels.of(com.Chagui68.stand.StandType.THE_WORLD);
     }

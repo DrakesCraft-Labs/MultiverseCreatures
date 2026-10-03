@@ -1,6 +1,5 @@
 package com.Chagui68.stand;
 
-import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -114,17 +113,6 @@ public final class StandRig {
             frames.put(part, new Frame(rotation, translation));
         }
         return frames;
-    }
-
-    /**
-     * The display transformation of one box: centred on {@code center}, {@code size} big, turned by
-     * {@code spin} about its own centre, then carried by its part's frame and scaled about the feet.
-     */
-    public static Transformation place(Vector3f center, Vector3f size, Quaternionf spin, Frame frame, float scale) {
-        Vector3f corner = new Vector3f(size).mul(-0.5f).rotate(spin).add(center);
-        Vector3f translation = frame.apply(corner).mul(scale);
-        Quaternionf rotation = new Quaternionf(frame.rotation()).mul(spin);
-        return new Transformation(translation, rotation, new Vector3f(size).mul(scale), new Quaternionf());
     }
 
     // ------------------------------------------------------------------ poses

@@ -39,27 +39,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-// Approximate colours of the blocks the Stands are built from.
-const COLORS = {
-  LIGHT_BLUE_TERRACOTTA: 0x716c89, BLUE_TERRACOTTA: 0x4a3b5b, GOLD_BLOCK: 0xf6d03d, YELLOW_TERRACOTTA: 0xba8523,
-  RED_TERRACOTTA: 0x8f3d2e, BROWN_TERRACOTTA: 0x4d3324, SHROOMLIGHT: 0xf09040, PINK_CONCRETE: 0xd5658e,
-  MAGENTA_TERRACOTTA: 0x96586c, LIGHT_BLUE_CONCRETE: 0x2389c6, WHITE_TERRACOTTA: 0xd1b2a1,
-  PURPLE_TERRACOTTA: 0x764656, WHITE_CONCRETE: 0xcfd5d6, CYAN_CONCRETE: 0x157788, BLACK_CONCRETE: 0x080a0f,
-  RED_CONCRETE: 0x8e2020, EMERALD_BLOCK: 0x2acb57, LIGHT_GRAY_CONCRETE: 0x7d7d73, GRAY_CONCRETE: 0x36393d,
-  ORANGE_TERRACOTTA: 0xa15325, YELLOW_CONCRETE: 0xf0af15, ORANGE_CONCRETE: 0xe06101, DIAMOND_BLOCK: 0x62ede4,
-  PURPLE_CONCRETE: 0x64209c, MAGENTA_CONCRETE: 0xa9309f, PINK_TERRACOTTA: 0xa14e4e, IRON_BLOCK: 0xdcdcdc,
-  NETHERITE_BLOCK: 0x42393a, QUARTZ_BLOCK: 0xece6df, BONE_BLOCK: 0xe5e1cf, GREEN_CONCRETE: 0x495b24,
-  LIME_CONCRETE: 0x5ea918, BLUE_CONCRETE: 0x2c2e8f, PURPLE_STAINED_GLASS: 0x7f3fb2, YELLOW_STAINED_GLASS: 0xe5e533,
-  RED_STAINED_GLASS: 0x993333, PINK_STAINED_GLASS: 0xf27fa5, MAGENTA_STAINED_GLASS: 0xb24cd8,
-  ORANGE_STAINED_GLASS: 0xd87f33, LIGHT_BLUE_STAINED_GLASS: 0x6699d8, WHITE_STAINED_GLASS: 0xffffff,
-  BLACK_TERRACOTTA: 0x251610, GRAY_TERRACOTTA: 0x392a23, CYAN_TERRACOTTA: 0x575b5b, LIME_TERRACOTTA: 0x677534,
-  GREEN_TERRACOTTA: 0x4c532a, LIGHT_GRAY_TERRACOTTA: 0x876b62, POLISHED_BLACKSTONE: 0x35303a,
-  CRYING_OBSIDIAN: 0x200a3c, AMETHYST_BLOCK: 0x8561c1, PEARLESCENT_FROGLIGHT: 0xf5f0f0, OCHRE_FROGLIGHT: 0xfbf2b5,
-  VERDANT_FROGLIGHT: 0xe5f4e4, SEA_LANTERN: 0xacc7be, GLOWSTONE: 0xfcd57a, REDSTONE_BLOCK: 0xaf1805,
-  COPPER_BLOCK: 0xc06c50, RAW_GOLD_BLOCK: 0xdda92e, LAPIS_BLOCK: 0x1f43a0, PRISMARINE: 0x63a39b,
-  CHISELED_QUARTZ_BLOCK: 0xe8e3d9, SMOOTH_QUARTZ: 0xece6df, OBSIDIAN: 0x0f0b19, TUFF: 0x6c6d66,
-};
-
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -111,7 +90,6 @@ function headGeometry(layer) {
   return g;
 }
 const HEAD = headGeometry(false), HAT = headGeometry(true);
-const CUBE = new THREE.BoxGeometry(1, 1, 1).translate(0.5, 0.5, 0.5);
 
 function place(object, p) {
   object.position.set(p.t[0], p.t[1], p.t[2]);
@@ -133,23 +111,12 @@ function buildStand(stand, poseName) {
       ? (paint.base.poses[poseName] || paint.base.poses.idle).map((p, i) => ({ ...p, skin: "../stand-skins/out/" + paint.files[i] }))
       : (stand.poses[poseName] || stand.poses.idle);
   for (const p of pieces) {
-    let mesh;
-    if (p.skin !== undefined) {
-      const tex = skin(p.skin);
-      const failed = tex.userData.failed;
-      const base = new THREE.MeshStandardMaterial(failed ? { color: 0xd4a62a } : { map: tex });
-      mesh = new THREE.Group();
-      mesh.add(new THREE.Mesh(HEAD, base));
-      if (!failed) {
-        mesh.add(new THREE.Mesh(HAT, new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.5 })));
-      }
-    } else {
-      const glass = p.m.includes("GLASS");
-      const material = new THREE.MeshStandardMaterial({
-        color: COLORS[p.m] ?? 0xff00ff, transparent: glass, opacity: glass ? 0.5 : 1,
-        emissive: p.glow ? COLORS[p.m] ?? 0 : 0, emissiveIntensity: p.glow ? 0.6 : 0, roughness: 0.85 });
-      mesh = new THREE.Mesh(CUBE, material);
-      mesh.castShadow = true;
+    const tex = skin(p.skin);
+    const failed = tex.userData.failed;
+    const mesh = new THREE.Group();
+    mesh.add(new THREE.Mesh(HEAD, new THREE.MeshStandardMaterial(failed ? { color: 0xd4a62a } : { map: tex })));
+    if (!failed) {
+      mesh.add(new THREE.Mesh(HAT, new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.5 })));
     }
     place(mesh, p);
     group.add(mesh);
@@ -182,7 +149,7 @@ function refresh() {
   const count = allBox.checked ? data.stands.reduce((n, s) => n + (s.poses[pose] || s.poses.idle).length, 0)
       : (stand.poses[pose] || stand.poses.idle).length;
   document.getElementById("info").textContent = `${count} display entities · drag to orbit, scroll to zoom`
-      + (allBox.checked ? "" : ` · ${stand.name} drawn with ${painted(stand) ? "painted skins" : stand.kind}`);
+      + (allBox.checked ? "" : ` · ${stand.name} drawn with ${painted(stand) ? "local skins" : "Mojang textures"}`);
 }
 
 function fillPoses() {

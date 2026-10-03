@@ -112,10 +112,11 @@ skins con `tools/stand-skins`): el plugin lee cada uno tal cual, lo pone de pie 
 cabeza siguiendo a su usuario, codos y rodillas que se doblan, la ráfaga y cada movimiento de
 The World de DIO).
 
-Cualquier Stand puede dibujarse igual: pon su export `/summon` de BDEngine, pegado tal cual, en
-`plugins/MultiverseCreatures/stands/<stand>.txt` (`star-platinum.txt`, `killer-queen.txt`, ...)
-y usa `/msc reload`. Un Stand sin archivo conserva su figura de bloques; un archivo que no se
-pueda leer se avisa en la consola. El `README.txt` de la carpeta lo repite.
+Un servidor puede reemplazar cualquiera: pon un export `/summon` de BDEngine, pegado tal cual, en
+`plugins/MultiverseCreatures/stands/<nombre>.txt` (`star-platinum.txt`, `dio-brando.txt`, ...) y
+usa `/msc reload`. Un archivo que no se pueda leer se avisa en la consola y se usa el modelo
+incluido. El `README.txt` de la carpeta lo repite. Hermit Purple no tiene cuerpo: sigue siendo un
+espiral de enredaderas con espinas alrededor del brazo de su usuario.
 
 ## ⚔️ Armas de los jefes
 
