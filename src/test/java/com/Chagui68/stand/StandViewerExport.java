@@ -59,6 +59,31 @@ public final class StandViewerExport {
             }
             json.append("}}");
         }
+        // DIO himself, in the poses his boss fight uses.
+        HeadModel dio = builtIn("dio-brando");
+        if (dio != null) {
+            json.append(",{\"key\":\"dio-brando\",\"name\":\"DIO (boss)\",\"kind\":\"heads\",\"poses\":{");
+            Map<String, com.Chagui68.entities.boss.fx.Pose> poses = new LinkedHashMap<>();
+            poses.put("idle", com.Chagui68.entities.boss.DioMoves.DIO_IDLE);
+            poses.put("arms folded", com.Chagui68.entities.boss.DioMoves.DIO_ARMS_FOLDED);
+            poses.put("knives thrown", com.Chagui68.entities.boss.DioMoves.DIO_KNIVES_THROWN);
+            poses.put("leap", com.Chagui68.entities.boss.DioMoves.DIO_LEAP);
+            poses.put("on the road roller", com.Chagui68.entities.boss.DioMoves.DIO_ON_ROLLER);
+            poses.put("walking", com.Chagui68.entities.boss.DioMoves.walk(1.2));
+            boolean firstPose = true;
+            for (Map.Entry<String, com.Chagui68.entities.boss.fx.Pose> pose : poses.entrySet()) {
+                com.Chagui68.entities.boss.fx.Pose p = pose.getValue();
+                if (!firstPose) {
+                    json.append(',');
+                }
+                firstPose = false;
+                json.append('"').append(pose.getKey()).append("\":[")
+                        .append(heads(dio, StandRig.fromArmorStand(p.head(), p.body(), p.leftArm(), p.rightArm(),
+                                p.leftLeg(), p.rightLeg())))
+                        .append(']');
+            }
+            json.append("}}");
+        }
         json.append("]}");
         Files.createDirectories(out.getParent());
         Files.writeString(out, json, StandardCharsets.UTF_8);
@@ -124,7 +149,11 @@ public final class StandViewerExport {
     }
 
     private static HeadModel builtIn(StandType type) throws IOException {
-        try (InputStream in = StandViewerExport.class.getResourceAsStream("/stands/" + type.key() + ".txt")) {
+        return builtIn(type.key());
+    }
+
+    private static HeadModel builtIn(String key) throws IOException {
+        try (InputStream in = StandViewerExport.class.getResourceAsStream("/stands/" + key + ".txt")) {
             return in == null ? null : HeadModel.parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
         }
     }

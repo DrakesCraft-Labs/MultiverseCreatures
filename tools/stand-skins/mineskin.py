@@ -67,6 +67,7 @@ def upload(key, path, label):
     request = urllib.request.Request(API, data=body, method="POST", headers={
         "Authorization": f"Bearer {key}", "User-Agent": AGENT, "Content-Type": content_type,
         "Accept": "application/json"})
+    busy = 0
     while True:
         try:
             with urllib.request.urlopen(request, timeout=120) as response:
@@ -74,6 +75,13 @@ def upload(key, path, label):
             break
         except urllib.error.HTTPError as error:
             text = error.read().decode(errors="replace")
+            if error.code >= 500 and busy < 8:
+                # MineSkin's own accounts are busy (e.g. proxy_rate_limited): wait and try again.
+                busy += 1
+                wait = 10 * busy
+                print(f"  MineSkin busy (HTTP {error.code}), retrying in {wait} s")
+                time.sleep(wait)
+                continue
             if error.code == 429:
                 wait = 5.0
                 try:
@@ -108,7 +116,7 @@ def build(name, key):
         cache[path.name] = {"sha256": digest, "value": value}
         cache_path.write_text(json.dumps(cache, indent=2))
         values.append(value)
-        time.sleep(max(delay, 1.0))
+        time.sleep(max(delay, 3.5))
     write_model(name, values)
 
 
@@ -117,8 +125,12 @@ def write_model(name, values):
     for value, ((x, y, z), (sx, sy, sz)) in zip(values, LAYOUT):
         matrix = [sx, 0, 0, x, 0, sy, 0, y, 0, 0, sz, z, 0, 0, 0, 1]
         numbers = ",".join(f"{m:.10g}f" for m in matrix)
+        # A stable profile id per skin, as BDEngine writes it: four signed ints.
+        digest = hashlib.sha256(value.encode()).digest()
+        ints = ",".join(str(int.from_bytes(digest[i:i + 4], "big", signed=True)) for i in range(0, 16, 4))
         passengers.append('{id:"minecraft:item_display",item:{id:"minecraft:player_head",Count:1,components:'
-                          '{"minecraft:profile":{properties:[{name:"textures",value:"' + value + '"}]}}},'
+                          '{"minecraft:profile":{id:[I;' + ints + '],properties:[{name:"textures",value:"'
+                          + value + '"}]}}},'
                           'item_display:"none",transformation:[' + numbers + ']}')
     MODELS.mkdir(parents=True, exist_ok=True)
     target = MODELS / f"{name}.txt"
