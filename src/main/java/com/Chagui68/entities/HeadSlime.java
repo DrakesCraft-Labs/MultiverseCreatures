@@ -64,6 +64,7 @@ public class HeadSlime implements Listener {
     private int maxAttachTicks;
     private int buffIntervalTicks;
     private int maxAttachTicksMob;
+    private int maxActive;
     private boolean targetEntities;
     private int skeletonBurstCooldown;
     private boolean debug;
@@ -159,6 +160,7 @@ public class HeadSlime implements Listener {
         maxAttachTicks = plugin.getConfig().getInt("entities.head-slime.max-attach-ticks", 200);
         buffIntervalTicks = plugin.getConfig().getInt("entities.head-slime.buff-interval-ticks", 40);
         maxAttachTicksMob = plugin.getConfig().getInt("entities.head-slime.max-attach-ticks-mob", 600);
+        maxActive = effectiveMaxActive(plugin.getConfig().getInt("entities.head-slime.max-active", 12));
         targetEntities = plugin.getConfig().getBoolean("entities.head-slime.target-entities", true);
         skeletonBurstCooldown = plugin.getConfig().getInt("entities.head-slime.skeleton-burst-cooldown", 60);
         debug = plugin.getConfig().getBoolean("entities.head-slime.debug", false);
@@ -244,6 +246,9 @@ public class HeadSlime implements Listener {
 
     public boolean trySpawn(Location location) {
         if (!plugin.isEnabled("entities.head-slime")) return false;
+        // Head Slimes are persistent by design. Without a ceiling, repeated natural conversions
+        // can leave enough live Slimes in one area to make vanilla collision resolution expensive.
+        if (!hasCapacity(activeSlimes.size(), maxActive)) return false;
         Slime slime = (Slime) location.getWorld().spawnEntity(location, EntityType.SLIME);
         if (slime == null) return false;
 
@@ -256,6 +261,14 @@ public class HeadSlime implements Listener {
         slime.setCanPickupItems(false);
 
         return true;
+    }
+
+    static int effectiveMaxActive(int configuredMax) {
+        return Math.max(1, configuredMax);
+    }
+
+    static boolean hasCapacity(int activeCount, int configuredMax) {
+        return activeCount < effectiveMaxActive(configuredMax);
     }
 
     private void setupSlime(Slime slime) {

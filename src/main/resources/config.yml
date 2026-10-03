@@ -428,6 +428,9 @@ entities:
   head-slime:
     enabled: true
     spawn-chance: 0.1
+    # Head Slimes persist across restarts. Bound automatic conversions so they cannot build up
+    # into a collision-heavy cluster; direct boss mechanics are unaffected.
+    max-active: 12
     size: 1
     speed: 0.5
     leap-range: 5.0

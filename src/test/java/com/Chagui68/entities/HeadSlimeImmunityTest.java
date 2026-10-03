@@ -17,6 +17,21 @@ import static org.junit.jupiter.api.Assertions.*;
 class HeadSlimeImmunityTest {
 
     @Test
+    void activeHeadSlimesHaveABoundedAutomaticPopulation() {
+        assertTrue(HeadSlime.hasCapacity(11, 12));
+        assertFalse(HeadSlime.hasCapacity(12, 12));
+        assertFalse(HeadSlime.hasCapacity(99, 12));
+    }
+
+    @Test
+    void invalidCapacityConfigurationStillAllowsOnlyOneHeadSlime() {
+        assertEquals(1, HeadSlime.effectiveMaxActive(0));
+        assertEquals(1, HeadSlime.effectiveMaxActive(-4));
+        assertTrue(HeadSlime.hasCapacity(0, 0));
+        assertFalse(HeadSlime.hasCapacity(1, 0));
+    }
+
+    @Test
     @DisplayName("Verify a player is not immune before eating anything")
     void testNotImmuneByDefault() {
         assertFalse(HeadSlime.isImmune(UUID.randomUUID()));
