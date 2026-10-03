@@ -92,6 +92,28 @@ class HeadModelTest {
     }
 
     @Test
+    @DisplayName("A boss's body eases into a new pose instead of jumping, and gets there")
+    void easesBetweenPoses() throws IOException {
+        HeadPuppet puppet = new HeadPuppet(theWorld(), 1f, "test", 0);
+        Map<Part, Quaternionf> punch = StandRig.barrage(0);
+        Quaternionf target = punch.get(Part.ARM_R);
+        float full = angleBetween(new Quaternionf(), target);
+
+        puppet.ease(punch, new Vector3f(), 0.4f, 1);
+        float afterOne = angleBetween(puppet.shown(Part.ARM_R), target);
+        assertEquals(full * 0.6f, afterOne, 0.02f, "one tick covers 40% of the way, not all of it");
+
+        for (int tick = 0; tick < 40; tick++) {
+            puppet.ease(punch, new Vector3f(), 0.4f, 1);
+        }
+        assertEquals(0, angleBetween(puppet.shown(Part.ARM_R), target), 1e-3f, "it ends in the pose");
+    }
+
+    private static float angleBetween(Quaternionf a, Quaternionf b) {
+        return new Quaternionf(a).conjugate().mul(b).angle();
+    }
+
+    @Test
     @DisplayName("An export that is not an eleven-head humanoid is refused")
     void refusesOtherModels() {
         assertThrows(IllegalArgumentException.class, () -> HeadModel.parse("/summon block_display ~ ~ ~ {}"));

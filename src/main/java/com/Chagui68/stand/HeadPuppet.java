@@ -29,6 +29,9 @@ public final class HeadPuppet {
     private final String tag;
     private final int teleportTicks;
     private final List<ItemDisplay> parts = new ArrayList<>();
+    private static final Quaternionf IDENTITY = new Quaternionf();
+    /** The pose shown now, which {@link #ease} moves towards its target. */
+    private final Map<Part, Quaternionf> current = new java.util.EnumMap<>(Part.class);
 
     /**
      * @param scale         size of the figure; 1 is the model as exported
@@ -52,6 +55,10 @@ public final class HeadPuppet {
      */
     public void spawn(Location at, Map<Part, Quaternionf> pose, float grow) {
         remove();
+        current.clear();
+        for (Map.Entry<Part, Quaternionf> joint : pose.entrySet()) {
+            current.put(joint.getKey(), new Quaternionf(joint.getValue()));
+        }
         Map<Part, Frame> frames = solve(pose, new Vector3f());
         for (HeadModel.Piece piece : model.pieces()) {
             ItemStack head = DisplaySuit.head("MSC_Stand", piece.texture(), "Stand");
@@ -80,6 +87,28 @@ public final class HeadPuppet {
                 part.teleport(at);
             }
         }
+    }
+
+    /**
+     * Moves the pose a share {@code rate} of the way towards {@code target}, joint by joint, and
+     * shows it.
+     *
+     * <p>This is how a boss is posed every tick. A boss's pose jumps whenever an attack begins or
+     * ends; shown as it is, every head would slide on its own to its new place and the limbs would
+     * come apart for a moment, which reads as the body shaking. Eased on the server, every tick is a
+     * whole, joined pose a little further on.</p>
+     */
+    public void ease(Map<Part, Quaternionf> target, Vector3f lift, float rate, int ticks) {
+        for (Part part : Part.values()) {
+            Quaternionf now = current.computeIfAbsent(part, p -> new Quaternionf());
+            now.slerp(target.getOrDefault(part, IDENTITY), rate).normalize();
+        }
+        pose(current, lift, ticks);
+    }
+
+    /** The rotation of one joint in the pose shown now, for tests. */
+    Quaternionf shown(Part part) {
+        return new Quaternionf(current.getOrDefault(part, IDENTITY));
     }
 
     /** Poses every head, the client sliding there over {@code ticks}. */

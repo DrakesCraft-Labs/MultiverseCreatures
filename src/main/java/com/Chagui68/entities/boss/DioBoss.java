@@ -96,6 +96,12 @@ public class DioBoss implements Listener {
     /** Tag of the heads The World is drawn with; "Boss" keeps them out of a player's time stop. */
     private static final String WORLD_PART_TAG = "MSC_DioBoss_TheWorldPart";
     private static final String DIO_PART_TAG = "MSC_DioBoss_DioPart";
+    /**
+     * Share of the way each body moves towards its pose every tick. The World is quicker, so the
+     * fists of its barrage, which alternate every tick, still land.
+     */
+    private static final float DIO_EASE = 0.4f;
+    private static final float WORLD_EASE = 0.65f;
     private static final Color GOLD = Color.fromRGB(0xFFD23F);
     private static final Color GREEN = Color.fromRGB(0x3CCB5A);
     private static final Color FROZEN = Color.fromRGB(0x6E6A86);
@@ -310,7 +316,11 @@ public class DioBoss implements Listener {
         updatePhase(inst);
 
         if (inst.attack != null) {
-            if (!inst.attack.tick()) {
+            boolean running = inst.attack.tick();
+            // An attack turns DIO to face his target (and moves him); keep that, instead of putting
+            // back where he stood before the attack ran, which turned him round and back every tick.
+            loc = stand.getLocation();
+            if (!running) {
                 inst.attack = null;
                 inst.attackName = null;
                 inst.attackCooldown = attackCooldownTicks / inst.phase + random.nextInt(20);
@@ -1163,12 +1173,13 @@ public class DioBoss implements Listener {
         if (inst.dioBody == null || !inst.dioBody.alive()) {
             if (inst.dioBody != null) inst.dioBody.remove();
             inst.dioBody = new com.Chagui68.stand.HeadPuppet(model,
-                    com.Chagui68.stand.HeadPuppet.scaleFor(model, ARMOR_STAND_HEIGHT * DIO_SCALE), DIO_PART_TAG, 1);
+                    com.Chagui68.stand.HeadPuppet.scaleFor(model, ARMOR_STAND_HEIGHT * DIO_SCALE), DIO_PART_TAG, 0);
             inst.dioBody.spawn(feet, pose, 1f);
             return;
         }
         inst.dioBody.moveTo(feet);
-        inst.dioBody.pose(pose, new org.joml.Vector3f(), 1);
+        // Eased on the server so a change of attack never pulls the limbs apart.
+        inst.dioBody.ease(pose, new org.joml.Vector3f(), DIO_EASE, 1);
     }
 
     /** The World's head model (stands/the-world.txt). */
@@ -1189,12 +1200,12 @@ public class DioBoss implements Listener {
         if (inst.worldBody == null || !inst.worldBody.alive()) {
             if (inst.worldBody != null) inst.worldBody.remove();
             inst.worldBody = new com.Chagui68.stand.HeadPuppet(model,
-                    com.Chagui68.stand.HeadPuppet.scaleFor(model, ARMOR_STAND_HEIGHT * WORLD_SCALE), WORLD_PART_TAG, 1);
+                    com.Chagui68.stand.HeadPuppet.scaleFor(model, ARMOR_STAND_HEIGHT * WORLD_SCALE), WORLD_PART_TAG, 0);
             inst.worldBody.spawn(at, pose, 1f);
             return;
         }
         inst.worldBody.moveTo(at);
-        inst.worldBody.pose(pose, new org.joml.Vector3f(), 1);
+        inst.worldBody.ease(pose, new org.joml.Vector3f(), WORLD_EASE, 1);
     }
 
     private static void pose(ArmorStand stand, Pose pose) {
