@@ -75,33 +75,45 @@ public class RecipeManager {
     }
 
     public static void registerRecipes() {
-        registerStarCore();
-        registerSwordMold();
-        registerReinforcedBoneBlock();
-        registerEnderCore();
-        registerChaosCompressionChain();
-        registerMilitaryMine();
-        registerHeadSlimeGelatin();
-        registerVenomfang();
-        registerFrostHeartOffhand();
-        registerSkyfireTalisman();
-        registerMarrowAegis();
-        registerMarrowChain();
-        registerEightHandledWheel();
-        registerSoulreapScythe();
-        registerChaosForge();
-        registerAetherPullshot();
-        registerNullshearEdge();
-        registerVeilwalkerMantle();
-        registerCinderGreatsword();
-        registerObsidianBastion();
-        registerCompressedGoldBlock();
-        registerMultiversalCore();
-        registerSentinelGrimoire();
-        registerExecutionerWarrant();
-        registerExecutionerGuillotine();
-        registerArchitectDeployer();
-        registerBearerElixir();
+        safely("registerStarCore", RecipeManager::registerStarCore);
+        safely("registerSwordMold", RecipeManager::registerSwordMold);
+        safely("registerReinforcedBoneBlock", RecipeManager::registerReinforcedBoneBlock);
+        safely("registerEnderCore", RecipeManager::registerEnderCore);
+        safely("registerChaosCompressionChain", RecipeManager::registerChaosCompressionChain);
+        safely("registerMilitaryMine", RecipeManager::registerMilitaryMine);
+        safely("registerHeadSlimeGelatin", RecipeManager::registerHeadSlimeGelatin);
+        safely("registerVenomfang", RecipeManager::registerVenomfang);
+        safely("registerFrostHeartOffhand", RecipeManager::registerFrostHeartOffhand);
+        safely("registerSkyfireTalisman", RecipeManager::registerSkyfireTalisman);
+        safely("registerMarrowAegis", RecipeManager::registerMarrowAegis);
+        safely("registerMarrowChain", RecipeManager::registerMarrowChain);
+        safely("registerEightHandledWheel", RecipeManager::registerEightHandledWheel);
+        safely("registerSoulreapScythe", RecipeManager::registerSoulreapScythe);
+        safely("registerChaosForge", RecipeManager::registerChaosForge);
+        safely("registerAetherPullshot", RecipeManager::registerAetherPullshot);
+        safely("registerNullshearEdge", RecipeManager::registerNullshearEdge);
+        safely("registerVeilwalkerMantle", RecipeManager::registerVeilwalkerMantle);
+        safely("registerCinderGreatsword", RecipeManager::registerCinderGreatsword);
+        safely("registerObsidianBastion", RecipeManager::registerObsidianBastion);
+        safely("registerCompressedGoldBlock", RecipeManager::registerCompressedGoldBlock);
+        safely("registerMultiversalCore", RecipeManager::registerMultiversalCore);
+        safely("registerSentinelGrimoire", RecipeManager::registerSentinelGrimoire);
+        safely("registerExecutionerWarrant", RecipeManager::registerExecutionerWarrant);
+        safely("registerExecutionerGuillotine", RecipeManager::registerExecutionerGuillotine);
+        safely("registerArchitectDeployer", RecipeManager::registerArchitectDeployer);
+        safely("registerBearerElixir", RecipeManager::registerBearerElixir);
+    }
+
+    /**
+     * Registers one recipe, logging instead of throwing: a single item that this server version
+     * cannot build must not take every other recipe down with it.
+     */
+    private static void safely(String name, Runnable registration) {
+        try {
+            registration.run();
+        } catch (RuntimeException | LinkageError error) {
+            com.Chagui68.utils.MscLog.warn("Could not register the recipe " + name, error);
+        }
     }
 
     /**

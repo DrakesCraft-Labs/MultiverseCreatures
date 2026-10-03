@@ -59,27 +59,62 @@ public class MarrowAegis {
             meta.setUnbreakable(true);
             MARROW_AEGIS.setItemMeta(meta);
 
-            BlocksAttacks vanilla = Material.SHIELD.getDefaultData(DataComponentTypes.BLOCKS_ATTACKS);
-            if (vanilla != null) {
-                BlocksAttacks custom = BlocksAttacks.blocksAttacks()
-                        .blockDelaySeconds(vanilla.blockDelaySeconds())
-                        .disableCooldownScale(vanilla.disableCooldownScale())
-                        .damageReductions(List.of(DamageReduction.damageReduction()
-                                .horizontalBlockingAngle(180f)
-                                .base(0f)
-                                .factor(BLOCK_FRACTION)
-                                .build()))
-                        .itemDamage(ItemDamageFunction.itemDamageFunction()
-                                .threshold(0f)
-                                .base(0f)
-                                .factor(0f)
-                                .build())
-                        .bypassedBy(vanilla.bypassedBy())
-                        .blockSound(vanilla.blockSound())
-                        .disableSound(vanilla.disableSound())
-                        .build();
-                MARROW_AEGIS.setData(DataComponentTypes.BLOCKS_ATTACKS, custom);
+            try {
+                applyBlocking();
+            } catch (RuntimeException | LinkageError error) {
+                // The item still works as a plain shield; a blocking component this server does not
+                // understand must never stop the class (and every recipe after it) from loading.
+                com.Chagui68.utils.MscLog.warn("Marrow Aegis keeps the vanilla shield blocking", error);
             }
+        }
+    }
+
+    /** The Aegis blocks from every side, a share of the damage, and never wears down. */
+    private static void applyBlocking() {
+        BlocksAttacks vanilla = Material.SHIELD.getDefaultData(DataComponentTypes.BLOCKS_ATTACKS);
+        if (vanilla != null) {
+            BlocksAttacks.Builder builder = BlocksAttacks.blocksAttacks()
+                    .blockDelaySeconds(vanilla.blockDelaySeconds())
+                    .disableCooldownScale(vanilla.disableCooldownScale())
+                    .damageReductions(List.of(DamageReduction.damageReduction()
+                            .horizontalBlockingAngle(180f)
+                            .base(0f)
+                            .factor(BLOCK_FRACTION)
+                            .build()))
+                    .itemDamage(ItemDamageFunction.itemDamageFunction()
+                            .threshold(0f)
+                            .base(0f)
+                            .factor(0f)
+                            .build())
+                    .blockSound(vanilla.blockSound())
+                    .disableSound(vanilla.disableSound());
+            copyBypassedBy(vanilla, builder);
+            MARROW_AEGIS.setData(DataComponentTypes.BLOCKS_ATTACKS, builder.build());
+        }
+    }
+
+    /**
+     * Copies which damage gets through the shield. The type of that value changed between
+     * versions (a {@code TagKey} in 1.21.11, a {@code RegistryKeySet} in 26.x), so a direct call
+     * compiled against one version does not link on the other: the value is copied by
+     * reflection to whichever setter accepts it.
+     */
+    static void copyBypassedBy(BlocksAttacks vanilla, BlocksAttacks.Builder builder) {
+        try {
+            // Looked up on the API interfaces: the server's own classes may not be public.
+            Object value = BlocksAttacks.class.getMethod("bypassedBy").invoke(vanilla);
+            if (value == null) {
+                return;
+            }
+            for (java.lang.reflect.Method setter : BlocksAttacks.Builder.class.getMethods()) {
+                if (setter.getName().equals("bypassedBy") && setter.getParameterCount() == 1
+                        && setter.getParameterTypes()[0].isInstance(value)) {
+                    setter.invoke(builder, value);
+                    return;
+                }
+            }
+        } catch (ReflectiveOperationException | RuntimeException error) {
+            com.Chagui68.utils.MscLog.debug("Marrow Aegis could not copy the shield's bypassed damage", error);
         }
     }
 }
