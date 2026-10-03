@@ -436,6 +436,7 @@ public class MSCCommand implements CommandExecutor, TabCompleter {
         Set<String> added = MscConfigMigration.run(plugin);
         mobHandler.reloadConfig();
         com.Chagui68.wiki.WikiRecipes.reset();
+        com.Chagui68.stand.HeadModels.reset();
         if (plugin.getMahoraga() != null) plugin.getMahoraga().reloadConfig();
         if (plugin.getArmorStandBoss() != null) plugin.getArmorStandBoss().reloadConfig();
         if (plugin.getHeadSlime() != null) plugin.getHeadSlime().reloadConfig();

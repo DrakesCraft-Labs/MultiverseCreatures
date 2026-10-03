@@ -152,6 +152,7 @@ public class MultiverseCreatures extends JavaPlugin {
         // old file and every new knob stays invisible. This adds what is missing before anything
         // reads the config.
         com.Chagui68.utils.MscConfigMigration.run(this);
+        com.Chagui68.stand.HeadModels.init(this);
 
         if (getConfig().getBoolean("recipes.enabled", true)) {
             if (getConfig().getBoolean("recipes.deferred-registration", true)) {

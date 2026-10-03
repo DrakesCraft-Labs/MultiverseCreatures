@@ -41,6 +41,8 @@ public final class StandModel {
     public static final String TAG = "MSC_StandPart";
 
     private static final float SCALE = 0.9f;
+    /** How tall a Stand drawn with heads stands, the same as the block figures. */
+    private static final double HEIGHT = 2.0 * SCALE;
     /** Ticks the body takes to grow out of its aura. */
     private static final int MATERIALISE_TICKS = 7;
     /** Ticks between two idle frames; the displays interpolate in between. */
@@ -52,6 +54,9 @@ public final class StandModel {
     private final List<StandDesign.Piece> pieces;
     private final List<BlockDisplay> parts = new ArrayList<>();
     private final List<BlockDisplay> vines = new ArrayList<>();
+    /** The textured head model of this Stand, or null when it is drawn with blocks. */
+    private final HeadModel heads;
+    private HeadPuppet puppet;
     private int age;
     private int barrageTicks;
     private int beat;
@@ -60,6 +65,7 @@ public final class StandModel {
         this.plugin = plugin;
         this.type = type;
         this.pieces = StandDesign.of(type);
+        this.heads = type.hasBody() ? HeadModels.of(type) : null;
     }
 
     public StandType type() {
@@ -82,11 +88,17 @@ public final class StandModel {
             return;
         }
         Location at = anchor(user, false);
-        Map<Part, Frame> frames = StandRig.solve(StandRig.idle(type, 0, user.getLocation().getPitch()), new Vector3f());
-        for (StandDesign.Piece piece : pieces) {
-            Transformation seed = StandRig.place(piece.center(), piece.size(), piece.spin(),
-                    frames.get(piece.part()), SCALE * 0.05f);
-            parts.add(display(world, at, piece.material(), piece.bright(), seed));
+        Map<Part, Quaternionf> rest = StandRig.idle(type, 0, user.getLocation().getPitch());
+        if (heads != null) {
+            puppet = new HeadPuppet(heads, HeadPuppet.scaleFor(heads, HEIGHT), TAG, 2);
+            puppet.spawn(at, rest, 0.05f);
+        } else {
+            Map<Part, Frame> frames = StandRig.solve(rest, new Vector3f());
+            for (StandDesign.Piece piece : pieces) {
+                Transformation seed = StandRig.place(piece.center(), piece.size(), piece.spin(),
+                        frames.get(piece.part()), SCALE * 0.05f);
+                parts.add(display(world, at, piece.material(), piece.bright(), seed));
+            }
         }
         // Next tick, grow to full size so the client interpolates the whole way.
         if (plugin.isEnabled()) {
@@ -175,6 +187,9 @@ public final class StandModel {
                 part.teleport(at);
             }
         }
+        if (puppet != null) {
+            puppet.moveTo(at);
+        }
         if (age <= MATERIALISE_TICKS) {
             return;
         }
@@ -203,6 +218,10 @@ public final class StandModel {
     /** Poses every piece, the displays sliding there over {@code ticks}. */
     private void apply(Map<Part, Quaternionf> pose, int ticks) {
         float lift = (float) Math.sin(age / 14.0) * 0.015f;
+        if (puppet != null) {
+            puppet.pose(pose, new Vector3f(0, lift, 0), ticks);
+            return;
+        }
         Map<Part, Frame> frames = StandRig.solve(pose, new Vector3f(0, lift, 0));
         for (int i = 0; i < parts.size(); i++) {
             BlockDisplay part = parts.get(i);
@@ -228,9 +247,27 @@ public final class StandModel {
             Vector3f where = new Vector3f((float) random.nextDouble(-0.55, 0.55), (float) random.nextDouble(0.95, 1.55),
                     (float) random.nextDouble(0.55, 1.25)).mul(SCALE);
             float size = 0.2f * SCALE;
-            Transformation pose = new Transformation(new Vector3f(where).sub(size / 2, size / 2, size / 2),
-                    new Quaternionf(), new Vector3f(size, size, size * 1.1f), new Quaternionf());
-            BlockDisplay ghost = display(at.getWorld(), at, fist, false, pose);
+            org.bukkit.entity.Entity ghost;
+            if (heads != null) {
+                // A Stand of heads throws ghosts of its own forearm, skin and all.
+                String skin = heads.pieces().stream().filter(p -> p.part() == Part.FOREARM_R)
+                        .findFirst().map(HeadModel.Piece::texture).orElse(heads.pieces().get(0).texture());
+                float k = size * 2f;
+                Transformation pose = new Transformation(new Vector3f(where).add(0, size / 2, 0),
+                        new Quaternionf().rotationY((float) Math.PI), new Vector3f(k, k, k * 1.1f), new Quaternionf());
+                ghost = at.getWorld().spawn(at, org.bukkit.entity.ItemDisplay.class, entity -> {
+                    entity.setPersistent(false);
+                    entity.addScoreboardTag(TAG);
+                    entity.setItemStack(com.Chagui68.utils.DisplaySuit.head("MSC_Stand", skin, "Stand"));
+                    entity.setItemDisplayTransform(org.bukkit.entity.ItemDisplay.ItemDisplayTransform.NONE);
+                    entity.setBrightness(new Display.Brightness(15, 15));
+                    entity.setTransformation(pose);
+                });
+            } else {
+                Transformation pose = new Transformation(new Vector3f(where).sub(size / 2, size / 2, size / 2),
+                        new Quaternionf(), new Vector3f(size, size, size * 1.1f), new Quaternionf());
+                ghost = display(at.getWorld(), at, fist, false, pose);
+            }
             plugin.getServer().getScheduler().runTaskLater(plugin, ghost::remove, 3L);
         }
     }
@@ -293,6 +330,9 @@ public final class StandModel {
     }
 
     public void remove() {
+        if (puppet != null) {
+            puppet.remove();
+        }
         for (BlockDisplay part : parts) {
             if (part != null && part.isValid()) {
                 part.remove();
@@ -308,6 +348,9 @@ public final class StandModel {
     }
 
     public boolean alive() {
+        if (puppet != null) {
+            return puppet.alive();
+        }
         List<BlockDisplay> all = type.hasBody() ? parts : vines;
         for (BlockDisplay part : all) {
             if (part == null || !part.isValid()) {

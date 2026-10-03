@@ -108,6 +108,10 @@ public class DioBoss implements Listener {
 
     private static final double DIO_SCALE = 1.15;
     private static final double WORLD_SCALE = 1.35;
+    /** Height of an armour stand at scale 1: The World's head model is sized to the stand it rides. */
+    private static final double ARMOR_STAND_HEIGHT = 1.975;
+    /** Tag of the heads The World is drawn with; "Boss" keeps them out of a player's time stop. */
+    private static final String WORLD_PART_TAG = "MSC_DioBoss_TheWorldPart";
     private static final Color GOLD = Color.fromRGB(0xFFD23F);
     private static final Color GREEN = Color.fromRGB(0x3CCB5A);
     private static final Color FROZEN = Color.fromRGB(0x6E6A86);
@@ -258,7 +262,7 @@ public class DioBoss implements Listener {
     private ArmorStand spawnTheWorld(ArmorStand dio) {
         Location at = dio.getLocation().clone().add(0, 0.6, 0);
         return dio.getWorld().spawn(at, ArmorStand.class, s -> {
-            s.setVisible(true);
+            s.setVisible(worldModel() == null);
             s.setArms(true);
             s.setBasePlate(false);
             s.setGravity(false);
@@ -291,6 +295,13 @@ public class DioBoss implements Listener {
     private void dressTheWorld(ArmorStand stand) {
         var eq = stand.getEquipment();
         if (eq == null) return;
+        if (worldModel() != null) {
+            // Drawn with its own heads: the stand is only the anchor they ride.
+            stand.setVisible(false);
+            eq.clear();
+            lock(stand);
+            return;
+        }
         eq.setHelmet(DisplaySuit.head("MSC_TheWorld", WORLD_TEXTURE, "The World"));
         eq.setChestplate(trimmed(new ItemStack(Material.GOLDEN_CHESTPLATE), TrimPattern.RIB));
         eq.setLeggings(trimmed(new ItemStack(Material.GOLDEN_LEGGINGS), TrimPattern.WILD));
@@ -397,6 +408,7 @@ public class DioBoss implements Listener {
         Location worldLoc = inst.worldAt.toLocation(stand.getWorld(), inst.worldYaw, 0);
         inst.world.teleport(worldLoc);
         pose(inst.world, inst.worldPose);
+        bodyOfTheWorld(inst, worldLoc);
         aura(inst);
 
         double current = MscEntityUtils.getVirtualHealth(stand);
@@ -1181,6 +1193,32 @@ public class DioBoss implements Listener {
 
     // ------------------------------------------------------------------ body
 
+    /** The head model of The World, or null when it is drawn as a dressed armour stand. */
+    private static com.Chagui68.stand.HeadModel worldModel() {
+        return com.Chagui68.stand.HeadModels.of(com.Chagui68.stand.StandType.THE_WORLD);
+    }
+
+    /**
+     * The World's body of textured heads, riding its armour stand and taking the stand's pose, so
+     * every move written for the stand (the punch, the barrage, the road roller) moves it too.
+     */
+    private void bodyOfTheWorld(DioInstance inst, Location at) {
+        com.Chagui68.stand.HeadModel model = worldModel();
+        if (model == null) return;
+        Pose p = inst.worldPose;
+        var pose = com.Chagui68.stand.StandRig.fromArmorStand(p.head(), p.body(), p.leftArm(), p.rightArm(),
+                p.leftLeg(), p.rightLeg());
+        if (inst.worldBody == null || !inst.worldBody.alive()) {
+            if (inst.worldBody != null) inst.worldBody.remove();
+            inst.worldBody = new com.Chagui68.stand.HeadPuppet(model,
+                    com.Chagui68.stand.HeadPuppet.scaleFor(model, ARMOR_STAND_HEIGHT * WORLD_SCALE), WORLD_PART_TAG, 1);
+            inst.worldBody.spawn(at, pose, 1f);
+            return;
+        }
+        inst.worldBody.moveTo(at);
+        inst.worldBody.pose(pose, new org.joml.Vector3f(), 1);
+    }
+
     private static void pose(ArmorStand stand, Pose pose) {
         stand.setHeadPose(Pose.euler(pose.head()));
         stand.setBodyPose(Pose.euler(pose.body()));
@@ -1277,6 +1315,7 @@ public class DioBoss implements Listener {
             world.dropItemNaturally(at.clone().add(0, 0.5, 0), drop);
         }
         if (inst.world != null) inst.world.remove();
+        if (inst.worldBody != null) inst.worldBody.remove();
         inst.stand.remove();
         cleanup(inst);
     }
@@ -1285,6 +1324,7 @@ public class DioBoss implements Listener {
         resumeTime(inst);
         removeProps(inst);
         if (inst.world != null && inst.world.isValid()) inst.world.remove();
+        if (inst.worldBody != null) inst.worldBody.remove();
         if (inst.bossBar != null) inst.bossBar.removeAll();
         active.remove(inst.stand.getUniqueId());
     }
@@ -1381,6 +1421,8 @@ public class DioBoss implements Listener {
     static final class DioInstance {
         final ArmorStand stand;
         ArmorStand world;
+        /** The World's textured body, when it has a head model. */
+        com.Chagui68.stand.HeadPuppet worldBody;
         BossBar bossBar;
         Timeline attack;
         String attackName;

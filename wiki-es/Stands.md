@@ -102,6 +102,20 @@ Las dos pociones no tienen tipo vanilla, así que ninguna receta vanilla las pue
 
 ---
 
+## 🧱 Modelos de los Stands
+
+The World se dibuja con **once cabezas de jugador texturizadas** (cabeza, pecho, abdomen,
+brazos, antebrazos, muslos y espinillas), tanto como Stand de un jugador como detrás de DIO en
+su combate. El modelo es el export de BDEngine que trae el jar (`stands/the-world.txt`): el plugin
+lo lee tal cual se pegó, lo pone de pie y lo anima con su propio esqueleto (respiración, la
+cabeza siguiendo a su usuario, codos y rodillas que se doblan, la ráfaga y cada movimiento de
+The World de DIO).
+
+Cualquier Stand puede dibujarse igual: pon su export `/summon` de BDEngine, pegado tal cual, en
+`plugins/MultiverseCreatures/stands/<stand>.txt` (`star-platinum.txt`, `killer-queen.txt`, ...)
+y usa `/msc reload`. Un Stand sin archivo conserva su figura de bloques; un archivo que no se
+pueda leer se avisa en la consola. El `README.txt` de la carpeta lo repite.
+
 ## ⚔️ Armas de los jefes
 
 | Arma | Receta | Habilidades |

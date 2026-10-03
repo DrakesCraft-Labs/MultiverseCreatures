@@ -92,10 +92,19 @@ public final class StandRig {
      * @param lift    extra translation of the whole body, for the breathing bob
      */
     public static Map<Part, Frame> solve(Map<Part, Quaternionf> local, Vector3f lift) {
+        return solve(local, lift, Part::pivot);
+    }
+
+    /**
+     * The same, on a skeleton with its own joints: a model of player heads is not built to the
+     * proportions of the block figures, so its shoulders and hips are somewhere else.
+     */
+    public static Map<Part, Frame> solve(Map<Part, Quaternionf> local, Vector3f lift,
+                                         java.util.function.Function<Part, Vector3f> pivots) {
         Map<Part, Frame> frames = new EnumMap<>(Part.class);
         for (Part part : Part.values()) {
             Quaternionf turn = local.getOrDefault(part, new Quaternionf());
-            Vector3f pivot = part.pivot();
+            Vector3f pivot = new Vector3f(pivots.apply(part));
             // About its own joint: x -> turn * (x - pivot) + pivot.
             Vector3f offset = new Vector3f(pivot).sub(new Vector3f(pivot).rotate(turn));
             Frame parent = part.parent() == null ? new Frame(new Quaternionf(), new Vector3f(lift))
@@ -197,6 +206,28 @@ public final class StandRig {
         pose.put(Part.THIGH_L, degrees(-12f, 0, 4f));
         pose.put(Part.SHIN_L, degrees(26f, 0, 0));
         return pose;
+    }
+
+    /**
+     * An armour-stand pose (six joints, degrees, as the bosses write them) on this skeleton. An
+     * armour stand turns each joint Z, then Y, then X with the same signs this rig uses, and has no
+     * elbows or knees, so those stay straight.
+     */
+    public static Map<Part, Quaternionf> fromArmorStand(double[] head, double[] body, double[] leftArm,
+                                                        double[] rightArm, double[] leftLeg, double[] rightLeg) {
+        Map<Part, Quaternionf> pose = new EnumMap<>(Part.class);
+        pose.put(Part.HEAD, zyx(head));
+        pose.put(Part.BODY, zyx(body));
+        pose.put(Part.ARM_L, zyx(leftArm));
+        pose.put(Part.ARM_R, zyx(rightArm));
+        pose.put(Part.THIGH_L, zyx(leftLeg));
+        pose.put(Part.THIGH_R, zyx(rightLeg));
+        return pose;
+    }
+
+    private static Quaternionf zyx(double[] degrees) {
+        return new Quaternionf().rotationZYX((float) Math.toRadians(degrees[2]), (float) Math.toRadians(degrees[1]),
+                (float) Math.toRadians(degrees[0]));
     }
 
     /** Where the fist of an arm is in model space, for tests and for the shouts. */

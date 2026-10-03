@@ -99,6 +99,19 @@ Neither potion has a vanilla type, so no vanilla recipe can turn them into somet
 
 ---
 
+## 🧱 Stand models
+
+The World is drawn with **eleven textured player heads** (head, chest, belly, upper arms, forearms,
+thighs and shins), both as a player's Stand and behind DIO in his fight. The model is the
+BDEngine export shipped in the jar (`stands/the-world.txt`): the plugin reads it as it was pasted,
+stands it up straight and animates it on its own skeleton (breathing, the head following its
+user, elbows and knees bending, the barrage, every move of DIO's The World).
+
+Any Stand can be drawn the same way: put its BDEngine `/summon` export, pasted as it is, in
+`plugins/MultiverseCreatures/stands/<stand>.txt` (`star-platinum.txt`, `killer-queen.txt`, ...)
+and run `/msc reload`. A Stand without a file keeps its block figure; a file that cannot be read
+is reported in the console. The folder's `README.txt` repeats this.
+
 ## ⚔️ Boss weapons
 
 | Weapon | Recipe | Abilities |
