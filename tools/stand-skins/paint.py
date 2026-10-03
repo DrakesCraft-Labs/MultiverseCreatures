@@ -215,12 +215,12 @@ def magicians_red():
         "front": ["rrqrrqrr",
                   "q455554q",
                   "3kk44kk3",
-                  "3ee44ee3",
+                  "3ek44ke3",
                   "34yyyy43",
                   "3yYccYy3",
                   "33yYYy33",
                   "233YY332"],
-        "right": ["qrrrqrrq", "rrqq4554", "rq334444", "qq334ek4", "q3333444", "33333444", "33333344", "22233333"],
+        "right": ["qrrrqrrq", "rrqq4554", "rq334444", "qq334444", "q3333444", "33333444", "33333344", "22233333"],
         "back": ["rqrrqrrq", "qrrqqrrq", "rqrrrrqr", "qrqrrqrq", "rrqrrqrr", "qrrqqrrq", "3qrrrrq3", "23qrrq32"],
         "top": ["rrqrrqrr", "rqrrrrqr", "qrrqqrrq", "rrqrrqrr", "rqrrrrqr", "qrrqqrrq", "rrqrrqrr", "rqrrrrqr"],
         "bottom": fill("2"),
@@ -385,8 +385,11 @@ def paint(stand, maker):
 
 def main():
     import json
-    manifest = {}
+    manifest_path = OUT / "manifest.json"
+    manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
     for stand, maker in STANDS.items():
+        if (Path(__file__).parent / "source" / f"{stand}.png").exists():
+            continue  # a real skin wins over the painted one: split.py cuts it
         manifest[stand] = paint(stand, maker)
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print("painted", ", ".join(manifest))
