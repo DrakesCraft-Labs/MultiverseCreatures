@@ -1,0 +1,109 @@
+# Compatibilidad entre versiones de Minecraft.
+#
+# QUE HACE
+#   Un solo jar para 1.21.11, 26.1 y 26.2. Este workflow lo compila una vez, contra 1.21.11, y:
+#     - compila y ejecuta los tests contra las APIs de Paper 26.1 y 26.2 (compatibilidad del
+#       codigo fuente), y
+#     - arranca un servidor Paper real de cada version con ESE MISMO jar (compatibilidad binaria).
+#
+# POR QUE EXISTE
+#   Que el codigo compile contra una API no garantiza que el jar ya compilado funcione en ese
+#   servidor: un metodo que cambio de firma solo falla al cargar la clase. Arrancar el servidor
+#   con el jar real es la unica prueba que lo detecta.
+name: Compatibilidad de versiones
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - '.github/workflows/compatibility.yml'
+      - '.github/scripts/server-smoke-test.sh'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compatibility-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compilar:
+    name: Compilar el jar (Purpur 1.21.11, Java 21)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compilar y ejecutar los tests
+        run: mvn -B -ntp package
+      - name: Guardar el jar
+        run: |
+          mkdir -p dist
+          cp "$(ls target/MultiverseCreatures-v*.jar | grep -v original | head -1)" dist/MultiverseCreatures.jar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-jar
+          path: dist/MultiverseCreatures.jar
+          retention-days: 7
+
+  api:
+    name: Compilar y testear contra ${{ matrix.profile }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [api-26.1, api-26.2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Compilar y ejecutar los tests
+        run: mvn -B -ntp -P ${{ matrix.profile }} test -Dmaven.compiler.showDeprecation=true
+
+  servidor:
+    name: Mismo jar en Paper ${{ matrix.minecraft }}
+    needs: compilar
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - minecraft: '1.21.11'
+            java: '21'
+          - minecraft: '26.1.2'
+            java: '25'
+          - minecraft: '26.2'
+            java: '25'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: plugin-jar
+          path: dist
+      - name: Arrancar el servidor con el plugin
+        run: bash .github/scripts/server-smoke-test.sh "${{ matrix.minecraft }}" dist/MultiverseCreatures.jar
+      - name: Guardar el log del servidor
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-log-${{ matrix.minecraft }}
+          path: server-${{ matrix.minecraft }}/server.log
+          if-no-files-found: ignore
+          retention-days: 7

@@ -264,6 +264,10 @@ public class MultiverseCreatures extends JavaPlugin {
         com.Chagui68.stand.StandCommand standCommand = new com.Chagui68.stand.StandCommand(this);
         getCommand("stand").setExecutor(standCommand);
         getCommand("stand").setTabCompleter(standCommand);
+
+        // The last line of a good start: the version compatibility check on GitHub waits for it.
+        getLogger().info("MultiverseCreatures " + getPluginMeta().getVersion() + " ready on "
+                + getServer().getName() + " " + getServer().getMinecraftVersion());
     }
 
     @Override
