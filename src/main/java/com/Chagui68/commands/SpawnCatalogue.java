@@ -146,7 +146,7 @@ final class SpawnCatalogue {
                     (plugin, mobs, location) -> plugin.getBoneShield().trySpawn(location)),
             new Type("arrowskeleton", List.of("arrowskeleton", "archer", "standarrow"),
                     "Arrow Skeleton", "Arrow Skeleton",
-                    "&6Arquero de la Flecha &7(Stand Arrow Archer)", 3,
+                    "&6Archer of the Arrow &7(Stand Arrow)", 3,
                     (plugin, mobs, location) -> plugin.getArrowSkeleton() != null
                             && plugin.getArrowSkeleton().trySpawn(location)),
             new Type("venomwitch", List.of("venomwitch", "venom"),
@@ -174,7 +174,7 @@ final class SpawnCatalogue {
                     }),
             // ----- Spawnable but kept out of the help menu (unchanged behaviour) -----
             new Type("jack", List.of("jack"),
-                    "JackStar — El Arquitecto del Sistema", "JackStar Boss",
+                    "JackStar — The System Architect", "JackStar Boss",
                     null, 0,
                     (plugin, mobs, location) -> plugin.getJackStarBoss().trySpawn(location)));
 

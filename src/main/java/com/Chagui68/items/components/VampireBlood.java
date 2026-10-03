@@ -16,20 +16,20 @@ public class VampireBlood {
     public static final NamespacedKey KEY = new NamespacedKey("multiversecreatures", "msc_vampire_blood");
 
     public static final ItemStack VAMPIRE_BLOOD = ItemBuilder.of(Material.RED_DYE)
-            .name(MscText.title(DARK_RED, "Sangre Vampírica"))
+            .name(MscText.title(DARK_RED, "Vampire Blood"))
             .lore(
-                    MscText.line(GRAY, "Sangre espesa y todavía tibia de DIO."),
-                    MscText.line(GRAY, "Late por sí sola, como si buscara"),
-                    MscText.line(GRAY, "un nuevo cuerpo que habitar."),
+                    MscText.line(GRAY, "Thick blood, still warm, drawn from DIO."),
+                    MscText.line(GRAY, "It beats on its own, as if searching"),
+                    MscText.line(GRAY, "for a new body to dwell in."),
                     MscText.blank(),
-                    MscText.line(WHITE, "Ingrediente de Destilado"),
-                    MscText.rich(YELLOW, "  ▸ ", GRAY, "Poción Rara + ", DARK_RED, "Sangre Vampírica",
-                            GRAY, " = ", RED, "Sangre Inestable"),
+                    MscText.line(WHITE, "Brewing Ingredient"),
+                    MscText.rich(YELLOW, "  ▸ ", GRAY, "Awkward Potion + ", DARK_RED, "Vampire Blood",
+                            GRAY, " = ", RED, "Unstable Blood"),
                     MscText.blank(),
-                    MscText.quote(DARK_RED, "\"¡Mi sangre es el inicio"),
-                    MscText.quote(DARK_RED, "de tu nueva vida!\""),
+                    MscText.quote(DARK_PURPLE, "\"My blood marks the beginning"),
+                    MscText.quote(DARK_PURPLE, "of your new life!\""),
                     MscText.blank(),
-                    MscText.footer(GOLD, "DIO")
+                    MscText.footer("Jojos")
             )
             .tagged(KEY)
             .build();

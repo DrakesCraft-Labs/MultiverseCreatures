@@ -253,9 +253,9 @@ public class MobHandler implements Listener {
                 // entidades. Conservar la cache evita abrir el tope y el enfriamiento
                 // impide repetir esa iteracion riesgosa cada cinco segundos.
                 proximoReintentoRecuento.put(world.getName(), ahora + REINTENTO_RECUENTO_TRAS_FALLO_MS);
-                plugin.getLogger().warning("[MSC] no se pudo contar en "
+                plugin.getLogger().warning("[MSC] could not count entities in "
                         + world.getName() + ": " + e.getClass().getSimpleName()
-                        + "; se reintentara en 60 s");
+                        + "; retrying in 60 s");
             }
         }
     }

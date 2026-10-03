@@ -16,17 +16,17 @@ public class ExecutionerEdge {
     public static final NamespacedKey KEY = new NamespacedKey("multiversecreatures", "msc_executioner_edge");
 
     public static final ItemStack EXECUTIONER_EDGE = ItemBuilder.of(Material.NETHERITE_SCRAP)
-            .name(MscText.title(DARK_RED, "Filo del Verdugo"))
+            .name(MscText.title(DARK_RED, "Executioner's Edge"))
             .lore(
-                    MscText.line(GRAY, "Un trozo del hacha de NIX, todavía"),
-                    MscText.line(GRAY, "manchado con la sangre de sus condenados."),
+                    MscText.line(GRAY, "A shard of NIX's axe, still stained"),
+                    MscText.line(GRAY, "with the blood of the condemned."),
                     MscText.blank(),
-                    MscText.line(WHITE, "Ingrediente de Crafteo"),
-                    MscText.rich(YELLOW, "  ▸ ", GRAY, "Forja la ", DARK_RED, "Guillotina del Verdugo"),
+                    MscText.line(WHITE, "Crafting Ingredient"),
+                    MscText.rich(YELLOW, "  ▸ ", GRAY, "Forges the ", DARK_RED, "Executioner's Guillotine"),
                     MscText.blank(),
-                    MscText.quote(DARK_RED, "\"La sentencia ya fue dictada.\""),
+                    MscText.quote(DARK_PURPLE, "\"The sentence has already been passed.\""),
                     MscText.blank(),
-                    MscText.footer(DARK_RED, "NIX")
+                    MscText.footer("DrakesCraft")
             )
             .tagged(KEY)
             .build();

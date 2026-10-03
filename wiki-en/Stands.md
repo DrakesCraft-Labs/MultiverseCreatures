@@ -1,17 +1,18 @@
 # 🏹 The Arrow and the Stands (JoJo's Bizarre Adventure)
 
-The Arrow chooses who gets a Stand… and who dies. Surviving it and awakening one takes DIO's
-blood.
+The Arrow chooses who gets a Stand… and who dies. DIO's blood makes you a Stand bearer: the
+Arrow can no longer kill you and always awakens your Stand.
 
 ```
-Archer of the Arrow ──(2% of its shots)──► the Arrow ──► 70% death / 30% chosen
+Archer of the Arrow ──(2% of its shots)──► the Arrow
 DIO ──► Vampire Blood ──► Unstable Blood ──► Bearer's Elixir ──► vampire + Stand bearer
-chosen + bearer ──► a Stand awakens
+bearer ──► the Arrow always awakens a Stand
+no Elixir ──► 70% death (marked unworthy) / 30% a Stand awakens
 ```
 
 ---
 
-## 💀 Archer of the Arrow ("Arquero de la Flecha")
+## 💀 Archer of the Arrow 
 
 A skeleton in a golden crown and a purple coat that replaces natural skeletons.
 
@@ -29,9 +30,10 @@ pierces a player:
 
 | Outcome | When | What happens |
 |---|---|---|
-| **Death** | 70% | Dies whatever their armour or totem; its own death messages (3 in `arrow-death-messages`) |
-| **Stand** | 30%, drank the Bearer's Elixir | A Stand awakens, rolled by rarity |
-| **Rejected** | 30%, did not drink it | Survives with Weakness, but the body cannot hold a Stand |
+| **Stand** | Drank the Bearer's Elixir (bearer) | Never dies: a Stand always awakens, rolled by rarity |
+| **Death** | 70%, not a bearer | Dies whatever their armour or totem; its own death messages (3 in `arrow-death-messages`). Marked **unworthy** |
+| **Stand** | 30%, not a bearer | Survives and a Stand awakens, rolled by rarity |
+| **Rejected** | Unworthy, not a bearer | The Arrow passes through: no Stand until they drink the Bearer's Elixir, which lifts the mark |
 | **Resonance** | Already a Stand user | The Arrow fades: it neither kills nor gives another |
 
 ---
@@ -115,11 +117,11 @@ now the core of the Deployer.
 | Command | Who | What it does |
 |---|---|---|
 | `/stand` | everybody (`msc.stand`) | Your Stand, whether you are a bearer or a vampire, and your abilities |
-| `/stand invocar` · `/stand habilidad [1\|2]` · `/stand sha` | everybody | Same as the keys |
-| `/stand dar <player> [stand]` | `msc.admin` | Awakens a Stand (random when not named) |
-| `/stand quitar <player>` | `msc.admin` | Takes the Stand away |
-| `/stand vampiro <player> <si\|no>` | `msc.admin` | Gives or cures DIO's blood |
-| `/stand flecha <player>` | `msc.admin` | Pierces the player with the Arrow (testing) |
+| `/stand summon` · `/stand ability [1\|2]` · `/stand sha` | everybody | Same as the keys |
+| `/stand give <player> [stand]` | `msc.admin` | Awakens a Stand (random when not named) |
+| `/stand remove <player>` | `msc.admin` | Takes the Stand away |
+| `/stand vampire <player> <on\|off>` | `msc.admin` | Gives or cures DIO's blood |
+| `/stand arrow <player>` | `msc.admin` | Pierces the player with the Arrow (testing) |
 
 `/msc give` includes `vampireblood`, `unstableblood`, `bearerelixir`, `executioneredge`,
 `executionerguillotine` and `architectdeployer`.

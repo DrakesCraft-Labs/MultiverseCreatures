@@ -18,20 +18,27 @@ import static org.junit.jupiter.api.Assertions.*;
 class StandRulesTest {
 
     @Test
-    @DisplayName("The Arrow kills 70% of the time and only bearers awaken a Stand")
+    @DisplayName("A bearer is never killed and always awakens; anybody else dies 70% of the time")
     void arrowOutcomes() {
-        assertEquals(StandArrowRoll.Outcome.DEATH, StandArrowRoll.decide(0.0, 0.7, true, false));
-        assertEquals(StandArrowRoll.Outcome.DEATH, StandArrowRoll.decide(0.69, 0.7, true, false));
-        assertEquals(StandArrowRoll.Outcome.STAND, StandArrowRoll.decide(0.7, 0.7, true, false));
-        assertEquals(StandArrowRoll.Outcome.REJECTED, StandArrowRoll.decide(0.9, 0.7, false, false),
-                "without DIO's blood the body cannot hold a Stand");
-        assertEquals(StandArrowRoll.Outcome.RESONATE, StandArrowRoll.decide(0.0, 0.7, true, true),
-                "a Stand user is never chosen (nor killed) again");
+        for (double roll : new double[]{0.0, 0.5, 0.99}) {
+            assertEquals(StandArrowRoll.Outcome.STAND, StandArrowRoll.decide(roll, 0.7, true, false, false),
+                    "DIO's blood makes the Arrow always awaken a Stand");
+            assertEquals(StandArrowRoll.Outcome.STAND, StandArrowRoll.decide(roll, 0.7, true, true, false),
+                    "a bearer is never treated as unworthy");
+            assertEquals(StandArrowRoll.Outcome.REJECTED, StandArrowRoll.decide(roll, 0.7, false, true, false),
+                    "an unworthy player gets nothing until they drink DIO's blood");
+            assertEquals(StandArrowRoll.Outcome.RESONATE, StandArrowRoll.decide(roll, 0.7, true, false, true),
+                    "a Stand user is never chosen (nor killed) again");
+        }
+        assertEquals(StandArrowRoll.Outcome.DEATH, StandArrowRoll.decide(0.0, 0.7, false, false, false));
+        assertEquals(StandArrowRoll.Outcome.DEATH, StandArrowRoll.decide(0.69, 0.7, false, false, false));
+        assertEquals(StandArrowRoll.Outcome.STAND, StandArrowRoll.decide(0.7, 0.7, false, false, false),
+                "a non bearer who survives awakens a Stand");
 
         int deaths = 0;
         int runs = 100_000;
         for (int i = 0; i < runs; i++) {
-            if (StandArrowRoll.decide((i + 0.5) / runs, 0.7, true, false) == StandArrowRoll.Outcome.DEATH) {
+            if (StandArrowRoll.decide((i + 0.5) / runs, 0.7, false, false, false) == StandArrowRoll.Outcome.DEATH) {
                 deaths++;
             }
         }

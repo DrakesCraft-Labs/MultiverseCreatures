@@ -5,6 +5,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -31,7 +33,34 @@ public final class MscConfigMigration {
      * Version of the shipped {@code config.yml}. Bump it when a release adds, moves or renames keys
      * so the log stops claiming the file is current once it is not.
      */
-    public static final int CONFIG_VERSION = 3;
+    public static final int CONFIG_VERSION = 4;
+
+    /**
+     * Lists that version 3 shipped in Spanish, by path. A file that still holds one of them word for
+     * word never had it edited, so it takes the English default; a list an operator changed is kept.
+     */
+    static final Map<String, List<String>> RETIRED_DEFAULTS = Map.of(
+            "entities.dio-brando.death-messages", List.of(
+                    "&6%player% &efue aplastado por la Road Roller de DIO",
+                    "&6%player% &eno pudo moverse en el tiempo detenido de DIO",
+                    "&6%player% &erecibió un MUDA MUDA MUDA de The World"),
+            "entities.jackstar-architect.death-messages", List.of(
+                    "&b%player% &7fue desmantelado por &3JackStar — El Arquitecto del Sistema",
+                    "&b%player% &7recibió un &cSIGKILL (kill -9) &7de &3JackStar",
+                    "&b%player% &7no pudo escapar del &5Vector Override &7de &3JackStar",
+                    "&b%player% &7fue eliminado como proceso huérfano por el &eGarbage Collector"),
+            "entities.arrow-skeleton.arrow-death-messages", List.of(
+                    "&6%player% &efue atravesado por la Flecha y no resultó digno",
+                    "&6%player% &eno sobrevivió al juicio de la Flecha",
+                    "&6%player% &equiso un Stand, pero la Flecha solo le dio el final"),
+            "entities.arrow-skeleton.death-messages", List.of(
+                    "&6%player% &ecayó ante el Arquero de la Flecha",
+                    "&6%player% &efue cazado por el Arquero de la Flecha",
+                    "&6%player% &eestaba en la mira del Arquero de la Flecha"),
+            "vampire.sun-death-messages", List.of(
+                    "&6%player% &cse convirtió en cenizas bajo el sol",
+                    "&6%player% &colvidó que el amanecer no perdona a los hijos de la noche",
+                    "&6%player% &cquiso desafiar al sol como DIO... y el sol ganó"));
 
     /** Key holding that version; written into the file so an operator can see what they have. */
     public static final String VERSION_KEY = "config-version";
@@ -80,6 +109,9 @@ public final class MscConfigMigration {
         for (String key : missing) {
             config.set(key, defaults.get(key));
         }
+        if (defaults != null) {
+            replaceRetiredDefaults(config, defaults);
+        }
         config.set(VERSION_KEY, CONFIG_VERSION);
         plugin.saveConfig();
         return missing;
@@ -107,6 +139,23 @@ public final class MscConfigMigration {
                     + (added.size() > LOGGED_KEYS ? " … and " + (added.size() - LOGGED_KEYS) + " more" : ""));
         }
         return added;
+    }
+
+    /**
+     * Swaps every list still equal to a {@link #RETIRED_DEFAULTS} value for the shipped one.
+     *
+     * @return the paths that were replaced
+     */
+    static Set<String> replaceRetiredDefaults(ConfigurationSection config, ConfigurationSection defaults) {
+        Set<String> replaced = new TreeSet<>();
+        for (Map.Entry<String, List<String>> retired : RETIRED_DEFAULTS.entrySet()) {
+            String path = retired.getKey();
+            if (config.getStringList(path).equals(retired.getValue()) && defaults.isList(path)) {
+                config.set(path, defaults.getStringList(path));
+                replaced.add(path);
+            }
+        }
+        return replaced;
     }
 
     private static void collect(ConfigurationSection section, String prefix, Set<String> paths) {

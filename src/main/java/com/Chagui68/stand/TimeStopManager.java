@@ -65,7 +65,7 @@ public final class TimeStopManager implements Listener {
             }
             if (entity instanceof Player player) {
                 frozenPlayers.put(player.getUniqueId(), until);
-                player.sendActionBar(Component.text("⏸ El tiempo se ha detenido", NamedTextColor.GOLD));
+                player.sendActionBar(Component.text("⏸ Time has stopped", NamedTextColor.GOLD));
                 frozen++;
             } else if (entity instanceof Mob mob) {
                 FrozenMob previous = frozenMobs.get(mob.getUniqueId());
@@ -103,7 +103,7 @@ public final class TimeStopManager implements Listener {
                 it.remove();
                 Player player = plugin.getServer().getPlayer(entry.getKey());
                 if (player != null) {
-                    player.sendActionBar(Component.text("▶ El tiempo vuelve a fluir", NamedTextColor.YELLOW));
+                    player.sendActionBar(Component.text("▶ Time flows again", NamedTextColor.YELLOW));
                 }
             }
         }

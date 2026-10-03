@@ -110,7 +110,7 @@ public class JackInvocationManager implements Listener {
         event.getItemDrop().remove();
 
         Player player = event.getPlayer();
-        player.sendMessage(ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "⚡ [SYS] Terminal autenticada. Iniciando secuencia de hackeo del núcleo...");
+        player.sendMessage(ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "⚡ [SYS] Terminal authenticated. Starting the core hacking sequence...");
 
         stopInvocation(world);
         JackInvocationStructure.extinguishAllCandles(data.origin);
@@ -206,11 +206,11 @@ public class JackInvocationManager implements Listener {
                         if (p.getLocation().distanceSquared(center) <= 45 * 45) {
                             p.sendTitle(
                                     ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "JACKSTAR",
-                                    ChatColor.AQUA + "El Arquitecto del Sistema — Control Absoluto",
+                                    ChatColor.AQUA + "The System Architect — Absolute Control",
                                     10, 60, 20
                             );
                             p.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.DARK_AQUA + "SYS" + ChatColor.DARK_GRAY + "] "
-                                    + ChatColor.GRAY + "Identidad raíz verificada. " + ChatColor.AQUA + "JackStar ha tomado el control del nodo.");
+                                    + ChatColor.GRAY + "Root identity verified. " + ChatColor.AQUA + "JackStar has taken control of the node.");
                         }
                     }
 

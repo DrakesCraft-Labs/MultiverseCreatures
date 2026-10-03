@@ -444,7 +444,7 @@ public class DioBoss implements Listener {
         fx.burst(feet.clone().add(new Vector(0, 1.5, 0)), Particle.DAMAGE_INDICATOR, 40, 0.4);
         for (Player p : playersNear(inst.stand.getLocation(), 60)) {
             p.showTitle(Title.title(Component.text("WRYYYYYYYY!", NamedTextColor.GOLD, TextDecoration.BOLD),
-                    Component.text("DIO se ha enfurecido", NamedTextColor.RED), times(5, 40, 15)));
+                    Component.text("DIO is enraged", NamedTextColor.RED), times(5, 40, 15)));
         }
     }
 
@@ -529,7 +529,7 @@ public class DioBoss implements Listener {
             inst.dioPose = DioMoves.DIO_KNIVES_DRAWN;
             for (Player p : inst.frozen.keySet().stream().map(Bukkit::getPlayer).filter(java.util.Objects::nonNull).toList()) {
                 p.showTitle(Title.title(Component.empty(),
-                        Component.text("⏸ El tiempo se ha detenido", NamedTextColor.GRAY), times(0, 40, 10)));
+                        Component.text("⏸ Time has stopped", NamedTextColor.GRAY), times(0, 40, 10)));
             }
         });
         // One second at a time, as he counts it.
@@ -1135,7 +1135,7 @@ public class DioBoss implements Listener {
         for (Player p : playersNear(inst.stand.getLocation(), 7)) {
             if (!inst.greeted.add(p.getUniqueId())) continue;
             p.sendMessage(MscText.rich(NamedTextColor.GOLD, "DIO: ", NamedTextColor.YELLOW,
-                    "¿Oh? ¿Te estás acercando a mí? En vez de huir... ¿vienes directo hacia mí?"));
+                    "Oh? You're approaching me? Instead of running away, you're coming right to me?"));
             LiveStage.fxIn(world).sound(inst.stand.getLocation().toVector(), Sfx.NOTE_BASEDRUM, 1f, 0.5f);
         }
     }
@@ -1259,8 +1259,8 @@ public class DioBoss implements Listener {
         Fx fx = LiveStage.fxIn(world);
         say(inst, "B-baka na... kono DIO ga... kono DIO ga!", NamedTextColor.RED);
         for (Player p : playersNear(at, 60)) {
-            p.showTitle(Title.title(Component.text("DIO HA CAÍDO", NamedTextColor.GOLD, TextDecoration.BOLD),
-                    Component.text(killer != null ? "Derrotado por " + killer.getName() : "El tiempo vuelve a fluir",
+            p.showTitle(Title.title(Component.text("DIO HAS FALLEN", NamedTextColor.GOLD, TextDecoration.BOLD),
+                    Component.text(killer != null ? "Defeated by " + killer.getName() : "Time flows again",
                             NamedTextColor.YELLOW), times(5, 60, 20)));
         }
         fx.impact(at.toVector().add(new Vector(0, 1.2, 0)), GOLD, 4);

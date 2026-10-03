@@ -1,6 +1,10 @@
 package com.Chagui68.stand;
 
+import com.Chagui68.stand.StandRig.Frame;
+import com.Chagui68.stand.StandRig.Part;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,15 +21,19 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * A summoned Stand: a figure of block displays floating behind its user's right shoulder,
- * outlined in the colour of the Stand. It follows the user every tick and steps in front of
- * them for a barrage, its fists pumping while it hits.
+ * A summoned Stand: a detailed figure of block displays floating behind its user's right
+ * shoulder (see {@link StandDesign} for what each one looks like and {@link StandRig} for the
+ * skeleton). It follows its user every tick, breathes, turns its head where its user looks and,
+ * for a barrage, steps in front and throws punch after punch, leaving afterimages of its fists.
  *
- * <p>Hermit Purple has no body: it is drawn as purple vines coiling round the user's arm.
- * Every piece is a non persistent display tagged {@link #TAG}, so nothing is left behind by a
- * crash.</p>
+ * <p>It materialises out of its aura when summoned, with the menacing ゴゴゴ rising round it.
+ * Hermit Purple has no body: it is a double coil of thorned vines turning round its user's
+ * right arm. Every piece is a non persistent display tagged {@link #TAG}, so nothing is left
+ * behind by a crash.</p>
  */
 public final class StandModel {
 
@@ -33,80 +41,133 @@ public final class StandModel {
     public static final String TAG = "MSC_StandPart";
 
     private static final float SCALE = 0.9f;
-
-    /** One piece of the figure: its block, middle and size in the Stand's own frame. */
-    private record Piece(Material material, Vector3f center, Vector3f size, boolean arm, int side) {
-    }
+    /** Ticks the body takes to grow out of its aura. */
+    private static final int MATERIALISE_TICKS = 7;
+    /** Ticks between two idle frames; the displays interpolate in between. */
+    private static final int IDLE_EVERY = 3;
+    private static final int VINE_SEGMENTS = 14;
 
     private final org.bukkit.plugin.Plugin plugin;
     private final StandType type;
+    private final List<StandDesign.Piece> pieces;
     private final List<BlockDisplay> parts = new ArrayList<>();
-    private final List<Piece> pieces = new ArrayList<>();
+    private final List<BlockDisplay> vines = new ArrayList<>();
     private int age;
     private int barrageTicks;
+    private int beat;
 
     public StandModel(org.bukkit.plugin.Plugin plugin, StandType type) {
         this.plugin = plugin;
         this.type = type;
-        if (type.hasBody()) {
-            design();
-        }
+        this.pieces = StandDesign.of(type);
     }
 
     public StandType type() {
         return type;
     }
 
-    private void design() {
-        // Head, crest, eyes.
-        pieces.add(new Piece(type.head(), new Vector3f(0, 1.55f, 0), new Vector3f(0.42f, 0.42f, 0.42f), false, 0));
-        pieces.add(new Piece(type.accent(), new Vector3f(0, 1.8f, -0.02f), new Vector3f(0.46f, 0.1f, 0.46f), false, 0));
-        pieces.add(new Piece(Material.WHITE_CONCRETE, new Vector3f(-0.09f, 1.58f, 0.21f),
-                new Vector3f(0.08f, 0.05f, 0.02f), false, 0));
-        pieces.add(new Piece(Material.WHITE_CONCRETE, new Vector3f(0.09f, 1.58f, 0.21f),
-                new Vector3f(0.08f, 0.05f, 0.02f), false, 0));
-        // Torso, belt and emblem.
-        pieces.add(new Piece(type.body(), new Vector3f(0, 1.05f, 0), new Vector3f(0.52f, 0.62f, 0.26f), false, 0));
-        pieces.add(new Piece(type.accent(), new Vector3f(0, 0.76f, 0), new Vector3f(0.54f, 0.08f, 0.28f), false, 0));
-        pieces.add(new Piece(type.accent(), new Vector3f(0, 1.16f, 0.135f), new Vector3f(0.14f, 0.14f, 0.02f), false, 0));
-        // Shoulders, arms and fists.
-        for (int side : new int[]{-1, 1}) {
-            pieces.add(new Piece(type.accent(), new Vector3f(side * 0.33f, 1.33f, 0),
-                    new Vector3f(0.2f, 0.1f, 0.28f), false, 0));
-            pieces.add(new Piece(type.arms(), new Vector3f(side * 0.36f, 1.04f, 0),
-                    new Vector3f(0.16f, 0.56f, 0.16f), true, side));
-            pieces.add(new Piece(type.head(), new Vector3f(side * 0.36f, 0.7f, 0),
-                    new Vector3f(0.2f, 0.2f, 0.2f), true, side));
+    /** Builds the figure at its user's shoulder, growing out of the aura. */
+    public void spawn(Player user) {
+        World world = user.getWorld();
+        if (!type.hasBody()) {
+            Location at = vineAnchor(user);
+            for (int i = 0; i < VINE_SEGMENTS * 2 + VINE_SEGMENTS / 2; i++) {
+                Material material = i >= VINE_SEGMENTS * 2 ? Material.MAGENTA_TERRACOTTA
+                        : (i % 2 == 0 ? Material.PURPLE_CONCRETE : Material.PURPLE_TERRACOTTA);
+                vines.add(display(world, at, material, false, null));
+            }
+            twistVines(2);
+            world.spawnParticle(Particle.DUST, at.clone().add(0, 1, 0), 30, 0.3, 0.5, 0.3, 0,
+                    new Particle.DustOptions(type.aura(), 1.2f));
+            return;
         }
-        // The lower body fades into the aura.
-        pieces.add(new Piece(type.body(), new Vector3f(0, 0.5f, 0), new Vector3f(0.4f, 0.4f, 0.22f), false, 0));
+        Location at = anchor(user, false);
+        Map<Part, Frame> frames = StandRig.solve(StandRig.idle(type, 0, user.getLocation().getPitch()), new Vector3f());
+        for (StandDesign.Piece piece : pieces) {
+            Transformation seed = StandRig.place(piece.center(), piece.size(), piece.spin(),
+                    frames.get(piece.part()), SCALE * 0.05f);
+            parts.add(display(world, at, piece.material(), piece.bright(), seed));
+        }
+        // Next tick, grow to full size so the client interpolates the whole way.
+        if (plugin.isEnabled()) {
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> apply(
+                    StandRig.idle(type, age, user.getLocation().getPitch()), MATERIALISE_TICKS), 1L);
+        }
+        world.spawnParticle(Particle.DUST, at.clone().add(0, 1, 0), 60, 0.4, 0.9, 0.4, 0,
+                new Particle.DustOptions(type.aura(), 1.5f));
+        world.spawnParticle(Particle.END_ROD, at.clone().add(0, 1, 0), 12, 0.3, 0.7, 0.3, 0.02);
+        menace(user, at);
     }
 
-    /** Builds the figure at the user's shoulder. */
-    public void spawn(Player user) {
-        Location at = anchor(user, false);
-        World world = user.getWorld();
-        for (Piece piece : pieces) {
-            BlockDisplay display = world.spawn(at, BlockDisplay.class, entity -> {
+    private BlockDisplay display(World world, Location at, Material material, boolean bright,
+                                 Transformation transformation) {
+        return world.spawn(at, BlockDisplay.class, entity -> {
+            entity.setPersistent(false);
+            entity.addScoreboardTag(TAG);
+            entity.setBlock(material.createBlockData());
+            entity.setBrightness(new Display.Brightness(15, 15));
+            entity.setTeleportDuration(2);
+            entity.setInterpolationDuration(2);
+            entity.setShadowRadius(0f);
+            entity.setViewRange(bright ? 1.2f : 1.0f);
+            if (transformation != null) {
+                entity.setTransformation(transformation);
+            }
+        });
+    }
+
+    /** The ゴゴゴ that rises round a Stand when it appears. */
+    private void menace(Player user, Location at) {
+        if (!plugin.isEnabled()) {
+            return;
+        }
+        Vector right = rightOf(user);
+        for (int i = 0; i < 4; i++) {
+            double side = i % 2 == 0 ? 1 : -1;
+            Location spot = at.clone().add(right.clone().multiply(side * (0.7 + i * 0.12)))
+                    .add(0, 0.6 + i * 0.35, 0);
+            TextDisplay text = at.getWorld().spawn(spot, TextDisplay.class, entity -> {
                 entity.setPersistent(false);
                 entity.addScoreboardTag(TAG);
-                entity.setBlock(piece.material().createBlockData());
-                entity.setBrightness(new Display.Brightness(15, 15));
-                entity.setTeleportDuration(2);
-                entity.setInterpolationDuration(2);
-                entity.setGlowColorOverride(type.aura());
-                entity.setGlowing(true);
-                entity.setTransformation(pose(piece, 0));
+                entity.text(Component.text("ゴ", NamedTextColor.DARK_PURPLE, TextDecoration.BOLD));
+                entity.setBillboard(Display.Billboard.CENTER);
+                entity.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+                entity.setShadowed(true);
+                entity.setTransformation(new Transformation(new Vector3f(), new Quaternionf(),
+                        new Vector3f(1.6f, 1.6f, 1.6f), new Quaternionf()));
             });
-            parts.add(display);
+            long delay = 1L + i * 3L;
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (text.isValid()) {
+                    text.setInterpolationDelay(0);
+                    text.setInterpolationDuration(26);
+                    text.setTransformation(new Transformation(new Vector3f(0, 1.1f, 0), new Quaternionf(),
+                            new Vector3f(2.0f, 2.0f, 2.0f), new Quaternionf()));
+                }
+            }, delay);
+            plugin.getServer().getScheduler().runTaskLater(plugin, text::remove, delay + 28L);
         }
-        world.spawnParticle(Particle.DUST, at.clone().add(0, 1, 0), 40, 0.4, 0.8, 0.4, 0,
-                new Particle.DustOptions(type.aura(), 1.4f));
     }
 
     /** Moves the figure to its user; called every tick. */
     public void follow(Player user) {
         age++;
+        if (!type.hasBody()) {
+            Location at = vineAnchor(user);
+            for (BlockDisplay vine : vines) {
+                if (vine.isValid()) {
+                    vine.teleport(at);
+                }
+            }
+            if (age % 2 == 0) {
+                twistVines(2);
+            }
+            if (age % 6 == 0) {
+                user.getWorld().spawnParticle(Particle.DUST, at.clone().add(rightOf(user).multiply(0.37))
+                        .add(0, 1.0, 0), 2, 0.15, 0.3, 0.15, 0, new Particle.DustOptions(type.aura(), 0.8f));
+            }
+            return;
+        }
         boolean front = barrageTicks > 0;
         Location at = anchor(user, front);
         for (BlockDisplay part : parts) {
@@ -114,46 +175,100 @@ public final class StandModel {
                 part.teleport(at);
             }
         }
+        if (age <= MATERIALISE_TICKS) {
+            return;
+        }
         if (front) {
             barrageTicks--;
             if (age % 2 == 0) {
-                // Fists pumping: the arms swap places every other tick.
-                for (int i = 0; i < parts.size(); i++) {
-                    Piece piece = pieces.get(i);
-                    if (piece.arm()) {
-                        BlockDisplay part = parts.get(i);
-                        part.setInterpolationDelay(0);
-                        part.setTransformation(pose(piece, (age / 2 + (piece.side() > 0 ? 1 : 0)) % 2 == 0 ? 0.55f : 0f));
-                    }
-                }
+                apply(StandRig.barrage(beat++), 2);
+                afterimages(at);
             }
             if (barrageTicks == 0) {
-                for (int i = 0; i < parts.size(); i++) {
-                    parts.get(i).setTransformation(pose(pieces.get(i), 0));
-                }
+                apply(StandRig.idle(type, age, user.getLocation().getPitch()), 4);
             }
+        } else if (age % IDLE_EVERY == 0) {
+            apply(StandRig.idle(type, age, user.getLocation().getPitch()), IDLE_EVERY);
         }
         if (age % 4 == 0) {
-            Location aura = at.clone().add(0, type.hasBody() ? 0.9 : 1.1, 0);
-            if (type.hasBody()) {
-                user.getWorld().spawnParticle(Particle.DUST, aura, 3, 0.3, 0.5, 0.3, 0,
-                        new Particle.DustOptions(type.aura(), 1.0f));
-            } else {
-                vines(user);
+            Location aura = at.clone().add(0, 0.3, 0);
+            user.getWorld().spawnParticle(Particle.DUST, aura, 3, 0.2, 0.25, 0.2, 0,
+                    new Particle.DustOptions(type.aura(), 1.0f));
+            if (type == StandType.MAGICIANS_RED) {
+                user.getWorld().spawnParticle(Particle.FLAME, at.clone().add(0, 1.0, 0), 2, 0.35, 0.4, 0.35, 0.01);
             }
         }
     }
 
-    /** Hermit Purple: a coil of purple thorns round the user's right arm. */
-    private void vines(Player user) {
-        Location base = user.getLocation().add(0, 1.0, 0);
-        Vector right = rightOf(user);
-        for (int i = 0; i < 8; i++) {
-            double t = age * 0.25 + i * 0.8;
-            Vector offset = right.clone().multiply(0.45).add(new Vector(Math.cos(t) * 0.25, i * 0.1 - 0.35,
-                    Math.sin(t) * 0.25));
-            user.getWorld().spawnParticle(Particle.DUST, base.clone().add(offset), 1, 0, 0, 0, 0,
-                    new Particle.DustOptions(Color.fromRGB(0x7A3FB8), 0.9f));
+    /** Poses every piece, the displays sliding there over {@code ticks}. */
+    private void apply(Map<Part, Quaternionf> pose, int ticks) {
+        float lift = (float) Math.sin(age / 14.0) * 0.015f;
+        Map<Part, Frame> frames = StandRig.solve(pose, new Vector3f(0, lift, 0));
+        for (int i = 0; i < parts.size(); i++) {
+            BlockDisplay part = parts.get(i);
+            if (!part.isValid()) {
+                continue;
+            }
+            StandDesign.Piece piece = pieces.get(i);
+            part.setInterpolationDelay(0);
+            part.setInterpolationDuration(ticks);
+            part.setTransformation(StandRig.place(piece.center(), piece.size(), piece.spin(),
+                    frames.get(piece.part()), SCALE));
+        }
+    }
+
+    /** Ghost fists flickering round the real ones while the Stand hits. */
+    private void afterimages(Location at) {
+        if (!plugin.isEnabled()) {
+            return;
+        }
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        Material fist = StandDesign.fist(type);
+        for (int i = 0; i < 3; i++) {
+            Vector3f where = new Vector3f((float) random.nextDouble(-0.55, 0.55), (float) random.nextDouble(0.95, 1.55),
+                    (float) random.nextDouble(0.55, 1.25)).mul(SCALE);
+            float size = 0.2f * SCALE;
+            Transformation pose = new Transformation(new Vector3f(where).sub(size / 2, size / 2, size / 2),
+                    new Quaternionf(), new Vector3f(size, size, size * 1.1f), new Quaternionf());
+            BlockDisplay ghost = display(at.getWorld(), at, fist, false, pose);
+            plugin.getServer().getScheduler().runTaskLater(plugin, ghost::remove, 3L);
+        }
+    }
+
+    /** Hermit Purple: two coils of thorned vine turning round the right arm. */
+    private void twistVines(int ticks) {
+        double phase = age * 0.22;
+        for (int i = 0; i < vines.size(); i++) {
+            BlockDisplay vine = vines.get(i);
+            if (!vine.isValid()) {
+                continue;
+            }
+            int segment;
+            double strand;
+            float size;
+            double reach;
+            if (i < VINE_SEGMENTS * 2) {
+                segment = i % VINE_SEGMENTS;
+                strand = i < VINE_SEGMENTS ? 0 : Math.PI;
+                size = 0.075f;
+                reach = 0.19;
+            } else {
+                // A thorn on every other segment of the first coil, pointing out.
+                segment = (i - VINE_SEGMENTS * 2) * 2 + 1;
+                strand = 0;
+                size = 0.045f;
+                reach = 0.27;
+            }
+            double t = segment / (double) (VINE_SEGMENTS - 1);
+            double angle = t * Math.PI * 4 + phase + strand;
+            float x = (float) (-0.37 + Math.cos(angle) * reach);
+            float y = (float) (0.72 + t * 0.8);
+            float z = (float) (Math.sin(angle) * reach);
+            Quaternionf spin = new Quaternionf().rotationXYZ((float) angle, (float) angle * 0.5f, 0.6f);
+            Vector3f corner = new Vector3f(size, size, size).mul(-0.5f).rotate(spin).add(x, y, z);
+            vine.setInterpolationDelay(0);
+            vine.setInterpolationDuration(ticks);
+            vine.setTransformation(new Transformation(corner, spin, new Vector3f(size, size, size), new Quaternionf()));
         }
     }
 
@@ -184,18 +299,22 @@ public final class StandModel {
             }
         }
         parts.clear();
+        for (BlockDisplay vine : vines) {
+            if (vine != null && vine.isValid()) {
+                vine.remove();
+            }
+        }
+        vines.clear();
     }
 
     public boolean alive() {
-        if (!type.hasBody()) {
-            return true;
-        }
-        for (BlockDisplay part : parts) {
+        List<BlockDisplay> all = type.hasBody() ? parts : vines;
+        for (BlockDisplay part : all) {
             if (part == null || !part.isValid()) {
                 return false;
             }
         }
-        return !parts.isEmpty();
+        return !all.isEmpty();
     }
 
     /** Where the Stand floats: behind the right shoulder, or a step in front while it hits. */
@@ -212,19 +331,15 @@ public final class StandModel {
         return at;
     }
 
+    /** Hermit Purple lives on its user's arm: their feet, turned the way they face. */
+    private static Location vineAnchor(Player user) {
+        Location at = user.getLocation();
+        at.setPitch(0);
+        return at;
+    }
+
     private static Vector rightOf(Player user) {
         double yaw = Math.toRadians(user.getLocation().getYaw());
         return new Vector(-Math.cos(yaw), 0, -Math.sin(yaw));
-    }
-
-    /** The pose of a piece, an arm pushed forward by {@code punch} blocks. */
-    private static Transformation pose(Piece piece, float punch) {
-        Vector3f size = new Vector3f(piece.size()).mul(SCALE);
-        Vector3f center = new Vector3f(piece.center()).mul(SCALE);
-        if (piece.arm()) {
-            center.z += punch;
-        }
-        Vector3f corner = new Vector3f(center).sub(new Vector3f(size).mul(0.5f));
-        return new Transformation(corner, new Quaternionf(), size, new Quaternionf());
     }
 }

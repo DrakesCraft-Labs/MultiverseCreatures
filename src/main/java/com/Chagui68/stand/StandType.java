@@ -9,7 +9,8 @@ import java.util.Map;
 import java.util.function.ToIntFunction;
 
 /**
- * The Stands the Arrow can awaken, with how often each one appears and how it looks.
+ * The Stands the Arrow can awaken, with how often each one appears and its colours. What each one
+ * looks like lives in {@link StandDesign}.
  *
  * <p>The weights are the defaults; {@code stands.<key>.weight} in config.yml overrides them. A
  * Stand with weight 0 is never rolled.</p>
@@ -17,44 +18,33 @@ import java.util.function.ToIntFunction;
 public enum StandType {
 
     HERMIT_PURPLE("hermit-purple", "Hermit Purple", NamedTextColor.DARK_PURPLE, 30,
-            Color.fromRGB(0x7A3FB8), null, null, null, null),
+            Color.fromRGB(0x7A3FB8), Material.CHORUS_PLANT),
     MAGICIANS_RED("magicians-red", "Magician's Red", NamedTextColor.RED, 25,
-            Color.fromRGB(0xE0451B), Material.ORANGE_TERRACOTTA, Material.RED_CONCRETE, Material.ORANGE_CONCRETE,
-            Material.YELLOW_CONCRETE),
+            Color.fromRGB(0xE0451B), Material.BLAZE_POWDER),
     CRAZY_DIAMOND("crazy-diamond", "Crazy Diamond", NamedTextColor.LIGHT_PURPLE, 18,
-            Color.fromRGB(0xF28CC8), Material.PINK_CONCRETE, Material.PINK_TERRACOTTA, Material.PINK_CONCRETE,
-            Material.LIGHT_BLUE_CONCRETE),
+            Color.fromRGB(0xF28CC8), Material.DIAMOND),
     KILLER_QUEEN("killer-queen", "Killer Queen", NamedTextColor.LIGHT_PURPLE, 14,
-            Color.fromRGB(0xE7A1C9), Material.PINK_TERRACOTTA, Material.PINK_CONCRETE, Material.MAGENTA_TERRACOTTA,
-            Material.BONE_BLOCK),
+            Color.fromRGB(0xE7A1C9), Material.TNT),
     STAR_PLATINUM("star-platinum", "Star Platinum", NamedTextColor.BLUE, 10,
-            Color.fromRGB(0x5B4BD6), Material.LIGHT_BLUE_TERRACOTTA, Material.PURPLE_CONCRETE,
-            Material.LIGHT_BLUE_TERRACOTTA, Material.GOLD_BLOCK),
+            Color.fromRGB(0x5B4BD6), Material.NETHER_STAR),
     THE_WORLD("the-world", "The World", NamedTextColor.GOLD, 3,
-            Color.fromRGB(0xF2C230), Material.YELLOW_TERRACOTTA, Material.GOLD_BLOCK, Material.YELLOW_CONCRETE,
-            Material.EMERALD_BLOCK);
+            Color.fromRGB(0xF2C230), Material.CLOCK);
 
     private final String key;
     private final String displayName;
     private final NamedTextColor textColor;
     private final int defaultWeight;
     private final Color aura;
-    private final Material head;
-    private final Material body;
-    private final Material arms;
-    private final Material accent;
+    private final Material icon;
 
     StandType(String key, String displayName, NamedTextColor textColor, int defaultWeight, Color aura,
-              Material head, Material body, Material arms, Material accent) {
+              Material icon) {
         this.key = key;
         this.displayName = displayName;
         this.textColor = textColor;
         this.defaultWeight = defaultWeight;
         this.aura = aura;
-        this.head = head;
-        this.body = body;
-        this.arms = arms;
-        this.accent = accent;
+        this.icon = icon;
     }
 
     /** The id used in config.yml, in commands and stored in the player. */
@@ -78,25 +68,14 @@ public enum StandType {
         return aura;
     }
 
+    /** The item that stands for this Stand in menus such as the wiki. */
+    public Material icon() {
+        return icon;
+    }
+
     /** True for a Stand that is drawn as a body; Hermit Purple is only its vines. */
     public boolean hasBody() {
-        return head != null;
-    }
-
-    public Material head() {
-        return head;
-    }
-
-    public Material body() {
-        return body;
-    }
-
-    public Material arms() {
-        return arms;
-    }
-
-    public Material accent() {
-        return accent;
+        return this != HERMIT_PURPLE;
     }
 
     /** True for the Stands that can stop time, and therefore move inside a stopped time. */

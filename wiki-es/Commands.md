@@ -317,6 +317,15 @@ Itera todos los mundos y elimina cada ArmorStand cuya etiqueta de scoreboard emp
 
 ---
 
+## /wiki [página|hand|en|es]
+
+Abre la wiki dentro del juego, para todos los jugadores (`msc.wiki`, concedido por defecto). Alias: `/mscwiki`, `/mwiki`.
+
+- Nueve secciones: armas, armaduras, reliquias, comida y pociones, botín de criaturas, componentes fabricados, botín de jefes, Stands y jefes.
+- Cada página muestra el ítem con su lore, su receta tal como la tiene el servidor (mesa de crafteo, horno, alto horno, soporte para pociones o intercambio), quién lo suelta con la probabilidad del propio servidor y en qué se usa. Haz clic en un ingrediente para abrir su página.
+- Inglés y español: se abre en el idioma del cliente y la bandera de la esquina lo cambia (la elección se guarda en el jugador).
+- `/wiki venomfang` abre una página directamente; `/wiki hand` abre la del ítem que sostienes; `/wiki es` o `/wiki en` cambia el idioma.
+
 ## Permisos
 
 | Permiso | Por defecto | Descripción |

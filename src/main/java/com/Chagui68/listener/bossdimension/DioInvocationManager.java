@@ -113,7 +113,7 @@ public class DioInvocationManager implements Listener {
         for (Player p : world.getPlayers()) {
             if (p.getLocation().distanceSquared(throne) > 60 * 60) continue;
             p.showTitle(Title.title(Component.text("ZA WARUDO!", NamedTextColor.GOLD, TextDecoration.BOLD),
-                    Component.text("El tiempo se ha detenido...", NamedTextColor.GRAY),
+                    Component.text("Time has stopped...", NamedTextColor.GRAY),
                     Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500))));
             if (p.getLocation().distanceSquared(throne) <= 20 * 20) {
                 p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, ARRIVAL_DELAY, 6, false, false, false));
@@ -135,7 +135,7 @@ public class DioInvocationManager implements Listener {
         fx.sound(throne.toVector(), Sfx.BELL_RESONATE, 2f, 0.6f);
         for (Player p : world.getPlayers()) {
             if (p.getLocation().distanceSquared(throne) > 40 * 40) continue;
-            p.sendMessage(Component.text("⏱ El trono de The World despierta. Ofrece un reloj...", NamedTextColor.GOLD));
+            p.sendMessage(Component.text("⏱ The World's throne awakens. Offer a clock...", NamedTextColor.GOLD));
         }
 
         BukkitRunnable task = new BukkitRunnable() {

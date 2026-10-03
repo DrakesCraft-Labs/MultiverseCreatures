@@ -139,7 +139,7 @@ public class MultiverseCreatures extends JavaPlugin {
                 java.nio.file.Files.copy(target.toPath(), backupFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (Exception e) {
-            getLogger().warning("[Backup] No se pudo crear backup de config.yml: " + e.getMessage());
+            getLogger().warning("[Backup] Could not back up config.yml: " + e.getMessage());
         }
     }
 
@@ -264,6 +264,11 @@ public class MultiverseCreatures extends JavaPlugin {
         com.Chagui68.stand.StandCommand standCommand = new com.Chagui68.stand.StandCommand(this);
         getCommand("stand").setExecutor(standCommand);
         getCommand("stand").setTabCompleter(standCommand);
+        getServer().getPluginManager().registerEvents(new com.Chagui68.wiki.WikiListener(), this);
+        getServer().getPluginManager().registerEvents(new com.Chagui68.items.LegacyItemRefresher(), this);
+        com.Chagui68.wiki.WikiCommand wikiCommand = new com.Chagui68.wiki.WikiCommand();
+        getCommand("wiki").setExecutor(wikiCommand);
+        getCommand("wiki").setTabCompleter(wikiCommand);
 
         // The last line of a good start: the version compatibility check on GitHub waits for it.
         getLogger().info("MultiverseCreatures " + getPluginMeta().getVersion() + " ready on "

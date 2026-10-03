@@ -256,17 +256,7 @@ public class GarouBoss implements Listener {
             w.playSound(loc, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.5f, 0.8f);
 
             // Reward: Garou Cosmic Core / Martial Essence
-            ItemStack core = new ItemStack(Material.NETHER_STAR);
-            var meta = core.getItemMeta();
-            if (meta != null) {
-                meta.displayName(MscText.title(DARK_PURPLE, "Garou Cosmic Core"));
-                meta.lore(List.of(
-                        MscText.line(GRAY, "Fragment of primordial martial arts power."),
-                        MscText.line(LIGHT_PURPLE, "Relic of the DrakesCraft Gods.")
-                ));
-                core.setItemMeta(meta);
-            }
-            w.dropItemNaturally(loc, core);
+            w.dropItemNaturally(loc, com.Chagui68.items.components.GarouCosmicCore.GAROU_COSMIC_CORE.clone());
         }
 
         // Announce to nearby players

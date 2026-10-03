@@ -1,12 +1,13 @@
 # 🏹 La Flecha y los Stands (JoJo's Bizarre Adventure)
 
-La Flecha elige a quién darle un Stand… y a quién matar. Para sobrevivir a ella y despertar uno
-hace falta la sangre de DIO.
+La Flecha elige a quién darle un Stand… y a quién matar. La sangre de DIO te vuelve portador de
+Stand: la Flecha ya no puede matarte y siempre despierta tu Stand.
 
 ```
-Arquero de la Flecha ──(2% de sus disparos)──► la Flecha ──► 70% muerte / 30% elegido
-DIO ──► Sangre Vampírica ──► Sangre Inestable ──► Elixir del Portador ──► vampiro + portador de Stand
-elegido + portador ──► despierta un Stand
+Archer of the Arrow ──(2% de sus disparos)──► la Flecha
+DIO ──► Vampire Blood ──► Unstable Blood ──► Bearer's Elixir ──► vampiro + portador de Stand
+portador ──► la Flecha siempre despierta un Stand
+sin Elixir ──► 70% muerte (marcado indigno) / 30% despierta un Stand
 ```
 
 ---
@@ -29,26 +30,27 @@ recoger. Al atravesar a un jugador:
 
 | Resultado | Cuándo | Qué pasa |
 |---|---|---|
-| **Muerte** | 70% | Muere sin importar armadura ni tótem; mensaje de muerte propio (3 variantes en `arrow-death-messages`) |
-| **Stand** | 30%, si bebió el Elixir del Portador | Despierta un Stand al azar según su rareza |
-| **Rechazado** | 30%, si no bebió el Elixir | Sobrevive con Debilidad, pero su cuerpo no puede sostener un Stand |
+| **Stand** | Bebió el Bearer's Elixir (portador) | Nunca muere: siempre despierta un Stand al azar según su rareza |
+| **Muerte** | 70%, si no es portador | Muere sin importar armadura ni tótem; mensaje de muerte propio (3 variantes en `arrow-death-messages`). Queda marcado como **indigno** |
+| **Stand** | 30%, si no es portador | Sobrevive y despierta un Stand al azar según su rareza |
+| **Rechazado** | Indigno y no portador | La Flecha lo atraviesa sin efecto: no tendrá Stand hasta beber el Bearer's Elixir, que borra la marca |
 | **Resonancia** | Ya tiene un Stand | La Flecha se desvanece; ni lo mata ni le da otro |
 
 ---
 
-## 🩸 DIO y la Sangre Vampírica
+## 🩸 DIO y la Vampire Blood
 
-DIO suelta **1–2 Sangre Vampírica** al morir (`entities.dio-brando.vampire-blood-min/max`). Es el
+DIO suelta **1–2 Vampire Blood** al morir (`entities.dio-brando.vampire-blood-min/max`). Es el
 único componente del plugin que acepta el soporte de pociones:
 
 | Paso | Base | Ingrediente | Resultado |
 |---|---|---|---|
-| 1 | Poción Rara | **Sangre Vampírica** | Sangre Inestable |
-| 2 | Sangre Inestable | Rosa del Wither | **Elixir del Portador** |
+| 1 | Poción Rara | **Vampire Blood** | Unstable Blood |
+| 2 | Unstable Blood | Rosa del Wither | **Bearer's Elixir** |
 
 Las dos pociones no tienen tipo vanilla, así que ninguna receta vanilla las puede transformar.
 
-### Beber el Elixir del Portador
+### Beber el Bearer's Elixir
 
 - Te conviertes en **portador de Stand**: si la Flecha te elige, tu Stand despierta.
 - Te conviertes en **vampiro** (se guarda en el jugador, sobrevive a reinicios y muertes):
@@ -104,12 +106,12 @@ Las dos pociones no tienen tipo vanilla, así que ninguna receta vanilla las pue
 
 | Arma | Receta | Habilidades |
 |---|---|---|
-| **Guillotina del Verdugo** (hacha de netherita) | `E C E / · A · / · W ·` — 2 Filos del Verdugo, cadena de hierro, hacha de netherita, Orden del Verdugo | Sentencia (+40% a objetivos bajo el 30%), Sangrado (Wither I), Cadenas del Juicio (clic derecho), Caída de la Guillotina (shift + clic derecho) |
-| **Desplegador del Arquitecto** (arco) | `· E · / N K N / · B ·` — fragmento de eco, 2 lingotes de netherita, Kernel del Arquitecto, arco | Paquetes guiados (+20%), sudo rm -rf (shift + clic izquierdo, haz de 40 bloques), Failover (bajo el 30% de vida, saltas tras el atacante) |
+| **Executioner's Guillotine** (hacha de netherita) | `E C E / · A · / · W ·` — 2 Executioner's Edge, cadena de hierro, hacha de netherita, Orden del Verdugo | Sentencia (+40% a objetivos bajo el 30%), Sangrado (Wither I), Cadenas del Juicio (clic derecho), Caída de la Guillotina (shift + clic derecho) |
+| **Architect's Deployer** (arco) | `· E · / N K N / · B ·` — fragmento de eco, 2 lingotes de netherita, Architect Kernel, arco | Paquetes guiados (+20%), sudo rm -rf (shift + clic izquierdo, haz de 40 bloques), Failover (bajo el 30% de vida, saltas tras el atacante) |
 
-NIX suelta **1 Filo del Verdugo** siempre y un segundo con un 35% (`edge-drop-chance`,
-`edge-bonus-chance`). JACKSTAR sigue soltando su **Kernel del Arquitecto**, que además de invocarlo
-ahora es el núcleo del Desplegador.
+NIX suelta **1 Executioner's Edge** siempre y un segundo con un 35% (`edge-drop-chance`,
+`edge-bonus-chance`). JACKSTAR sigue soltando su **Architect Kernel**, que además de invocarlo
+ahora es el núcleo del Architect's Deployer.
 
 ---
 
@@ -118,11 +120,11 @@ ahora es el núcleo del Desplegador.
 | Comando | Quién | Qué hace |
 |---|---|---|
 | `/stand` | todos (`msc.stand`) | Tu Stand, si eres portador o vampiro, y tus habilidades |
-| `/stand invocar` · `/stand habilidad [1\|2]` · `/stand sha` | todos | Lo mismo que las teclas |
-| `/stand dar <jugador> [stand]` | `msc.admin` | Despierta un Stand (al azar si no se indica) |
-| `/stand quitar <jugador>` | `msc.admin` | Quita el Stand |
-| `/stand vampiro <jugador> <si\|no>` | `msc.admin` | Da o cura la sangre de DIO |
-| `/stand flecha <jugador>` | `msc.admin` | Atraviesa al jugador con la Flecha (prueba) |
+| `/stand summon` · `/stand ability [1\|2]` · `/stand sha` | todos | Lo mismo que las teclas |
+| `/stand give <jugador> [stand]` | `msc.admin` | Despierta un Stand (al azar si no se indica) |
+| `/stand remove <jugador>` | `msc.admin` | Quita el Stand |
+| `/stand vampire <jugador> <on\|off>` | `msc.admin` | Da o cura la sangre de DIO |
+| `/stand arrow <jugador>` | `msc.admin` | Atraviesa al jugador con la Flecha (prueba) |
 
 `/msc give` incluye `vampireblood`, `unstableblood`, `bearerelixir`, `executioneredge`,
 `executionerguillotine` y `architectdeployer`.

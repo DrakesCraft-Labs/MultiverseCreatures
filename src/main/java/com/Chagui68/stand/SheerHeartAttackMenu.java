@@ -55,20 +55,20 @@ public final class SheerHeartAttackMenu implements InventoryHolder {
             slot++;
         }
         if (online.isEmpty()) {
-            inventory.setItem(22, button(Material.BARRIER, MscText.title(RED, "No hay nadie más conectado"),
-                    MscText.line(GRAY, "Sheer Heart Attack necesita un objetivo.")));
+            inventory.setItem(22, button(Material.BARRIER, MscText.title(RED, "Nobody else is online"),
+                    MscText.line(GRAY, "Sheer Heart Attack needs a target.")));
         }
         ItemStack filler = button(Material.PINK_STAINED_GLASS_PANE, Component.text(" "));
         for (int i = 45; i < 54; i++) {
             inventory.setItem(i, filler);
         }
         if (this.page > 0) {
-            inventory.setItem(PREVIOUS, button(Material.ARROW, MscText.title(YELLOW, "« Página anterior")));
+            inventory.setItem(PREVIOUS, button(Material.ARROW, MscText.title(YELLOW, "« Previous page")));
         }
         if (this.page < pages - 1) {
-            inventory.setItem(NEXT, button(Material.ARROW, MscText.title(YELLOW, "Página siguiente »")));
+            inventory.setItem(NEXT, button(Material.ARROW, MscText.title(YELLOW, "Next page »")));
         }
-        inventory.setItem(CLOSE, button(Material.BARRIER, MscText.title(RED, "Cerrar")));
+        inventory.setItem(CLOSE, button(Material.BARRIER, MscText.title(RED, "Close")));
     }
 
     private static ItemStack head(Player owner, Player target) {
@@ -78,16 +78,16 @@ public final class SheerHeartAttackMenu implements InventoryHolder {
             meta.displayName(MscText.title(LIGHT_PURPLE, target.getName()));
             List<Component> lore = new ArrayList<>();
             if (target.getWorld().equals(owner.getWorld())) {
-                lore.add(MscText.rich(GRAY, "Distancia: ", GOLD,
-                        (int) target.getLocation().distance(owner.getLocation()) + " bloques"));
+                lore.add(MscText.rich(GRAY, "Distance: ", GOLD,
+                        (int) target.getLocation().distance(owner.getLocation()) + " blocks"));
             } else {
-                lore.add(MscText.rich(GRAY, "Mundo: ", GOLD, target.getWorld().getName()));
+                lore.add(MscText.rich(GRAY, "World: ", GOLD, target.getWorld().getName()));
             }
             lore.add(MscText.blank());
-            lore.add(MscText.line(GRAY, "Sheer Heart Attack rodará hasta él"));
-            lore.add(MscText.line(GRAY, "atravesando lo que haga falta."));
+            lore.add(MscText.line(GRAY, "Sheer Heart Attack will roll after them,"));
+            lore.add(MscText.line(GRAY, "through whatever stands in the way."));
             lore.add(MscText.blank());
-            lore.add(MscText.line(YELLOW, "Clic para enviar la bomba"));
+            lore.add(MscText.line(YELLOW, "Click to send the bomb"));
             meta.lore(lore);
             head.setItemMeta(meta);
         }

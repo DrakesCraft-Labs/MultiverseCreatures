@@ -16,31 +16,31 @@ public class ExecutionerGuillotine {
     public static final NamespacedKey KEY = new NamespacedKey("multiversecreatures", "msc_executioner_guillotine");
 
     public static final ItemStack EXECUTIONER_GUILLOTINE = ItemBuilder.of(Material.NETHERITE_AXE)
-            .name(MscText.title(DARK_RED, "Guillotina del Verdugo"))
+            .name(MscText.title(DARK_RED, "Executioner's Guillotine"))
             .lore(
-                    MscText.line(GRAY, "El hacha de NIX, rehecha con los filos"),
-                    MscText.line(GRAY, "que dejó atrás. Nunca falla un cuello."),
+                    MscText.line(GRAY, "NIX's axe, reforged from the edges"),
+                    MscText.line(GRAY, "he left behind. It never misses a neck."),
                     MscText.blank(),
-                    MscText.line(WHITE, "Efectos Pasivos:"),
-                    MscText.rich(YELLOW, "  ▸ ", WHITE, "Sentencia: ", GRAY, "+", RED, "40% ", GRAY,
-                            "de daño a objetivos bajo el ", GOLD, "30%"),
-                    MscText.line(GRAY, "    de su vida"),
-                    MscText.rich(YELLOW, "  ▸ ", WHITE, "Sangrado: ", GOLD, "25% ", GRAY, "de aplicar ",
-                            DARK_GRAY, "Wither I ", GRAY, "por ", GOLD, "3 s"),
+                    MscText.line(WHITE, "Passive Effects:"),
+                    MscText.rich(YELLOW, "  ▸ ", WHITE, "Sentence: ", GRAY, "+", RED, "40% ", GRAY,
+                            "damage to targets below ", GOLD, "30%"),
+                    MscText.line(GRAY, "    of their health"),
+                    MscText.rich(YELLOW, "  ▸ ", WHITE, "Bleed: ", GOLD, "25% ", GRAY, "chance to apply ",
+                            DARK_GRAY, "Wither I ", GRAY, "for ", GOLD, "3 seconds"),
                     MscText.blank(),
-                    MscText.rich(AQUA, "Habilidad: ", WHITE, "Cadenas del Juicio ", GRAY, "(Clic derecho)"),
-                    MscText.line(GRAY, "  Atrapa al objetivo que miras (hasta 18 bloques)"),
-                    MscText.line(GRAY, "  y lo arrastra hacia ti con Lentitud II."),
-                    MscText.rich(GRAY, "  Enfriamiento: ", GOLD, "15 segundos"),
+                    MscText.rich(AQUA, "Item Ability: ", WHITE, "Chains of Judgment ", GRAY, "(Right-Click)"),
+                    MscText.rich(GRAY, "  Snares the target you look at (up to ", GOLD, "18 blocks", GRAY, ")"),
+                    MscText.rich(GRAY, "  and drags it to you with ", DARK_GRAY, "Slowness II", GRAY, "."),
+                    MscText.rich(GRAY, "  Cooldown: ", GOLD, "15 seconds"),
                     MscText.blank(),
-                    MscText.rich(AQUA, "Habilidad: ", WHITE, "Caída de la Guillotina ", GRAY, "(Shift + Clic derecho)"),
-                    MscText.line(GRAY, "  Un salto con el hacha en alto y un golpe que"),
-                    MscText.rich(GRAY, "  hace ", RED, "14 ", GRAY, "de daño en ", GOLD, "4 bloques", GRAY, " y lanza al aire."),
-                    MscText.rich(GRAY, "  Enfriamiento: ", GOLD, "25 segundos"),
+                    MscText.rich(AQUA, "Item Ability: ", WHITE, "Guillotine Drop ", GRAY, "(Shift + Right-Click)"),
+                    MscText.line(GRAY, "  A leap with the axe held high and a blow that"),
+                    MscText.rich(GRAY, "  deals ", RED, "14 ", GRAY, "damage in ", GOLD, "4 blocks", GRAY, " and launches foes."),
+                    MscText.rich(GRAY, "  Cooldown: ", GOLD, "25 seconds"),
                     MscText.blank(),
-                    MscText.quote(DARK_RED, "\"Todo condenado tiene su hora.\""),
+                    MscText.quote(DARK_PURPLE, "\"Every condemned soul has its hour.\""),
                     MscText.blank(),
-                    MscText.footer(DARK_RED, "NIX")
+                    MscText.footer("DrakesCraft")
             )
             .tagged(KEY)
             .unbreakable()

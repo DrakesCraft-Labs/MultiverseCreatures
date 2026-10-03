@@ -12,19 +12,19 @@ public class ArchitectKernel {
     public static final NamespacedKey KEY = new NamespacedKey("multiversecreatures", "msc_architect_kernel");
 
     public static final ItemStack ARCHITECT_KERNEL = ItemBuilder.of(Material.NETHER_STAR)
-            .name(MscText.title(AQUA, "Kernel del Arquitecto"))
+            .name(MscText.title(AQUA, "Architect Kernel"))
             .lore(
-                    MscText.line(GRAY, "Un núcleo condensado extraído de la entidad"),
-                    MscText.line(GRAY, "que administra las leyes físicas del sistema."),
+                    MscText.line(GRAY, "A condensed core torn from the entity"),
+                    MscText.line(GRAY, "that runs the physical laws of the system."),
                     MscText.blank(),
-                    MscText.line(WHITE, "Reliquia Multiversal · Nivel ROOT"),
-                    MscText.rich(YELLOW, "  ▸ ", GRAY, "Núcleo del ", AQUA, "Desplegador del Arquitecto"),
-                    MscText.rich(YELLOW, "  ▸ ", GRAY, "Ofrenda que invoca a ", AQUA, "JACKSTAR"),
+                    MscText.line(WHITE, "Multiversal Relic · ROOT Level"),
+                    MscText.rich(YELLOW, "  ▸ ", GRAY, "Core of the ", AQUA, "Architect's Deployer"),
+                    MscText.rich(YELLOW, "  ▸ ", GRAY, "Offering that summons ", AQUA, "JACKSTAR"),
                     MscText.blank(),
-                    MscText.quote(DARK_PURPLE, "\"El servicio debe continuar.\""),
-                    MscText.quote(DARK_AQUA, "Status: HEALTHY · Uptime: ∞ · Auth: ROOT"),
+                    MscText.quote(DARK_PURPLE, "\"The service must go on.\""),
+                    MscText.quote(DARK_PURPLE, "Status: HEALTHY · Uptime: ∞ · Auth: ROOT"),
                     MscText.blank(),
-                    MscText.footer(GOLD, "JackStar Systems")
+                    MscText.footer("DrakesCraft")
             )
             .tagged(KEY)
             .build();

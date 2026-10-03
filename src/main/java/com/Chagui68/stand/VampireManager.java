@@ -95,7 +95,7 @@ public final class VampireManager implements Listener {
                 player.setVisualFire(burning);
                 if (burning) {
                     smoking.add(player.getUniqueId());
-                    player.sendActionBar(Component.text("☀ ¡El sol te está quemando! Busca sombra", GOLD,
+                    player.sendActionBar(Component.text("☀ The sun is burning you! Find shade", GOLD,
                             TextDecoration.BOLD));
                 } else {
                     smoking.remove(player.getUniqueId());
@@ -155,16 +155,16 @@ public final class VampireManager implements Listener {
         }
         Player player = event.getPlayer();
         if (StandData.isBearer(player)) {
-            player.sendMessage(Component.text("La sangre de DIO ya corre por tus venas.", DARK_RED));
+            player.sendMessage(Component.text("DIO's blood already runs through your veins.", DARK_RED));
             return;
         }
         StandData.drinkBlood(player);
-        player.showTitle(Title.title(Component.text("SANGRE DE DIO", DARK_RED, TextDecoration.BOLD),
-                Component.text("Ahora eres un vampiro y portador de Stand", GRAY),
+        player.showTitle(Title.title(Component.text("DIO'S BLOOD", DARK_RED, TextDecoration.BOLD),
+                Component.text("You are now a vampire and a Stand bearer", GRAY),
                 Title.Times.times(Duration.ofMillis(400), Duration.ofSeconds(4), Duration.ofSeconds(1))));
-        player.sendMessage(MscText.rich(DARK_RED, "✦ ", GRAY, "Tu cuerpo puede sostener un ", GOLD, "Stand", GRAY,
-                ": si la Flecha te elige, despertará. Pero el ", YELLOW, "sol", GRAY,
-                " ya no te perdona: bajo el cielo abierto de día, arderás."));
+        player.sendMessage(MscText.rich(DARK_RED, "✦ ", GRAY, "Your body can now hold a ", GOLD, "Stand", GRAY,
+                ": the Arrow can no longer kill you and will awaken it. But the ", YELLOW, "sol", GRAY,
+                " no longer forgives you: under the open sky by day, you will burn."));
         player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 120, 0));
         player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 60, 0));
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.6f, 1.6f);

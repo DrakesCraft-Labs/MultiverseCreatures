@@ -15,8 +15,13 @@ commands:
     permission: msc.admin
   stand:
     description: Your Stand, its abilities and Killer Queen's Sheer Heart Attack
-    usage: /stand [invocar|habilidad|sha|dar|quitar|vampiro|flecha]
+    usage: /stand [summon|ability|sha|give|remove|vampire|arrow]
     permission: msc.stand
+  wiki:
+    description: Opens the in-game wiki (English and Spanish) with every item, recipe and drop
+    usage: /wiki [page|hand|en|es]
+    aliases: [mscwiki, mwiki]
+    permission: msc.wiki
 
 permissions:
   msc.admin:
@@ -24,6 +29,9 @@ permissions:
     default: op
   msc.stand:
     description: Allows using /stand (your own Stand); the admin subcommands need msc.admin
+    default: true
+  msc.wiki:
+    description: Allows opening the in-game wiki with /wiki
     default: true
   msc.admin.bypass:
     description: Bypasses the protected boss-dimension build and teleport rules
